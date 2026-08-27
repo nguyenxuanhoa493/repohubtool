@@ -15,72 +15,83 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);
     font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  .wrap{max-width:920px;margin:0 auto;padding:0 20px}
-  header{padding:64px 0 40px;text-align:center;
-    background:radial-gradient(900px 380px at 50% -140px,rgba(0,246,246,.16),transparent)}
-  .icon{width:104px;height:104px;border-radius:22px;border:2px solid var(--accent-dim);
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+  /* Hero: text and call to action on the left, product shot on the right.
+     Collapses to one column below 860px so the buttons stay above the fold
+     on a phone. */
+  header{padding:56px 0 44px;
+    background:radial-gradient(900px 420px at 22% -120px,rgba(0,246,246,.16),transparent)}
+  .hero{display:grid;gap:40px;align-items:center;grid-template-columns:1fr 1fr}
+  .icon{width:78px;height:78px;border-radius:18px;border:2px solid var(--accent-dim);
     background:var(--panel);image-rendering:pixelated}
-  h1{font-size:clamp(2rem,6vw,2.9rem);margin:20px 0 6px;letter-spacing:-.5px}
-  .sub{color:var(--muted);font-size:1.1rem;margin:0 0 18px}
-  .ver{display:inline-block;border:1px solid var(--accent-dim);color:var(--accent);
-    border-radius:999px;padding:5px 15px;font-size:.86rem;font-weight:600}
-  h2{font-size:1.35rem;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
-  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
-    display:flex;flex-direction:column}
-  .card.main{border-color:var(--accent-dim);box-shadow:0 0 0 1px rgba(0,246,246,.14)}
-  .card h3{margin:0 0 4px;font-size:1.1rem}
-  .size{color:var(--gold);font-weight:600;font-size:.9rem}
-  .card p{color:var(--muted);font-size:.94rem;margin:12px 0 20px;flex:1}
-  .btn{display:block;text-align:center;text-decoration:none;font-weight:700;
-    padding:13px 18px;border-radius:10px;background:var(--accent);color:#04121b;
+  h1{font-size:clamp(2.1rem,5.4vw,3rem);margin:16px 0 8px;letter-spacing:-.5px}
+  .sub{color:var(--muted);font-size:1.12rem;margin:0 0 26px}
+  .shot{width:100%;border-radius:14px;border:1px solid var(--line);display:block;
+    box-shadow:0 18px 50px rgba(0,0,0,.5)}
+
+  .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-block;text-align:center;text-decoration:none;font-weight:700;
+    padding:14px 22px;border-radius:10px;background:var(--accent);color:#04121b;
     transition:filter .15s}
   .btn:hover{filter:brightness(1.12)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
-  ol{padding-left:22px}
-  ol li{margin:12px 0}
+  .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
+
+  h2{font-size:1.35rem;margin:56px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  ol{padding-left:22px} ol li{margin:12px 0}
   code{background:#0a1120;border:1px solid var(--line);border-radius:6px;
     padding:2px 7px;font-size:.9em;color:var(--accent);white-space:nowrap}
+  .note{background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
+    border-radius:10px;padding:14px 18px;color:#f4e3b8;font-size:.94rem}
+
   .feat{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
     list-style:none;padding:0}
   .feat li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
     padding:14px 16px;font-size:.95rem}
   .feat b{color:var(--accent);display:block;margin-bottom:2px;font-size:.9rem}
-  .note{background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
-    border-radius:10px;padding:14px 18px;color:#f4e3b8;font-size:.94rem}
+
+  .donate{display:grid;gap:26px;align-items:center;grid-template-columns:220px 1fr;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .qr{width:220px;height:220px;background:#fff;border-radius:10px;padding:10px;display:block}
+  .rows{margin:0;display:grid;gap:2px}
+  .rows div{display:flex;justify-content:space-between;gap:16px;
+    padding:9px 0;border-bottom:1px solid var(--line)}
+  .rows div:last-child{border-bottom:0}
+  .rows dt{color:var(--muted);font-size:.92rem}
+  .rows dd{margin:0;font-weight:600}
+
   footer{margin:60px 0 40px;padding-top:24px;border-top:1px solid var(--line);
     color:var(--muted);font-size:.92rem;text-align:center}
   footer a{color:var(--accent);text-decoration:none}
   footer a:hover{text-decoration:underline}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr;gap:30px}
+    .donate{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .rows div{justify-content:center;flex-direction:column;gap:0;text-align:center}
+  }
 </style>
 </head>
 <body>
 <header>
-  <div class="wrap">
-    <img class="icon" src="files/icon.png" alt="">
-    <h1>RetroHub</h1>
-    <p class="sub">Kho game và tiện ích cho TrimUI Brick</p>
-    <span class="ver">Phiên bản 1.15</span>
+  <div class="wrap hero">
+    <div>
+      <img class="icon" src="files/icon.png" alt="">
+      <h1>RetroHub</h1>
+      <p class="sub">Kho game và tiện ích cho TrimUI Brick</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15-full.zip">
+          Tải bản đầy đủ<small>74 MB · kèm giả lập Java</small></a>
+        <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15.zip">
+          Tải bản gọn<small>9,5 MB · không kèm Java</small></a>
+      </div>
+    </div>
+    <img class="shot" src="screenshot.png" alt="Màn hình RetroHub">
   </div>
 </header>
 
 <main class="wrap">
-  <h2>Tải về</h2>
-  <div class="dl">
-    <div class="card main">
-      <h3>Bản đầy đủ</h3>
-      <span class="size">74,5 MB</span>
-      <p>Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.</p>
-      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15-full.zip">Tải bản đầy đủ</a>
-    </div>
-    <div class="card">
-      <h3>Bản gọn</h3>
-      <span class="size">9,5 MB</span>
-      <p>Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.</p>
-      <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15.zip">Tải bản gọn</a>
-    </div>
-  </div>
-
   <h2>Cách cài</h2>
   <ol>
     <li>Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.</li>
@@ -99,8 +110,22 @@
     <li><b>Tiếng Việt</b>Đầy đủ hai ngôn ngữ Việt và Anh</li>
   </ul>
 
+  <h2>Ủng hộ tôi</h2>
+  <div class="donate">
+    <img class="qr" src="files/assets/qr_donate.png" alt="Mã QR chuyển khoản">
+    <div>
+      <p style="margin-top:0">RetroHub là dự án cá nhân, làm và phát hành miễn phí. Nếu nó có ích cho bạn, một ly cà phê cũng là động lực để tôi làm tiếp.</p>
+      <dl class="rows">
+        <div><dt>Ngân hàng</dt><dd>Techcombank</dd></div>
+        <div><dt>Chủ tài khoản</dt><dd>NGUYEN XUAN HOA</dd></div>
+        <div><dt>Số tài khoản</dt><dd>1732 8888 88</dd></div>
+      </dl>
+    </div>
+  </div>
+
   <h2>Cần giúp đỡ?</h2>
-  <p>Hỏi đáp và báo lỗi tại nhóm Telegram <a class="btn ghost" style="display:inline-block;padding:6px 14px;margin-left:6px" href="https://t.me/retrohubtool">@retrohubtool</a></p>
+  <p>Hỏi đáp và báo lỗi tại nhóm Telegram
+     <a class="btn ghost" style="padding:7px 15px;margin-left:6px" href="https://t.me/retrohubtool">@retrohubtool</a></p>
 </main>
 
 <footer class="wrap">
