@@ -1,7 +1,7 @@
 {
-  "version": "1.9",
+  "version": "2.0",
   "python": "cpython-311",
-  "built": "2026-08-28T02:45:24+0700",
+  "built": "2026-08-28T02:55:05+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.py",
@@ -24,8 +24,8 @@
   "files": [
     {
       "path": "app.pyc",
-      "size": 200175,
-      "sha256": "5aec88e60e6604bdcbf30cbdc19ae45a3a223ab46ead644b449d36d9514e89bb"
+      "size": 200289,
+      "sha256": "bedf6e783497dc8d619ce04263b17d470acdbad8c48a2a2e2941cb580f7515c5"
     },
     {
       "path": "assets/flag_en.png",
@@ -39,13 +39,13 @@
     },
     {
       "path": "assets/qr_donate.png",
-      "size": 39644,
-      "sha256": "b1ffed5c16aeeae1dbcecef6715edcde4c2e9df22208207ef1c7c7134cebdfa8"
+      "size": 3752,
+      "sha256": "286a4661bbd21b28dce9f41d37d29ce67f37d4d0c1b4934b140b426f6b568456"
     },
     {
       "path": "assets/qr_telegram.png",
-      "size": 23508,
-      "sha256": "e030be236826d641b246025bb86793a0607c703fc3646f60b59ae20265679a52"
+      "size": 2310,
+      "sha256": "f76660dd8339d043088f99f9d5dfd61aeff34135cdbaeff394e03b954ab40418"
     },
     {
       "path": "config.json",
@@ -130,7 +130,7 @@
     {
       "path": "rh/version.pyc",
       "size": 1197,
-      "sha256": "00c1045cba31ed4d3afab376033007cbfd82ddbbfb064d9caf280e2a88d86c9b"
+      "sha256": "6d546792ffe3382322622a9bf95f4a5018608a4e7a4e9c7160b1d3fe45eb3068"
     },
     {
       "path": "streamer.pyc",
