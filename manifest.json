@@ -1,0 +1,131 @@
+{
+  "version": "1.3",
+  "python": "cpython-311",
+  "built": "2026-08-28T00:53:03+0700",
+  "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
+  "remove": [
+    "app.py",
+    "db.py",
+    "rh/__init__.py",
+    "rh/catalog.py",
+    "rh/downloader.py",
+    "rh/i18n.py",
+    "rh/j2me.py",
+    "rh/media.py",
+    "rh/paths.py",
+    "rh/services.py",
+    "rh/splash.py",
+    "rh/state.py",
+    "rh/sysinfo.py",
+    "rh/updater.py",
+    "rh/version.py",
+    "streamer.py"
+  ],
+  "files": [
+    {
+      "path": "app.pyc",
+      "size": 185730,
+      "sha256": "765e430a3983f2f5942f3e53aa8889826849b6eb1cb950b4407d986e29daaba9"
+    },
+    {
+      "path": "assets/flag_en.png",
+      "size": 3475,
+      "sha256": "3a5964ca84e828253592cdcf27eaee22076c059061088345207a0740f7b5ecf4"
+    },
+    {
+      "path": "assets/flag_vi.png",
+      "size": 1273,
+      "sha256": "95cc00c7cdcc250ef7bf5b4af058e662a21cc4976ecf88da6eec5ba73b50b32f"
+    },
+    {
+      "path": "config.json",
+      "size": 106,
+      "sha256": "874769dade4841588a45bdca44e11e60294cf13a74e52a46f64d2fe8a40fb884"
+    },
+    {
+      "path": "db.pyc",
+      "size": 23805,
+      "sha256": "f925c4160648504e6415451b862220ac19a758e0aed8d83d9e6bcc421f2f8ccb"
+    },
+    {
+      "path": "icon.png",
+      "size": 3289,
+      "sha256": "96c8db504c86847a327dd38e2f6d23d0668856dd4b5f2b56fdee1e2044532865"
+    },
+    {
+      "path": "launch.sh",
+      "size": 453,
+      "sha256": "8cd029e53343f4b893e1291fdb5dab21e523d348f34598beb2b9bad7f2f36215"
+    },
+    {
+      "path": "rh/__init__.pyc",
+      "size": 119,
+      "sha256": "9dc0d8bc1deb134cfb458d5fa1e9bfd397c411a003c7221dc6f525854de02887"
+    },
+    {
+      "path": "rh/catalog.pyc",
+      "size": 12027,
+      "sha256": "543fbe1b1974489a36582d79a9b58c9ef942532c3ec43881679f578a7d9b487e"
+    },
+    {
+      "path": "rh/downloader.pyc",
+      "size": 34430,
+      "sha256": "7b1b6506bf51fbb80e6686c55d4ec148cdbf322cd22b054fe041aabd61647cbc"
+    },
+    {
+      "path": "rh/i18n.pyc",
+      "size": 23818,
+      "sha256": "f0c5b7c44cdfdcd2e32d9fa9ba5ea782b332dbeda1781791eac7524339aba958"
+    },
+    {
+      "path": "rh/j2me.pyc",
+      "size": 13798,
+      "sha256": "5baeaaee073738da6002c1579fb248e0a5d6b89fac05eb25e3718a4b36acc555"
+    },
+    {
+      "path": "rh/media.pyc",
+      "size": 5965,
+      "sha256": "7b5b7234289c25595d377ba44c8c1c982e442e82116be3c5476823968cc1b264"
+    },
+    {
+      "path": "rh/paths.pyc",
+      "size": 1590,
+      "sha256": "28b8523e861ab90e2f1ba3ded53a437cf2299baa06983bedd678eb2bcec52dfc"
+    },
+    {
+      "path": "rh/services.pyc",
+      "size": 13731,
+      "sha256": "ba977f8fc79e5fc14d41aeae6ccae566f694542b5a919dd626f9cb513c2b9b90"
+    },
+    {
+      "path": "rh/splash.pyc",
+      "size": 14847,
+      "sha256": "835ed3589856572ec8a67855f8fec10b45e0d2fcc7aa1a490ede0ba56e6319a8"
+    },
+    {
+      "path": "rh/state.pyc",
+      "size": 3364,
+      "sha256": "883d56b123c13cdd2464d3c601d64814b087efcdd44039f1e7ea88684e783a19"
+    },
+    {
+      "path": "rh/sysinfo.pyc",
+      "size": 18383,
+      "sha256": "57766b2a973246052e4ffffc41156a53c35aa8e7f915b81ef94b82208d7f44a9"
+    },
+    {
+      "path": "rh/updater.pyc",
+      "size": 12716,
+      "sha256": "a3c555d1b9929caca5f23260d936afb2ca618bc70c4d98f8040e0b07bc099384"
+    },
+    {
+      "path": "rh/version.pyc",
+      "size": 1197,
+      "sha256": "c6087ffeb67ae00de8f8a15f89eedb50ffe787a360710a880f486b3d6a9adb94"
+    },
+    {
+      "path": "streamer.pyc",
+      "size": 38521,
+      "sha256": "47281cce160ab3a1a8de73b955053b66ddc6954e0cf84919a269ea8aafe637b9"
+    }
+  ]
+}

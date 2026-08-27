@@ -1,0 +1,6 @@
+{
+    "label": "RetroHub",
+    "icon": "icon.png",
+    "iconsel": "icon.png",
+    "launch": "launch.sh"
+}
