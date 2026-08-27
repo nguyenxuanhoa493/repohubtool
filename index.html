@@ -3,66 +3,157 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RetroHub cho TrimUI Brick</title>
-<meta name="description" content="Kho game và tiện ích cho máy chơi game cầm tay TrimUI Brick. Gần 40.000 game, giả lập Java J2ME, tự động cập nhật.">
+<title>RetroHub — Kho game và tiện ích cho máy chơi game cầm tay</title>
+
+<meta name="description" content="RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI. Cài một lần, tự cập nhật mãi.">
+<meta name="keywords" content="RetroHub, TrimUI Brick, máy chơi game cầm tay, kho game, ROM, giả lập, J2ME, game Java, retro handheld">
+<meta name="author" content="Nguyễn Xuân Hòa">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0d1220">
+<link rel="canonical" href="https://nguyenxuanhoa493.github.io/repohubtool/">
 <link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:site_name" content="RetroHub">
+<meta property="og:url" content="https://nguyenxuanhoa493.github.io/repohubtool/">
+<meta property="og:title" content="RetroHub — Kho game và tiện ích cho máy chơi game cầm tay">
+<meta property="og:description" content="Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật. Cài một lần, tự cập nhật mãi.">
+<meta property="og:image" content="https://nguyenxuanhoa493.github.io/repohubtool/shots/kho-game.png">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="768">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RetroHub — Kho game và tiện ích cho máy chơi game cầm tay">
+<meta name="twitter:description" content="Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật.">
+<meta name="twitter:image" content="https://nguyenxuanhoa493.github.io/repohubtool/shots/kho-game.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "RetroHub",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "TrimUI (Linux)",
+  "url": "https://nguyenxuanhoa493.github.io/repohubtool/",
+  "downloadUrl": "https://github.com/nguyenxuanhoa493/repohubtool/releases/latest",
+  "softwareVersion": "1.20",
+  "inLanguage": "vi",
+  "description": "Kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "VND" },
+  "author": { "@type": "Person", "name": "Nguyễn Xuân Hòa", "url": "https://xuanhoa493.com" }
+}
+</script>
+
 <style>
   :root{
     --bg:#0d1220; --panel:#16223a; --line:#2b3d5e;
     --accent:#00f6f6; --accent-dim:#0a8f96;
-    --text:#eef3fb; --muted:#93a4c0; --gold:#ffcf3c;
+    --text:#eef3fb; --muted:#93a4c0; --gold:#ffcf3c; --green:#3ddc97;
   }
   *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:74px}
   body{margin:0;background:var(--bg);color:var(--text);
     font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
 
-  header{padding:66px 0 48px;text-align:center;
-    background:radial-gradient(900px 400px at 50% -130px,rgba(0,246,246,.16),transparent)}
-  /* The logo art is transparent and already round, so it needs no frame -
-     a panel box behind it just fought the artwork. */
+  /* Sticky nav. Blurred rather than solid so the page still reads as one
+     surface while scrolling under it. */
+  nav{position:sticky;top:0;z-index:50;background:rgba(13,18,32,.86);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .navin{display:flex;align-items:center;gap:20px;height:58px;
+    max-width:1080px;margin:0 auto;padding:0 22px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;
+    text-decoration:none;color:var(--text);letter-spacing:-.2px}
+  .brand img{width:26px;height:26px}
+  .navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;
+    scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:.93rem;
+    padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
+  .navlinks a:hover{color:var(--text);background:#1b2c49}
+  .navlinks a.here{color:var(--accent);background:#14243d}
+
+  header{padding:70px 0 52px;text-align:center;
+    background:radial-gradient(900px 400px at 50% -140px,rgba(0,246,246,.16),transparent)}
   .logo{width:118px;height:118px;display:block;margin:0 auto;
-    filter:drop-shadow(0 6px 22px rgba(0,246,246,.28))}
-  h1{font-size:clamp(2.1rem,5.6vw,3rem);margin:18px 0 8px;letter-spacing:-.5px}
+    filter:drop-shadow(0 6px 22px rgba(0,246,246,.28));animation:float 5s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  h1{font-size:clamp(2.1rem,5.6vw,3rem);margin:18px 0 8px;letter-spacing:-.6px}
   .sub{color:var(--muted);font-size:1.12rem;margin:0 0 28px}
 
   .cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-  .btn{display:inline-block;text-align:center;text-decoration:none;font-weight:700;
-    padding:14px 22px;border-radius:10px;background:var(--accent);color:#04121b;
-    transition:filter .15s}
-  .btn:hover{filter:brightness(1.12)}
+  .btn{position:relative;display:inline-block;text-align:center;text-decoration:none;
+    font-weight:700;padding:14px 24px;border-radius:10px;background:var(--accent);
+    color:#04121b;transition:transform .18s cubic-bezier(.2,.8,.3,1),box-shadow .18s,filter .18s}
+  .btn:hover{transform:translateY(-3px);filter:brightness(1.1);
+    box-shadow:0 12px 26px rgba(0,246,246,.3)}
+  .btn:active{transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
+  .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
-  h2{font-size:1.35rem;margin:56px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h2{font-size:1.4rem;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  section{padding:52px 0 0}
   ol{padding-left:22px} ol li{margin:12px 0}
   code{background:#0a1120;border:1px solid var(--line);border-radius:6px;
     padding:2px 7px;font-size:.9em;color:var(--accent);white-space:nowrap}
   .note{background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
     border-radius:10px;padding:14px 18px;color:#f4e3b8;font-size:.94rem}
 
-  /* Feature showcase: the list drives which shot is on screen, and it advances
-     on its own so the page shows what the app does without being clicked. */
   .show{display:grid;gap:26px;grid-template-columns:340px 1fr;align-items:start}
   .tabs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
   .tab{position:relative;overflow:hidden;background:var(--panel);
     border:1px solid var(--line);border-radius:10px;padding:13px 16px;
-    cursor:pointer;transition:border-color .15s,background .15s}
-  .tab:hover{border-color:var(--accent-dim)}
+    cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+  .tab:hover{border-color:var(--accent-dim);transform:translateX(3px)}
   .tab[aria-selected="true"]{border-color:var(--accent);background:#1b2c49}
   .tab b{display:block;color:var(--accent);font-size:.95rem}
   .tab span{color:var(--muted);font-size:.87rem;line-height:1.45;display:block;margin-top:2px}
-  /* Countdown to the next slide. Width is animated from JS so a click can
-     restart it cleanly. */
   .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--accent)}
   .stage{position:relative;border:1px solid var(--line);border-radius:14px;
     overflow:hidden;background:#0a1120;aspect-ratio:4/3}
-  .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-    opacity:0;transition:opacity .45s ease}
-  .stage img.on{opacity:1}
+  /* contain, not cover: the shots are a mix of 4:3 device captures and wider
+     desktop grabs, and cropping the wide ones cuts off what they are showing. */
+  .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    opacity:0;transform:scale(1.015);transition:opacity .45s ease,transform .45s ease}
+  .stage img.on{opacity:1;transform:scale(1)}
 
-  .feat{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    list-style:none;padding:0}
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
+    display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
+  .card:hover{transform:translateY(-4px);border-color:var(--accent-dim)}
+  .card.main{border-color:var(--accent-dim)}
+  .card h3{margin:0 0 4px;font-size:1.1rem}
+  .size{color:var(--gold);font-weight:600;font-size:.9rem}
+  .card p{color:var(--muted);font-size:.94rem;margin:12px 0 20px;flex:1}
+  .card .btn{display:block}
+
+  .os{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .os li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:13px 16px;font-size:.94rem;display:flex;gap:11px;align-items:flex-start}
+  .dot{width:10px;height:10px;border-radius:50%;margin-top:7px;flex:none}
+  .dot.ok{background:var(--green);box-shadow:0 0 10px rgba(61,220,151,.6)}
+  .dot.wait{background:#5d6f8e}
+  .os b{display:block}
+  .os span{color:var(--muted);font-size:.87rem}
+
+  .road{list-style:none;padding:0;margin:0;position:relative}
+  .road::before{content:"";position:absolute;left:11px;top:10px;bottom:10px;
+    width:2px;background:var(--line)}
+  .road li{position:relative;padding:0 0 22px 42px}
+  .road li:last-child{padding-bottom:0}
+  .pin{position:absolute;left:2px;top:3px;width:20px;height:20px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--line)}
+  .road li.done .pin{border-color:var(--green);background:var(--green);
+    box-shadow:0 0 12px rgba(61,220,151,.5)}
+  .road b{display:block;font-size:1.02rem}
+  .road span{color:var(--muted);font-size:.9rem}
+  .badge{display:inline-block;font-size:.75rem;font-weight:700;border-radius:999px;
+    padding:2px 10px;margin-left:8px;vertical-align:2px}
+  .badge.ok{background:rgba(61,220,151,.16);color:var(--green);border:1px solid rgba(61,220,151,.45)}
+  .badge.next{background:#1b2c49;color:var(--muted);border:1px solid var(--line)}
 
   .donate{display:grid;gap:26px;align-items:center;grid-template-columns:220px 1fr;
     background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
@@ -74,73 +165,154 @@
   .rows dt{color:var(--muted);font-size:.92rem}
   .rows dd{margin:0;font-weight:600}
 
-  footer{margin:60px 0 40px;padding-top:24px;border-top:1px solid var(--line);
+  footer{margin:64px 0 40px;padding-top:24px;border-top:1px solid var(--line);
     color:var(--muted);font-size:.92rem;text-align:center}
   footer a{color:var(--accent);text-decoration:none}
   footer a:hover{text-decoration:underline}
+
+  /* Sections rise into place as they come into view. Purely decorative, and
+     switched off entirely for anyone who asked for less motion. */
+  .rise{opacity:0;transform:translateY(22px);
+    transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.3,1)}
+  .rise.seen{opacity:1;transform:none}
 
   @media (max-width:860px){
     .show{grid-template-columns:1fr}
     .donate{grid-template-columns:1fr;justify-items:center;text-align:center}
     .rows div{justify-content:center;flex-direction:column;gap:0;text-align:center}
+    .brand span{display:none}
   }
   @media (prefers-reduced-motion:reduce){
-    .stage img{transition:none}
+    html{scroll-behavior:auto}
+    .logo{animation:none}
+    .rise{opacity:1;transform:none;transition:none}
+    .stage img{transition:none;transform:none}
+    .btn:hover,.card:hover,.tab:hover{transform:none}
   }
 </style>
 </head>
 <body>
-<header>
+
+<nav>
+  <div class="navin">
+    <a class="brand" href="#top"><img src="logo.png" alt=""><span>RetroHub</span></a>
+    <div class="navlinks">
+      <a href="#tinh-nang">Tính năng</a>
+      <a href="#cach-cai">Cách cài</a>
+      <a href="#tai-ve">Tải về</a>
+      <a href="#ung-ho">Ủng hộ</a>
+      <a href="#lo-trinh">Lộ trình</a>
+      <a href="#lien-he">Liên hệ</a>
+    </div>
+  </div>
+</nav>
+
+<header id="top">
   <div class="wrap">
-    <img class="logo" src="logo.png" alt="">
+    <img class="logo" src="logo.png" alt="Biểu tượng RetroHub">
     <h1>RetroHub</h1>
-    <p class="sub">Kho game và tiện ích cho TrimUI Brick</p>
+    <p class="sub">Kho game và tiện ích cho máy chơi game cầm tay</p>
     <div class="cta">
       <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.18/RetroHub-1.18-full.zip">
         Tải bản đầy đủ<small>75 MB · kèm giả lập Java</small></a>
       <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.18/RetroHub-1.18.zip">
-        Tải bản gọn<small>9,5 MB · không kèm Java</small></a>
+        Tải bản gọn<small>9,7 MB · không kèm Java</small></a>
     </div>
   </div>
 </header>
 
 <main class="wrap">
-  <h2>Có gì trong đó</h2>
-  <div class="show">
-    <ul class="tabs" id="tabs" role="tablist"></ul>
-    <div class="stage" id="stage"></div>
-  </div>
-
-  <h2>Cách cài</h2>
-  <ol>
-    <li>Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.</li>
-    <li>Cắm thẻ nhớ vào máy tính, chép cả thư mục đó vào <code>/Apps/</code> trên thẻ.</li>
-    <li>Lắp thẻ lại vào máy, mở <b>Apps → RetroHub</b>.</li>
-  </ol>
-  <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.</p>
-
-  <h2>Ủng hộ tôi</h2>
-  <div class="donate">
-    <img class="qr" src="files/assets/qr_donate.png" alt="Mã QR chuyển khoản">
-    <div>
-      <p style="margin-top:0">RetroHub là dự án cá nhân, làm và phát hành miễn phí. Nếu nó có ích cho bạn, một ly cà phê cũng là động lực để tôi làm tiếp.</p>
-      <dl class="rows">
-        <div><dt>Ngân hàng</dt><dd>Techcombank</dd></div>
-        <div><dt>Chủ tài khoản</dt><dd>NGUYEN XUAN HOA</dd></div>
-        <div><dt>Số tài khoản</dt><dd>1732 8888 88</dd></div>
-      </dl>
+  <section id="tinh-nang" class="rise">
+    <h2>Tính năng nổi bật</h2>
+    <div class="show">
+      <ul class="tabs" id="tabs" role="tablist"></ul>
+      <div class="stage" id="stage"></div>
     </div>
-  </div>
+  </section>
 
-  <h2>Cần giúp đỡ?</h2>
-  <p>Hỏi đáp và báo lỗi tại nhóm Telegram
-     <a class="btn ghost" style="padding:7px 15px;margin-left:6px" href="https://t.me/retrohubtool">@retrohubtool</a></p>
+  <section id="cach-cai" class="rise">
+    <h2>Cách cài</h2>
+    <ol>
+      <li>Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.</li>
+      <li>Cắm thẻ nhớ vào máy tính, chép cả thư mục đó vào <code>/Apps/</code> trên thẻ.</li>
+      <li>Lắp thẻ lại vào máy, mở <b>Apps → RetroHub</b>.</li>
+    </ol>
+    <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.</p>
+  </section>
+
+  <section id="tai-ve" class="rise">
+    <h2>Tải về</h2>
+    <div class="dl">
+      <div class="card main">
+        <h3>Bản đầy đủ</h3>
+        <span class="size">75 MB</span>
+        <p>Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.</p>
+        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.18/RetroHub-1.18-full.zip">Tải bản đầy đủ</a>
+      </div>
+      <div class="card">
+        <h3>Bản gọn</h3>
+        <span class="size">9,7 MB</span>
+        <p>Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.</p>
+        <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.18/RetroHub-1.18.zip">Tải bản gọn</a>
+      </div>
+    </div>
+
+    <h3 style="margin:34px 0 0;font-size:1.05rem">Hệ điều hành hỗ trợ</h3>
+    <ul class="os">
+      <li><span class="dot ok"></span><div><b>TrimUI Brick — hệ gốc</b>
+        <span>Đã thử trực tiếp, chạy đầy đủ mọi tính năng</span></div></li>
+      <li><span class="dot wait"></span><div><b>TrimUI Smart Pro — hệ gốc</b>
+        <span>Cùng dòng firmware, nhiều khả năng chạy được nhưng chưa thử</span></div></li>
+      <li><span class="dot wait"></span><div><b>CrossMix, Knulli và các bản CFW</b>
+        <span>Chưa thử. Nếu bạn chạy được, báo tôi trong nhóm chat</span></div></li>
+    </ul>
+  </section>
+
+  <section id="ung-ho" class="rise">
+    <h2>Ủng hộ tôi</h2>
+    <div class="donate">
+      <img class="qr" src="files/assets/qr_donate.png" alt="Mã QR chuyển khoản Techcombank">
+      <div>
+        <p style="margin-top:0">RetroHub là dự án cá nhân, làm và phát hành miễn phí. Nếu nó có ích cho bạn, một ly cà phê cũng là động lực để tôi làm tiếp.</p>
+        <dl class="rows">
+          <div><dt>Ngân hàng</dt><dd>Techcombank</dd></div>
+          <div><dt>Chủ tài khoản</dt><dd>NGUYEN XUAN HOA</dd></div>
+          <div><dt>Số tài khoản</dt><dd>1732 8888 88</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section id="lo-trinh" class="rise">
+    <h2>Lộ trình phát triển</h2>
+    <ul class="road">
+      <li class="done"><span class="pin"></span>
+        <b>Kho game và tiện ích cơ bản<span class="badge ok">Đã xong</span></b>
+        <span>Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi, tự động cập nhật</span></li>
+      <li><span class="pin"></span>
+        <b>Hỗ trợ thêm hệ điều hành và máy khác<span class="badge next">Đang tới</span></b>
+        <span>Mở rộng ra các bản CFW và những dòng máy cầm tay khác</span></li>
+      <li><span class="pin"></span>
+        <b>Kho ứng dụng online<span class="badge next">Dự kiến</span></b>
+        <span>Cài thêm tiện ích ngay trên máy, không cần rút thẻ nhớ</span></li>
+      <li><span class="pin"></span>
+        <b>Máy chủ ghép trận online<span class="badge next">Dự kiến</span></b>
+        <span>Tìm người chơi và đấu cùng nhau qua mạng</span></li>
+    </ul>
+  </section>
+
+  <section id="lien-he" class="rise">
+    <h2>Liên hệ</h2>
+    <p>Hỏi đáp, báo lỗi và góp ý tại nhóm Telegram
+       <a class="btn ghost" style="padding:7px 15px;margin-left:6px" href="https://t.me/retrohubtool">@retrohubtool</a></p>
+  </section>
 </main>
 
 <footer class="wrap">
   <p>RetroHub — Nguyễn Xuân Hòa ·
      <a href="https://xuanhoa493.com">xuanhoa493.com</a> ·
-     <a href="https://t.me/retrohubtool">Telegram</a></p>
+     <a href="https://t.me/retrohubtool">Telegram</a> ·
+     <a href="https://github.com/nguyenxuanhoa493/repohubtool">GitHub</a></p>
 </footer>
 
 <script>
@@ -170,8 +342,6 @@
     tabs.appendChild(li);
     bars.push(li.querySelector(".bar"));
 
-    // Every shot is in the DOM from the start and cross-faded by opacity, so
-    // switching never shows a half-loaded image.
     var img = document.createElement("img");
     img.src = "shots/" + f[0] + ".png";
     img.alt = f[1];
@@ -190,36 +360,59 @@
       b.style.transition = "none";
       b.style.width = "0%";
       if (sel) {
-        // Force a reflow so the width reset lands before the animation starts,
-        // otherwise a restarted bar keeps its old progress.
         void b.offsetWidth;
         b.style.transition = "width " + HOLD + "ms linear";
         b.style.width = "100%";
       }
     }
   }
-
-  function show(i, manual) {
-    at = (i + FEATURES.length) % FEATURES.length;
-    paint();
-    if (manual) start();
-  }
-  function start() {
-    clearInterval(timer);
-    timer = setInterval(function () { show(at + 1); }, HOLD);
-  }
+  function show(i, manual) { at = (i + FEATURES.length) % FEATURES.length; paint(); if (manual) start(); }
+  function start() { clearInterval(timer); timer = setInterval(function () { show(at + 1); }, HOLD); }
   function stop() { clearInterval(timer); }
 
-  paint();
-  start();
-  // Hold still while someone is reading a panel, and while the tab is hidden -
-  // otherwise it would race through every slide in the background.
+  paint(); start();
   var box = document.querySelector(".show");
   box.addEventListener("mouseenter", stop);
   box.addEventListener("mouseleave", start);
-  document.addEventListener("visibilitychange", function () {
-    document.hidden ? stop() : start();
-  });
+  document.addEventListener("visibilitychange", function () { document.hidden ? stop() : start(); });
+
+  // Reveal on scroll, and mark the nav link for whichever section is in view.
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var secs = [].slice.call(document.querySelectorAll("section[id]"));
+  if ("IntersectionObserver" in window) {
+    if (!reduce) {
+      var rev = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("seen"); rev.unobserve(e.target); } });
+      }, { rootMargin: "0px 0px -12% 0px" });
+      document.querySelectorAll(".rise").forEach(function (el) { rev.observe(el); });
+    } else {
+      document.querySelectorAll(".rise").forEach(function (el) { el.classList.add("seen"); });
+    }
+    // Highlight the nav link of whichever section is crossing the top band.
+    // Tracking a set of visible ids and picking the first in document order
+    // avoids the flicker you get from reacting to each entry on its own.
+    var links = {};
+    [].forEach.call(document.querySelectorAll(".navlinks a"), function (a) {
+      links[a.getAttribute("href").slice(1)] = a;
+    });
+    var visible = {};
+    var spy = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) visible[e.target.id] = 1;
+        else delete visible[e.target.id];
+      });
+      var cur = null;
+      for (var i = 0; i < secs.length; i++) {
+        if (visible[secs[i].id]) { cur = secs[i].id; break; }
+      }
+      Object.keys(links).forEach(function (k) {
+        links[k].classList.toggle("here", k === cur);
+      });
+    }, { rootMargin: "-58px 0px -62% 0px" });
+    secs.forEach(function (el) { spy.observe(el); });
+  } else {
+    document.querySelectorAll(".rise").forEach(function (el) { el.classList.add("seen"); });
+  }
 })();
 </script>
 </body>
