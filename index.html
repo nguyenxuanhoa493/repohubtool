@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RetroHub cho TrimUI Brick</title>
+<meta name="description" content="Kho game và tiện ích cho máy chơi game cầm tay TrimUI Brick. Gần 40.000 game, giả lập Java J2ME, tự động cập nhật.">
+<link rel="icon" href="files/icon.png">
+<style>
+  :root{
+    --bg:#0d1220; --panel:#16223a; --line:#2b3d5e;
+    --accent:#00f6f6; --accent-dim:#0a8f96;
+    --text:#eef3fb; --muted:#93a4c0; --gold:#ffcf3c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px}
+  header{padding:64px 0 40px;text-align:center;
+    background:radial-gradient(900px 380px at 50% -140px,rgba(0,246,246,.16),transparent)}
+  .icon{width:104px;height:104px;border-radius:22px;border:2px solid var(--accent-dim);
+    background:var(--panel);image-rendering:pixelated}
+  h1{font-size:clamp(2rem,6vw,2.9rem);margin:20px 0 6px;letter-spacing:-.5px}
+  .sub{color:var(--muted);font-size:1.1rem;margin:0 0 18px}
+  .ver{display:inline-block;border:1px solid var(--accent-dim);color:var(--accent);
+    border-radius:999px;padding:5px 15px;font-size:.86rem;font-weight:600}
+  h2{font-size:1.35rem;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
+    display:flex;flex-direction:column}
+  .card.main{border-color:var(--accent-dim);box-shadow:0 0 0 1px rgba(0,246,246,.14)}
+  .card h3{margin:0 0 4px;font-size:1.1rem}
+  .size{color:var(--gold);font-weight:600;font-size:.9rem}
+  .card p{color:var(--muted);font-size:.94rem;margin:12px 0 20px;flex:1}
+  .btn{display:block;text-align:center;text-decoration:none;font-weight:700;
+    padding:13px 18px;border-radius:10px;background:var(--accent);color:#04121b;
+    transition:filter .15s}
+  .btn:hover{filter:brightness(1.12)}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
+  ol{padding-left:22px}
+  ol li{margin:12px 0}
+  code{background:#0a1120;border:1px solid var(--line);border-radius:6px;
+    padding:2px 7px;font-size:.9em;color:var(--accent);white-space:nowrap}
+  .feat{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    list-style:none;padding:0}
+  .feat li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;font-size:.95rem}
+  .feat b{color:var(--accent);display:block;margin-bottom:2px;font-size:.9rem}
+  .note{background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
+    border-radius:10px;padding:14px 18px;color:#f4e3b8;font-size:.94rem}
+  footer{margin:60px 0 40px;padding-top:24px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.92rem;text-align:center}
+  footer a{color:var(--accent);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <img class="icon" src="files/icon.png" alt="">
+    <h1>RetroHub</h1>
+    <p class="sub">Kho game và tiện ích cho TrimUI Brick</p>
+    <span class="ver">Phiên bản 1.15</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <h2>Tải về</h2>
+  <div class="dl">
+    <div class="card main">
+      <h3>Bản đầy đủ</h3>
+      <span class="size">74,5 MB</span>
+      <p>Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.</p>
+      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15-full.zip">Tải bản đầy đủ</a>
+    </div>
+    <div class="card">
+      <h3>Bản gọn</h3>
+      <span class="size">9,5 MB</span>
+      <p>Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.</p>
+      <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15.zip">Tải bản gọn</a>
+    </div>
+  </div>
+
+  <h2>Cách cài</h2>
+  <ol>
+    <li>Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.</li>
+    <li>Cắm thẻ nhớ vào máy tính, chép cả thư mục đó vào <code>/Apps/</code> trên thẻ.</li>
+    <li>Lắp thẻ lại vào máy, mở <b>Apps → RetroHub</b>.</li>
+  </ol>
+  <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.</p>
+
+  <h2>Có gì trong đó</h2>
+  <ul class="feat">
+    <li><b>Kho game</b>39.971 tựa từ nhiều nguồn, lọc theo hệ máy và theo nguồn</li>
+    <li><b>Game Java J2ME</b>2.713 game chia 26 nhóm, gán phím và chọn độ phân giải</li>
+    <li><b>Quản lý tải</b>Hàng chờ, tự nối tiếp, tải tiếp khi đứt mạng</li>
+    <li><b>Tự cập nhật</b>Báo khi có bản mới, chỉ tải tệp thay đổi</li>
+    <li><b>Kết nối</b>SFTP, SSH, ADB, MTP và stream màn hình ra trình duyệt</li>
+    <li><b>Tiếng Việt</b>Đầy đủ hai ngôn ngữ Việt và Anh</li>
+  </ul>
+
+  <h2>Cần giúp đỡ?</h2>
+  <p>Hỏi đáp và báo lỗi tại nhóm Telegram <a class="btn ghost" style="display:inline-block;padding:6px 14px;margin-left:6px" href="https://t.me/retrohubtool">@retrohubtool</a></p>
+</main>
+
+<footer class="wrap">
+  <p>RetroHub — Nguyễn Xuân Hòa ·
+     <a href="https://xuanhoa493.com">xuanhoa493.com</a> ·
+     <a href="https://t.me/retrohubtool">Telegram</a></p>
+</footer>
+</body>
+</html>
