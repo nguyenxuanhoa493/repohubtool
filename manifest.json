@@ -1,7 +1,7 @@
 {
-  "version": "1.17",
+  "version": "1.18",
   "python": "cpython-311",
-  "built": "2026-08-28T04:05:08+0700",
+  "built": "2026-08-28T04:10:35+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.py",
@@ -24,8 +24,8 @@
   "files": [
     {
       "path": "app.pyc",
-      "size": 205639,
-      "sha256": "3354477997fc342e787d4ad7535d7aee2059989c32232a9555bbe9be2590a2e8"
+      "size": 206074,
+      "sha256": "ec49decdb556f1b91673e4ef53144789d9f10ae46752a7e123d2ec149fd2a4dd"
     },
     {
       "path": "assets/flag_en.png",
@@ -130,12 +130,387 @@
     {
       "path": "rh/version.pyc",
       "size": 1198,
-      "sha256": "2810484e89a39dd4c25f893aeb41125300802488dd7487d08accf05a64e91a8c"
+      "sha256": "8659435ca57ce726274d52a57b6c7a9fa521b8f7f51b4cbd170dbb6f25ba6498"
     },
     {
       "path": "streamer.pyc",
       "size": 38521,
       "sha256": "47281cce160ab3a1a8de73b955053b66ddc6954e0cf84919a269ea8aafe637b9"
+    },
+    {
+      "path": "vendor/sdl2/__init__.pyc",
+      "size": 1557,
+      "sha256": "9d7a37ad8b3dfbbff0764fcc77c558e6d84efe4f60a0d96be5f1bd54de1dde65"
+    },
+    {
+      "path": "vendor/sdl2/_internal.pyc",
+      "size": 1607,
+      "sha256": "1a8a5b9852166c65265522d284fa9adcfd3e449a414f22a1245420654864b527"
+    },
+    {
+      "path": "vendor/sdl2/_sdl_init.pyc",
+      "size": 1602,
+      "sha256": "80cb421a4490e471accc2b4dd314ae57c41cb0eae7b100f067e38e0e4691ff85"
+    },
+    {
+      "path": "vendor/sdl2/audio.pyc",
+      "size": 11174,
+      "sha256": "ed1d510aa83b876294f9238bfdfd176db53c9f84f4ccd5bc1e7ca55675a08f83"
+    },
+    {
+      "path": "vendor/sdl2/blendmode.pyc",
+      "size": 1844,
+      "sha256": "56173b7f849bd0eaeeb9b9e8d79efa35e18b011fcf4af0f9ad656616cd04e27c"
+    },
+    {
+      "path": "vendor/sdl2/clipboard.pyc",
+      "size": 1361,
+      "sha256": "7056c2ae4444f9c9dcda9ec68a4095eba8fab68b9e91c90c11b9057c3207eddf"
+    },
+    {
+      "path": "vendor/sdl2/cpuinfo.pyc",
+      "size": 2967,
+      "sha256": "a2e41f39123d69de31dc2c6a944c341e41b9a979eee1c3d83fb66229fe23b162"
+    },
+    {
+      "path": "vendor/sdl2/dll.pyc",
+      "size": 16550,
+      "sha256": "5c874941568dd2df972b1eaa280b86232ffe7a46233e3a0d2de0ffac901f4b57"
+    },
+    {
+      "path": "vendor/sdl2/endian.pyc",
+      "size": 1853,
+      "sha256": "1ee23859d4fce5d63638aaaa22d4bf59f08b734d20db3fdbfed109e89e2071a4"
+    },
+    {
+      "path": "vendor/sdl2/error.pyc",
+      "size": 1785,
+      "sha256": "38ddd11e5b7499624c7b88e2e409d56c7ca7156be248614e92af1c0962925c68"
+    },
+    {
+      "path": "vendor/sdl2/events.pyc",
+      "size": 19844,
+      "sha256": "268cf4ff44caabcf81a9333a6d9b912accbc95c351f9bd63ab1322cb33f78c3b"
+    },
+    {
+      "path": "vendor/sdl2/ext/__init__.pyc",
+      "size": 771,
+      "sha256": "0057ba67c486efe98b67157f859ab92c663671020e285a352d2f0ba2a89a510d"
+    },
+    {
+      "path": "vendor/sdl2/ext/algorithms.pyc",
+      "size": 4260,
+      "sha256": "7191ba46eeccaf73856739e744fcfdc3e8a8f75ddc606ba6ac1a1b865d4deed2"
+    },
+    {
+      "path": "vendor/sdl2/ext/array.pyc",
+      "size": 12447,
+      "sha256": "0f563b9420e50992cb49d1a84eea41f6f2b55537047aa203614964032847d754"
+    },
+    {
+      "path": "vendor/sdl2/ext/bitmapfont.pyc",
+      "size": 9851,
+      "sha256": "8e51b911dc6a5f1a0a50e178ff6f6db1f7ba833be366c2a2582cead7859f74fa"
+    },
+    {
+      "path": "vendor/sdl2/ext/color.pyc",
+      "size": 26783,
+      "sha256": "7bb86e42dabf5cb14b3310d8f0cde180d5ac3021a008dc267f148359dc13b527"
+    },
+    {
+      "path": "vendor/sdl2/ext/colorpalettes.pyc",
+      "size": 31741,
+      "sha256": "0b589a2bb07bfb52a7e6611b363a4e7191274bff34063b2c4f18a41208e5a21f"
+    },
+    {
+      "path": "vendor/sdl2/ext/common.pyc",
+      "size": 5224,
+      "sha256": "4833715540bae47f035b097030b01cf27bf6309359271a645882d4c5b5392eee"
+    },
+    {
+      "path": "vendor/sdl2/ext/compat.pyc",
+      "size": 5761,
+      "sha256": "c11e5ab0057da292e21ee2c592cd4f6aff2c64f41d1093e5d27cc1bc8a4e7d54"
+    },
+    {
+      "path": "vendor/sdl2/ext/displays.pyc",
+      "size": 7940,
+      "sha256": "2aeb788e5e765ff45f7df7162b7ca5e0dded4c92c0cda867653e13698a465d2f"
+    },
+    {
+      "path": "vendor/sdl2/ext/draw.pyc",
+      "size": 7114,
+      "sha256": "083d19adca5ec5694a5e793c180721eb636a98a298d49fe359ac4b9f42ee9f46"
+    },
+    {
+      "path": "vendor/sdl2/ext/ebs.pyc",
+      "size": 13152,
+      "sha256": "3c8394f97e27b43335a23932daf8e84dd28a27511d7ab2b53b98729b4a2e0870"
+    },
+    {
+      "path": "vendor/sdl2/ext/err.pyc",
+      "size": 1769,
+      "sha256": "48c63e0bdb4d5d18ad95b479b8b4184fe41b9ac563157b148340f0aee591e4bf"
+    },
+    {
+      "path": "vendor/sdl2/ext/events.pyc",
+      "size": 4723,
+      "sha256": "18d7998fe04c0e008c006cf4ae7df53d22fba4986cf2d42942a7e6f2e3b80034"
+    },
+    {
+      "path": "vendor/sdl2/ext/image.pyc",
+      "size": 11372,
+      "sha256": "a4070007dc96f64a39daf7a276316df2bd82ea9c1a2ab798aa13b486aeea757a"
+    },
+    {
+      "path": "vendor/sdl2/ext/mouse.pyc",
+      "size": 6497,
+      "sha256": "21f884f1a2aa6798b446ba43fe26b65e12bc85b220053a2838f6730fb51f6f98"
+    },
+    {
+      "path": "vendor/sdl2/ext/msgbox.pyc",
+      "size": 8650,
+      "sha256": "7d6b25a23f58940df4cc15230d2e192248d74af897081dc84ae1650e945fc3bb"
+    },
+    {
+      "path": "vendor/sdl2/ext/particles.pyc",
+      "size": 4365,
+      "sha256": "6a5a08319d81d922c816b5666ad324d3d62b4f53e0af8b735669e19ca96d179d"
+    },
+    {
+      "path": "vendor/sdl2/ext/pixelaccess.pyc",
+      "size": 9403,
+      "sha256": "cd36836954efe7a965d510b9bff43813b21096c3148e6ccec57358598da6475b"
+    },
+    {
+      "path": "vendor/sdl2/ext/renderer.pyc",
+      "size": 28985,
+      "sha256": "dc1d67fba87b6286b67d7bd5b08bd5030cb3697a1cfc1c121b5d3125d2b5c9e1"
+    },
+    {
+      "path": "vendor/sdl2/ext/resources.pyc",
+      "size": 12589,
+      "sha256": "a11b9c669d66a6e6af880bb2c5cd578a3fd7d5b12cf6cd131efb2e4e549130c3"
+    },
+    {
+      "path": "vendor/sdl2/ext/sprite.pyc",
+      "size": 7839,
+      "sha256": "88b4ef91eee9cab6ae657670598a36d7bdd8816a2fe653bc51f4b5eb840a33af"
+    },
+    {
+      "path": "vendor/sdl2/ext/spritesystem.pyc",
+      "size": 15115,
+      "sha256": "ee56afa0c7cc9bd71e292b23eeaa91e2ee8edb80c25c30bd783aa5e6423fd217"
+    },
+    {
+      "path": "vendor/sdl2/ext/surface.pyc",
+      "size": 5626,
+      "sha256": "5a7d901059b43928201d8eadad7e3d507b56589bb809c87133095881918c7d6b"
+    },
+    {
+      "path": "vendor/sdl2/ext/ttf.pyc",
+      "size": 31096,
+      "sha256": "c5df502c4e828769ffdace549c5987e24212a700af8631eafcdda8cdf7d9e368"
+    },
+    {
+      "path": "vendor/sdl2/ext/uisystem.pyc",
+      "size": 14771,
+      "sha256": "175510efbd7b5fa7b96082576d706828526d6d9fbabd739e61d1cc321126934f"
+    },
+    {
+      "path": "vendor/sdl2/ext/window.pyc",
+      "size": 8684,
+      "sha256": "d29d945b4ff8b547d1ce3693c4ea8fc76c2082cd2b06e1d0a7873bf189fcc36a"
+    },
+    {
+      "path": "vendor/sdl2/filesystem.pyc",
+      "size": 844,
+      "sha256": "befe27ffbb625ad094f42a052e8ee8797453822377cfcaf1b5593665aa6139e9"
+    },
+    {
+      "path": "vendor/sdl2/gamecontroller.pyc",
+      "size": 15348,
+      "sha256": "dac9c934d55f24f14eb5bb37c02a0fbd968efbf9550f9fc88bc3ec645662d423"
+    },
+    {
+      "path": "vendor/sdl2/gesture.pyc",
+      "size": 1381,
+      "sha256": "7dce1f525b1a3d6bf5fbf4d5391048a03a2f71fb8bf0e144062dd0a559959d57"
+    },
+    {
+      "path": "vendor/sdl2/guid.pyc",
+      "size": 1530,
+      "sha256": "a725186d94cdc5c53e176ce3621c4e9623c5c08d7107829122884cac7a6e8923"
+    },
+    {
+      "path": "vendor/sdl2/haptic.pyc",
+      "size": 9635,
+      "sha256": "ef50b8ebb47d6d520f1d4a3aec8d682ff17ea6d92292537ec5ba21fbd0a10ee1"
+    },
+    {
+      "path": "vendor/sdl2/hidapi.pyc",
+      "size": 4700,
+      "sha256": "e6335174f91668b6d7b195f6ca264891d36f26062f1e7546a843300e0a400d39"
+    },
+    {
+      "path": "vendor/sdl2/hints.pyc",
+      "size": 15938,
+      "sha256": "8d79b9fdb4fa17d573881a53ba29ef5c06c13dba345ee415eac2afe3f716f505"
+    },
+    {
+      "path": "vendor/sdl2/joystick.pyc",
+      "size": 13305,
+      "sha256": "75d0732f4d700945e50672c717d184a45d46d55c1a932a24272e12d09027c482"
+    },
+    {
+      "path": "vendor/sdl2/keyboard.pyc",
+      "size": 3484,
+      "sha256": "44d0602d9e17a2db6f306cf1ad130c09ed55104f515a7e14de0e31e3a9cbd604"
+    },
+    {
+      "path": "vendor/sdl2/keycode.pyc",
+      "size": 17810,
+      "sha256": "fcb1f54bcd3ffada7dc2a7256ff7022a2767ce1ac0ed3ab9ff0b73b31864359d"
+    },
+    {
+      "path": "vendor/sdl2/loadso.pyc",
+      "size": 942,
+      "sha256": "1c8e003d16809b6e4b3fa0e11e9a077a593bdea225e42e1dd50189a34339eea1"
+    },
+    {
+      "path": "vendor/sdl2/locale.pyc",
+      "size": 2562,
+      "sha256": "5891586d6f1a5ae5c3481191f81ea08fb26e18507a35df842750ddde4a7a5860"
+    },
+    {
+      "path": "vendor/sdl2/log.pyc",
+      "size": 3515,
+      "sha256": "931aabb20ac65c9ac15deb8fe506ef221c013129e7ad2f047bd43b99998fa8ad"
+    },
+    {
+      "path": "vendor/sdl2/messagebox.pyc",
+      "size": 3415,
+      "sha256": "476a7d48d695af525c55d2a658a25a1529e055c506cbf37f0334c3dc647cdd6f"
+    },
+    {
+      "path": "vendor/sdl2/metal.pyc",
+      "size": 1595,
+      "sha256": "c2f6373a879fbcdc48322c08a71780a8257a14dee7c66697d59225da94ba1877"
+    },
+    {
+      "path": "vendor/sdl2/misc.pyc",
+      "size": 759,
+      "sha256": "6ad4b9b77b27766fe85480aaab80d5cc74ef71279892cf852ccf298ef6400748"
+    },
+    {
+      "path": "vendor/sdl2/mouse.pyc",
+      "size": 4794,
+      "sha256": "d5f341de8c6570f64299a2d4729bbbaced65ce10507b6ccc36dc4f1757a671a5"
+    },
+    {
+      "path": "vendor/sdl2/pixels.pyc",
+      "size": 18123,
+      "sha256": "79e72b11a17cd4a90aa9b188947535adfe214959966fc5e5351510c7e308f25a"
+    },
+    {
+      "path": "vendor/sdl2/platform.pyc",
+      "size": 719,
+      "sha256": "7416b53e968b08f924203d2ecfbb4885bcdd467a6c97cda05216e9b35f10e32c"
+    },
+    {
+      "path": "vendor/sdl2/power.pyc",
+      "size": 1095,
+      "sha256": "a66a638f4f54753ecc05ac4fa48875b4e1931f46db477a2e1f2c95378f69d6a4"
+    },
+    {
+      "path": "vendor/sdl2/rect.pyc",
+      "size": 12692,
+      "sha256": "1c0fd40cb06ebd16ca403bf751cefdac9b46fadb5247cf8e18f45fd0cfd81826"
+    },
+    {
+      "path": "vendor/sdl2/render.pyc",
+      "size": 21689,
+      "sha256": "723bcfd9ab5192a39b4668b5f225ac489ae73f8da53f3429c676cfe2c001e585"
+    },
+    {
+      "path": "vendor/sdl2/rwops.pyc",
+      "size": 12460,
+      "sha256": "f3ebf19d250b0c6b9affc72956c884f5907e8e28c7cb59e6eedd8d7674280142"
+    },
+    {
+      "path": "vendor/sdl2/scancode.pyc",
+      "size": 9171,
+      "sha256": "a6f7c046328e2e9c705007c1f9bfb9548e0a0034daa34cf35c73bffc676a186a"
+    },
+    {
+      "path": "vendor/sdl2/sdlgfx.pyc",
+      "size": 28306,
+      "sha256": "8ed11b5bd64ecffd5840163054cb47c6402c3ae7563c0009e11546f989a86e4d"
+    },
+    {
+      "path": "vendor/sdl2/sdlimage.pyc",
+      "size": 19800,
+      "sha256": "629c45980ad67b46a34ef8bfa1a7ef73521997bec76dcc05c1335b04fe3627d5"
+    },
+    {
+      "path": "vendor/sdl2/sdlmixer.pyc",
+      "size": 30594,
+      "sha256": "589cdca9fe1afed2a3ef687c0dd49db45048e716a91183ff86d48b9f443be94b"
+    },
+    {
+      "path": "vendor/sdl2/sdlttf.pyc",
+      "size": 33669,
+      "sha256": "c1c23451903d68ae07c403ce524dc6195d451af3a74b0717ddc151486d76e89a"
+    },
+    {
+      "path": "vendor/sdl2/sensor.pyc",
+      "size": 3731,
+      "sha256": "c45e06dceaa70a282fe64890ccd45bbfe74862a095459ce23329a5170bceda98"
+    },
+    {
+      "path": "vendor/sdl2/shape.pyc",
+      "size": 2904,
+      "sha256": "0a68ae7c8fd8aabfe1de33979c8eb1e6599d3c22a16b462b66eeee0c044d7b6b"
+    },
+    {
+      "path": "vendor/sdl2/stdinc.pyc",
+      "size": 2389,
+      "sha256": "f52eba96ce9a40b99189d0c7e385276a2316bed0241d96ecddb64cc2723d1c37"
+    },
+    {
+      "path": "vendor/sdl2/surface.pyc",
+      "size": 10109,
+      "sha256": "b2283b0c4a843fbeb019347b874ff19dd9ef81ea7e93daa1b4d737aac5627bbb"
+    },
+    {
+      "path": "vendor/sdl2/syswm.pyc",
+      "size": 9170,
+      "sha256": "48395005b4dedbb2cf63af91fb3335554ad77f159cdf7ca818a653e8593a2065"
+    },
+    {
+      "path": "vendor/sdl2/timer.pyc",
+      "size": 1767,
+      "sha256": "013bd6f425b0aafe029ab9fe3cb681937c2fe66f124b8756f542c236b159a352"
+    },
+    {
+      "path": "vendor/sdl2/touch.pyc",
+      "size": 2214,
+      "sha256": "2ee933ff5efc5b0d3d421f9c80317928aa6d568038cabd3c6541f12044eefeaa"
+    },
+    {
+      "path": "vendor/sdl2/version.pyc",
+      "size": 2395,
+      "sha256": "07e5636c589d39188dc6cbf29d87313822c7239de9a3590ab21eed467a07568c"
+    },
+    {
+      "path": "vendor/sdl2/video.pyc",
+      "size": 23354,
+      "sha256": "19ce6d6e2b3ef5654cff82f11fa0743b135f0600ac290077921a1fbc08b3b699"
+    },
+    {
+      "path": "vendor/sdl2/vulkan.pyc",
+      "size": 1918,
+      "sha256": "e06329daf804c97d0c6c09bb739f72bbddbfcb623b8feb04d59a9b12a9afe85e"
     }
   ]
 }
