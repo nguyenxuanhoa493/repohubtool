@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RetroHub cho TrimUI Brick</title>
 <meta name="description" content="Kho game và tiện ích cho máy chơi game cầm tay TrimUI Brick. Gần 40.000 game, giả lập Java J2ME, tự động cập nhật.">
-<link rel="icon" href="files/icon.png">
+<link rel="icon" href="logo.png">
 <style>
   :root{
     --bg:#0d1220; --panel:#16223a; --line:#2b3d5e;
@@ -17,20 +17,16 @@
     font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
 
-  /* Hero: text and call to action on the left, product shot on the right.
-     Collapses to one column below 860px so the buttons stay above the fold
-     on a phone. */
-  header{padding:56px 0 44px;
-    background:radial-gradient(900px 420px at 22% -120px,rgba(0,246,246,.16),transparent)}
-  .hero{display:grid;gap:40px;align-items:center;grid-template-columns:1fr 1fr}
-  .icon{width:78px;height:78px;border-radius:18px;border:2px solid var(--accent-dim);
-    background:var(--panel);image-rendering:pixelated}
-  h1{font-size:clamp(2.1rem,5.4vw,3rem);margin:16px 0 8px;letter-spacing:-.5px}
-  .sub{color:var(--muted);font-size:1.12rem;margin:0 0 26px}
-  .shot{width:100%;border-radius:14px;border:1px solid var(--line);display:block;
-    box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  header{padding:66px 0 48px;text-align:center;
+    background:radial-gradient(900px 400px at 50% -130px,rgba(0,246,246,.16),transparent)}
+  /* The logo art is transparent and already round, so it needs no frame -
+     a panel box behind it just fought the artwork. */
+  .logo{width:118px;height:118px;display:block;margin:0 auto;
+    filter:drop-shadow(0 6px 22px rgba(0,246,246,.28))}
+  h1{font-size:clamp(2.1rem,5.6vw,3rem);margin:18px 0 8px;letter-spacing:-.5px}
+  .sub{color:var(--muted);font-size:1.12rem;margin:0 0 28px}
 
-  .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
   .btn{display:inline-block;text-align:center;text-decoration:none;font-weight:700;
     padding:14px 22px;border-radius:10px;background:var(--accent);color:#04121b;
     transition:filter .15s}
@@ -45,11 +41,28 @@
   .note{background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
     border-radius:10px;padding:14px 18px;color:#f4e3b8;font-size:.94rem}
 
+  /* Feature showcase: the list drives which shot is on screen, and it advances
+     on its own so the page shows what the app does without being clicked. */
+  .show{display:grid;gap:26px;grid-template-columns:340px 1fr;align-items:start}
+  .tabs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .tab{position:relative;overflow:hidden;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:13px 16px;
+    cursor:pointer;transition:border-color .15s,background .15s}
+  .tab:hover{border-color:var(--accent-dim)}
+  .tab[aria-selected="true"]{border-color:var(--accent);background:#1b2c49}
+  .tab b{display:block;color:var(--accent);font-size:.95rem}
+  .tab span{color:var(--muted);font-size:.87rem;line-height:1.45;display:block;margin-top:2px}
+  /* Countdown to the next slide. Width is animated from JS so a click can
+     restart it cleanly. */
+  .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--accent)}
+  .stage{position:relative;border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;background:#0a1120;aspect-ratio:4/3}
+  .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    opacity:0;transition:opacity .45s ease}
+  .stage img.on{opacity:1}
+
   .feat{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
     list-style:none;padding:0}
-  .feat li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:14px 16px;font-size:.95rem}
-  .feat b{color:var(--accent);display:block;margin-bottom:2px;font-size:.9rem}
 
   .donate{display:grid;gap:26px;align-items:center;grid-template-columns:220px 1fr;
     background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
@@ -67,31 +80,37 @@
   footer a:hover{text-decoration:underline}
 
   @media (max-width:860px){
-    .hero{grid-template-columns:1fr;gap:30px}
+    .show{grid-template-columns:1fr}
     .donate{grid-template-columns:1fr;justify-items:center;text-align:center}
     .rows div{justify-content:center;flex-direction:column;gap:0;text-align:center}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .stage img{transition:none}
   }
 </style>
 </head>
 <body>
 <header>
-  <div class="wrap hero">
-    <div>
-      <img class="icon" src="files/icon.png" alt="">
-      <h1>RetroHub</h1>
-      <p class="sub">Kho game và tiện ích cho TrimUI Brick</p>
-      <div class="cta">
-        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15-full.zip">
-          Tải bản đầy đủ<small>74 MB · kèm giả lập Java</small></a>
-        <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15.zip">
-          Tải bản gọn<small>9,5 MB · không kèm Java</small></a>
-      </div>
+  <div class="wrap">
+    <img class="logo" src="logo.png" alt="">
+    <h1>RetroHub</h1>
+    <p class="sub">Kho game và tiện ích cho TrimUI Brick</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15-full.zip">
+        Tải bản đầy đủ<small>74 MB · kèm giả lập Java</small></a>
+      <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.15/RetroHub-1.15.zip">
+        Tải bản gọn<small>9,5 MB · không kèm Java</small></a>
     </div>
-    <img class="shot" src="screenshot.png" alt="Màn hình RetroHub">
   </div>
 </header>
 
 <main class="wrap">
+  <h2>Có gì trong đó</h2>
+  <div class="show">
+    <ul class="tabs" id="tabs" role="tablist"></ul>
+    <div class="stage" id="stage"></div>
+  </div>
+
   <h2>Cách cài</h2>
   <ol>
     <li>Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.</li>
@@ -99,17 +118,6 @@
     <li>Lắp thẻ lại vào máy, mở <b>Apps → RetroHub</b>.</li>
   </ol>
   <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.</p>
-
-  <h2>Có gì trong đó</h2>
-  <ul class="feat">
-    <li><b>Kho game</b>39.971 tựa từ nhiều nguồn, lọc theo hệ máy và theo nguồn</li>
-    <li><b>Game Java J2ME</b>2.713 game chia 26 nhóm, gán phím và chọn độ phân giải</li>
-    <li><b>Quản lý tải</b>Hàng chờ, tự nối tiếp, tải tiếp khi đứt mạng</li>
-    <li><b>Tự cập nhật</b>Báo khi có bản mới, chỉ tải tệp thay đổi</li>
-    <li><b>Truyền file qua Wi-Fi</b>Bật SFTP là chép game vào máy từ máy tính, không cần rút thẻ nhớ</li>
-    <li><b>Kết nối khác</b>SSH, ADB, MTP và stream màn hình ra trình duyệt</li>
-    <li><b>Tiếng Việt</b>Đầy đủ hai ngôn ngữ Việt và Anh</li>
-  </ul>
 
   <h2>Ủng hộ tôi</h2>
   <div class="donate">
@@ -134,5 +142,87 @@
      <a href="https://xuanhoa493.com">xuanhoa493.com</a> ·
      <a href="https://t.me/retrohubtool">Telegram</a></p>
 </footer>
+
+<script>
+(function () {
+  var HOLD = 5000;
+  var FEATURES = [
+    ["kho-game", "Kho game",              "39.971 tựa từ nhiều nguồn, lọc theo hệ máy và theo nguồn"],
+    ["java",     "Game Java J2ME",        "2.713 game chia 26 nhóm, gán phím và chọn độ phân giải"],
+    ["tai-game", "Quản lý tải",           "Hàng chờ, tự nối tiếp, tải tiếp khi đứt mạng"],
+    ["cap-nhat", "Tự cập nhật",           "Báo khi có bản mới, chỉ tải tệp thay đổi"],
+    ["sftp",     "Truyền file qua Wi-Fi", "Bật SFTP là chép game vào máy từ máy tính, không cần rút thẻ nhớ"],
+    ["ket-noi",  "Kết nối khác",          "SSH, ADB, MTP và stream màn hình ra trình duyệt"],
+    ["ngon-ngu", "Song ngữ",              "Đầy đủ hai ngôn ngữ Việt và Anh"]
+  ];
+
+  var tabs = document.getElementById("tabs");
+  var stage = document.getElementById("stage");
+  var bars = [], imgs = [], at = 0, timer = null;
+
+  FEATURES.forEach(function (f, i) {
+    var li = document.createElement("li");
+    li.className = "tab";
+    li.setAttribute("role", "tab");
+    li.setAttribute("aria-selected", i === 0 ? "true" : "false");
+    li.innerHTML = '<b></b><span></span><i class="bar"></i>';
+    li.querySelector("b").textContent = f[1];
+    li.querySelector("span").textContent = f[2];
+    li.addEventListener("click", function () { show(i, true); });
+    tabs.appendChild(li);
+    bars.push(li.querySelector(".bar"));
+
+    // Every shot is in the DOM from the start and cross-faded by opacity, so
+    // switching never shows a half-loaded image.
+    var img = document.createElement("img");
+    img.src = "shots/" + f[0] + ".png";
+    img.alt = f[1];
+    img.loading = i === 0 ? "eager" : "lazy";
+    if (i === 0) img.className = "on";
+    stage.appendChild(img);
+    imgs.push(img);
+  });
+
+  function paint() {
+    for (var i = 0; i < FEATURES.length; i++) {
+      var sel = i === at;
+      tabs.children[i].setAttribute("aria-selected", sel ? "true" : "false");
+      imgs[i].className = sel ? "on" : "";
+      var b = bars[i];
+      b.style.transition = "none";
+      b.style.width = "0%";
+      if (sel) {
+        // Force a reflow so the width reset lands before the animation starts,
+        // otherwise a restarted bar keeps its old progress.
+        void b.offsetWidth;
+        b.style.transition = "width " + HOLD + "ms linear";
+        b.style.width = "100%";
+      }
+    }
+  }
+
+  function show(i, manual) {
+    at = (i + FEATURES.length) % FEATURES.length;
+    paint();
+    if (manual) start();
+  }
+  function start() {
+    clearInterval(timer);
+    timer = setInterval(function () { show(at + 1); }, HOLD);
+  }
+  function stop() { clearInterval(timer); }
+
+  paint();
+  start();
+  // Hold still while someone is reading a panel, and while the tab is hidden -
+  // otherwise it would race through every slide in the background.
+  var box = document.querySelector(".show");
+  box.addEventListener("mouseenter", stop);
+  box.addEventListener("mouseleave", start);
+  document.addEventListener("visibilitychange", function () {
+    document.hidden ? stop() : start();
+  });
+})();
+</script>
 </body>
 </html>
