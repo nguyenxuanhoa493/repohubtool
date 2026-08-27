@@ -1,7 +1,7 @@
 {
-  "version": "1.10",
+  "version": "1.11",
   "python": "cpython-311",
-  "built": "2026-08-28T02:57:09+0700",
+  "built": "2026-08-28T02:59:36+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.py",
@@ -24,8 +24,8 @@
   "files": [
     {
       "path": "app.pyc",
-      "size": 200289,
-      "sha256": "bedf6e783497dc8d619ce04263b17d470acdbad8c48a2a2e2941cb580f7515c5"
+      "size": 200742,
+      "sha256": "78b7d8b1330972a8eadf9c93310310198db9c5fd1ec271ece763bb3a81fbd269"
     },
     {
       "path": "assets/flag_en.png",
@@ -84,8 +84,8 @@
     },
     {
       "path": "rh/i18n.pyc",
-      "size": 26584,
-      "sha256": "fd0cdce7056a3aa3e6fe1b6823735f9e4ae594901247204b2669eae9fda97c72"
+      "size": 26518,
+      "sha256": "3f0c99a9b484a74a179c7dff9e6a03ae92e63e487a878bc26618c8cac5284ace"
     },
     {
       "path": "rh/j2me.pyc",
@@ -130,7 +130,7 @@
     {
       "path": "rh/version.pyc",
       "size": 1198,
-      "sha256": "ea0dc25b36f52c02353685d5818e00b8514d4518cac6e05069cff0bb1e106f04"
+      "sha256": "3cf6a72038a3c0f603f031914b68b1c9fc4fed0bc0eb45c8710ec3d4147106b4"
     },
     {
       "path": "streamer.pyc",
