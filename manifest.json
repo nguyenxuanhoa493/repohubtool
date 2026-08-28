@@ -1,7 +1,7 @@
 {
-  "version": "1.24",
+  "version": "1.25",
   "python": "any",
-  "built": "2026-08-28T14:02:09+0700",
+  "built": "2026-08-28T14:28:52+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.pyc",
@@ -99,8 +99,18 @@
   "files": [
     {
       "path": "app.py",
-      "size": 208829,
-      "sha256": "8c1b314434ede08d400c3a899cdd604287b2a5da1ab68a5d0e140fee20846b49"
+      "size": 209230,
+      "sha256": "7d5c9961bb60fdddb2e5544b7a838b11f9ee27b7ea6de700c406a3241c3fa744"
+    },
+    {
+      "path": "assets/fallback.ttf",
+      "size": 757076,
+      "sha256": "7da195a74c55bef988d0d48f9508bd5d849425c1770dba5d7bfc6ce9ed848954"
+    },
+    {
+      "path": "assets/fallback.ttf.LICENSE",
+      "size": 8816,
+      "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93"
     },
     {
       "path": "assets/flag_en.png",
@@ -210,12 +220,12 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "f23afa1d75a69e8fe8d54bb1483697b445246ad7f3180b5ebeab3d839d7328eb"
+      "sha256": "35ea50eaf75fac70946ff3d1bfb49164b3044c5691993d4f75e95f7138171d87"
     },
     {
       "path": "streamer.py",
-      "size": 30546,
-      "sha256": "954bee89522ba2b430345b457e053891f155e43fa51eade67e9df4ed777e3f34"
+      "size": 30925,
+      "sha256": "bcd188fd4b10dd3f365871a73abe7adb641b0a14ded592e3060949c77907a6ed"
     },
     {
       "path": "vendor/sdl2/__init__.py",

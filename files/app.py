@@ -55,8 +55,8 @@ except ImportError as _e:
 # INTERNALS (split out of this file - see rh/)
 # ==============================================================================
 from rh import state
-from rh.paths import (FLAG_FILES, QR_BMC_FILE, QR_DONATE_FILE, QR_TELEGRAM_FILE,
-    SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW)
+from rh.paths import (ASSETS_DIR, FLAG_FILES, QR_BMC_FILE, QR_DONATE_FILE,
+    QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW)
 from rh.i18n import tr, wrap_title_2lines
 from rh.sysinfo import (detect_device_platform,
     get_battery_info,
@@ -340,17 +340,22 @@ def main():
     # The font used to be pinned to the TRIMUI Blue theme. Anyone on a different
     # theme got a null font from TTF_OpenFont, which nothing checked, so every
     # later draw fed SDL a null pointer. Search the themes that are installed.
+    # assets/fallback.ttf is the last resort. A device stripped of themes and of
+    # /usr/trimui/res used to leave the app with no font at all, which killed it
+    # before anything was drawn. The bundled face covers Vietnamese but not CJK,
+    # so a theme font is still preferred - Japanese game titles need one.
     font_path = None
     for cand in glob.glob("/mnt/SDCARD/Themes/*/wqy-microhei.ttf") + \
                 glob.glob("/mnt/SDCARD/Themes/*/msyh.ttf") + \
                 glob.glob("/mnt/SDCARD/Themes/*/*.ttf") + \
-                glob.glob("/usr/trimui/res/*.ttf"):
+                glob.glob("/usr/trimui/res/*.ttf") + \
+                [os.path.join(ASSETS_DIR, "fallback.ttf")]:
         if os.path.exists(cand):
             font_path = cand.encode("utf-8")
             break
     if not font_path:
-        sys.stderr.write("\nRetroHub khong khoi dong duoc: khong tim thay font .ttf nao "
-                         "trong /mnt/SDCARD/Themes/.\n\n")
+        sys.stderr.write("\nRetroHub khong khoi dong duoc: khong tim thay font .ttf nao, "
+                         "ke ca font du phong trong assets/.\n\n")
         return
 
     font_title = sdlttf.TTF_OpenFont(font_path, 40)

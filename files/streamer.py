@@ -530,8 +530,18 @@ def make_ws_binary_frame(data):
     else:
         return struct.pack("!BBQ", 0x82, 127, length) + data
 
+FFMPEG = "/usr/bin/ffmpeg"
+
+
 def frame_grabber_worker():
     global latest_frame, latest_frame_id
+
+    # Without ffmpeg every pass through the loop threw and slept 0.3s forever,
+    # so a device that lacks it served a black stream and said nothing. Check
+    # once and stop, with a line in the log that names the missing binary.
+    if not os.path.exists(FFMPEG):
+        print("Stream khong chay duoc: may khong co %s" % FFMPEG, flush=True)
+        return
 
     while not stop_event.is_set():
         with active_clients_lock:
@@ -570,7 +580,7 @@ def frame_grabber_worker():
                 mm = mmap.mmap(fb.fileno(), total_fb_size, prot=mmap.PROT_READ)
 
                 cmd = [
-                    "/usr/bin/ffmpeg",
+                    FFMPEG,
                     "-f", "rawvideo",
                     "-pix_fmt", "bgra",
                     "-s", f"{xres}x{yres}",
