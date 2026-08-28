@@ -1,7 +1,7 @@
 {
-  "version": "1.26",
+  "version": "1.27",
   "python": "any",
-  "built": "2026-08-28T14:36:05+0700",
+  "built": "2026-08-28T14:46:10+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.pyc",
@@ -154,8 +154,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 1022,
-      "sha256": "73f73a5369cdd0939ef036dea7236b6c85d71a95d191bbcba9799685705bd254"
+      "size": 6355,
+      "sha256": "200f3c057c2414c69bc940fe27471560a7c83732f0ee4e3f503e42fbf4cbec9e"
     },
     {
       "path": "rh/__init__.py",
@@ -220,7 +220,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "75657ea6774de21a7cd9525b52b02526a81bf2360ca277a632f83b5583649127"
+      "sha256": "ce2636dfe4866d2b36ef96baa99c5ac6d38c13448b755a3be333b0041e067057"
     },
     {
       "path": "streamer.py",
