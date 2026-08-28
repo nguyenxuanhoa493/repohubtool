@@ -17,7 +17,7 @@ import os
 import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DOMAIN = "https://repohub.xuanhoa493.com"
+DOMAIN = "https://retrohub.xuanhoa493.com"
 VER_FULL = "RetroHub-1.20-full.zip"
 VER_LITE = "RetroHub-1.20.zip"
 REL = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.20"
@@ -83,6 +83,7 @@ T = {
   "title": "RetroHub — Games and tools for handheld consoles",
   "desc": "RetroHub: nearly 40,000 games, a Java J2ME emulator, Wi-Fi file transfer and self-updating for TrimUI handheld consoles. Install once, update forever.",
   "keywords": "RetroHub, TrimUI Brick, handheld console, game library, ROM, emulator, J2ME, Java games, retro handheld",
+  "og_alt": "RetroHub — games and tools for handheld consoles",
   "og_desc": "Nearly 40,000 games, a Java J2ME emulator, Wi-Fi file transfer and self-updating. Install once, update forever.",
   "tagline": "Games and tools for handheld consoles",
   "nav": ["Features", "Install", "Download", "Support", "Roadmap", "Contact"],
@@ -118,6 +119,7 @@ T = {
   "title": "RetroHub — Kho game và tiện ích cho máy chơi game cầm tay",
   "desc": "RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI. Cài một lần, tự cập nhật mãi.",
   "keywords": "RetroHub, TrimUI Brick, máy chơi game cầm tay, kho game, ROM, giả lập, J2ME, game Java, retro handheld",
+  "og_alt": "RetroHub — kho game và tiện ích cho máy chơi game cầm tay",
   "og_desc": "Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật. Cài một lần, tự cập nhật mãi.",
   "tagline": "Kho game và tiện ích cho máy chơi game cầm tay",
   "nav": ["Tính năng", "Cách cài", "Tải về", "Ủng hộ", "Lộ trình", "Liên hệ"],
@@ -439,13 +441,17 @@ PAGE = """<!doctype html>
 <meta property="og:url" content="{canon}">
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{og_desc}">
-<meta property="og:image" content="{DOMAIN}/shots/{lang}/kho-game.png">
-<meta property="og:image:width" content="1024">
-<meta property="og:image:height" content="768">
+<meta property="og:image" content="{DOMAIN}/og-{lang}.png">
+<meta property="og:image:secure_url" content="{DOMAIN}/og-{lang}.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{og_alt}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{title}">
 <meta name="twitter:description" content="{og_desc}">
-<meta name="twitter:image" content="{DOMAIN}/shots/{lang}/kho-game.png">
+<meta name="twitter:image" content="{DOMAIN}/og-{lang}.png">
+<meta name="twitter:image:alt" content="{og_alt}">
 <script type="application/ld+json">
 {ldjson}
 </script>
