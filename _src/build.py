@@ -87,6 +87,7 @@ T = {
   "og_desc": "Nearly 40,000 games, a Java J2ME emulator, Wi-Fi file transfer and self-updating. Install once, update forever.",
   "tagline": "Games and tools for handheld consoles",
   "nav": ["Features", "Install", "Download", "Support", "Roadmap", "Contact"],
+  "dls": "downloads so far",
   "dl_full": "Download full", "dl_full_sub": "75 MB · Java emulator included",
   "dl_lite": "Download lite", "dl_lite_sub": "9.7 MB · no Java emulator",
   "h_feat": "Highlights", "h_install": "How to install", "h_dl": "Download",
@@ -123,6 +124,7 @@ T = {
   "og_desc": "Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật. Cài một lần, tự cập nhật mãi.",
   "tagline": "Kho game và tiện ích cho máy chơi game cầm tay",
   "nav": ["Tính năng", "Cách cài", "Tải về", "Ủng hộ", "Lộ trình", "Liên hệ"],
+  "dls": "lượt tải",
   "dl_full": "Tải bản đầy đủ", "dl_full_sub": "75 MB · kèm giả lập Java",
   "dl_lite": "Tải bản gọn", "dl_lite_sub": "9,7 MB · không kèm Java",
   "h_feat": "Tính năng nổi bật", "h_install": "Cách cài", "h_dl": "Tải về",
@@ -212,6 +214,9 @@ CSS = """
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
+
+  .dlcount{color:var(--muted);font-size:.9rem;margin:20px 0 0}
+  .dlcount b{color:var(--accent);font-size:1.05rem}
 
   h2{font-size:1.4rem;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
   section{padding:52px 0 0}
@@ -390,6 +395,36 @@ JS = """
   box.addEventListener("mouseleave", start);
   document.addEventListener("visibilitychange", function () { document.hidden ? stop() : start(); });
 
+  // Download totals come from the GitHub Releases API, which already counts
+  // every asset download and allows browser requests. No server of our own.
+  // Unauthenticated callers get 60 requests an hour per IP, so the answer is
+  // kept for the session - a visitor who reloads should not burn the budget of
+  // everyone behind the same office or carrier NAT.
+  (function () {
+    var box = document.getElementById("dlcount");
+    if (!box) return;
+    function put(n) {
+      if (!n) return;                       // nothing to boast about yet
+      box.querySelector("b").textContent = n.toLocaleString();
+      box.hidden = false;
+    }
+    var cached = null;
+    try { cached = sessionStorage.getItem("rh_dl"); } catch (e) {}
+    if (cached) { put(parseInt(cached, 10)); return; }
+    fetch("https://api.github.com/repos/nguyenxuanhoa493/repohubtool/releases")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (rs) {
+        if (!rs) return;
+        var n = 0;
+        rs.forEach(function (rel) {
+          (rel.assets || []).forEach(function (a) { n += a.download_count || 0; });
+        });
+        try { sessionStorage.setItem("rh_dl", String(n)); } catch (e) {}
+        put(n);
+      })
+      .catch(function () { /* stays hidden, which is better than a broken line */ });
+  })();
+
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var secs = [].slice.call(document.querySelectorAll("section[id]"));
   if ("IntersectionObserver" in window && !reduce) {
@@ -477,6 +512,7 @@ PAGE = """<!doctype html>
       <a class="btn" href="{REL}/{VER_FULL}">{dl_full}<small>{dl_full_sub}</small></a>
       <a class="btn ghost" href="{REL}/{VER_LITE}">{dl_lite}<small>{dl_lite_sub}</small></a>
     </div>
+    <p class="dlcount" id="dlcount" hidden><b></b> {dls}</p>
   </div>
 </header>
 
