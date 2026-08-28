@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
 # One place to bump. Four strings drifted apart before this was a constant:
 # the two filenames, the release URL and the softwareVersion in the JSON-LD.
-VERSION = "1.25"
+VERSION = "1.26"
 VER_FULL = "RetroHub-%s-full.zip" % VERSION
 VER_LITE = "RetroHub-%s.zip" % VERSION
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
