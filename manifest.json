@@ -1,7 +1,7 @@
 {
-  "version": "1.27",
+  "version": "1.28",
   "python": "any",
-  "built": "2026-08-28T14:46:10+0700",
+  "built": "2026-08-28T15:19:24+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.pyc",
@@ -97,6 +97,16 @@
     "vendor/sdl2/vulkan.pyc"
   ],
   "files": [
+    {
+      "path": "LICENSE",
+      "size": 1486,
+      "sha256": "8d0a1ac1e4b7a33c0047cb18c965d541f1cb6eb563649a9b1498797f6dbd82e9"
+    },
+    {
+      "path": "NOTICE.txt",
+      "size": 3858,
+      "sha256": "8b26973a22be70bbe8d9ea29d0781e8166e3d6d800220a5f1e0146f0f24a3678"
+    },
     {
       "path": "app.py",
       "size": 209299,
@@ -220,12 +230,17 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "ce2636dfe4866d2b36ef96baa99c5ac6d38c13448b755a3be333b0041e067057"
+      "sha256": "e1c934258138f6ee8b347a1947ffd1f6935847055b588aa0f995f517e0d0d001"
     },
     {
       "path": "streamer.py",
       "size": 30925,
       "sha256": "bcd188fd4b10dd3f365871a73abe7adb641b0a14ded592e3060949c77907a6ed"
+    },
+    {
+      "path": "vendor/sdl2/COPYING.txt",
+      "size": 2205,
+      "sha256": "710f77d275b65c5156a0b51c55d594cebffedcd4d18965859f4c3598d6083fe7"
     },
     {
       "path": "vendor/sdl2/__init__.py",
