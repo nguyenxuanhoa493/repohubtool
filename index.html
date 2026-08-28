@@ -188,6 +188,16 @@
     text-overflow:ellipsis;white-space:nowrap}
   .chips i{display:block;font-style:normal;color:var(--muted);font-size:.78rem}
 
+  /* Quieter than the rest: it has to be readable and findable, not compete with
+     the download buttons for attention. */
+  .disc{border-left:3px solid var(--accent-dim);background:#111b2e;
+    border-radius:0 12px 12px 0;padding:20px 24px}
+  .disc p{color:var(--muted);font-size:.92rem;margin:0 0 10px;line-height:1.6}
+  .disc p:last-child{margin-bottom:0}
+  .disc b{color:var(--text)}
+  .disc a{color:var(--accent);text-decoration:none}
+  .disc a:hover{text-decoration:underline}
+
   footer{margin:64px 0 40px;padding-top:24px;border-top:1px solid var(--line);
     color:var(--muted);font-size:.92rem;text-align:center}
   footer a{color:var(--accent);text-decoration:none}
@@ -354,6 +364,21 @@
             <span><i>Website</i>xuanhoa493.com</span></a></li>
         </ul>
       </div>
+    </div>
+  </section>
+  <!-- No id: the scroll spy only tracks sections that have a nav link, and a
+       legal notice does not belong in the top menu. -->
+  <section class="rise">
+    <div class="disc">
+      <h2 style="border:0;padding:0;margin:0 0 12px;font-size:1.1rem">Tuyên bố miễn trừ trách nhiệm</h2>
+      <p><b>RetroHub là công cụ tra cứu và tải game, không lưu trữ bất kỳ tệp game nào.</b>
+         Ứng dụng chỉ dẫn tới những nguồn vốn đã công khai trên Internet.</p>
+      <p>Mọi tựa game đều thuộc bản quyền của nhà phát triển gốc. Chúng tôi không sở hữu
+         và không tuyên bố quyền sở hữu với bất kỳ tựa game nào.</p>
+      <p>Đây là dự án phi lợi nhuận, làm ra để lưu giữ di sản văn hoá game và phục vụ
+         nhu cầu hoài niệm.</p>
+      <p>Nếu bạn là chủ sở hữu bản quyền và muốn gỡ một tựa game khỏi danh mục,
+         <a href="mailto:nguyenxuanhoa493@gmail.com">hãy liên hệ với tôi</a> — tôi sẽ gỡ ngay.</p>
     </div>
   </section>
 </main>
