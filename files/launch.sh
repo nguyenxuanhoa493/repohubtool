@@ -33,7 +33,7 @@ export PYSDL2_DLL_PATH="/usr/trimui/lib"
 CACHE_DIR="$SDCARD_PATH/.retrohub"
 CACHE_PY="$CACHE_DIR/python/bin/python3"
 RUNTIME_URL="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/runtime-python-3.11.16-aarch64/python-3.11.16-aarch64.tar.gz"
-RUNTIME_SHA="da6c91a90a4dc81677286b1fba74ebb14af1b36287447fc97b8f37a2e1f2173a"
+RUNTIME_SHA="67f320dc29bf98d93c81263de37875cfef47debfdcce6b97e1c3f3ee97bbd01b"
 RUNTIME_MB=20
 
 # There is no console on a handheld: stdout vanishes and the menu redraws over
