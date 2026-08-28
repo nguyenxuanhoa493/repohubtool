@@ -1,0 +1,4131 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import glob
+import time
+import ssl
+import shlex
+import random
+import urllib.request
+import subprocess
+import threading
+import hashlib
+import ctypes
+try:
+    import db
+except Exception:
+    db = None
+
+# pysdl2 is pure Python - the actual SDL libraries come from /usr/trimui/lib -
+# so it ships inside the app. Before this, RetroHub only ran on a device that
+# already had PortMaster installed, and failed with a blank screen otherwise.
+# PortMaster's copy stays as a fallback, searched after the bundled one so
+# everybody exercises the same code.
+EXLIBS_PATH = "/mnt/SDCARD/Apps/PortMaster/PortMaster/exlibs"
+if os.path.exists(EXLIBS_PATH):
+    sys.path.insert(0, EXLIBS_PATH)
+VENDOR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vendor")
+if os.path.isdir(VENDOR_PATH):
+    sys.path.insert(0, VENDOR_PATH)
+
+os.environ["PYSDL2_DLL_PATH"] = "/usr/trimui/lib"
+
+try:
+    import sdl2
+    import sdl2.ext
+    import sdl2.sdlttf as sdlttf
+    import sdl2.sdlimage as sdlimage
+except ImportError as _e:
+    # pysdl2 lives in PortMaster's exlibs, not in the stock firmware python. On a
+    # handheld an unhandled ImportError just bounces straight back to the menu
+    # with nothing on screen, so say what is wrong for anyone who reads the log.
+    sys.stderr.write(
+        "\nRetroHub khong khoi dong duoc: thieu thu vien SDL2 (%s).\n"
+        "Ban cai co the bi thieu thu muc vendor/. Hay tai lai va chep de len.\n"
+        "Da tim o: %s\n         va: %s\n\n" % (_e, VENDOR_PATH, EXLIBS_PATH))
+    sys.exit(1)
+
+# ==============================================================================
+# CONFIG & PATHS
+# ==============================================================================
+
+# ==============================================================================
+# INTERNALS (split out of this file - see rh/)
+# ==============================================================================
+from rh import state
+from rh.paths import (FLAG_FILES, QR_BMC_FILE, QR_DONATE_FILE, QR_TELEGRAM_FILE,
+    SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW)
+from rh.i18n import tr, wrap_title_2lines
+from rh.sysinfo import (detect_device_platform,
+    get_battery_info,
+    get_device_info_rows,
+    get_ram_info,
+    get_storage_info_rows)
+from rh.services import (get_sftp_guide_rows,
+    get_ssh_guide_rows,
+    get_stream_guide_rows,
+    is_adb_running,
+    is_mtp_running,
+    is_sftpgo_running,
+    is_ssh_running,
+    is_streamer_running,
+    is_wifi_awake,
+    toggle_adb,
+    toggle_mtp,
+    toggle_sftpgo,
+    toggle_ssh,
+    toggle_streamer,
+    toggle_wifi_awake)
+from rh.splash import (apply_splash_update,
+    convert_and_fit_splash,
+    restore_original_splash,
+    scan_directory_for_images,
+    scan_splash_images)
+from rh.j2me import (DEFAULT_KEYMAP, RESOLUTIONS, VALID_BUTTONS, VALID_KEYS,
+    button_in_use, install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
+    load_keymap,
+    move_to_resolution, pretty_resolution, resolution_of_path, rom_dir_for,
+    save_keymap)
+from rh.updater import (apply_update, check_for_update, download_update,
+    request_restart, skip_version)
+from rh.version import APP_VERSION
+from rh.catalog import (VALID_EXTS, get_java_category_list,
+    get_games_for_view,
+    get_source_systems_list,
+    get_system_display_name,
+    scan_all_downloaded_games)
+from rh.downloader import (cancel_active_download, clear_download_queue, dl_state,
+    download_state_for, enqueue_download, pop_notification, queued_items,
+    start_next_queued)
+
+# Range-resume budget for a single part of a parallel download.
+
+# Preferred ROM extensions per system, best first. Disc-based sets must resolve to the
+# playlist/descriptor, not a raw data track, or the emulator is handed the wrong file.
+
+
+
+
+# ==============================================================================
+# LOCALIZATION (TIẾNG VIỆT CÓ DẤU CHUẨN & ENGLISH) - ZERO EMOJIS (NO TOFU □)
+# ==============================================================================
+
+# Split / Wrap Game Title across 2 clean lines (Cached)
+
+# ==============================================================================
+# SYSTEM HELPER FUNCTIONS & SERVICE CONTROLS
+# ==============================================================================
+
+
+
+# ==============================================================================
+# BOOT SPLASH MANAGER & CONVERTER
+# ==============================================================================
+
+
+
+# Fallback boxart: short system tag and accent colour, nothing else. Module level
+# because the library grid redraws every tile each frame, and rebuilding this dict
+# per tile was pure waste.
+# Header bar and where page content starts underneath it. The subtitle line was
+# dropped, so the bar lost the 32px it occupied and everything below moved up.
+HEADER_H = 64
+CONTENT_TOP = HEADER_H + 14
+
+SYS_BADGE = {
+    "GBA": ("GBA", (138, 43, 226)),
+    "GBC": ("GBC", (200, 50, 160)),
+    "GB": ("GB", (110, 135, 70)),
+    "SFC": ("SNES", (115, 105, 190)),
+    "SNES": ("SNES", (115, 105, 190)),
+    "FC": ("NES", (220, 45, 45)),
+    "NES": ("NES", (220, 45, 45)),
+    "MD": ("GENESIS", (25, 105, 215)),
+    "GENESIS": ("GENESIS", (25, 105, 215)),
+    "GG": ("GAME GEAR", (35, 125, 195)),
+    "MS": ("MASTER SYS", (45, 135, 205)),
+    "NDS": ("NINTENDO DS", (0, 175, 230)),
+    "PSP": ("PSP", (15, 85, 210)),
+    "PS": ("PLAYSTATION", (0, 105, 215)),
+    "PS1": ("PLAYSTATION", (0, 105, 215)),
+    "N64": ("NINTENDO 64", (235, 90, 20)),
+    "ARCADE": ("ARCADE", (255, 140, 0)),
+    "MAME": ("MAME", (255, 140, 0)),
+    "NEOGEO": ("NEO-GEO", (230, 55, 55)),
+    "NGP": ("NEO GEO PKT", (185, 190, 200)),
+    "CPS1": ("CPS-1", (225, 160, 20)),
+    "CPS2": ("CPS-2", (40, 185, 115)),
+    "CPS3": ("CPS-3", (180, 75, 220)),
+    "PCE": ("PC ENGINE", (225, 105, 20)),
+    "WS": ("WONDERSWAN", (55, 165, 195)),
+    "WSC": ("WSWAN COLOR", (65, 185, 215)),
+    "PICO8": ("PICO-8", (255, 35, 85)),
+    "ATARI2600": ("ATARI 2600", (195, 65, 25)),
+    "ATARI7800": ("ATARI 7800", (205, 75, 35)),
+    "LYNX": ("ATARI LYNX", (195, 145, 15)),
+    "DC": ("DREAMCAST", (240, 115, 20)),
+    "SS": ("SEGA SATURN", (135, 145, 160)),
+    "JAVA": ("JAVA", (205, 97, 85)),
+}
+
+def auto_check_and_supplement_environment():
+    """Silently checks and auto-supplements missing libraries, emulator cores, and fixes permissions."""
+    repaired_items = []
+    
+    # 1. Rewrite the JAVA system glue when it is missing or stale. Gate on the
+    # config file, not on a core binary: the previous check keyed off SquirrelJME,
+    # which is not the runtime in use, so deleting that stale core would have
+    # retriggered a full reinstall.
+    java_cfg = f"{SDCARD_PATH}/Emus/JAVA/config.json"
+    java_launch = f"{SDCARD_PATH}/Emus/JAVA/launch.sh"
+    if is_j2me_runtime_ready() and not (os.path.exists(java_cfg) and os.path.exists(java_launch)):
+        try:
+            install_j2me_emulator()
+            repaired_items.append("Đã bổ sung cấu hình hệ máy Java J2ME" if state.current_lang == "VI" else "Restored Java J2ME system config")
+        except Exception as e:
+            print(f"Error restoring J2ME config: {e}")
+
+    # 2. Wi-Fi power save is a runtime kernel setting that resets on reboot, so the
+    # user's saved choice has to be reapplied here or the toggle would not stick.
+    try:
+        if state.wifi_awake and not is_wifi_awake():
+            from rh.services import apply_wifi_awake
+            if apply_wifi_awake(True):
+                repaired_items.append("Đã giữ WiFi luôn thức theo cài đặt" if state.current_lang == "VI"
+                                      else "Reapplied keep-Wi-Fi-awake setting")
+    except Exception as e:
+        print(f"Error reapplying Wi-Fi power save: {e}")
+
+    # 3. Check and Create standard ROMs & Imgs directories
+    for d in [f"{SDCARD_PATH}/Roms/JAVA", f"{SDCARD_PATH}/Imgs/JAVA", f"{SDCARD_PATH}/Apps/RetroHub/catalog"]:
+        try:
+            if not os.path.exists(d):
+                os.makedirs(d, exist_ok=True)
+        except Exception:
+            pass
+
+    # 3. Ensure launch script permissions
+    try:
+        if os.path.exists(f"{SDCARD_PATH}/Emus/JAVA/launch.sh"):
+            os.chmod(f"{SDCARD_PATH}/Emus/JAVA/launch.sh", 0o755)
+    except Exception:
+        pass
+
+    return repaired_items
+
+def get_system_doctor_report():
+    """Generates a complete diagnostic health check of the handheld system and dependencies."""
+    repaired = auto_check_and_supplement_environment()
+    rows = []
+    plat = detect_device_platform()
+    try:
+        kernel = subprocess.check_output("uname -r 2>/dev/null || uname -s", shell=True).decode().strip()
+        arch = subprocess.check_output("uname -m 2>/dev/null", shell=True).decode().strip()
+    except Exception:
+        kernel, arch = "Linux", "aarch64"
+    rows.append(("1. Phần cứng & Nhân Linux" if state.current_lang == "VI" else "1. Platform & Kernel", f"{plat} • {arch} ({kernel})"))
+    
+    # 2. Graphics & GUI Engine
+    rows.append(("2. Giao diện đồ họa (GUI)" if state.current_lang == "VI" else "2. Graphics Engine", f"SDL2 + SDL2_ttf ({state.SCREEN_W}x{state.SCREEN_H} 60 FPS)"))
+    
+    # 3. Database Engine
+    db_status = "C-API libsqlite3.so.0"
+    try:
+        import sqlite3
+        db_status = f"sqlite3 ({sqlite3.sqlite_version})"
+    except Exception:
+        pass
+    rows.append(("3. Động cơ CSDL (Database)" if state.current_lang == "VI" else "3. Database Engine", f"[OK] {db_status} (Tự động nạp C-API)"))
+    
+    # 4. Catalog Database File
+    if os.path.exists(db.DB_PATH):
+        sz_mb = os.path.getsize(db.DB_PATH) / (1024 * 1024)
+        rows.append(("4. Kho dữ liệu ROMs Store" if state.current_lang == "VI" else "4. ROMs Catalog Database", f"[OK] 40,000+ Game ({sz_mb:.1f} MB SQLite)"))
+    else:
+        rows.append(("4. Kho dữ liệu ROMs Store" if state.current_lang == "VI" else "4. ROMs Catalog Database", "[X] Chưa tìm thấy CSDL!"))
+        
+    # 5. Java Emulator Core
+    j2me_core = is_j2me_runtime_ready()
+    if j2me_core:
+        rows.append(("5. Giả lập Java J2ME" if state.current_lang == "VI" else "5. Java J2ME Core", "[OK] ĐÃ BỔ SUNG & SẴN SÀNG"))
+    else:
+        rows.append(("5. Giả lập Java J2ME" if state.current_lang == "VI" else "5. Java J2ME Core", "[!] Đang chuẩn bị bổ sung"))
+        
+    # 6. Physical Emulators in Emus/
+    emus_count = len([d for d in os.listdir(f"{SDCARD_PATH}/Emus") if os.path.isdir(os.path.join(f"{SDCARD_PATH}/Emus", d)) and not d.startswith(".")]) if os.path.exists(f"{SDCARD_PATH}/Emus") else 0
+    rows.append(("6. Hệ máy giả lập trên máy" if state.current_lang == "VI" else "6. Installed Emus Systems", f"[OK] {emus_count} Hệ máy trong Emus/"))
+    
+    # 7. Auto-repair & Doctor Status
+    if repaired:
+        rows.append(("7. Tự động bổ sung thư viện" if state.current_lang == "VI" else "7. Auto-Supplement Engine", f"[OK] {', '.join(repaired)}"))
+    else:
+        rows.append(("7. Tự động bổ sung thư viện" if state.current_lang == "VI" else "7. Auto-Supplement Engine", "[OK] Tất cả thư viện & Core đầy đủ"))
+        
+    # 8. Memory & Storage
+    mem_str = get_ram_info()
+    rows.append(("8. Bộ nhớ RAM" if state.current_lang == "VI" else "8. RAM Memory", mem_str))
+    
+    # 9. SDCARD Storage
+    try:
+        st = os.statvfs(SDCARD_PATH)
+        free_gb = (st.f_bavail * st.f_frsize) / (1024**3)
+        total_gb = (st.f_blocks * st.f_frsize) / (1024**3)
+        rows.append(("9. Thẻ nhớ SDCARD" if state.current_lang == "VI" else "9. SD Card Storage", f"Trống {free_gb:.1f} GB / Tổng {total_gb:.1f} GB"))
+    except Exception:
+        pass
+        
+    return rows
+
+# ==============================================================================
+# BATTERY & POWER SUPPLY STATUS
+# ==============================================================================
+
+# ==============================================================================
+# SCAN DOWNLOADED LOCAL GAMES WITH BOXART
+# ==============================================================================
+
+# ==============================================================================
+# SYSTEM NAMES & MULTI-SOURCE RETRIEVAL HELPERS
+# ==============================================================================
+
+# ==============================================================================
+# DOWNLOAD & UNZIP WORKER THREAD (RESILIENT STREAM + RANGE RESUME + CANCEL)
+# ==============================================================================
+
+# ==============================================================================
+# MAIN GUI
+# ==============================================================================
+def main():
+    sdl2.SDL_SetHint(b"SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", b"1")
+    sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK | sdl2.SDL_INIT_GAMECONTROLLER)
+    sdlttf.TTF_Init()
+    sdlimage.IMG_Init(sdlimage.IMG_INIT_PNG | sdlimage.IMG_INIT_JPG)
+
+    display_mode = sdl2.SDL_DisplayMode()
+    if sdl2.SDL_GetCurrentDisplayMode(0, display_mode) == 0:
+        state.SCREEN_W = display_mode.w
+        state.SCREEN_H = display_mode.h
+    else:
+        state.SCREEN_W = 1024
+        state.SCREEN_H = 768
+
+    controllers = []
+    joysticks = []
+    has_controller = False
+
+    for i in range(sdl2.SDL_NumJoysticks()):
+        if sdl2.SDL_IsGameController(i) == sdl2.SDL_TRUE:
+            pad = sdl2.SDL_GameControllerOpen(i)
+            if pad:
+                controllers.append(pad)
+                has_controller = True
+        else:
+            joy = sdl2.SDL_JoystickOpen(i)
+            if joy:
+                joysticks.append(joy)
+
+    window = sdl2.SDL_CreateWindow(
+        b"RetroHub",
+        0, 0,
+        state.SCREEN_W,
+        state.SCREEN_H,
+        sdl2.SDL_WINDOW_SHOWN | sdl2.SDL_WINDOW_FULLSCREEN
+    )
+    if not window:
+        window = sdl2.SDL_CreateWindow(b"RetroHub", 0, 0, state.SCREEN_W, state.SCREEN_H, sdl2.SDL_WINDOW_SHOWN)
+    renderer = sdl2.SDL_CreateRenderer(window, -1, sdl2.SDL_RENDERER_ACCELERATED)
+
+    # The font used to be pinned to the TRIMUI Blue theme. Anyone on a different
+    # theme got a null font from TTF_OpenFont, which nothing checked, so every
+    # later draw fed SDL a null pointer. Search the themes that are installed.
+    font_path = None
+    for cand in glob.glob("/mnt/SDCARD/Themes/*/wqy-microhei.ttf") + \
+                glob.glob("/mnt/SDCARD/Themes/*/msyh.ttf") + \
+                glob.glob("/mnt/SDCARD/Themes/*/*.ttf") + \
+                glob.glob("/usr/trimui/res/*.ttf"):
+        if os.path.exists(cand):
+            font_path = cand.encode("utf-8")
+            break
+    if not font_path:
+        sys.stderr.write("\nRetroHub khong khoi dong duoc: khong tim thay font .ttf nao "
+                         "trong /mnt/SDCARD/Themes/.\n\n")
+        return
+
+    font_title = sdlttf.TTF_OpenFont(font_path, 40)
+    font_sub = sdlttf.TTF_OpenFont(font_path, 26)
+    font_item = sdlttf.TTF_OpenFont(font_path, 32)
+    font_badge = sdlttf.TTF_OpenFont(font_path, 26)
+    font_grid_title = sdlttf.TTF_OpenFont(font_path, 24)
+    font_footer = sdlttf.TTF_OpenFont(font_path, 22)
+    font_btn_badge = sdlttf.TTF_OpenFont(font_path, 24)
+    font_toast = sdlttf.TTF_OpenFont(font_path, 24)
+    font_modal_lbl = sdlttf.TTF_OpenFont(font_path, 26)
+    font_modal_val = sdlttf.TTF_OpenFont(font_path, 24)
+    font_kb = sdlttf.TTF_OpenFont(font_path, 28)
+    # For the one value a screen exists to show - the stream address someone is
+    # about to type into a browser.
+    font_huge = sdlttf.TTF_OpenFont(font_path, 54)
+
+    if not font_title:
+        sys.stderr.write("\nRetroHub khong khoi dong duoc: khong mo duoc font %s\n\n"
+                         % font_path.decode("utf-8", "ignore"))
+        return
+
+    # High-Performance Text Texture LRU Cache
+    text_texture_cache = {}
+    MAX_TEXT_CACHE = 280
+
+    def draw_text(text, font, x, y, r, g, b, a=255, center_x=False, center_y=False):
+        if not text:
+            return 0, 0
+        now_ts = time.time()
+        key = (text, id(font), r, g, b, a)
+        cached = text_texture_cache.get(key)
+        if cached:
+            tex, w, h = cached[0], cached[1], cached[2]
+            cached[3] = now_ts
+        else:
+            color = sdl2.SDL_Color(r, g, b, a)
+            surf = sdlttf.TTF_RenderUTF8_Blended(font, text.encode("utf-8"), color)
+            if not surf:
+                return 0, 0
+            w = surf.contents.w
+            h = surf.contents.h
+            tex = sdl2.SDL_CreateTextureFromSurface(renderer, surf)
+            sdl2.SDL_FreeSurface(surf)
+            if not tex:
+                return 0, 0
+            
+            # Evict oldest 50 items if cache is full
+            if len(text_texture_cache) >= MAX_TEXT_CACHE:
+                old_keys = sorted(text_texture_cache.keys(), key=lambda k: text_texture_cache[k][3])[:50]
+                for ok in old_keys:
+                    item = text_texture_cache.pop(ok, None)
+                    if item and item[0]:
+                        sdl2.SDL_DestroyTexture(item[0])
+            
+            text_texture_cache[key] = [tex, w, h, now_ts]
+
+        dest_x = x - (w // 2) if center_x else x
+        dest_y = y - (h // 2) if center_y else y
+        dest = sdl2.SDL_Rect(dest_x, dest_y, w, h)
+        sdl2.SDL_RenderCopy(renderer, tex, None, dest)
+        return w, h
+
+    _text_w_cache = {}
+
+    def measure_text(text, font):
+        """Pixel width of text in this font, without drawing it.
+
+        Character counts are a poor proxy here: Vietnamese diacritics and the
+        proportional font make identical-length strings render very differently.
+        """
+        if not text:
+            return 0
+        key = (text, id(font))
+        cached = _text_w_cache.get(key)
+        if cached is not None:
+            return cached
+        w = ctypes.c_int(0)
+        h = ctypes.c_int(0)
+        sdlttf.TTF_SizeUTF8(font, text.encode("utf-8"), ctypes.byref(w), ctypes.byref(h))
+        if len(_text_w_cache) > 600:
+            _text_w_cache.clear()
+        _text_w_cache[key] = w.value
+        return w.value
+
+    def wrap_text_to_width(text, font, max_w, max_lines=2):
+        """Break text into at most max_lines that each fit within max_w pixels.
+
+        Falls back to a hard character split for a single word longer than the
+        line, and ellipsises whatever still does not fit on the final line.
+        """
+        text = (text or "").strip()
+        if not text or measure_text(text, font) <= max_w:
+            return [text]
+
+        words = text.split()
+        lines = []
+        cur = ""
+        for i, word in enumerate(words):
+            cand = (cur + " " + word).strip()
+            if cur and measure_text(cand, font) > max_w:
+                lines.append(cur)
+                if len(lines) == max_lines - 1:
+                    # Everything left goes on the final line; index the word list
+                    # rather than slicing the original string, which would be off
+                    # whenever the title contains repeated spaces.
+                    cur = " ".join(words[i:])
+                    break
+                cur = word
+            else:
+                cur = cand
+
+        if measure_text(cur, font) > max_w:
+            while cur and measure_text(cur + "...", font) > max_w:
+                cur = cur[:-1]
+            cur = cur.rstrip() + "..."
+        lines.append(cur)
+        return lines[:max_lines]
+
+    def fill_rect(x, y, w, h, r, g, b, a=255):
+        rect = sdl2.SDL_Rect(x, y, w, h)
+        sdl2.SDL_SetRenderDrawColor(renderer, r, g, b, a)
+        sdl2.SDL_RenderFillRect(renderer, rect)
+
+    def draw_rect(x, y, w, h, r, g, b, a=255, thickness=1):
+        sdl2.SDL_SetRenderDrawColor(renderer, r, g, b, a)
+        for i in range(thickness):
+            rect = sdl2.SDL_Rect(x + i, y + i, w - 2*i, h - 2*i)
+            sdl2.SDL_RenderDrawRect(renderer, rect)
+
+    def draw_toggle(x, y, is_on):
+        sw_w = 110
+        sw_h = 48
+        knob_size = 36
+        pad = (sw_h - knob_size) // 2
+
+        if is_on:
+            fill_rect(x, y, sw_w, sw_h, 0, 180, 80, 255)
+            draw_rect(x, y, sw_w, sw_h, 0, 255, 140, 255, thickness=2)
+            draw_text(tr("on"), font_badge, x + 30, y + sw_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            knob_x = x + sw_w - knob_size - pad
+            knob_y = y + pad
+            fill_rect(knob_x, knob_y, knob_size, knob_size, 255, 255, 255, 255)
+        else:
+            fill_rect(x, y, sw_w, sw_h, 45, 55, 75, 255)
+            draw_rect(x, y, sw_w, sw_h, 80, 95, 125, 255, thickness=1)
+            knob_x = x + pad
+            knob_y = y + pad
+            fill_rect(knob_x, knob_y, knob_size, knob_size, 150, 160, 180, 255)
+            draw_text(tr("off"), font_badge, x + sw_w - 30, y + sw_h // 2, 170, 180, 200, center_x=True, center_y=True)
+
+    # State
+    screen_stack = ["home"]
+    selected_indices = {
+        "home": 0,
+        "network": 0,
+        "utilities": 0,
+        "rom_store_menu": 0,
+        "rom_source_systems": 0,
+        "downloaded_games": 0,
+        "search_input": 0,
+        "search_results": 0,
+        "rom_systems": 0,
+        "rom_games": 0
+    }
+    scroll_offsets = {
+        "home": 0,
+        "network": 0,
+        "utilities": 0,
+        "rom_store_menu": 0,
+        "rom_source_systems": 0,
+        "downloaded_games": 0,
+        "search_input": 0,
+        "search_results": 0,
+        "rom_systems": 0,
+        "rom_games": 0,
+        "file_browser": 0,
+        "splash_manager": 0
+    }
+    current_source = "VIET"
+    current_rom_system = "ALL"
+    # Which J2ME shelf is being browsed; "ALL" means every Java game.
+    current_java_cat = "ALL"
+    # The shelf list costs ~96ms to query and the screen rebuilds every frame,
+    # so it is fetched once per visit rather than 60 times a second.
+    java_cats_cache = []
+    # Same reason: the systems list for a source is a DB aggregate over 40k rows.
+    src_sys_cache = []
+    src_sys_cache_key = None
+    # The rom_games screen rebuilds its list on every frame, and that query costs
+    # up to 380ms on the handheld - about 3 FPS. Memoise it and refetch only when
+    # the source, system or sort order actually changes.
+    rom_games_cache = []
+    rom_games_cache_key = None
+    state.rom_sort_mode = "downloads"  # "downloads" (Default) or "alpha"
+
+    # Search Systems Filter Options. These come from the catalogue DB rather than
+    # the static catalogs.json: the DB carries 29 systems where the JSON listed only
+    # 13, so PS, PSP, DC, SS, N64 and friends were missing from the filter entirely.
+    j2me_keymap = {}
+    _sys_rows = get_source_systems_list("ALL")
+    _sys_counts = dict(_sys_rows)
+    sys_keys_list = ["ALL"] + [c for c, _ in _sys_rows if c != "ALL"]
+    search_sys_idx = 0
+    # Which catalogue source the search is narrowed to; "ALL" means every source.
+    search_source = "ALL"
+    SEARCH_SOURCES = ["ALL", "VIET", "HITS", "JAVA", "HACK", "RETROSTIC", "ARCHIVE"]
+
+    # Virtual Keyboard & Search State
+    kb_rows = [
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+        ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+        ["A", "S", "D", "F", "G", "H", "J", "K", "L", "-"],
+        ["Z", "X", "C", "V", "B", "N", "M", ".", "_", "/"],
+        ["SPACE", "DEL", "CLEAR", "SEARCH"]
+    ]
+    kb_cursor = [1, 0]
+    search_query = ""
+    search_results_list = []
+
+    # Downloaded Games Cache & Proportional Image Loading
+    downloaded_games_list = []
+    # Library filter: "ALL" or a single sys_code. Kept out of settings.json on
+    # purpose - it is a transient view choice, not a preference.
+    current_lib_sys = "ALL"
+    # One list picker serving the library filter and both search filters. rows are
+    # (code, label, right_text); "current" is the value shown with a filled dot.
+    pick_modal = {"active": False, "title": "", "rows": [], "selected_idx": 0,
+                  "target": "", "current": ""}
+    img_texture_cache = {}
+    missing_img_cache = set()
+    MAX_IMG_CACHE = 60
+
+    def get_texture_and_size(path, force_reload=False):
+        if not path:
+            return None, 0, 0
+        if not force_reload and path in missing_img_cache:
+            return None, 0, 0
+        if force_reload:
+            missing_img_cache.discard(path)
+
+        now_ts = time.time()
+        if force_reload or path == SPLASH_TEMP_PREVIEW:
+            if path in img_texture_cache:
+                tex, _, _, _ = img_texture_cache.pop(path)
+                sdl2.SDL_DestroyTexture(tex)
+        elif path in img_texture_cache:
+            item = img_texture_cache[path]
+            item[3] = now_ts
+            return item[0], item[1], item[2]
+
+        if not os.path.exists(path):
+            missing_img_cache.add(path)
+            return None, 0, 0
+
+        surf = sdlimage.IMG_Load(path.encode("utf-8"))
+        if not surf:
+            missing_img_cache.add(path)
+            return None, 0, 0
+        w = surf.contents.w
+        h = surf.contents.h
+        tex = sdl2.SDL_CreateTextureFromSurface(renderer, surf)
+        sdl2.SDL_FreeSurface(surf)
+        if tex:
+            # Evict oldest 15 textures if cache exceeds limit
+            if len(img_texture_cache) >= MAX_IMG_CACHE:
+                old_paths = sorted(img_texture_cache.keys(), key=lambda k: img_texture_cache[k][3])[:15]
+                for op in old_paths:
+                    it = img_texture_cache.pop(op, None)
+                    if it and it[0]:
+                        sdl2.SDL_DestroyTexture(it[0])
+            img_texture_cache[path] = [tex, w, h, now_ts]
+            return tex, w, h
+        return None, 0, 0
+
+    def draw_proportional_boxart(path, box_x, box_y, box_w, box_h):
+        tex, orig_w, orig_h = get_texture_and_size(path)
+        if not tex or orig_w <= 0 or orig_h <= 0:
+            return False
+        scale = min(box_w / float(orig_w), box_h / float(orig_h))
+        dest_w = max(1, int(orig_w * scale))
+        dest_h = max(1, int(orig_h * scale))
+        dest_x = box_x + (box_w - dest_w) // 2
+        dest_y = box_y + (box_h - dest_h) // 2
+        dest_r = sdl2.SDL_Rect(dest_x, dest_y, dest_w, dest_h)
+        sdl2.SDL_RenderCopy(renderer, tex, None, dest_r)
+        return True
+
+    def draw_default_boxart_avatar(box_x, box_y, box_w, box_h, sys_code="ROM", game_title="Game"):
+        """Placeholder tile for a game with no boxart.
+
+        Deliberately plain: a coloured header with the system tag and a small
+        cartridge mark. The mark is drawn from rectangles rather than an emoji
+        because the bundled font has no emoji glyphs and would render tofu boxes.
+        game_title is unused, kept so existing call sites stay valid.
+        """
+        if box_w <= 10 or box_h <= 10:
+            return False
+
+        s_tag, theme_col = SYS_BADGE.get(sys_code.upper(), (sys_code.upper(), (0, 200, 220)))
+        tr_c, tg_c, tb_c = theme_col
+
+        # Card body with a subtle bevel
+        fill_rect(box_x, box_y, box_w, box_h, 16, 22, 34, 255)
+        fill_rect(box_x + 1, box_y + 1, box_w - 2, 2, 65, 85, 125, 255)
+        fill_rect(box_x + 1, box_y + box_h - 3, box_w - 2, 2, 8, 12, 18, 255)
+        draw_rect(box_x, box_y, box_w, box_h, 40, 55, 85, 255, thickness=1)
+
+        # Coloured header carrying the system tag - the only text on the tile
+        header_h = max(24, int(box_h * 0.16))
+        fill_rect(box_x + 2, box_y + 2, box_w - 4, header_h, tr_c, tg_c, tb_c, 255)
+        fill_rect(box_x + 2, box_y + header_h, box_w - 4, 1, 255, 255, 255, 90)
+        draw_text(s_tag, font_badge, box_x + box_w // 2, box_y + header_h // 2 + 1,
+                  255, 255, 255, center_x=True, center_y=True)
+
+        # Small cartridge mark, centred in the remaining space
+        body_y = box_y + header_h
+        body_h = box_h - header_h
+        cw = max(14, min(int(box_w * 0.34), int(body_h * 0.44)))
+        ch = int(cw * 1.15)
+        cx = box_x + (box_w - cw) // 2
+        cy = body_y + (body_h - ch) // 2
+        if cw >= 14 and ch >= 14:
+            fill_rect(cx, cy, cw, ch, tr_c, tg_c, tb_c, 60)
+            draw_rect(cx, cy, cw, ch, tr_c, tg_c, tb_c, 150, thickness=1)
+            lx, ly = cx + max(2, cw // 6), cy + max(2, ch // 6)
+            lw, lh = cw - 2 * max(2, cw // 6), int(ch * 0.42)
+            if lw > 4 and lh > 4:
+                fill_rect(lx, ly, lw, lh, tr_c, tg_c, tb_c, 120)
+            pin_w = max(2, cw // 7)
+            pin_y = cy + ch - max(3, ch // 8)
+            for k in range(3):
+                px = cx + max(2, cw // 6) + k * (pin_w * 2)
+                if px + pin_w <= cx + cw - 2:
+                    fill_rect(px, pin_y, pin_w, max(2, ch // 10), tr_c, tg_c, tb_c, 170)
+        return True
+
+    # Pre-Download Game Preview & Info Modal (Requirement 5)
+    pre_download_modal = {
+        "active": False,
+        "game_info": None,
+        "sys_code": "GBA",
+        "img_path": None,
+        "img_url": "",
+        "preview_cached_path": None,
+        "preview_status": "idle",
+        "selected_opt": 0
+    }
+
+    def open_pre_download_modal(sys_c, g_info, local_img_path=None):
+        pre_download_modal["active"] = True
+        pre_download_modal["game_info"] = g_info
+        pre_download_modal["sys_code"] = sys_c
+        pre_download_modal["selected_opt"] = 0
+        pre_download_modal["img_path"] = local_img_path
+        pre_download_modal["preview_cached_path"] = None
+
+        img_url = g_info.get("img_url", "")
+        pre_download_modal["img_url"] = img_url
+
+        # Dynamic File Size Resolution for Online Mirrors / Retrostic
+        pre_download_modal["dynamic_size_str"] = (g_info.get("file_size_str") or g_info.get("size") or "").strip() if g_info else ""
+        if not pre_download_modal["dynamic_size_str"] or pre_download_modal["dynamic_size_str"] in ("TOPO SHOP", "TOPO"):
+            pre_download_modal["dynamic_size_str"] = ""
+            rom_u = g_info.get("rom_url", "") if g_info else ""
+            if rom_u and rom_u.startswith("http"):
+                def bg_fetch_rom_size(target_url, g_target):
+                    try:
+                        c_ctx = ssl._create_unverified_context()
+                        p_req = urllib.request.Request(
+                            target_url,
+                            headers={
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                                "Range": "bytes=0-0"
+                            }
+                        )
+                        with urllib.request.urlopen(p_req, context=c_ctx, timeout=4) as p_resp:
+                            cr = p_resp.headers.get("Content-Range", "")
+                            tot = 0
+                            if cr and "/" in cr:
+                                try:
+                                    tot = int(cr.split("/")[-1])
+                                except:
+                                    pass
+                            if tot == 0:
+                                tot = int(p_resp.headers.get("Content-Length", 0))
+                            if tot > 0:
+                                if tot >= 1024 * 1024 * 1024:
+                                    s_fmt = f"{tot / (1024*1024*1024):.2f} GB"
+                                elif tot >= 1024 * 1024:
+                                    s_fmt = f"{tot / (1024*1024):.1f} MB"
+                                elif tot >= 1024:
+                                    s_fmt = f"{tot / 1024:.1f} KB"
+                                else:
+                                    s_fmt = f"{tot} B"
+                                g_target["file_size_str"] = s_fmt
+                                pre_download_modal["dynamic_size_str"] = s_fmt
+                                src_id = g_target.get("source_id")
+                                if src_id:
+                                    try:
+                                        db.update_source_file_size(src_id, s_fmt)
+                                    except Exception:
+                                        pass
+                    except Exception:
+                        pass
+                threading.Thread(target=bg_fetch_rom_size, args=(rom_u, g_info), daemon=True).start()
+
+        if local_img_path and os.path.exists(local_img_path):
+            pre_download_modal["preview_status"] = "ready"
+        elif img_url and img_url != "null" and img_url.startswith("http") and "default.jpg" not in img_url:
+            url_hash = hashlib.md5(img_url.encode("utf-8")).hexdigest()[:12]
+            ext = ".jpg" if (".jpg" in img_url.lower() or ".jpeg" in img_url.lower()) else ".png"
+            tmp_prev = f"/tmp/prev_{url_hash}{ext}"
+            if os.path.exists(tmp_prev) and os.path.getsize(tmp_prev) > 1024:
+                pre_download_modal["preview_cached_path"] = tmp_prev
+                pre_download_modal["preview_status"] = "ready"
+            else:
+                pre_download_modal["preview_status"] = "loading"
+                def bg_fetch(u, dest):
+                    try:
+                        ctx = ssl._create_unverified_context()
+                        req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+                        with urllib.request.urlopen(req, context=ctx, timeout=6) as resp:
+                            if resp.status == 200:
+                                ctype = resp.headers.get("Content-Type", "").lower()
+                                if "image" in ctype or not ctype:
+                                    data = resp.read()
+                                    if len(data) > 1024:
+                                        with open(dest, "wb") as f:
+                                            f.write(data)
+                                        if os.path.exists(dest) and os.path.getsize(dest) > 1024:
+                                            pre_download_modal["preview_cached_path"] = dest
+                                            pre_download_modal["preview_status"] = "ready"
+                                            return
+                        pre_download_modal["preview_status"] = "failed"
+                    except Exception:
+                        pre_download_modal["preview_status"] = "failed"
+                threading.Thread(target=bg_fetch, args=(img_url, tmp_prev), daemon=True).start()
+        else:
+            pre_download_modal["preview_status"] = "failed"
+
+    # Horizontal Action Popup State
+    game_action_modal = {
+        "active": False,
+        "game_info": None,
+        "selected_opt": 0,
+        "from_downloaded_view": False,
+        "img_path": None,
+        "size_str": ""
+    }
+
+    # Alphabet Quick Jump Modal State (A - Z Grid)
+    # Screen-size picker for Java games. A list rather than a cycling button: five
+    # sizes is too many to step through blind, and you cannot see what is on offer.
+    res_modal = {"active": False, "selected_idx": 0}
+
+    # Button picker for one phone key. Cycling was useless here: the shipped keymap
+    # already uses all ten pad buttons, so stepping through "free" ones offered
+    # nothing but unset-and-back. Picking from a list lets a taken button be swapped.
+    key_modal = {"active": False, "key": None, "selected_idx": 0}
+
+    # Java emulator info + reinstall. `pending` defers the actual work by one frame
+    # so the "installing" line is on screen before the UI thread blocks on it.
+    j2me_modal = {"active": False, "busy": False, "pending": False}
+
+    # Shows a scannable code beside a few lines of text. Used for the donation
+    # transfer details and the chat group invite.
+    # pages is a list of {title, img, mods, rows}. A single-page call still works:
+    # the shoulder hint and the counter only appear when there is more than one.
+    qr_modal = {"active": False, "pages": [], "page": 0}
+
+    # Filled in by the startup check thread; the main loop shows it when a newer
+    # release is published. selected_opt: 0 install, 1 skip this version, 2 later.
+    update_modal = {
+        "active": False, "manifest": None, "files": [],
+        "selected_opt": 0, "busy": False, "status": "", "failed": False,
+        # Set while a manual check is in flight, and used by the worker thread to
+        # hand a message back - toast_msg is a local of the main loop.
+        "checking": False, "notice": None,
+    }
+
+    alphabet_modal = {
+        "active": False,
+        "selected_idx": 0,
+        "letters": ["#"] + [chr(c) for c in range(ord('A'), ord('Z') + 1)],
+        "available_map": {},
+        "counts_map": {},
+        "sys_code": None
+    }
+
+    modal_title = None
+    modal_rows = None
+    # Layout for the shared info modal. None keeps the stacked label-over-value
+    # rows the long device/storage values need; "two_col" is the table form.
+    modal_style = None
+    toast_msg = None
+    toast_timer = 0
+
+    splash_images_list = []
+    splash_preview_path = ""
+    splash_preview_orig_name = ""
+    fb_current_path = "/mnt/SDCARD"
+    fb_items = []
+    fb_scanned_path = None
+
+    # Auto-check and supplement missing libraries & emulator cores in background
+    try:
+        threading.Thread(target=auto_check_and_supplement_environment, daemon=True).start()
+    except Exception:
+        pass
+
+    def bg_check_update():
+        """Ask the update repo whether a newer build exists.
+
+        Runs off the main loop: the request can block for the full timeout, and
+        the UI must not wait on it. Nothing is downloaded here - the user
+        decides first."""
+        try:
+            found = check_for_update()
+        except Exception as e:
+            print(f"Update check error: {e}")
+            return
+        if not found:
+            return
+        manifest, files = found
+        update_modal["manifest"] = manifest
+        update_modal["files"] = files
+        update_modal["selected_opt"] = 0
+        update_modal["active"] = True
+
+    def run_update():
+        """Fetch, verify and install the pending release, then ask for a restart.
+
+        Every file is downloaded and hash-checked before anything is moved, so a
+        failure here leaves the running install exactly as it was."""
+        m = update_modal["manifest"]
+        files = update_modal["files"]
+
+        def prog(done, total, path):
+            name = os.path.basename(path) if path else ""
+            update_modal["status"] = f"{done}/{total}  {name}".strip()
+
+        ok = False
+        try:
+            if download_update(m, files, progress=prog):
+                update_modal["status"] = tr("upd_installing")
+                ok = apply_update(m, files)
+        except Exception as e:
+            print(f"Update error: {e}")
+
+        if ok:
+            update_modal["status"] = tr("upd_done")
+            # Leave a marker for the build that is about to start. Confirming
+            # success here would be premature - the new bytecode has not run yet.
+            state.pending_update = m["version"]
+            state.save_settings()
+            request_restart()
+            update_modal["restart"] = True
+        else:
+            update_modal["failed"] = True
+            update_modal["status"] = tr("upd_failed")
+        update_modal["busy"] = False
+
+    def manual_check_update():
+        """Check on demand, from the version row in Settings.
+
+        force=True so a version the user skipped earlier still shows: asking by
+        hand is a clear signal they want to see whatever is out there."""
+        try:
+            found = check_for_update(force=True)
+        except Exception as e:
+            print(f"Manual update check error: {e}")
+            update_modal["notice"] = tr("upd_check_failed")
+            update_modal["checking"] = False
+            return
+        if found:
+            manifest, files = found
+            update_modal["manifest"] = manifest
+            update_modal["files"] = files
+            update_modal["selected_opt"] = 0
+            update_modal["failed"] = False
+            update_modal["active"] = True
+        else:
+            update_modal["notice"] = tr("upd_up_to_date")
+        update_modal["checking"] = False
+
+    # An update that restarted the app leaves its version behind. Seeing it match
+    # the build now running is the proof the swap worked, so report it once and
+    # clear the marker.
+    if state.pending_update:
+        if state.pending_update == APP_VERSION:
+            update_modal["notice"] = f"{tr('upd_success')}{APP_VERSION}"
+        state.pending_update = ""
+        state.save_settings()
+
+    if state.auto_update:
+        try:
+            threading.Thread(target=bg_check_update, daemon=True).start()
+        except Exception:
+            pass
+
+    running = True
+    last_user_activity_time = time.time()
+
+    local_cache_map = {}
+    last_cache_time = {}
+
+    def get_local_cache(sys_code):
+        now_t = time.time()
+        if sys_code in local_cache_map and now_t - last_cache_time.get(sys_code, 0) < 4.0:
+            return local_cache_map[sys_code]
+        rom_dir = state.catalogs.get(sys_code, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{sys_code}")
+        # Maps filename -> real path. J2ME sorts its jars into one folder per
+        # handset resolution, so those roms sit a level below rom_dir: a flat
+        # listing saw only the folders and reported every Java game as missing,
+        # and joining rom_dir with the filename pointed at a file that is not
+        # there. scandir keeps the directory test off the stat path, which
+        # matters for systems holding thousands of roms.
+        res = {}
+        try:
+            with os.scandir(rom_dir) as it:
+                for e in it:
+                    if e.is_dir():
+                        try:
+                            with os.scandir(e.path) as sub_it:
+                                for se in sub_it:
+                                    if not se.is_dir():
+                                        res.setdefault(se.name, se.path)
+                        except OSError:
+                            pass
+                    else:
+                        # A rom sitting directly in rom_dir wins over a same-named
+                        # one in a subfolder.
+                        res[e.name] = e.path
+        except OSError:
+            res = {}
+        local_cache_map[sys_code] = res
+        last_cache_time[sys_code] = now_t
+        return res
+
+    def number_items(rows):
+        """Prefix a running number onto the primary rows of a menu.
+
+        Sub-rows (the per-service guides) and the back row are skipped: they are
+        not choices in the same sequence. Numbering here rather than inside the
+        translated strings is what stops the digits going stale - they already
+        had, after the services and utilities menus were regrouped.
+        """
+        n = 0
+        for it in rows:
+            if it.get("sub") or it.get("id") == "back":
+                continue
+            n += 1
+            it["title"] = f"{n}. {it['title']}"
+        return rows
+
+    def open_picker(title, rows, target, current):
+        # An empty list would make the wrap-around navigation divide by zero.
+        if not rows:
+            return
+        pick_modal.update(active=True, title=title, rows=rows, target=target,
+                          current=current)
+        pick_modal["selected_idx"] = next(
+            (i for i, r in enumerate(rows) if r[0] == current), 0)
+
+    def _act_ids(sys_c=None):
+        """Ids of the action tiles, in display order.
+
+        Single source of truth for navigation, drawing and the button handler -
+        dispatching on a hard-coded index broke as soon as Java gained a fifth tile.
+        """
+        if sys_c is None:
+            sys_c = game_action_modal.get("sys_code")
+        ids = ["PLAY", "DEL"]
+        if sys_c in ("JAVA", "J2ME"):
+            ids.append("RES")
+        ids += ["REGET", "CLOSE"]
+        return ids
+
+    def _act_count():
+        return len(_act_ids())
+
+    def launch_emulator_game(sys_c, rom_p):
+        nonlocal running
+        if not rom_p or not os.path.exists(rom_p):
+            return False, "Không tìm thấy tập tin ROM!" if state.current_lang == "VI" else "ROM file not found!"
+
+        emu_script = f"/mnt/SDCARD/Emus/{sys_c}/launch.sh"
+        if not os.path.exists(emu_script):
+            if sys_c == "JAVA":
+                install_j2me_emulator()
+            else:
+                return False, f"Chưa cấu hình Giả lập {sys_c}!" if state.current_lang == "VI" else f"{sys_c} Emulator not configured!"
+            for alt in [f"/mnt/SDCARD/Emus/{sys_c.upper()}/launch.sh", f"/mnt/SDCARD/Emus/{sys_c.lower()}/launch.sh"]:
+                if os.path.exists(alt):
+                    emu_script = alt
+                    break
+
+        if not os.path.exists(emu_script):
+            return False, f"Không tìm thấy giả lập hệ {sys_c}!" if state.current_lang == "VI" else f"Emulator for {sys_c} not found!"
+
+        emu_dir = os.path.dirname(emu_script)
+        
+        # Write handoff script for launch.sh to execute cleanly after RetroHub releases all GPU/RAM resources
+        try:
+            with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
+                # shlex.quote, not plain double quotes: sh expands $ inside them,
+                # and three roms in the catalogue carry one - "Mega Microgame$!"
+                # would launch with $! replaced by a job id and the file missing.
+                f.write("cd %s\nexec sh %s %s\n" % (
+                    shlex.quote(emu_dir), shlex.quote(emu_script), shlex.quote(rom_p)))
+            subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
+        except Exception as e:
+            print(f"Error writing launch_game.sh: {e}")
+            
+        # Cleanly quit RetroHub main loop
+        running = False
+        return True, ""
+
+    key_held_state = {
+        "up": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0},
+        "down": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0},
+        "left": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0},
+        "right": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0}
+    }
+
+    service_states = {
+        "sftp": False,
+        "ssh": False,
+        "adb": False,
+        "mtp": False,
+        "streamer": False,
+        "wifi_awake": False
+    }
+    last_service_check_time = 0
+
+    while running:
+        now = time.time()
+
+        current_screen = screen_stack[-1]
+        selected_idx = selected_indices.get(current_screen, 0)
+
+        # Deferred J2ME install: the panel has already drawn its "installing" line by
+        # the time we get here, so blocking for a few seconds no longer looks frozen.
+        if j2me_modal.get("pending"):
+            j2me_modal["pending"] = False
+            ok_inst, msg_inst = install_j2me_emulator(force=True)
+            j2me_modal["busy"] = False
+            toast_msg = msg_inst
+            toast_timer = time.time()
+            downloaded_games_list = scan_all_downloaded_games()
+
+        # Smart Service State Polling. Only the services screen reads these, and
+        # the six checks cost ~260ms together - a visible stall every 3s on every
+        # other screen, for values nothing was looking at.
+        if current_screen == "network" and now - last_service_check_time > 3.0:
+            service_states["sftp"] = is_sftpgo_running()
+            service_states["ssh"] = is_ssh_running()
+            service_states["adb"] = is_adb_running()
+            service_states["mtp"] = is_mtp_running()
+            service_states["streamer"] = is_streamer_running()
+            service_states["wifi_awake"] = is_wifi_awake()
+            last_service_check_time = now
+
+        # A download that ran in the background finishes with no modal, so report it
+        # here or the user would never learn it completed.
+        _note = pop_notification()
+        if _note:
+            _n_title, _n_status = _note
+            _n_lbl = tr("dl_done_bg") if _n_status == "success" else tr("dl_failed_bg")
+            toast_msg = f"{_n_lbl}: {_n_title}"
+            toast_timer = time.time()
+            downloaded_games_list = scan_all_downloaded_games()
+
+        sftp_on = service_states["sftp"]
+        ssh_on = service_states["ssh"]
+        adb_on = service_states["adb"]
+        mtp_on = service_states["mtp"]
+        streamer_on = service_states["streamer"]
+        wifi_awake_on = service_states["wifi_awake"]
+
+        # The library screen draws from this rather than the raw scan, so the
+        # system filter reaches the item list, both view modes and the shuffle.
+        lib_games_list = (downloaded_games_list if current_lib_sys == "ALL" else
+                          [g for g in downloaded_games_list
+                           if g.get("sys_code") == current_lib_sys])
+
+        # Build items for current screen
+        items = []
+
+        # HOME: ONLY Language has a right status badge!
+        if current_screen == "home":
+            header_title = tr("app_title")
+            items = [
+                {"id": "nav_rom_store_menu", "title": tr("home_item2")},
+                {"id": "nav_network", "title": tr("home_item1")},
+                {"id": "nav_utilities", "title": tr("home_item3")},
+                {"id": "nav_donate", "title": tr("home_item_donate")},
+                {"id": "nav_settings", "title": tr("home_item_settings")},
+                {"id": "exit", "title": tr("home_item5")}
+            ]
+            # Number from position. The labels used to carry the digit in the
+            # translated string, so reordering the menu silently mislabelled it.
+            number_items(items)
+
+        # UTILITIES: Only Toggle ON/OFF and Guide [XEM] show badges
+        elif current_screen == "utilities":
+            header_title = tr("util_title")
+            items.append({"id": "nav_splash", "title": tr("util_item_splash")})
+            
+            is_j2me_installed = is_j2me_runtime_ready()
+            j2me_label = "ĐÃ CÓ" if is_j2me_installed else "TỰ CÀI"
+            if state.current_lang != "VI":
+                j2me_label = "READY" if is_j2me_installed else "AUTO"
+            items.append({"id": "install_j2me_emu", "title": tr("util_j2me_title"), "label": j2me_label})
+            if is_j2me_installed:
+                items.append({"id": "nav_j2me_keys", "title": tr("util_j2me_keys"),
+                              "label": tr("view"), "sub": True})
+            
+            doctor_label = "TỐT" if is_j2me_installed else "VÁ"
+            if state.current_lang != "VI":
+                doctor_label = "GOOD" if is_j2me_installed else "FIX"
+            # The three read-only views sit together: they were split across two
+            # menus even though they answer the same kind of question.
+            items.append({"id": "system_doctor", "title": tr("util_doctor_title"), "label": doctor_label})
+            items.append({"id": "device_info", "title": tr("device_info"), "label": tr("view")})
+            items.append({"id": "storage_status", "title": tr("util_storage_item"), "label": tr("view")})
+            items.append({"id": "reload_ui", "title": tr("util_item_reload")})
+            number_items(items)
+            items.append({"id": "back", "title": tr("back_home")})
+
+        # JAVA KEY MAPPING: one row per phone key the native side actually honours
+        elif current_screen == "j2me_keys":
+            header_title = tr("j2me_keys_title")
+            key_labels = {"OK": "OK / Chọn (giữa)", "*": "Phím  *", "#": "Phím  #",
+                          "\u5de6\u952e": "Phím mềm TRÁI", "\u53f3\u952e": "Phím mềm PHẢI"}
+            if state.current_lang != "VI":
+                key_labels = {"OK": "OK / Select (fire)", "*": "Key  *", "#": "Key  #",
+                              "\u5de6\u952e": "LEFT softkey", "\u53f3\u952e": "RIGHT softkey"}
+            for k in VALID_KEYS:
+                lbl = key_labels.get(k, ("Phím  " if state.current_lang == "VI" else "Key  ") + k)
+                items.append({"id": f"j2mekey_{k}", "j2me_key": k, "title": lbl,
+                              "label": j2me_keymap.get(k) or tr("j2me_key_none")})
+            items.append({"id": "j2me_keys_reset", "title": tr("j2me_keys_reset"), "sub": True})
+            items.append({"id": "back", "title": tr("back_home")})
+
+        # SETTINGS: things that shape the app itself, kept out of Utilities which is
+        # about acting on the device.
+        elif current_screen == "settings":
+            header_title = tr("settings_title")
+            items.append({"id": "toggle_lang", "title": tr("set_lang"),
+                          "label": tr("lang_badge"), "is_lang": True})
+            items.append({"id": "toggle_autoupdate", "title": tr("set_autoupdate"),
+                          "type": "toggle", "state": state.auto_update})
+            # Read-only: the quickest way to confirm an update actually landed.
+            items.append({"id": "app_version", "title": tr("set_version"),
+                          "label": tr("upd_checking") if update_modal["checking"]
+                                   else APP_VERSION})
+            items.append({"id": "nav_author", "title": tr("set_author"),
+                          "label": tr("view")})
+            items.append({"id": "nav_chat", "title": tr("set_chat"),
+                          "label": tr("view")})
+            items.append({"id": "back", "title": tr("back_home")})
+
+        # BOOT SPLASH MANAGER: Scanned images + Browse File + Restore default
+        elif current_screen == "splash_manager":
+            header_title = tr("splash_title")
+            items.append({"id": "splash_restore", "title": tr("splash_restore_item"), "is_restore": True})
+            items.append({"id": "splash_browse_sd", "title": tr("splash_browse_item"), "is_browse": True})
+            for i, simg in enumerate(splash_images_list):
+                items.append({
+                    "id": f"splash_{i}",
+                    "title": simg["filename"],
+                    "path": simg["path"],
+                    "size_str": simg["size_str"],
+                    "dir": simg["dir"],
+                    "img_data": simg
+                })
+            items.append({"id": "back", "title": tr("back")})
+
+        # FILE BROWSER SCREEN (SELECT ANY IMAGE FROM SDCARD)
+        elif current_screen == "file_browser":
+            header_title = tr("fb_title")
+            # Re-scan only when the folder changes. This ran on every frame, so
+            # browsing a folder meant a full directory walk sixty times a second.
+            if fb_scanned_path != fb_current_path:
+                fb_items = scan_directory_for_images(fb_current_path)
+                fb_scanned_path = fb_current_path
+            if not fb_items:
+                items.append({"id": "fb_empty", "title": tr("fb_empty"), "is_disabled": True})
+            else:
+                items = fb_items
+
+        # BOOT SPLASH FULLSCREEN PREVIEW
+        elif current_screen == "splash_preview":
+            header_title = tr("splash_preview_title")
+
+        # ROM STORE MENU: 1. Thư viện -> 2. Tìm kiếm -> 3. Kho game online -> 4. Quản lý tải -> 5. Quay lại
+        elif current_screen == "rom_store_menu":
+            header_title = tr("store_title")
+            items = [
+                {"id": "nav_downloaded", "title": tr("store_item_library")},
+                {"id": "nav_search_global", "title": tr("store_item_search")},
+                {"id": "nav_online_categories", "title": tr("store_item_online")},
+                {"id": "nav_dl_manager", "title": tr("store_item_dl_mgr")},
+                {"id": "back", "title": tr("back_home")}
+            ]
+
+        # ONLINE CATEGORIES: 1. Việt Hóa -> 2. Top Game -> 3. Game Java -> 4. ROM Hacks -> 5. Tất cả -> 6. Retrostic -> 7. Archive -> 8. Quay lại
+        elif current_screen == "rom_online_categories":
+            header_title = tr("online_cat_title")
+            items = [
+                {"id": "src_viet", "title": tr("store_src_viet")},
+                {"id": "src_hits", "title": tr("store_src_hits")},
+                {"id": "src_java", "title": tr("store_src_java")},
+                {"id": "src_hack", "title": tr("store_src_hack")},
+                {"id": "src_all", "title": tr("store_src_all")},
+                {"id": "src_retrostic", "title": tr("store_src_retrostic")},
+                {"id": "src_archive", "title": tr("store_src_archive")},
+                {"id": "back", "title": tr("back_store_menu")}
+            ]
+
+        # ROM SOURCE SYSTEMS SELECTION (CHỌN HỆ MÁY)
+        # J2ME SHELVES: the source groups its jars into topic folders, and 2713
+        # titles in one flat list is unusable.
+        elif current_screen == "rom_java_cats":
+            header_title = tr("java_cat_title")
+            if not java_cats_cache:
+                java_cats_cache = get_java_category_list()
+            for code, cnt in java_cats_cache:
+                if code == "ALL":
+                    label = tr("java_cat_all")
+                elif code == "":
+                    label = tr("java_cat_none")
+                else:
+                    label = code
+                items.append({"id": f"javacat_{code}", "java_cat": code,
+                              "title": f"• {label} ({cnt})"})
+            items.append({"id": "back", "title": tr("back_store_menu")})
+
+        elif current_screen == "rom_source_systems":
+            src_titles = {
+                "VIET": "GAME VIỆT HÓA" if state.current_lang == "VI" else "VIETNAMESE GAMES",
+                "HACK": "KHO ROM HACKS & MODS" if state.current_lang == "VI" else "ROM HACKS & MODS",
+                "HITS": "TOP GAME HAY" if state.current_lang == "VI" else "TOP GAMES",
+                "JAVA": "GAME JAVA (J2ME)" if state.current_lang == "VI" else "JAVA GAMES",
+                "ALL": "TẤT CẢ HỆ MÁY" if state.current_lang == "VI" else "ALL SYSTEMS",
+                "RETROSTIC": "NGUỒN RETROSTIC CDN" if state.current_lang == "VI" else "RETROSTIC CDN",
+                "ARCHIVE": "NGUỒN INTERNET ARCHIVE" if state.current_lang == "VI" else "INTERNET ARCHIVE"
+            }
+            s_name_header = src_titles.get(current_source, "KHO GAME")
+            header_title = f"{s_name_header} - CHỌN HỆ MÁY" if state.current_lang == "VI" else f"{s_name_header} - SELECT SYSTEM"
+
+            if src_sys_cache_key != current_source:
+                src_sys_cache = get_source_systems_list(current_source)
+                src_sys_cache_key = current_source
+            sys_list = src_sys_cache
+            for sc, count in sys_list:
+                if sc == "ALL":
+                    items.append({"id": "sys_ALL", "sys_code": "ALL", "title": f"• {tr('source_systems_all')} ({count} Games)"})
+                else:
+                    disp_name = get_system_display_name(sc)
+                    items.append({"id": f"sys_{sc}", "sys_code": sc, "title": f"• {disp_name} ({count} Games)"})
+            items.append({"id": "back", "title": "< Quay lại danh mục" if state.current_lang == "VI" else "< Back to Categories"})
+
+        # DOWNLOAD MANAGER SCREEN
+        elif current_screen == "download_manager":
+            header_title = tr("dl_mgr_title")
+            
+            is_dl_running = dl_state.get("active") or dl_state.get("status") in ("downloading", "extracting")
+            if is_dl_running:
+                items.append({
+                    "id": "dl_active_card",
+                    "title": f"[{dl_state['sys_code']}] {dl_state['title']}",
+                    "is_active_dl": True
+                })
+            else:
+                items.append({
+                    "id": "dl_no_active",
+                    "title": tr("dl_no_active"),
+                    "is_disabled": True
+                })
+                
+            q_items = queued_items()
+            for q_i, (q_sys, q_game) in enumerate(q_items, start=1):
+                items.append({
+                    "id": f"dl_queued_{q_i}",
+                    "title": f"{q_i}. [{q_game.get('sys_code') or q_sys}] {q_game.get('title', '?')}",
+                    "label": tr("dl_queue_badge"),
+                    "sub": True,
+                    "is_disabled": True
+                })
+            if q_items:
+                items.append({"id": "dl_clear_queue", "title": tr("dl_clear_queue"),
+                              "label": str(len(q_items))})
+
+            items.append({"id": "back", "title": tr("back_store_menu")})
+
+        # DOWNLOADED GAMES: List items
+        elif current_screen == "downloaded_games":
+            _lib_tag = "" if current_lib_sys == "ALL" else f" - {current_lib_sys}"
+            header_title = f"{tr('dl_view_title')}{_lib_tag} [{len(lib_games_list)}]"
+            for idx, dg in enumerate(lib_games_list):
+                sz_str = dg.get("size_str", "")
+                sz_disp = f" [{sz_str}]" if sz_str and sz_str not in ("TOPO SHOP", "TOPO") else ""
+                items.append({
+                    "id": f"dl_{idx}",
+                    "game_idx": idx,
+                    "title": f"{idx+1}. [{dg['sys_code']}] {dg['title']}{sz_disp}",
+                    "game_data": dg
+                })
+            if not items:
+                items.append({"id": "empty", "title": tr("empty_dl")})
+            items.append({"id": "back", "title": tr("back_store_menu")})
+
+        # NETWORK SERVICES: Only Toggles and View Guide / Info [XEM] show badges
+        elif current_screen == "network":
+            header_title = tr("net_title")
+            items.append({"id": "sftp_toggle", "title": tr("sftp_item"), "type": "toggle", "state": sftp_on})
+            if sftp_on:
+                items.append({"id": "sftp_guide", "title": tr("sftp_guide"), "label": tr("view"), "sub": True})
+            items.append({"id": "ssh_toggle", "title": tr("ssh_item"), "type": "toggle", "state": ssh_on})
+            if ssh_on:
+                items.append({"id": "ssh_guide", "title": tr("ssh_guide"), "label": tr("view"), "sub": True})
+            items.append({"id": "adb_toggle", "title": tr("adb_item"), "type": "toggle", "state": adb_on})
+            items.append({"id": "mtp_toggle", "title": tr("mtp_item"), "type": "toggle", "state": mtp_on})
+            # The streamer is a service you switch on like the rest, so it belongs
+            # here rather than among the tools.
+            items.append({"id": "stream_toggle", "title": tr("stream_item"), "type": "toggle", "state": streamer_on})
+            if streamer_on:
+                items.append({"id": "stream_guide", "title": tr("stream_guide"), "label": tr("view"), "sub": True})
+            items.append({"id": "wifi_ps_toggle", "title": tr("wifi_ps_item"), "type": "toggle", "state": wifi_awake_on})
+            number_items(items)
+            items.append({"id": "back", "title": tr("back_home")})
+
+        # ROM SYSTEMS LIST (LEGACY/FALLBACK)
+        elif current_screen == "rom_systems":
+            header_title = tr("sys_select_title")
+            for code, cnt in get_source_systems_list("ALL"):
+                if code == "ALL":
+                    continue
+                items.append({"id": f"sys_{code}", "sys_code": code,
+                              "title": f"{get_system_display_name(code)}  ({cnt})"})
+            items.append({"id": "back", "title": tr("back_store_menu")})
+
+        # ROM GAMES LIST: Show status badge [ĐÃ CÓ] / [TẢI]
+        elif current_screen == "rom_games":
+            _gkey = (current_source, current_rom_system, state.rom_sort_mode, current_java_cat)
+            if _gkey != rom_games_cache_key:
+                rom_games_cache = get_games_for_view(
+                    current_source, current_rom_system,
+                    category=current_java_cat if current_source == "JAVA" else None)
+                rom_games_cache_key = _gkey
+            games_list = rom_games_cache
+            total_g = len(games_list)
+            cur_pos = selected_idx + 1 if total_g > 0 else 0
+            
+            
+            src_titles = {
+                "VIET": "Game Việt Hóa" if state.current_lang == "VI" else "Vietnamese Games",
+                "HACK": "ROM Hacks & Mods" if state.current_lang == "VI" else "ROM Hacks",
+                "HITS": "Top 100 Game" if state.current_lang == "VI" else "Top 100 Games",
+                "JAVA": "Game Java (J2ME)" if state.current_lang == "VI" else "Java Games",
+                "RETROSTIC": "Retrostic CDN" if state.current_lang == "VI" else "Retrostic CDN",
+                "ARCHIVE": "Internet Archive" if state.current_lang == "VI" else "Internet Archive",
+                "ALL": "Kho Game Online" if state.current_lang == "VI" else "Online Games"
+            }
+            
+            sys_disp = get_system_display_name(current_rom_system) if current_rom_system != "ALL" else ("Tất cả hệ máy" if state.current_lang == "VI" else "All Systems")
+            s_name = src_titles.get(current_source, "Game")
+            
+            if current_source == "HITS":
+                header_title = f"Top 100 Game {sys_disp} [{cur_pos}/{total_g}]"
+            elif current_source == "HACK":
+                header_title = f"ROM Hacks {sys_disp} [{cur_pos}/{total_g}]"
+            elif current_source == "JAVA":
+                _jc = ("" if current_java_cat == "ALL"
+                       else f" - {tr('java_cat_none') if current_java_cat == '' else current_java_cat}")
+                header_title = f"Game Java J2ME{_jc} [{cur_pos}/{total_g}]"
+            elif current_source == "VIET":
+                header_title = f"Game Việt Hóa {sys_disp} [{cur_pos}/{total_g}]"
+            else:
+                if current_rom_system == "ALL":
+                    header_title = f"{s_name} - Tất cả [{cur_pos}/{total_g}]"
+                else:
+                    header_title = f"{sys_disp} [{cur_pos}/{total_g}]"
+
+            for idx, g in enumerate(games_list):
+                # Catalogue rows may store a category path here, but only
+                # the last component is the name the file has on disk.
+                fn = os.path.basename(str(g.get("filename", "")).replace("\\", "/"))
+                base_name = os.path.splitext(fn)[0]
+                g_sys = g.get("sys_code") or (current_rom_system if current_rom_system != "ALL" else "ROM")
+                if g_sys in ("VIET", "HITS", "TOPO", "ARCHIVE", "ALL"):
+                    g_sys = g.get("sys_code") or "ROM"
+
+                rom_dir = state.catalogs.get(g_sys, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{g_sys}")
+                img_dir = state.catalogs.get(g_sys, {}).get("img_dir", f"{SDCARD_PATH}/Imgs/{g_sys}")
+                local_files = get_local_cache(g_sys)
+
+                is_downloaded = (fn in local_files)
+                found_rom_path = local_files.get(fn) if is_downloaded else None
+
+                if not is_downloaded:
+                    for ext in VALID_EXTS:
+                        cand = base_name + ext
+                        if cand in local_files:
+                            is_downloaded = True
+                            found_rom_path = local_files.get(cand)
+                            break
+
+                img_p = os.path.join(img_dir, f"{base_name}.png")
+                if not os.path.exists(img_p):
+                    img_p = os.path.join(img_dir, f"{base_name}.jpg")
+                if not os.path.exists(img_p):
+                    img_p = None
+
+                # Owned > downloading > queued > available, so a game already in
+                # flight cannot be started again from the list.
+                if is_downloaded:
+                    badge_lbl = tr("have_badge")
+                else:
+                    _dst = download_state_for(g)
+                    badge_lbl = (tr("dling_badge") if _dst == "downloading"
+                                 else tr("dl_queue_badge") if _dst == "queued"
+                                 else tr("download_badge"))
+
+                g_title = g.get("title", "Game")
+                disp_title = f"{idx+1}. [{g_sys}] {g_title}"
+                
+                dl_count = g.get("download_count", 0)
+                if dl_count and dl_count > 0:
+                    dl_str = f"{dl_count/1000:.1f}k" if dl_count >= 1000 else str(dl_count)
+                    disp_title += f" [{dl_str} dl]"
+                elif g.get("file_size_str"):
+                    disp_title += f" [{g.get('file_size_str')}]"
+
+                items.append({
+                    "id": f"game_{idx}",
+                    "game_idx": idx,
+                    "game_info": g,
+                    "sys_code": g_sys,
+                    "title": disp_title,
+                    "label": badge_lbl,
+                    "downloaded": is_downloaded,
+                    "rom_path": found_rom_path if found_rom_path else os.path.join(rom_dir, fn),
+                    "img_path": img_p
+                })
+            if current_source == "VIET":
+                items.append({"id": "back", "title": tr("back_store_menu")})
+            else:
+                items.append({"id": "back", "title": tr("back_systems")})
+
+        # SEARCH RESULTS: Show status badge [ĐÃ CÓ] / [TẢI]
+        elif current_screen == "search_results":
+            cur_filter_sys = sys_keys_list[search_sys_idx]
+            header_title = f"{tr('search_res_title')}: '{search_query}' [{len(search_results_list)}]"
+
+            for idx, r in enumerate(search_results_list):
+                g = r["game_info"]
+                s_code = r["sys_code"]
+                rom_dir = state.catalogs.get(s_code, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{s_code}")
+                img_dir = state.catalogs.get(s_code, {}).get("img_dir", f"{SDCARD_PATH}/Imgs/{s_code}")
+                local_files = get_local_cache(s_code)
+                # Catalogue rows may store a category path here, but only
+                # the last component is the name the file has on disk.
+                fn = os.path.basename(str(g.get("filename", "")).replace("\\", "/"))
+                base_name = os.path.splitext(fn)[0]
+
+                is_downloaded = (fn in local_files)
+                found_rom_path = local_files.get(fn) if is_downloaded else None
+                if not is_downloaded:
+                    for ext in VALID_EXTS:
+                        cand = base_name + ext
+                        if cand in local_files:
+                            is_downloaded = True
+                            found_rom_path = local_files.get(cand)
+                            break
+
+                img_p = os.path.join(img_dir, f"{base_name}.png")
+                if not os.path.exists(img_p):
+                    img_p = os.path.join(img_dir, f"{base_name}.jpg")
+                if not os.path.exists(img_p):
+                    img_p = None
+
+                # Owned > downloading > queued > available, so a game already in
+                # flight cannot be started again from the list.
+                if is_downloaded:
+                    badge_lbl = tr("have_badge")
+                else:
+                    _dst = download_state_for(g)
+                    badge_lbl = (tr("dling_badge") if _dst == "downloading"
+                                 else tr("dl_queue_badge") if _dst == "queued"
+                                 else tr("download_badge"))
+                g_title = g.get("title", "Game")
+                disp_title = f"{idx+1}. [{s_code}] {g_title}"
+                sz = (g.get("file_size_str") or g.get("size") or "").strip()
+                if sz and sz not in ("TOPO SHOP", "TOPO"):
+                    disp_title += f" [{sz}]"
+
+                items.append({
+                    "id": f"res_{idx}",
+                    "game_info": g,
+                    "sys_code": s_code,
+                    "title": disp_title,
+                    "label": badge_lbl,
+                    "downloaded": is_downloaded,
+                    "rom_path": found_rom_path if found_rom_path else os.path.join(rom_dir, fn),
+                    "img_path": img_p
+                })
+            if not items:
+                items.append({"id": "empty", "title": tr("no_res")})
+            items.append({"id": "back", "title": tr("back_search")})
+
+        # Bounds check
+        if selected_idx >= len(items):
+            selected_idx = len(items) - 1
+        if selected_idx < 0:
+            selected_idx = 0
+        selected_indices[current_screen] = selected_idx
+
+        # ----------------------------------------------------------------------
+        # EVENT HANDLING - PRECISE PHYSICAL BUTTON MAPPING
+        # ----------------------------------------------------------------------
+        btn_up = False
+        btn_down = False
+        btn_left = False
+        btn_right = False
+        btn_l1 = False
+        btn_r1 = False
+        btn_a = False
+        btn_b = False
+        btn_x = False
+        btn_y = False
+        btn_start = False
+        btn_f1 = False
+
+        event = sdl2.SDL_Event()
+        while sdl2.SDL_PollEvent(event) != 0:
+            etype = event.type
+
+            if etype == sdl2.SDL_QUIT:
+                running = False
+
+            elif etype == sdl2.SDL_CONTROLLERBUTTONDOWN:
+                cbtn = event.cbutton.button
+                if cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    btn_up = True
+                    key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    btn_down = True
+                    key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                    btn_left = True
+                    key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    btn_right = True
+                    key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+                    btn_l1 = True
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+                    btn_r1 = True
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_B: # Physical A (East)
+                    btn_a = True
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_A: # Physical B (South)
+                    btn_b = True
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_Y: # Physical X (North)
+                    btn_x = True
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_X: # Physical Y (West)
+                    btn_y = True
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_START:
+                    btn_start = True
+                elif cbtn in [sdl2.SDL_CONTROLLER_BUTTON_BACK, sdl2.SDL_CONTROLLER_BUTTON_GUIDE]:
+                    btn_f1 = True
+
+            elif etype == sdl2.SDL_CONTROLLERBUTTONUP:
+                cbtn = event.cbutton.button
+                if cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_UP: key_held_state["up"]["pressed"] = False
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_DOWN: key_held_state["down"]["pressed"] = False
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_LEFT: key_held_state["left"]["pressed"] = False
+                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_RIGHT: key_held_state["right"]["pressed"] = False
+
+            elif etype == sdl2.SDL_CONTROLLERAXISMOTION:
+                val = event.caxis.value
+                if event.caxis.axis == sdl2.SDL_CONTROLLER_AXIS_LEFTY:
+                    if val < -15000:
+                        if not key_held_state["up"]["pressed"]:
+                            btn_up = True
+                            key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["down"]["pressed"] = False
+                    elif val > 15000:
+                        if not key_held_state["down"]["pressed"]:
+                            btn_down = True
+                            key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["up"]["pressed"] = False
+                    elif abs(val) <= 10000:
+                        key_held_state["up"]["pressed"] = False
+                        key_held_state["down"]["pressed"] = False
+
+                elif event.caxis.axis == sdl2.SDL_CONTROLLER_AXIS_LEFTX:
+                    if val < -15000:
+                        if not key_held_state["left"]["pressed"]:
+                            btn_left = True
+                            key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["right"]["pressed"] = False
+                    elif val > 15000:
+                        if not key_held_state["right"]["pressed"]:
+                            btn_right = True
+                            key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["left"]["pressed"] = False
+                    elif abs(val) <= 10000:
+                        key_held_state["left"]["pressed"] = False
+                        key_held_state["right"]["pressed"] = False
+
+            elif not has_controller and etype == sdl2.SDL_JOYBUTTONDOWN:
+                jbtn = event.jbutton.button
+                if jbtn == 1:
+                    btn_a = True
+                elif jbtn == 0:
+                    btn_b = True
+                elif jbtn in [8, 11, 13]:
+                    btn_up = True
+                    key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif jbtn in [9, 12, 14]:
+                    btn_down = True
+                    key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif jbtn in [4, 6]:
+                    btn_l1 = True
+                elif jbtn in [5, 7]:
+                    btn_r1 = True
+                elif jbtn == 3: # Physical X
+                    btn_x = True
+                elif jbtn == 2: # Physical Y
+                    btn_y = True
+                elif jbtn == 10:
+                    btn_f1 = True
+                elif jbtn == 9:
+                    btn_start = True
+
+            elif not has_controller and etype == sdl2.SDL_JOYBUTTONUP:
+                jbtn = event.jbutton.button
+                if jbtn in [8, 11, 13]: key_held_state["up"]["pressed"] = False
+                elif jbtn in [9, 12, 14]: key_held_state["down"]["pressed"] = False
+
+            elif etype == sdl2.SDL_JOYAXISMOTION:
+                j_axis = event.jaxis.axis
+                j_val = event.jaxis.value
+                if j_axis == 1: # Left Y axis
+                    if j_val < -15000:
+                        if not key_held_state["up"]["pressed"]:
+                            btn_up = True
+                            key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["down"]["pressed"] = False
+                    elif j_val > 15000:
+                        if not key_held_state["down"]["pressed"]:
+                            btn_down = True
+                            key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["up"]["pressed"] = False
+                    elif abs(j_val) <= 10000:
+                        key_held_state["up"]["pressed"] = False
+                        key_held_state["down"]["pressed"] = False
+
+                elif j_axis == 0: # Left X axis
+                    if j_val < -15000:
+                        if not key_held_state["left"]["pressed"]:
+                            btn_left = True
+                            key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["right"]["pressed"] = False
+                    elif j_val > 15000:
+                        if not key_held_state["right"]["pressed"]:
+                            btn_right = True
+                            key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                            key_held_state["left"]["pressed"] = False
+                    elif abs(j_val) <= 10000:
+                        key_held_state["left"]["pressed"] = False
+                        key_held_state["right"]["pressed"] = False
+
+            elif etype == sdl2.SDL_JOYHATMOTION:
+                hat_val = event.jhat.value
+                if hat_val & sdl2.SDL_HAT_UP:
+                    if not key_held_state["up"]["pressed"]:
+                        btn_up = True
+                        key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                else:
+                    key_held_state["up"]["pressed"] = False
+
+                if hat_val & sdl2.SDL_HAT_DOWN:
+                    if not key_held_state["down"]["pressed"]:
+                        btn_down = True
+                        key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                else:
+                    key_held_state["down"]["pressed"] = False
+
+                if hat_val & sdl2.SDL_HAT_LEFT:
+                    if not key_held_state["left"]["pressed"]:
+                        btn_left = True
+                        key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                else:
+                    key_held_state["left"]["pressed"] = False
+
+                if hat_val & sdl2.SDL_HAT_RIGHT:
+                    if not key_held_state["right"]["pressed"]:
+                        btn_right = True
+                        key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                else:
+                    key_held_state["right"]["pressed"] = False
+
+            elif etype == sdl2.SDL_KEYDOWN:
+                sym = event.key.keysym.sym
+                if sym in [sdl2.SDLK_UP, sdl2.SDLK_w]:
+                    btn_up = True
+                    key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif sym in [sdl2.SDLK_DOWN, sdl2.SDLK_s]:
+                    btn_down = True
+                    key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif sym in [sdl2.SDLK_LEFT, sdl2.SDLK_a]:
+                    btn_left = True
+                    key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif sym in [sdl2.SDLK_RIGHT, sdl2.SDLK_d]:
+                    btn_right = True
+                    key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
+                elif sym in [sdl2.SDLK_PAGEUP, sdl2.SDLK_q]:
+                    btn_l1 = True
+                elif sym in [sdl2.SDLK_PAGEDOWN, sdl2.SDLK_e]:
+                    btn_r1 = True
+                elif sym in [sdl2.SDLK_RETURN, sdl2.SDLK_SPACE, sdl2.SDLK_z, sdl2.SDLK_j]:
+                    btn_a = True
+                elif sym in [sdl2.SDLK_ESCAPE, sdl2.SDLK_BACKSPACE, sdl2.SDLK_k]:
+                    btn_b = True
+                elif sym == sdl2.SDLK_x:
+                    btn_x = True
+                elif sym == sdl2.SDLK_y:
+                    btn_y = True
+                elif sym in [sdl2.SDLK_F1, sdl2.SDLK_m]:
+                    btn_f1 = True
+                elif current_screen == "search_input":
+                    if sym == sdl2.SDLK_BACKSPACE:
+                        search_query = search_query[:-1]
+                    elif sym == sdl2.SDLK_RETURN:
+                        btn_start = True
+
+            elif etype == sdl2.SDL_KEYUP:
+                sym = event.key.keysym.sym
+                if sym in [sdl2.SDLK_UP, sdl2.SDLK_w]: key_held_state["up"]["pressed"] = False
+                elif sym in [sdl2.SDLK_DOWN, sdl2.SDLK_s]: key_held_state["down"]["pressed"] = False
+                elif sym in [sdl2.SDLK_LEFT, sdl2.SDLK_a]: key_held_state["left"]["pressed"] = False
+                elif sym in [sdl2.SDLK_RIGHT, sdl2.SDLK_d]: key_held_state["right"]["pressed"] = False
+
+        # Smooth Hold-to-Scroll Autorepeat (Initial delay 260ms, repeat every 75ms)
+        HOLD_DELAY = 0.26
+        REPEAT_INTERVAL = 0.075
+        for k_dir, k_st in key_held_state.items():
+            if k_st["pressed"]:
+                if now - k_st["start_time"] > HOLD_DELAY:
+                    if now - k_st["last_repeat"] > REPEAT_INTERVAL:
+                        if k_dir == "up": btn_up = True
+                        elif k_dir == "down": btn_down = True
+                        elif k_dir == "left": btn_left = True
+                        elif k_dir == "right": btn_right = True
+                        k_st["last_repeat"] = now
+
+        if btn_up or btn_down or btn_left or btn_right or btn_a or btn_b or btn_x or btn_y or btn_start or btn_f1 or btn_l1 or btn_r1:
+            last_user_activity_time = now
+
+        # ----------------------------------------------------------------------
+        # PROCESS UI LOGIC
+        # ----------------------------------------------------------------------
+        if dl_state["active"] and not dl_state.get("is_background", False):
+            if dl_state["status"] in ("downloading", "extracting"):
+                if btn_b or btn_y:
+                    dl_state["is_background"] = True
+                    toast_msg = tr("dl_bg_toast")
+                    toast_timer = time.time()
+                elif btn_x:
+                    cancel_active_download()
+                    toast_msg = tr("dl_cancelled_toast")
+                    toast_timer = time.time()
+
+            elif dl_state["status"] == "success":
+                if btn_left or btn_up:
+                    dl_state["selected_opt"] = 0
+                elif btn_right or btn_down:
+                    dl_state["selected_opt"] = 1
+                elif btn_b:
+                    dl_state["active"] = False
+                    dl_state["status"] = "idle"
+                    if start_next_queued():
+                        toast_msg = tr("dl_queue_next")
+                        toast_timer = time.time()
+                elif btn_a:
+                    opt = dl_state["selected_opt"]
+                    rom_p = dl_state.get("extracted_rom_path", "")
+                    sys_c = dl_state.get("sys_code", "")
+                    dl_state["active"] = False
+                    dl_state["status"] = "idle"
+
+                    launched = False
+                    if opt == 0 and rom_p and os.path.exists(rom_p):
+                        ok, err_msg = launch_emulator_game(sys_c, rom_p)
+                        launched = ok
+                        if not ok:
+                            toast_msg = err_msg
+                            toast_timer = time.time()
+
+                    # Pointless to start a queued download when the app is about to
+                    # hand off to the emulator and exit.
+                    if not launched and start_next_queued():
+                        toast_msg = tr("dl_queue_next")
+                        toast_timer = time.time()
+
+            elif dl_state["status"] in ("error", "cancelled"):
+                if btn_b or btn_a or btn_x or btn_y or btn_start or btn_f1:
+                    dl_state["active"] = False
+                    dl_state["status"] = "idle"
+                    dl_state["msg"] = ""
+                    if start_next_queued():
+                        toast_msg = tr("dl_queue_next")
+                        toast_timer = time.time()
+        elif qr_modal["active"]:
+            _np = len(qr_modal["pages"])
+            if (btn_l1 or btn_left) and _np > 1:
+                qr_modal["page"] = (qr_modal["page"] - 1) % _np
+            elif (btn_r1 or btn_right) and _np > 1:
+                qr_modal["page"] = (qr_modal["page"] + 1) % _np
+            elif btn_a or btn_b:
+                qr_modal["active"] = False
+        elif pick_modal["active"]:
+            rows = pick_modal["rows"]
+            if btn_up:
+                pick_modal["selected_idx"] = (pick_modal["selected_idx"] - 1) % len(rows)
+            elif btn_down:
+                pick_modal["selected_idx"] = (pick_modal["selected_idx"] + 1) % len(rows)
+            elif btn_b or btn_f1:
+                pick_modal["active"] = False
+            elif btn_a:
+                chosen = rows[pick_modal["selected_idx"]][0]
+                target = pick_modal["target"]
+                pick_modal["active"] = False
+                if target == "lib_sys":
+                    current_lib_sys = chosen
+                    # The cursor indexes the filtered list, so a narrower filter
+                    # would leave it pointing past the end.
+                    selected_idx = 0
+                    selected_indices["downloaded_games"] = 0
+                    scroll_offsets["downloaded_games"] = 0
+                    toast_msg = (tr("lib_filter_all") if chosen == "ALL"
+                                 else f"{tr('lib_filter_on')}{chosen}")
+                    toast_timer = time.time()
+                elif target == "search_sys":
+                    search_sys_idx = sys_keys_list.index(chosen) if chosen in sys_keys_list else 0
+                elif target == "search_src":
+                    search_source = chosen
+        elif update_modal["active"]:
+            if update_modal["busy"]:
+                # The install thread owns the modal; swallow input so a stray
+                # press cannot dismiss it while files are being replaced.
+                pass
+            elif update_modal["failed"]:
+                if btn_a or btn_b:
+                    update_modal["active"] = False
+            elif btn_left:
+                update_modal["selected_opt"] = (update_modal["selected_opt"] - 1) % 3
+            elif btn_right:
+                update_modal["selected_opt"] = (update_modal["selected_opt"] + 1) % 3
+            elif btn_b:
+                update_modal["active"] = False
+            elif btn_a:
+                opt = update_modal["selected_opt"]
+                if opt == 1:
+                    skip_version(update_modal["manifest"]["version"])
+                    update_modal["active"] = False
+                    toast_msg = tr("upd_skipped")
+                    toast_timer = time.time()
+                elif opt == 2:
+                    update_modal["active"] = False
+                else:
+                    update_modal["busy"] = True
+                    update_modal["status"] = tr("upd_downloading")
+                    threading.Thread(target=run_update, daemon=True).start()
+        elif pre_download_modal["active"]:
+            if btn_left or btn_up:
+                pre_download_modal["selected_opt"] = 0
+            elif btn_right or btn_down:
+                pre_download_modal["selected_opt"] = 1
+            elif btn_b:
+                pre_download_modal["active"] = False
+            elif btn_a:
+                opt = pre_download_modal["selected_opt"]
+                g_info = pre_download_modal["game_info"]
+                sys_c = pre_download_modal["sys_code"]
+                pre_download_modal["active"] = False
+                if opt == 0:
+                    q_msg = enqueue_download(sys_c, g_info)
+                    if q_msg:
+                        toast_msg = q_msg
+                        toast_timer = time.time()
+        elif alphabet_modal["active"]:
+            if btn_left:
+                alphabet_modal["selected_idx"] = (alphabet_modal["selected_idx"] - 1) % 27
+            elif btn_right:
+                alphabet_modal["selected_idx"] = (alphabet_modal["selected_idx"] + 1) % 27
+            elif btn_up:
+                alphabet_modal["selected_idx"] = (alphabet_modal["selected_idx"] - 9) % 27
+            elif btn_down:
+                alphabet_modal["selected_idx"] = (alphabet_modal["selected_idx"] + 9) % 27
+            elif btn_b or btn_x:
+                alphabet_modal["active"] = False
+            elif btn_a:
+                sel_let = alphabet_modal["letters"][alphabet_modal["selected_idx"]]
+                if sel_let in alphabet_modal["available_map"]:
+                    target_idx = alphabet_modal["available_map"][sel_let]
+                    selected_idx = target_idx
+                    selected_indices["rom_games"] = target_idx
+                    scroll_offsets["rom_games"] = target_idx
+                    alphabet_modal["active"] = False
+                    cnt = alphabet_modal["counts_map"].get(sel_let, 0)
+                    toast_msg = f"{tr('alpha_jump_toast')}{sel_let} ({cnt} game)" if state.current_lang == "VI" else f"{tr('alpha_jump_toast')}{sel_let} ({cnt} games)"
+                    toast_timer = time.time()
+                else:
+                    toast_msg = f"{tr('alpha_no_games')}'{sel_let}'"
+                    toast_timer = time.time()
+
+        elif j2me_modal["active"]:
+            if btn_b or btn_x:
+                if not j2me_modal["busy"]:
+                    j2me_modal["active"] = False
+            elif btn_a and not j2me_modal["busy"]:
+                j2me_modal["busy"] = True
+                j2me_modal["pending"] = True
+
+        elif key_modal["active"]:
+            n_opt = len(VALID_BUTTONS) + 1          # +1 for the "unassigned" row
+            if btn_up or btn_left:
+                key_modal["selected_idx"] = (key_modal["selected_idx"] - 1) % n_opt
+            elif btn_down or btn_right:
+                key_modal["selected_idx"] = (key_modal["selected_idx"] + 1) % n_opt
+            elif btn_b or btn_x:
+                key_modal["active"] = False
+            elif btn_a:
+                k = key_modal["key"]
+                idx = key_modal["selected_idx"]
+                pick = "" if idx == 0 else VALID_BUTTONS[idx - 1]
+                old_btn = j2me_keymap.get(k, "")
+                if pick:
+                    # Swap rather than steal: whoever held this button takes the one
+                    # this key is giving up, so no key is silently left unbound.
+                    holder = button_in_use(j2me_keymap, pick, except_key=k)
+                    if holder:
+                        if old_btn:
+                            j2me_keymap[holder] = old_btn
+                        else:
+                            j2me_keymap.pop(holder, None)
+                    j2me_keymap[k] = pick
+                else:
+                    j2me_keymap.pop(k, None)
+                if save_keymap(j2me_keymap):
+                    toast_msg = tr("j2me_keys_saved")
+                    toast_timer = time.time()
+                key_modal["active"] = False
+
+        elif res_modal["active"]:
+            if btn_up or btn_left:
+                res_modal["selected_idx"] = (res_modal["selected_idx"] - 1) % len(RESOLUTIONS)
+            elif btn_down or btn_right:
+                res_modal["selected_idx"] = (res_modal["selected_idx"] + 1) % len(RESOLUTIONS)
+            elif btn_b or btn_x:
+                res_modal["active"] = False
+            elif btn_a:
+                pick = RESOLUTIONS[res_modal["selected_idx"]]
+                cur_path = game_action_modal.get("rom_path", "")
+                res_modal["active"] = False
+                if resolution_of_path(cur_path) != pick:
+                    new_path = move_to_resolution(cur_path, pick)
+                    if new_path:
+                        game_action_modal["rom_path"] = new_path
+                        downloaded_games_list = scan_all_downloaded_games()
+                        toast_msg = f"{tr('res_changed')} {pretty_resolution(pick)}"
+                    else:
+                        toast_msg = "Không di chuyển được" if state.current_lang == "VI" else "Could not move file"
+                    toast_timer = time.time()
+
+        elif game_action_modal["active"]:
+            if btn_left:
+                game_action_modal["selected_opt"] = (game_action_modal["selected_opt"] - 1) % _act_count()
+            elif btn_right:
+                game_action_modal["selected_opt"] = (game_action_modal["selected_opt"] + 1) % _act_count()
+            elif btn_up:
+                game_action_modal["selected_opt"] = (game_action_modal["selected_opt"] - 1) % _act_count()
+            elif btn_down:
+                game_action_modal["selected_opt"] = (game_action_modal["selected_opt"] + 1) % _act_count()
+            elif btn_b:
+                game_action_modal["active"] = False
+            elif btn_a:
+                opt = game_action_modal["selected_opt"]
+                g_info = game_action_modal["game_info"]
+                rom_p = game_action_modal.get("rom_path", "")
+                sys_c = game_action_modal.get("sys_code", current_rom_system)
+                game_action_modal["active"] = False
+
+                act = _act_ids(sys_c)[opt] if opt < len(_act_ids(sys_c)) else "CLOSE"
+                if act == "PLAY":
+                    ok, err_msg = launch_emulator_game(sys_c, rom_p)
+                    if not ok:
+                        toast_msg = err_msg
+                        toast_timer = time.time()
+
+                elif act == "DEL":
+                    if rom_p and os.path.exists(rom_p):
+                        try:
+                            os.remove(rom_p)
+                            toast_msg = tr("deleted_toast")
+                            toast_timer = time.time()
+                            if current_screen == "downloaded_games":
+                                downloaded_games_list = scan_all_downloaded_games()
+                        except Exception as e:
+                            toast_msg = f"Error: {e}"
+                            toast_timer = time.time()
+
+                elif act == "RES":
+                    cur = resolution_of_path(game_action_modal.get("rom_path", ""))
+                    res_modal["selected_idx"] = (RESOLUTIONS.index(cur)
+                                                 if cur in RESOLUTIONS else 0)
+                    res_modal["active"] = True
+                elif act == "REGET":
+                    if g_info:
+                        q_msg = enqueue_download(sys_c, g_info)
+                        if q_msg:
+                            toast_msg = q_msg
+                            toast_timer = time.time()
+                    else:
+                        toast_msg = "Không thể tải lại từ mục này" if state.current_lang == "VI" else "Cannot re-download from here"
+                        toast_timer = time.time()
+
+        # SEARCH INPUT: PHYSICAL X = SPACE, PHYSICAL Y = DEL, L1/R1 = SYSTEM FILTER
+        elif current_screen == "search_input":
+            if btn_l1:
+                # Cycling with the shoulders meant stepping through 30 systems one
+                # press at a time; a list is one press to the one you want.
+                rows = [(c, tr("search_scope_all") if c == "ALL" else get_system_display_name(c),
+                         str(_sys_counts.get(c, 0)) if c != "ALL" else "")
+                        for c in sys_keys_list]
+                open_picker(tr("search_pick_sys"), rows, "search_sys",
+                            sys_keys_list[search_sys_idx])
+            elif btn_r1:
+                rows = [(c, tr(f"src_{c.lower()}"), "") for c in SEARCH_SOURCES]
+                open_picker(tr("search_pick_src"), rows, "search_src", search_source)
+            elif btn_up:
+                r, c = kb_cursor
+                r = (r - 1) % len(kb_rows)
+                c = min(c, len(kb_rows[r]) - 1)
+                kb_cursor = [r, c]
+            elif btn_down:
+                r, c = kb_cursor
+                r = (r + 1) % len(kb_rows)
+                c = min(c, len(kb_rows[r]) - 1)
+                kb_cursor = [r, c]
+            elif btn_left:
+                r, c = kb_cursor
+                c = (c - 1) % len(kb_rows[r])
+                kb_cursor = [r, c]
+            elif btn_right:
+                r, c = kb_cursor
+                c = (c + 1) % len(kb_rows[r])
+                kb_cursor = [r, c]
+            elif btn_x: # Physical X = Space
+                search_query += " "
+            elif btn_y: # Physical Y = Delete
+                search_query = search_query[:-1]
+            elif btn_b:
+                screen_stack.pop()
+            elif btn_start:
+                q_clean = search_query.strip().lower()
+                if q_clean:
+                    target_sys = sys_keys_list[search_sys_idx]
+                    if db and os.path.exists(db.DB_PATH):
+                        raw_fts = db.search_games_fts(q_clean, sys_code=target_sys, limit=150,
+                                                      source_type=search_source)
+                        search_results_list = [{"sys_code": g["sys_code"], "game_info": g} for g in raw_fts]
+                    else:
+                        seen_keys = set()
+                        search_results_list = []
+                        target_systems = ["GBA", "SFC", "FC", "MD", "GB", "GBC", "GG", "MS", "NDS", "PICO8", "ARCADE"] if target_sys == "ALL" else [target_sys]
+                        for sc in target_systems:
+                            s_data = state.catalogs.get(sc, {})
+                            for g in s_data.get("games", []):
+                                fn = g.get("filename", "")
+                                if q_clean in g.get("_s_idx", ""):
+                                    dedup_key = (g.get("sys_code", sc), fn)
+                                    if dedup_key not in seen_keys:
+                                        seen_keys.add(dedup_key)
+                                        search_results_list.append({"sys_code": g.get("sys_code", sc), "game_info": g})
+                    selected_indices["search_results"] = 0
+                    screen_stack.append("search_results")
+                else:
+                    toast_msg = "Vui lòng nhập từ khóa!" if state.current_lang == "VI" else "Please enter search keyword!"
+                    toast_timer = time.time()
+            elif btn_a:
+                r, c = kb_cursor
+                key_val = kb_rows[r][c]
+                if key_val == "SPACE":
+                    search_query += " "
+                elif key_val == "DEL":
+                    search_query = search_query[:-1]
+                elif key_val == "CLEAR":
+                    search_query = ""
+                elif key_val == "SEARCH":
+                    q_clean = search_query.strip().lower()
+                    if q_clean:
+                        target_sys = sys_keys_list[search_sys_idx]
+                        if db and os.path.exists(db.DB_PATH):
+                            raw_fts = db.search_games_fts(q_clean, sys_code=target_sys, limit=150,
+                                                      source_type=search_source)
+                            search_results_list = [{"sys_code": g["sys_code"], "game_info": g} for g in raw_fts]
+                        else:
+                            seen_keys = set()
+                            search_results_list = []
+                            target_systems = ["GBA", "SFC", "FC", "MD", "GB", "GBC", "GG", "MS", "NDS", "PICO8", "ARCADE"] if target_sys == "ALL" else [target_sys]
+                            for sc in target_systems:
+                                s_data = state.catalogs.get(sc, {})
+                                for g in s_data.get("games", []):
+                                    fn = g.get("filename", "")
+                                    if q_clean in g.get("_s_idx", ""):
+                                        dedup_key = (g.get("sys_code", sc), fn)
+                                        if dedup_key not in seen_keys:
+                                            seen_keys.add(dedup_key)
+                                            search_results_list.append({"sys_code": g.get("sys_code", sc), "game_info": g})
+                        selected_indices["search_results"] = 0
+                        screen_stack.append("search_results")
+                    else:
+                        toast_msg = "Vui lòng nhập từ khóa!" if state.current_lang == "VI" else "Please enter search keyword!"
+                        toast_timer = time.time()
+                else:
+                    search_query += key_val.lower()
+
+        elif modal_title:
+            if btn_a or btn_b:
+                modal_title = None
+                modal_rows = None
+                modal_style = None
+
+        else:
+            # Downloaded Games: X = Toggle View Mode, Y = Random Play
+            if current_screen == "download_manager" and btn_x:
+                if dl_state.get("active") or dl_state.get("status") in ("downloading", "extracting"):
+                    cancel_active_download()
+                    toast_msg = tr("dl_cancelled_toast")
+                    toast_timer = time.time()
+
+            elif dl_state.get("active") and dl_state.get("is_background") and btn_f1 and current_screen != "search_input":
+                dl_state["is_background"] = False
+
+            elif current_screen == "downloaded_games" and btn_x:
+                state.downloaded_view_mode = "grid" if state.downloaded_view_mode == "list" else "list"
+                state.save_settings()
+                toast_msg = tr("view_mode_grid") if state.downloaded_view_mode == "grid" else tr("view_mode_list")
+                toast_timer = time.time()
+
+            elif current_screen == "downloaded_games" and btn_f1:
+                # Build the rows from what is actually on the card, so the list
+                # never offers a system with nothing behind it.
+                counts = {}
+                for g in downloaded_games_list:
+                    sc = g.get("sys_code") or "?"
+                    counts[sc] = counts.get(sc, 0) + 1
+                rows = [("ALL", tr("lib_filter_all_row"), str(len(downloaded_games_list)))]
+                rows += [(c, get_system_display_name(c), str(n))
+                         for c, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]
+                open_picker(tr("lib_filter_title"), rows, "lib_sys", current_lib_sys)
+
+            elif current_screen == "downloaded_games" and btn_y and len(lib_games_list) > 0:
+                rand_game = random.choice(lib_games_list)
+                sys_c = rand_game["sys_code"]
+                rom_p = rand_game["rom_path"]
+                toast_msg = f"Random: {rand_game['title']}"
+                toast_timer = time.time()
+                ok, err_msg = launch_emulator_game(sys_c, rom_p)
+                if not ok:
+                    toast_msg = err_msg
+                    toast_timer = time.time()
+
+            elif current_screen == "rom_games" and btn_x:
+                if current_source != "HITS":
+                    state.rom_sort_mode = "alpha" if state.rom_sort_mode == "downloads" else "downloads"
+                    selected_indices["rom_games"] = 0
+                    scroll_offsets["rom_games"] = 0
+                    toast_msg = "Sắp xếp theo Bảng chữ cái (A-Z)" if state.rom_sort_mode == "alpha" else "Sắp xếp theo Lượt tải nhiều nhất"
+                    toast_timer = time.time()
+
+            elif current_screen == "rom_games" and btn_y:
+                # Open Alphabet Quick Jump Modal A-Z
+                games_list = get_games_for_view(current_source, current_rom_system, sort_by="title")
+                avail = {}
+                counts = {}
+                for idx, g in enumerate(games_list):
+                    t = g.get("title", "").strip().upper()
+                    first_ch = t[0] if t and t[0].isalpha() else "#"
+                    if first_ch not in avail:
+                        avail[first_ch] = idx
+                    counts[first_ch] = counts.get(first_ch, 0) + 1
+                alphabet_modal["available_map"] = avail
+                alphabet_modal["counts_map"] = counts
+                alphabet_modal["sys_code"] = current_rom_system
+                alphabet_modal["selected_idx"] = 0
+                alphabet_modal["active"] = True
+
+            elif current_screen == "rom_games" and btn_f1:
+                if current_rom_system in sys_keys_list:
+                    search_sys_idx = sys_keys_list.index(current_rom_system)
+                search_query = ""
+                screen_stack.append("search_input")
+
+            # Grid Navigation in Downloaded Games
+            elif current_screen == "downloaded_games" and state.downloaded_view_mode == "grid" and len(lib_games_list) > 0:
+                cols = 3
+                total_dl = len(lib_games_list)
+
+                if btn_up:
+                    selected_idx = max(0, selected_idx - cols)
+                    selected_indices[current_screen] = selected_idx
+                elif btn_down:
+                    selected_idx = min(total_dl - 1, selected_idx + cols)
+                    selected_indices[current_screen] = selected_idx
+                elif btn_left:
+                    selected_idx = max(0, selected_idx - 1)
+                    selected_indices[current_screen] = selected_idx
+                elif btn_right:
+                    selected_idx = min(total_dl - 1, selected_idx + 1)
+                    selected_indices[current_screen] = selected_idx
+                elif btn_l1: # Page backward 10
+                    selected_idx = max(0, selected_idx - 10)
+                    selected_indices[current_screen] = selected_idx
+                elif btn_r1: # Page forward 10
+                    selected_idx = min(total_dl - 1, selected_idx + 10)
+                    selected_indices[current_screen] = selected_idx
+                elif btn_b:
+                    screen_stack.pop()
+                elif btn_a:
+                    dg = lib_games_list[selected_idx]
+                    game_action_modal["active"] = True
+                    game_action_modal["game_info"] = {"title": dg["title"], "filename": dg["filename"]}
+                    game_action_modal["rom_path"] = dg["rom_path"]
+                    game_action_modal["sys_code"] = dg["sys_code"]
+                    game_action_modal["img_path"] = dg.get("img_path")
+                    game_action_modal["size_str"] = dg.get("size_str", "")
+                    game_action_modal["selected_opt"] = 0
+                    game_action_modal["from_downloaded_view"] = True
+
+            # Standard List Navigation (Supports D-pad & L1 / R1 for 10-item fast scroll)
+            elif btn_up:
+                if selected_idx == 0:
+                    selected_idx = len(items) - 1
+                    scroll_offsets[current_screen] = max(0, len(items) - 6)
+                else:
+                    selected_idx -= 1
+                selected_indices[current_screen] = selected_idx
+            elif btn_down:
+                if selected_idx >= len(items) - 1:
+                    selected_idx = 0
+                    scroll_offsets[current_screen] = 0
+                else:
+                    selected_idx += 1
+                selected_indices[current_screen] = selected_idx
+            elif btn_left or btn_l1: # L1 or Left: Jump back 10
+                selected_idx = max(0, selected_idx - 10)
+                selected_indices[current_screen] = selected_idx
+            elif btn_right or btn_r1: # R1 or Right: Jump forward 10
+                selected_idx = min(len(items) - 1, selected_idx + 10)
+                selected_indices[current_screen] = selected_idx
+            elif btn_b:
+                if modal_rows is not None:
+                    modal_rows = None
+                    modal_title = None
+                    modal_style = None
+                elif current_screen == "file_browser":
+                    if fb_current_path.rstrip("/") != "/mnt/SDCARD" and fb_current_path.rstrip("/") != "":
+                        parent = os.path.dirname(fb_current_path.rstrip("/"))
+                        fb_current_path = parent if parent else "/mnt/SDCARD"
+                        selected_indices["file_browser"] = 0
+                    else:
+                        screen_stack.pop()
+                elif len(screen_stack) > 1:
+                    screen_stack.pop()
+                else:
+                    running = False
+            elif btn_a:
+                # items is rebuilt every frame and can shrink - or be empty for a
+                # frame - while the cursor still points past its end. Clamp before
+                # indexing: unguarded, this raised IndexError and killed the app.
+                if selected_idx >= len(items):
+                    selected_idx = max(0, len(items) - 1)
+                    selected_indices[current_screen] = selected_idx
+                cur_item = items[selected_idx] if items else {}
+                item_id = cur_item.get("id", "")
+
+                if item_id == "nav_network":
+                    screen_stack.append("network")
+                elif item_id == "nav_rom_store_menu":
+                    bat_cap, bat_chg = get_battery_info()
+                    if bat_cap < 30 and not bat_chg:
+                        toast_msg = tr("low_battery_warn")
+                        toast_timer = time.time()
+                    screen_stack.append("rom_store_menu")
+                elif item_id == "nav_utilities":
+                    selected_indices["utilities"] = 0
+                    screen_stack.append("utilities")
+                elif item_id == "nav_j2me_keys":
+                    j2me_keymap = load_keymap()
+                    selected_indices["j2me_keys"] = 0
+                    screen_stack.append("j2me_keys")
+                elif item_id.startswith("j2mekey_"):
+                    k = cur_item.get("j2me_key")
+                    cur_btn = j2me_keymap.get(k, "")
+                    key_modal["key"] = k
+                    key_modal["selected_idx"] = (VALID_BUTTONS.index(cur_btn) + 1
+                                                 if cur_btn in VALID_BUTTONS else 0)
+                    key_modal["active"] = True
+                elif item_id == "j2me_keys_reset":
+                    j2me_keymap = dict(DEFAULT_KEYMAP)
+                    save_keymap(j2me_keymap)
+                    toast_msg = tr("j2me_keys_saved")
+                    toast_timer = time.time()
+                elif item_id == "nav_settings":
+                    selected_indices["settings"] = 0
+                    screen_stack.append("settings")
+                elif item_id == "toggle_autoupdate":
+                    state.auto_update = not state.auto_update
+                    state.save_settings()
+                elif item_id == "nav_splash":
+                    splash_images_list = scan_splash_images()
+                    selected_indices["splash_manager"] = 0
+                    screen_stack.append("splash_manager")
+                elif current_screen == "splash_preview":
+                    ok, msg = apply_splash_update(SPLASH_TEMP_PREVIEW)
+                    toast_msg = msg
+                    toast_timer = time.time()
+                    screen_stack.pop()
+                elif current_screen == "splash_manager":
+                    if item_id == "splash_restore":
+                        ok, msg = restore_original_splash()
+                        toast_msg = msg
+                        toast_timer = time.time()
+                    elif item_id == "splash_browse_sd":
+                        fb_current_path = "/mnt/SDCARD"
+                        selected_indices["file_browser"] = 0
+                        screen_stack.append("file_browser")
+                    elif item_id == "back":
+                        screen_stack.pop()
+                    elif "img_data" in cur_item:
+                        src_p = cur_item["path"]
+                        toast_msg = tr("splash_converting")
+                        toast_timer = time.time()
+                        ok = convert_and_fit_splash(src_p, SPLASH_TEMP_PREVIEW, width=state.SCREEN_W, height=state.SCREEN_H)
+                        if ok:
+                            get_texture_and_size(SPLASH_TEMP_PREVIEW, force_reload=True)
+                            splash_preview_path = SPLASH_TEMP_PREVIEW
+                            splash_preview_orig_name = cur_item["title"]
+                            screen_stack.append("splash_preview")
+                        else:
+                            toast_msg = tr("splash_err")
+                            toast_timer = time.time()
+                elif current_screen == "file_browser":
+                    if cur_item.get("id") == "fb_empty":
+                        pass
+                    elif cur_item.get("type") == "dir" or item_id == "fb_up":
+                        fb_current_path = cur_item["path"]
+                        selected_indices["file_browser"] = 0
+                    elif cur_item.get("type") == "file":
+                        src_p = cur_item["path"]
+                        toast_msg = tr("splash_converting")
+                        toast_timer = time.time()
+                        ok = convert_and_fit_splash(src_p, SPLASH_TEMP_PREVIEW, width=state.SCREEN_W, height=state.SCREEN_H)
+                        if ok:
+                            get_texture_and_size(SPLASH_TEMP_PREVIEW, force_reload=True)
+                            splash_preview_path = SPLASH_TEMP_PREVIEW
+                            splash_preview_orig_name = cur_item["filename"]
+                            screen_stack.append("splash_preview")
+                        else:
+                            toast_msg = tr("splash_err")
+                            toast_timer = time.time()
+                elif item_id == "nav_downloaded":
+                    downloaded_games_list = scan_all_downloaded_games()
+                    selected_indices["downloaded_games"] = 0
+                    scroll_offsets["downloaded_games"] = 0
+                    screen_stack.append("downloaded_games")
+                elif item_id in ("nav_search", "nav_search_global", "nav_search_fts"):
+                    selected_indices["search_input"] = 0
+                    scroll_offsets["search_input"] = 0
+                    screen_stack.append("search_input")
+                elif item_id == "nav_online_categories":
+                    selected_indices["rom_online_categories"] = 0
+                    scroll_offsets["rom_online_categories"] = 0
+                    screen_stack.append("rom_online_categories")
+                elif item_id == "nav_dl_manager":
+                    selected_indices["download_manager"] = 0
+                    scroll_offsets["download_manager"] = 0
+                    screen_stack.append("download_manager")
+                elif current_screen == "download_manager":
+                    if item_id == "dl_active_card":
+                        dl_state["is_background"] = False
+                    elif item_id == "dl_clear_queue":
+                        n = clear_download_queue()
+                        toast_msg = f"{tr('dl_queue_cleared')} ({n})"
+                        toast_timer = time.time()
+                    elif item_id == "back":
+                        screen_stack.pop()
+                elif item_id in ("src_viet", "src_hack", "src_hits", "src_archive", "src_retrostic", "src_all", "src_java", "src_fav"):
+                    src_map = {
+                        "src_viet": "VIET",
+                        "src_hack": "HACK",
+                        "src_hits": "HITS",
+                        "src_java": "JAVA",
+                        "src_retrostic": "RETROSTIC",
+                        "src_archive": "ARCHIVE",
+                        "src_all": "ALL",
+                        "src_fav": "FAV"
+                    }
+                    current_source = src_map[item_id]
+                    if current_source == "JAVA":
+                        current_rom_system = "JAVA"
+                        current_java_cat = "ALL"
+                        java_cats_cache = []
+                        selected_indices["rom_java_cats"] = 0
+                        scroll_offsets["rom_java_cats"] = 0
+                        screen_stack.append("rom_java_cats")
+                    else:
+                        selected_indices["rom_source_systems"] = 0
+                        scroll_offsets["rom_source_systems"] = 0
+                        screen_stack.append("rom_source_systems")
+                elif item_id.startswith("javacat_"):
+                    current_java_cat = cur_item.get("java_cat", "ALL")
+                    selected_indices["rom_games"] = 0
+                    scroll_offsets["rom_games"] = 0
+                    screen_stack.append("rom_games")
+                elif item_id.startswith("sys_"):
+                    # Both the source-filtered and the legacy system screens build
+                    # their tiles with a sys_ id; without this branch pressing A
+                    # did nothing, even though the footer offered "Chon he may".
+                    current_rom_system = cur_item.get("sys_code") or item_id[4:]
+                    selected_indices["rom_games"] = 0
+                    scroll_offsets["rom_games"] = 0
+                    screen_stack.append("rom_games")
+                elif item_id.startswith("game_") or item_id.startswith("res_"):
+                    # The store list and the search results build the same tile
+                    # shape but were never wired to the detail modal, so pressing
+                    # A on a game did nothing on either screen.
+                    open_pre_download_modal(cur_item["sys_code"],
+                                            cur_item["game_info"],
+                                            cur_item.get("img_path"))
+                elif item_id == "toggle_lang":
+                    state.current_lang = "EN" if state.current_lang == "VI" else "VI"
+                    state.save_settings()
+                    toast_msg = f"Đã chuyển sang: {tr('lang_badge')}"
+                    toast_timer = time.time()
+                elif item_id == "reload_ui":
+                    toast_msg = tr("reloading_toast")
+                    toast_timer = time.time()
+                    subprocess.call("killall -9 MainUI 2>/dev/null &", shell=True)
+                    running = False
+                elif item_id.startswith("dl_"):
+                    dg = cur_item["game_data"]
+                    game_action_modal["active"] = True
+                    game_action_modal["game_info"] = {"title": dg["title"], "filename": dg["filename"]}
+                    game_action_modal["rom_path"] = dg["rom_path"]
+                    game_action_modal["sys_code"] = dg["sys_code"]
+                    game_action_modal["img_path"] = dg.get("img_path")
+                    game_action_modal["size_str"] = dg.get("size_str", "")
+                    game_action_modal["selected_opt"] = 0
+                    game_action_modal["from_downloaded_view"] = True
+                elif item_id == "sftp_toggle":
+                    msg = toggle_sftpgo()
+                    service_states["sftp"] = is_sftpgo_running()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                elif item_id == "sftp_guide":
+                    modal_title = "HƯỚNG DẪN KẾT NỐI SFTPGO" if state.current_lang == "VI" else "SFTPGO CONNECTION GUIDE"
+                    modal_style = "big"
+                    modal_rows = get_sftp_guide_rows()
+                elif item_id == "ssh_toggle":
+                    msg = toggle_ssh()
+                    service_states["ssh"] = is_ssh_running()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                elif item_id == "ssh_guide":
+                    modal_title = "HƯỚNG DẪN KẾT NỐI SSH" if state.current_lang == "VI" else "SSH CONNECTION GUIDE"
+                    modal_style = "big"
+                    modal_rows = get_ssh_guide_rows()
+                elif item_id == "adb_toggle":
+                    msg = toggle_adb()
+                    service_states["adb"] = is_adb_running()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                elif item_id == "mtp_toggle":
+                    msg = toggle_mtp()
+                    service_states["mtp"] = is_mtp_running()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                elif item_id == "wifi_ps_toggle":
+                    msg = toggle_wifi_awake()
+                    service_states["wifi_awake"] = is_wifi_awake()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                elif item_id == "stream_toggle":
+                    msg = toggle_streamer()
+                    service_states["streamer"] = is_streamer_running()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                elif item_id == "stream_guide":
+                    modal_title = "HƯỚNG DẪN STREAM 24 FPS" if state.current_lang == "VI" else "24 FPS STREAM GUIDE"
+                    modal_style = "big"
+                    modal_rows = get_stream_guide_rows()
+                elif item_id == "app_version":
+                    if not update_modal["checking"]:
+                        update_modal["checking"] = True
+                        toast_msg = tr("upd_checking")
+                        toast_timer = time.time()
+                        threading.Thread(target=manual_check_update, daemon=True).start()
+                elif item_id == "nav_donate":
+                    # mods is each code's module count. The images carry no quiet
+                    # zone of their own, so the renderer adds the four modules the
+                    # spec requires, and that needs the count.
+                    qr_modal.update(active=True, page=0, pages=[
+                        {"title": tr("donate_title"), "img": QR_DONATE_FILE, "mods": 41,
+                         "rows": [(tr("donate_bank"), "Techcombank"),
+                                  (tr("donate_holder"), "NGUYEN XUAN HOA"),
+                                  (tr("donate_acct"), "1732 8888 88")]},
+                        {"title": tr("bmc_title"), "img": QR_BMC_FILE, "mods": 29,
+                         "rows": [(tr("bmc_site"), "buymeacoffee.com"),
+                                  (tr("bmc_user"), "xuanhoa493"),
+                                  (tr("bmc_pay"), tr("bmc_pay_val"))]},
+                    ])
+                elif item_id == "nav_chat":
+                    qr_modal.update(active=True, page=0, pages=[
+                        {"title": tr("chat_title"), "img": QR_TELEGRAM_FILE, "mods": 25,
+                         "rows": [("Telegram", "@retrohubtool")]},
+                    ])
+                elif item_id == "nav_author":
+                    modal_title = tr("author_title")
+                    modal_style = "two_col"
+                    modal_rows = [
+                        (tr("author_name"), "Nguyễn Xuân Hòa"),
+                        ("Email", "nguyenxuanhoa493@gmail.com"),
+                        (tr("author_phone"), "0962 369 231"),
+                        ("Telegram", "@xuanhoa493"),
+                        (tr("author_web"), "xuanhoa493.com"),
+                    ]
+                elif item_id == "device_info":
+                    modal_title = "THÔNG TIN THIẾT BỊ & MẠNG" if state.current_lang == "VI" else "DEVICE & NETWORK INFO"
+                    modal_rows = get_device_info_rows()
+                elif item_id == "storage_status":
+                    modal_title = "TRẠNG THÁI DUNG LƯỢNG LƯU TRỮ" if state.current_lang == "VI" else "STORAGE & DISK STATUS"
+                    modal_rows = get_storage_info_rows()
+                elif item_id == "system_doctor":
+                    modal_title = "BÁC SĨ HỆ THỐNG & KIỂM TRA THƯ VIỆN" if state.current_lang == "VI" else "SYSTEM DOCTOR & DIAGNOSTIC"
+                    modal_rows = get_system_doctor_report()
+                elif item_id == "install_j2me_emu":
+                    # Just open the panel. Installing on open was surprising, and it
+                    # reported success unconditionally even when pieces were missing.
+                    # Rescan here: the list is filled lazily when the library screen is
+                    # visited, so coming straight from Utilities showed a stale count.
+                    downloaded_games_list = scan_all_downloaded_games()
+                    j2me_modal["busy"] = False
+                    j2me_modal["pending"] = False
+                    j2me_modal["active"] = True
+                elif item_id == "back":
+                    if len(screen_stack) > 1:
+                        screen_stack.pop()
+                elif item_id == "exit":
+                    running = False
+
+        # A finished update swapped the bytecode underneath this process. Hand
+        # control back to launch.sh, which restarts the app with the new build.
+        if update_modal.get("restart") and not update_modal["busy"]:
+            running = False
+
+        # The check runs off-thread and cannot touch toast_msg directly.
+        if update_modal.get("notice"):
+            toast_msg = update_modal["notice"]
+            update_modal["notice"] = None
+            toast_timer = time.time()
+
+        # ----------------------------------------------------------------------
+        # DRAWING UI (Re-sync active screen & cursor index after event handling)
+        # ----------------------------------------------------------------------
+        current_screen = screen_stack[-1]
+        selected_idx = selected_indices.get(current_screen, 0)
+
+        fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 13, 17, 28, 255)
+
+        # 1. Header Bar
+        header_h = HEADER_H
+        fill_rect(0, 0, state.SCREEN_W, header_h, 20, 28, 46, 255)
+        fill_rect(0, header_h - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
+
+        _head_txt = tr("search_title") if current_screen == "search_input" else header_title
+        draw_text(_head_txt, font_title, 40, header_h // 2, 255, 255, 255, center_y=True)
+        # Version sits beside the app name on the home screen only. Measured
+        # rather than placed at a guessed offset, because the title is translated
+        # and the two languages are not the same width.
+        if current_screen == "home":
+            draw_text("v" + APP_VERSION, font_sub,
+                      40 + measure_text(_head_txt, font_title) + 14,
+                      header_h // 2 + 4, 120, 145, 180, center_y=True)
+        # Battery readout removed from the header: it carried emoji the bundled font
+        # has no glyphs for, and its second line sat below the shortened bar.
+        # Battery still shows in Device Info.
+
+        # ----------------------------------------------------------------------
+        # SCREEN: SEARCH INPUT & VIRTUAL KEYBOARD WITH SYSTEM FILTER BAR
+        # ----------------------------------------------------------------------
+        if current_screen == "search_input":
+            cur_filter_sys = sys_keys_list[search_sys_idx]
+            sys_disp_name = (tr("search_scope_all") if cur_filter_sys == "ALL"
+                             else get_system_display_name(cur_filter_sys))
+            src_disp_name = tr(f"src_{search_source.lower()}")
+
+            # Two pickers side by side. Each opens a list rather than stepping
+            # through values, which for 30 systems was a lot of presses.
+            fb_y = 108
+            fb_h = 54
+            fb_gap = 16
+            fb_w = (state.SCREEN_W - 80 - fb_gap) // 2
+            for i, (btn, lbl, val) in enumerate((
+                    ("L1", tr("search_scope_lbl"), sys_disp_name),
+                    ("R1", tr("search_src_lbl"), src_disp_name))):
+                bx = 40 + i * (fb_w + fb_gap)
+                fill_rect(bx, fb_y, fb_w, fb_h, 24, 34, 58, 255)
+                draw_rect(bx, fb_y, fb_w, fb_h, 0, 230, 255, 255, thickness=2)
+                draw_text(f"[{btn}] {lbl}", font_footer, bx + 16, fb_y + 15,
+                          0, 230, 255, center_y=True)
+                if len(val) > 24:
+                    val = val[:22] + "..."
+                draw_text(val, font_badge, bx + 16, fb_y + 38, 255, 255, 255, center_y=True)
+
+            box_x = 40
+            box_y = fb_y + fb_h + 12
+            box_w = state.SCREEN_W - 80
+            box_h = 58
+            fill_rect(box_x, box_y, box_w, box_h, 20, 28, 48, 255)
+            draw_rect(box_x, box_y, box_w, box_h, 60, 85, 130, 255, thickness=1)
+
+            cursor_str = "_" if int(time.time() * 2) % 2 == 0 else ""
+            disp_query = search_query + cursor_str if search_query else tr("search_prompt") + cursor_str
+            q_col = (255, 255, 255) if search_query else (120, 140, 170)
+            draw_text(disp_query, font_item, box_x + 20, box_y + box_h // 2, q_col[0], q_col[1], q_col[2], center_y=True)
+
+            # Anchored to the query box instead of a fixed offset: the fixed value
+            # put the first key row 20px inside the box.
+            kb_start_y = box_y + box_h + 16
+            k_row_gap = 12
+            k_col_gap = 10
+            k_h = 56
+
+            for r_idx, row in enumerate(kb_rows):
+                num_k = len(row)
+                total_w = state.SCREEN_W - 80
+                k_w = (total_w - (num_k - 1) * k_col_gap) // num_k
+                ky = kb_start_y + r_idx * (k_h + k_row_gap)
+
+                for c_idx, key_str in enumerate(row):
+                    kx = 40 + c_idx * (k_w + k_col_gap)
+                    is_k_sel = (kb_cursor[0] == r_idx and kb_cursor[1] == c_idx)
+
+                    if is_k_sel:
+                        fill_rect(kx, ky, k_w, k_h, 0, 230, 255, 255)
+                        draw_rect(kx, ky, k_w, k_h, 255, 255, 255, 255, thickness=2)
+                        draw_text(key_str, font_kb, kx + k_w // 2, ky + k_h // 2, 0, 20, 40, center_x=True, center_y=True)
+                    else:
+                        fill_rect(kx, ky, k_w, k_h, 24, 34, 56, 255)
+                        draw_rect(kx, ky, k_w, k_h, 45, 65, 100, 255, thickness=1)
+                        draw_text(key_str, font_kb, kx + k_w // 2, ky + k_h // 2, 220, 230, 245, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # SCREEN: DOWNLOADED GAMES - GRID MODE (2-LINE TITLE WRAP & NO EXTRA META)
+        # ----------------------------------------------------------------------
+        elif current_screen == "downloaded_games" and state.downloaded_view_mode == "grid" and len(lib_games_list) > 0:
+            cols = 3
+            rows = 2
+            per_page = cols * rows
+            cur_page = selected_idx // per_page
+            page_start = cur_page * per_page
+            visible_games = lib_games_list[page_start : page_start + per_page]
+
+            grid_margin_x = 40
+            grid_margin_y = CONTENT_TOP
+            card_gap_x = 20
+            card_gap_y = 16
+            card_w = (state.SCREEN_W - (grid_margin_x * 2) - (card_gap_x * (cols - 1))) // cols
+            card_h = (state.SCREEN_H - grid_margin_y - 80 - card_gap_y) // rows
+
+            for i, dg in enumerate(visible_games):
+                actual_idx = page_start + i
+                c_row = i // cols
+                c_col = i % cols
+                cx = grid_margin_x + c_col * (card_w + card_gap_x)
+                cy = grid_margin_y + c_row * (card_h + card_gap_y)
+                is_sel = (actual_idx == selected_idx)
+
+                if is_sel:
+                    fill_rect(cx, cy, card_w, card_h, 28, 44, 75, 255)
+                    draw_rect(cx, cy, card_w, card_h, 0, 246, 246, 255, thickness=3)
+                else:
+                    fill_rect(cx, cy, card_w, card_h, 19, 26, 42, 255)
+                    draw_rect(cx, cy, card_w, card_h, 40, 54, 85, 255, thickness=1)
+
+                img_area_x = cx + 8
+                img_area_y = cy + 8
+                img_area_w = card_w - 16
+                img_area_h = card_h - 76
+
+                fill_rect(img_area_x, img_area_y, img_area_w, img_area_h, 12, 16, 26, 255)
+
+                drawn = False
+                if dg.get("img_path"):
+                    drawn = draw_proportional_boxart(dg["img_path"], img_area_x, img_area_y, img_area_w, img_area_h)
+                if not drawn:
+                    draw_default_boxart_avatar(img_area_x, img_area_y, img_area_w, img_area_h, dg.get("sys_code", "ROM"), dg.get("title", "Game"))
+
+                title_lines = wrap_title_2lines(dg["title"], max_chars_per_line=17)
+                t_color = (255, 255, 255) if is_sel else (210, 220, 235)
+
+                if len(title_lines) == 1:
+                    draw_text(title_lines[0], font_grid_title, cx + card_w // 2, cy + card_h - 32, t_color[0], t_color[1], t_color[2], center_x=True, center_y=True)
+                else:
+                    draw_text(title_lines[0], font_grid_title, cx + card_w // 2, cy + card_h - 45, t_color[0], t_color[1], t_color[2], center_x=True, center_y=True)
+                    draw_text(title_lines[1], font_grid_title, cx + card_w // 2, cy + card_h - 19, t_color[0], t_color[1], t_color[2], center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # SCREEN: SPLASH PREVIEW (FULLSCREEN IMAGE + BOTTOM HUD)
+        # ----------------------------------------------------------------------
+        elif current_screen == "splash_preview":
+            draw_proportional_boxart(splash_preview_path, 0, 0, state.SCREEN_W, state.SCREEN_H)
+            
+            hud_x = 30
+            hud_w = state.SCREEN_W - 60
+            hud_h = 106
+            hud_y = state.SCREEN_H - hud_h - 25
+
+            fill_rect(hud_x, hud_y, hud_w, hud_h, 15, 22, 38, 240)
+            draw_rect(hud_x, hud_y, hud_w, hud_h, 0, 230, 255, 255, thickness=2)
+            fill_rect(hud_x + 3, hud_y + 4, 8, hud_h - 8, 0, 246, 246, 255)
+
+            draw_text(tr("splash_preview_title"), font_item, hud_x + 25, hud_y + 30, 0, 246, 246, center_y=True)
+            disp_fname = splash_preview_orig_name
+            if len(disp_fname) > 34:
+                disp_fname = disp_fname[:31] + "..."
+            draw_text(f"File: {disp_fname}  |  Chuẩn: {state.SCREEN_W}x{state.SCREEN_H} PNG", font_sub, hud_x + 25, hud_y + 70, 220, 230, 245, center_y=True)
+
+            btn1_w = 260
+            btn1_h = 44
+            btn1_x = hud_x + hud_w - btn1_w - 20
+            btn1_y = hud_y + 14
+            fill_rect(btn1_x, btn1_y, btn1_w, btn1_h, 0, 180, 90, 255)
+            draw_rect(btn1_x, btn1_y, btn1_w, btn1_h, 0, 255, 160, 255, thickness=2)
+            draw_text(f"[A] {tr('splash_btn_apply')}", font_badge, btn1_x + btn1_w // 2, btn1_y + btn1_h // 2, 0, 0, 0, center_x=True, center_y=True)
+
+            btn2_w = 260
+            btn2_h = 36
+            btn2_x = hud_x + hud_w - btn2_w - 20
+            btn2_y = hud_y + 60
+            fill_rect(btn2_x, btn2_y, btn2_w, btn2_h, 35, 45, 65, 255)
+            draw_rect(btn2_x, btn2_y, btn2_w, btn2_h, 80, 95, 130, 255, thickness=1)
+            draw_text(f"[B] {tr('splash_btn_cancel')}", font_sub, btn2_x + btn2_w // 2, btn2_y + btn2_h // 2, 200, 210, 230, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # SCREEN: SPLASH MANAGER & FILE BROWSER (SPLIT LIST + PREVIEW THUMBNAIL)
+        # ----------------------------------------------------------------------
+        elif current_screen in ("splash_manager", "file_browser"):
+            left_w = int(state.SCREEN_W * 0.56)
+            right_w = state.SCREEN_W - left_w - 60
+            panel_x = 30
+            card_h = 76
+            gap = 10
+            start_y = CONTENT_TOP
+            max_visible = 6
+            cur_scroll = scroll_offsets.get(current_screen, 0)
+            if selected_idx < cur_scroll:
+                cur_scroll = selected_idx
+            elif selected_idx >= cur_scroll + max_visible:
+                cur_scroll = selected_idx - max_visible + 1
+            cur_scroll = max(0, min(max(0, len(items) - max_visible), cur_scroll))
+            scroll_offsets[current_screen] = cur_scroll
+            scroll_offset = cur_scroll
+
+            if len(items) > max_visible:
+                visible_items = items[scroll_offset : scroll_offset + max_visible]
+            else:
+                visible_items = items
+
+            for i, item in enumerate(visible_items):
+                actual_idx = i + scroll_offset
+                cy = start_y + i * (card_h + gap)
+                is_sel = (actual_idx == selected_idx)
+
+                if is_sel:
+                    fill_rect(panel_x, cy, left_w, card_h, 28, 44, 75, 255)
+                    draw_rect(panel_x, cy, left_w, card_h, 0, 246, 246, 255, thickness=3)
+                    fill_rect(panel_x + 3, cy + 6, 8, card_h - 12, 0, 246, 246, 255)
+                    text_r, text_g, text_b = 255, 255, 255
+                else:
+                    fill_rect(panel_x, cy, left_w, card_h, 19, 26, 42, 255)
+                    draw_rect(panel_x, cy, left_w, card_h, 40, 54, 85, 255, thickness=1)
+                    text_r, text_g, text_b = 200, 210, 225
+
+                disp_title = item["title"]
+                if len(disp_title) > 28:
+                    disp_title = disp_title[:25] + "..."
+
+                if item.get("is_restore"):
+                    draw_text(disp_title, font_item, panel_x + 22, cy + (card_h // 2), 255, 215, 0, center_y=True)
+                elif item.get("is_browse"):
+                    draw_text(disp_title, font_item, panel_x + 22, cy + (card_h // 2), 0, 230, 255, center_y=True)
+                elif item.get("type") == "dir" or item.get("id") == "fb_up":
+                    draw_text(disp_title, font_item, panel_x + 22, cy + (card_h // 2), 0, 230, 255, center_y=True)
+                else:
+                    draw_text(disp_title, font_item, panel_x + 22, cy + (card_h // 2), text_r, text_g, text_b, center_y=True)
+
+            rx = panel_x + left_w + 20
+            ry = start_y
+            rw = right_w
+            rh = state.SCREEN_H - start_y - 75
+
+            fill_rect(rx, ry, rw, rh, 18, 25, 42, 255)
+            draw_rect(rx, ry, rw, rh, 0, 230, 255, 255, thickness=2)
+
+            cur_item = items[selected_idx] if selected_idx < len(items) else None
+            if cur_item:
+                box_x = rx + 25
+                box_y = ry + 60
+                box_w_target = rw - 50
+                box_h_target = rh - 170
+
+                fill_rect(box_x, box_y, box_w_target, box_h_target, 12, 16, 26, 255)
+                draw_rect(box_x, box_y, box_w_target, box_h_target, 45, 65, 100, 255, thickness=1)
+
+                if cur_item.get("is_restore"):
+                    fill_rect(rx + 10, ry + 12, rw - 20, 38, 50, 40, 20, 255)
+                    draw_text("ẢNH KHỞI ĐỘNG MẶC ĐỊNH (GỐC)", font_badge, rx + rw // 2, ry + 31, 255, 215, 0, center_x=True, center_y=True)
+                    restore_prev_p = SPLASH_BACKUP_FILE if os.path.exists(SPLASH_BACKUP_FILE) else "/rom/etc/splash.png"
+                    drawn = draw_proportional_boxart(restore_prev_p, box_x + 4, box_y + 4, box_w_target - 8, box_h_target - 8)
+                    if not drawn:
+                        draw_text(tr("splash_orig_preview"), font_sub, box_x + box_w_target // 2, box_y + box_h_target // 2, 120, 140, 170, center_x=True, center_y=True)
+
+                    ab_w = rw - 40
+                    ab_h = 48
+                    ab_x = rx + 20
+                    ab_y = ry + rh - ab_h - 15
+                    fill_rect(ab_x, ab_y, ab_w, ab_h, 180, 140, 20, 255)
+                    draw_rect(ab_x, ab_y, ab_w, ab_h, 255, 215, 0, 255, thickness=2)
+                    draw_text("[A] KHÔI PHỤC ẢNH GỐC", font_badge, ab_x + ab_w // 2, ab_y + ab_h // 2, 0, 0, 0, center_x=True, center_y=True)
+
+                elif cur_item.get("is_browse"):
+                    fill_rect(rx + 10, ry + 12, rw - 20, 38, 20, 45, 65, 255)
+                    draw_text("TRÌNH DUYỆT THẺ NHỚ", font_badge, rx + rw // 2, ry + 31, 0, 230, 255, center_x=True, center_y=True)
+                    draw_text("DUYỆT FILE SD CARD", font_item, box_x + box_w_target // 2, box_y + box_h_target // 2 - 15, 0, 246, 246, center_x=True, center_y=True)
+                    draw_text("Hỗ trợ .png, .jpg, .bmp", font_sub, box_x + box_w_target // 2, box_y + box_h_target // 2 + 25, 170, 185, 210, center_x=True, center_y=True)
+
+                    ab_w = rw - 40
+                    ab_h = 48
+                    ab_x = rx + 20
+                    ab_y = ry + rh - ab_h - 15
+                    fill_rect(ab_x, ab_y, ab_w, ab_h, 0, 140, 200, 255)
+                    draw_rect(ab_x, ab_y, ab_w, ab_h, 0, 230, 255, 255, thickness=2)
+                    draw_text("[A] MỞ TRÌNH DUYỆT TỆP", font_badge, ab_x + ab_w // 2, ab_y + ab_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                elif cur_item.get("type") == "dir" or cur_item.get("id") == "fb_up":
+                    fill_rect(rx + 10, ry + 12, rw - 20, 38, 20, 45, 65, 255)
+                    draw_text("THƯ MỤC", font_badge, rx + rw // 2, ry + 31, 0, 230, 255, center_x=True, center_y=True)
+                    draw_text(f"{cur_item['title']}", font_item, box_x + box_w_target // 2, box_y + box_h_target // 2 - 15, 0, 246, 246, center_x=True, center_y=True)
+                    draw_text("Bấm [A] để mở thư mục này", font_sub, box_x + box_w_target // 2, box_y + box_h_target // 2 + 25, 170, 185, 210, center_x=True, center_y=True)
+
+                    ab_w = rw - 40
+                    ab_h = 48
+                    ab_x = rx + 20
+                    ab_y = ry + rh - ab_h - 15
+                    fill_rect(ab_x, ab_y, ab_w, ab_h, 0, 140, 200, 255)
+                    draw_rect(ab_x, ab_y, ab_w, ab_h, 0, 230, 255, 255, thickness=2)
+                    draw_text("[A] MỞ THƯ MỤC", font_badge, ab_x + ab_w // 2, ab_y + ab_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                elif "img_data" in cur_item or cur_item.get("type") == "file":
+                    p = cur_item["path"]
+                    sz_s = cur_item.get("size_str", "")
+                    d_s = cur_item.get("dir", "File")
+                    fill_rect(rx + 10, ry + 12, rw - 20, 38, 28, 40, 68, 255)
+                    draw_text(f"[{d_s}] {sz_s}", font_badge, rx + rw // 2, ry + 31, 0, 246, 246, center_x=True, center_y=True)
+
+                    drawn = draw_proportional_boxart(p, box_x + 4, box_y + 4, box_w_target - 8, box_h_target - 8)
+                    if not drawn:
+                        draw_text("PREVIEW", font_sub, box_x + box_w_target // 2, box_y + box_h_target // 2, 120, 140, 170, center_x=True, center_y=True)
+
+                    ab_w = rw - 40
+                    ab_h = 48
+                    ab_x = rx + 20
+                    ab_y = ry + rh - ab_h - 15
+                    fill_rect(ab_x, ab_y, ab_w, ab_h, 0, 180, 90, 255)
+                    draw_rect(ab_x, ab_y, ab_w, ab_h, 0, 255, 160, 255, thickness=2)
+                    draw_text("[A] XEM TRƯỚC & ÁP DỤNG", font_badge, ab_x + ab_w // 2, ab_y + ab_h // 2, 0, 0, 0, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # SCREEN: DOWNLOADED GAMES - LIST MODE (SPLIT VIEW)
+        # ----------------------------------------------------------------------
+        elif current_screen == "downloaded_games" and state.downloaded_view_mode == "list" and len(lib_games_list) > 0:
+            left_w = int(state.SCREEN_W * 0.60)
+            right_w = state.SCREEN_W - left_w - 60
+            panel_x = 30
+            card_h = 76
+            gap = 10
+            start_y = CONTENT_TOP
+            max_visible = 6
+            cur_scroll = scroll_offsets.get(current_screen, 0)
+            if selected_idx < cur_scroll:
+                cur_scroll = selected_idx
+            elif selected_idx >= cur_scroll + max_visible:
+                cur_scroll = selected_idx - max_visible + 1
+            cur_scroll = max(0, min(max(0, len(items) - max_visible), cur_scroll))
+            scroll_offsets[current_screen] = cur_scroll
+            scroll_offset = cur_scroll
+
+            if len(items) > max_visible:
+                visible_items = items[scroll_offset : scroll_offset + max_visible]
+            else:
+                visible_items = items
+
+            for i, item in enumerate(visible_items):
+                actual_idx = i + scroll_offset
+                cy = start_y + i * (card_h + gap)
+                is_sel = (actual_idx == selected_idx)
+
+                if is_sel:
+                    fill_rect(panel_x, cy, left_w, card_h, 28, 44, 75, 255)
+                    draw_rect(panel_x, cy, left_w, card_h, 0, 246, 246, 255, thickness=3)
+                    fill_rect(panel_x + 3, cy + 6, 8, card_h - 12, 0, 246, 246, 255)
+                    text_r, text_g, text_b = 255, 255, 255
+                else:
+                    fill_rect(panel_x, cy, left_w, card_h, 19, 26, 42, 255)
+                    draw_rect(panel_x, cy, left_w, card_h, 40, 54, 85, 255, thickness=1)
+                    text_r, text_g, text_b = 200, 210, 225
+
+                disp_title = item["title"]
+                if len(disp_title) > 30:
+                    disp_title = disp_title[:27] + "..."
+                draw_text(disp_title, font_item, panel_x + 22, cy + (card_h // 2), text_r, text_g, text_b, center_y=True)
+
+            rx = panel_x + left_w + 20
+            ry = start_y
+            rw = right_w
+            rh = state.SCREEN_H - start_y - 75
+
+            fill_rect(rx, ry, rw, rh, 18, 25, 42, 255)
+            draw_rect(rx, ry, rw, rh, 0, 230, 255, 255, thickness=2)
+
+            cur_item = items[selected_idx] if selected_idx < len(items) else None
+            if cur_item and "game_data" in cur_item:
+                dg = cur_item["game_data"]
+                fill_rect(rx + 10, ry + 12, rw - 20, 42, 28, 40, 68, 255)
+                draw_text(f"{dg['sys_name']}", font_badge, rx + rw // 2, ry + 33, 0, 246, 246, center_x=True, center_y=True)
+
+                box_x = rx + 25
+                box_y = ry + 66
+                box_w_target = rw - 50
+                box_h_target = rh - 180
+
+                fill_rect(box_x, box_y, box_w_target, box_h_target, 12, 16, 26, 255)
+                draw_rect(box_x, box_y, box_w_target, box_h_target, 45, 65, 100, 255, thickness=1)
+
+                drawn = False
+                if dg.get("img_path"):
+                    drawn = draw_proportional_boxart(dg["img_path"], box_x + 6, box_y + 6, box_w_target - 12, box_h_target - 12)
+                if not drawn:
+                    draw_default_boxart_avatar(box_x + 6, box_y + 6, box_w_target - 12, box_h_target - 12, dg.get("sys_code", "ROM"), dg.get("title", "Game"))
+
+                ab_w = rw - 40
+                ab_h = 50
+                ab_x = rx + 20
+                ab_y = ry + rh - ab_h - 15
+                fill_rect(ab_x, ab_y, ab_w, ab_h, 0, 190, 100, 255)
+                draw_rect(ab_x, ab_y, ab_w, ab_h, 0, 255, 160, 255, thickness=2)
+                draw_text(tr("btn_play_now"), font_badge, ab_x + ab_w // 2, ab_y + ab_h // 2, 0, 0, 0, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # STANDARD FULL-WIDTH LIST VIEW
+        # ----------------------------------------------------------------------
+        else:
+            num_items = len(items)
+            panel_margin = 40
+            panel_x = panel_margin
+            panel_w = state.SCREEN_W - (panel_margin * 2)
+
+            if num_items <= 5:
+                card_h = 86
+                gap = 14
+                start_y = CONTENT_TOP + 8
+            else:
+                card_h = 76
+                gap = 10
+                start_y = CONTENT_TOP
+
+            max_visible = 6
+            cur_scroll = scroll_offsets.get(current_screen, 0)
+            if selected_idx < cur_scroll:
+                cur_scroll = selected_idx
+            elif selected_idx >= cur_scroll + max_visible:
+                cur_scroll = selected_idx - max_visible + 1
+            cur_scroll = max(0, min(max(0, num_items - max_visible), cur_scroll))
+            scroll_offsets[current_screen] = cur_scroll
+            scroll_offset = cur_scroll
+
+            if num_items > max_visible:
+                visible_items = items[scroll_offset : scroll_offset + max_visible]
+            else:
+                visible_items = items
+
+            for i, item in enumerate(visible_items):
+                actual_idx = i + scroll_offset
+                cy = start_y + i * (card_h + gap)
+                is_sel = (actual_idx == selected_idx)
+                is_sub = item.get("sub", False)
+                is_lang = item.get("is_lang", False)
+                has_label = bool(item.get("label"))
+
+                if is_sel:
+                    fill_rect(panel_x, cy, panel_w, card_h, 28, 44, 75, 255)
+                    draw_rect(panel_x, cy, panel_w, card_h, 0, 246, 246, 255, thickness=3)
+                    fill_rect(panel_x + 3, cy + 6, 8, card_h - 12, 0, 246, 246, 255)
+                    text_r, text_g, text_b = 255, 255, 255
+                else:
+                    if is_sub:
+                        fill_rect(panel_x, cy, panel_w, card_h, 15, 22, 36, 255)
+                        draw_rect(panel_x, cy, panel_w, card_h, 0, 180, 220, 160, thickness=1)
+                        text_r, text_g, text_b = 0, 225, 245
+                    else:
+                        fill_rect(panel_x, cy, panel_w, card_h, 19, 26, 42, 255)
+                        draw_rect(panel_x, cy, panel_w, card_h, 40, 54, 85, 255, thickness=1)
+                        text_r, text_g, text_b = 200, 210, 225
+
+                disp_title = item["title"]
+                max_chars = 46 if (has_label or item.get("type") == "toggle") else 58
+                if len(disp_title) > max_chars:
+                    disp_title = disp_title[:max_chars - 3] + "..."
+                draw_text(disp_title, font_item, panel_x + 28, cy + (card_h // 2), text_r, text_g, text_b, center_y=True)
+
+                if item.get("type") == "toggle":
+                    sw_x = panel_x + panel_w - 110 - 24
+                    sw_y = cy + (card_h - 48) // 2
+                    draw_toggle(sw_x, sw_y, item["state"])
+                elif item.get("is_active_dl"):
+                    badge_w = 200
+                    badge_h = 46
+                    badge_x = panel_x + panel_w - badge_w - 24
+                    badge_y = cy + (card_h - badge_h) // 2
+                    fill_rect(badge_x, badge_y, badge_w, badge_h, 16, 48, 36, 255)
+                    draw_rect(badge_x, badge_y, badge_w, badge_h, 0, 230, 140, 255, thickness=1)
+                    draw_text(f"{dl_state['progress_pct']}%", font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 0, 255, 160, center_x=True, center_y=True)
+                elif is_lang:
+                    badge_w = 92
+                    badge_h = 52
+                    badge_x = panel_x + panel_w - badge_w - 24
+                    badge_y = cy + (card_h - badge_h) // 2
+
+                    fill_rect(badge_x, badge_y, badge_w, badge_h, 24, 38, 64, 255)
+                    draw_rect(badge_x, badge_y, badge_w, badge_h, 0, 246, 246, 255, thickness=2)
+                    # A flag reads faster than a two-letter code. Fall back to the text
+                    # badge if the image is missing, so the row never renders empty.
+                    flag_p = FLAG_FILES.get(state.current_lang)
+                    drawn_flag = False
+                    if flag_p and os.path.exists(flag_p):
+                        drawn_flag = draw_proportional_boxart(
+                            flag_p, badge_x + 5, badge_y + 5, badge_w - 10, badge_h - 10)
+                    if not drawn_flag:
+                        draw_text(item["label"], font_badge, badge_x + badge_w // 2,
+                                  badge_y + badge_h // 2, 0, 246, 246,
+                                  center_x=True, center_y=True)
+                elif has_label:
+                    badge_w = 130
+                    badge_h = 46
+                    badge_x = panel_x + panel_w - badge_w - 24
+                    badge_y = cy + (card_h - badge_h) // 2
+
+                    if item.get("downloaded", False):
+                        fill_rect(badge_x, badge_y, badge_w, badge_h, 16, 48, 36, 255)
+                        draw_rect(badge_x, badge_y, badge_w, badge_h, 0, 230, 140, 255, thickness=1)
+                        draw_text(item["label"], font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 0, 255, 160, center_x=True, center_y=True)
+                    elif is_sub:
+                        fill_rect(badge_x, badge_y, badge_w, badge_h, 15, 45, 70, 255)
+                        draw_rect(badge_x, badge_y, badge_w, badge_h, 0, 246, 246, 255, thickness=1)
+                        draw_text(item["label"], font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 0, 246, 246, center_x=True, center_y=True)
+                    else:
+                        fill_rect(badge_x, badge_y, badge_w, badge_h, 30, 42, 68, 255)
+                        draw_rect(badge_x, badge_y, badge_w, badge_h, 65, 90, 135, 255, thickness=1)
+                        draw_text(item["label"], font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 0, 230, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 3. FOOTER NAVIGATION BAR (CLEAN, MODULAR, NO OVERLAPPING)
+        # ----------------------------------------------------------------------
+        # FOOTER ACTION BAR
+        # ----------------------------------------------------------------------
+        if current_screen != "splash_preview":
+            foot_h = 56
+            foot_y = state.SCREEN_H - foot_h
+            fill_rect(0, foot_y, state.SCREEN_W, foot_h, 10, 14, 24, 255)
+            fill_rect(0, foot_y, state.SCREEN_W, 2, 35, 45, 75, 255)
+
+            def draw_footer_btn(x, key_char, label_str, btn_color=(0, 230, 150), text_color=(220, 225, 235), is_dark_btn=True):
+                b_size = 32
+                b_y = foot_y + (foot_h - b_size) // 2
+                fill_rect(x, b_y, b_size, b_size, btn_color[0], btn_color[1], btn_color[2], 255)
+                font_btn_col = (0, 0, 0) if is_dark_btn else (255, 255, 255)
+                draw_text(key_char, font_btn_badge, x + b_size // 2, b_y + b_size // 2, font_btn_col[0], font_btn_col[1], font_btn_col[2], center_x=True, center_y=True)
+                w, h = draw_text(label_str, font_footer, x + b_size + 8, foot_y + foot_h // 2, text_color[0], text_color[1], text_color[2], center_y=True)
+                return x + b_size + 8 + w + 20
+
+            fx = 30
+            # Common: [A] & [B]
+            if current_screen == "file_browser":
+                a_label = "Mở / Xem"
+                b_label = "Thư mục cha / Lùi"
+            elif current_screen == "splash_manager":
+                a_label = "Xem & Cài đặt"
+                b_label = "Quay lại"
+            elif current_screen == "download_manager":
+                a_label = "Chi tiết / Mở"
+                b_label = "Quay lại"
+            elif current_screen in ("network", "utilities"):
+                a_label = "Bật / Tắt"
+                b_label = "Quay lại" if len(screen_stack) > 1 else "Thoát"
+            elif current_screen == "rom_java_cats":
+                a_label = "Chọn nhóm"
+                b_label = "Quay lại"
+            elif current_screen == "rom_source_systems":
+                a_label = "Chọn hệ máy"
+                b_label = "Quay lại"
+            elif current_screen == "rom_games":
+                a_label = "Xem chi tiết"
+                b_label = "Quay lại"
+            else:
+                a_label = "Chọn / Mở"
+                b_label = "Quay lại" if len(screen_stack) > 1 else "Thoát"
+
+            fx = draw_footer_btn(fx, "A", a_label, (0, 230, 150))
+            fx = draw_footer_btn(fx, "B", b_label, (255, 70, 70), is_dark_btn=False)
+
+            if current_screen == "download_manager":
+                if dl_state.get("active") or dl_state.get("status") in ("downloading", "extracting"):
+                    fx = draw_footer_btn(fx, "X", "Hủy tải", (255, 80, 80), is_dark_btn=False)
+                draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
+
+            elif current_screen == "downloaded_games":
+                # Physical X = Toggle view, Physical Y = Random, SELECT = filter
+                fx = draw_footer_btn(fx, "X", "Đổi xem", (0, 190, 255))
+                fx = draw_footer_btn(fx, "Y", "Random", (255, 200, 0))
+                _f_lbl = "Lọc hệ" if current_lib_sys == "ALL" else f"Lọc: {current_lib_sys}"
+                fx = draw_footer_btn(fx, "SL", _f_lbl, (140, 200, 90))
+                draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
+
+            elif current_screen == "rom_games":
+                if current_source != "HITS":
+                    sort_btn_text = "Xếp A-Z" if state.rom_sort_mode == "downloads" else "Xếp Lượt tải"
+                    fx = draw_footer_btn(fx, "X", sort_btn_text, (0, 190, 255))
+                    fx = draw_footer_btn(fx, "Y", "Chữ cái", (255, 200, 0))
+                draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
+
+            elif current_screen == "search_results":
+                draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
+
+            elif current_screen == "search_input":
+                fx = draw_footer_btn(fx, "X", "Cách", (0, 190, 255))
+                fx = draw_footer_btn(fx, "Y", "Xóa", (255, 200, 0))
+                fx = draw_footer_btn(fx, "ST", "Tìm", (255, 140, 0))
+                draw_footer_btn(state.SCREEN_W - 190, "LR", "Hệ / Nguồn", (70, 95, 140), is_dark_btn=False)
+
+            else:
+                draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
+
+        # 4. Toast Notification
+        if toast_msg and (now - toast_timer < 2.5):
+            tw = state.SCREEN_W - (panel_margin * 2)
+            th = 44
+            tx = panel_margin
+            ty = foot_y - 52
+            fill_rect(tx, ty, tw, th, 16, 32, 56, 245)
+            draw_rect(tx, ty, tw, th, 0, 246, 246, 255, thickness=1)
+            draw_text(toast_msg, font_toast, tx + tw // 2, ty + th // 2, 0, 246, 246, center_x=True, center_y=True)
+
+        # 4.5. Mini Floating Download HUD (when running in background)
+        if dl_state["active"] and dl_state.get("is_background", False) and current_screen != "splash_preview":
+            hud_w = state.SCREEN_W - 60
+            hud_h = 44
+            hud_x = 30
+            hud_y = foot_y - hud_h - 10
+
+            fill_rect(hud_x, hud_y, hud_w, hud_h, 15, 24, 40, 245)
+            draw_rect(hud_x, hud_y, hud_w, hud_h, 0, 230, 255, 255, thickness=2)
+
+            if dl_state["status"] == "downloading":
+                pct = dl_state["progress_pct"]
+                pb_w = int(hud_w * (pct / 100.0))
+                if pb_w > 0:
+                    fill_rect(hud_x + 2, hud_y + hud_h - 4, pb_w - 4, 3, 0, 230, 150)
+
+            g_title = dl_state["title"]
+            if len(g_title) > 45:
+                g_title = g_title[:42] + "..."
+            hud_txt = f"[{dl_state['sys_code']}] {g_title} • {dl_state['progress_pct']}% ({dl_state['downloaded_str']})"
+            draw_text(hud_txt, font_sub, hud_x + 18, hud_y + hud_h // 2 - 1, 0, 246, 246, center_y=True)
+
+        # 5. Live Progress Bar Download Modal
+        if dl_state["active"] and not dl_state.get("is_background", False):
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 210)
+
+            mw = min(920, state.SCREEN_W - 60)
+            mh = 430
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            fill_rect(mx + 3, my + 3, mw - 6, 72, 24, 34, 58, 255)
+            head_txt = dl_state['title']
+            # Two lines of the smaller font fit the existing 72px band, so a long
+            # title wraps without pushing the rest of the modal out of place.
+            head_lines = wrap_text_to_width(head_txt, font_item, mw - 90, max_lines=1)
+            if measure_text(head_txt, font_item) > mw - 90:
+                head_lines = wrap_text_to_width(head_txt, font_sub, mw - 70, max_lines=2)
+                head_font, head_ys = font_sub, (my + 26, my + 54)
+            else:
+                head_font, head_ys = font_item, (my + 38,)
+            for li, line in enumerate(head_lines[:len(head_ys)]):
+                draw_text(line, head_font, mx + mw // 2, head_ys[li], 0, 246, 246,
+                          center_x=True, center_y=True)
+
+            # Metadata line: System, Size, Source
+            src_str = dl_state.get("source_name", "Internet Archive")
+            draw_text(f"[{dl_state['sys_code']}]  {tr('game_size')}{dl_state['size']}   |   {tr('dl_source_lbl')}{src_str}", font_sub, mx + 45, my + 105, 255, 215, 0)
+            
+            if dl_state["status"] in ("downloading", "extracting"):
+                pb_x = mx + 45
+                pb_y = my + 155
+                pb_w = mw - 90
+                pb_h = 34
+                fill_rect(pb_x, pb_y, pb_w, pb_h, 24, 34, 56, 255)
+                draw_rect(pb_x, pb_y, pb_w, pb_h, 60, 85, 130, 255, thickness=1)
+                fill_w = int(pb_w * (dl_state["progress_pct"] / 100.0))
+                if fill_w > 0:
+                    fill_rect(pb_x + 2, pb_y + 2, fill_w - 4, pb_h - 4, 0, 230, 150, 255)
+
+                lines = dl_state["msg"].split("\n")
+                line_y = my + 215
+                for l in lines:
+                    draw_text(l, font_sub, mx + 45, line_y, 220, 230, 245)
+                    line_y += 32
+
+                btn_w = 220
+                btn_h = 52
+                gap_b = 30
+                bx1 = mx + (mw - (btn_w * 2 + gap_b)) // 2
+                bx2 = bx1 + btn_w + gap_b
+                by = my + mh - 75
+
+                fill_rect(bx1, by, btn_w, btn_h, 30, 60, 100, 255)
+                draw_rect(bx1, by, btn_w, btn_h, 0, 230, 255, 255, thickness=1)
+                draw_text(tr("dl_btn_minimize"), font_badge, bx1 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                fill_rect(bx2, by, btn_w, btn_h, 160, 45, 45, 255)
+                draw_rect(bx2, by, btn_w, btn_h, 255, 80, 80, 255, thickness=1)
+                draw_text(tr("dl_btn_cancel"), font_badge, bx2 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            elif dl_state["status"] == "success":
+                lines = dl_state["msg"].split("\n")
+                line_y = my + 155
+                for l in lines:
+                    draw_text(l, font_sub, mx + 45, line_y, 0, 246, 246)
+                    line_y += 34
+
+                btn_w = 220
+                btn_h = 56
+                gap_b = 30
+                bx1 = mx + (mw - (btn_w * 2 + gap_b)) // 2
+                bx2 = bx1 + btn_w + gap_b
+                by = my + mh - 75
+
+                is_opt0 = (dl_state["selected_opt"] == 0)
+                is_opt1 = (dl_state["selected_opt"] == 1)
+
+                fill_rect(bx1, by, btn_w, btn_h, 0, 200, 120, 255)
+                if is_opt0:
+                    draw_rect(bx1, by, btn_w, btn_h, 255, 255, 255, 255, thickness=3)
+                else:
+                    draw_rect(bx1, by, btn_w, btn_h, 0, 255, 160, 255, thickness=1)
+                draw_text(tr("dl_btn_play_now"), font_badge, bx1 + btn_w // 2, by + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
+
+                fill_rect(bx2, by, btn_w, btn_h, 45, 60, 90, 255)
+                if is_opt1:
+                    draw_rect(bx2, by, btn_w, btn_h, 255, 255, 255, 255, thickness=3)
+                else:
+                    draw_rect(bx2, by, btn_w, btn_h, 90, 120, 170, 255, thickness=1)
+                draw_text(f"[B] {tr('act_close_title').capitalize()}", font_badge, bx2 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            elif dl_state["status"] in ("error", "cancelled"):
+                lines = dl_state["msg"].split("\n")
+                line_y = my + 155
+                for l in lines:
+                    draw_text(l, font_sub, mx + 45, line_y, 255, 100, 100)
+                    line_y += 34
+
+                btn_w = 200
+                btn_h = 50
+                bx = mx + (mw - btn_w) // 2
+                by = my + mh - 70
+                fill_rect(bx, by, btn_w, btn_h, 220, 70, 70, 255)
+                draw_rect(bx, by, btn_w, btn_h, 255, 255, 255, 255, thickness=2)
+                draw_text(f"[B] {tr('act_close_title').capitalize()}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.2. QR MODAL (donation transfer details, chat group invite)
+        # ----------------------------------------------------------------------
+        elif qr_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 225)
+
+            mw = min(940, state.SCREEN_W - 50)
+            mh = min(620, state.SCREEN_H - 70)
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            fill_rect(mx + 3, my + 3, mw - 6, 66, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 67, mw - 6, 2, 0, 246, 246, 255)
+            _pg = qr_modal["pages"][qr_modal["page"] % len(qr_modal["pages"])]
+            _npages = len(qr_modal["pages"])
+            draw_text(_pg["title"], font_title, mx + mw // 2, my + 35,
+                      0, 246, 246, center_x=True, center_y=True)
+
+            body_y = my + 88
+            body_h = mh - 88 - 62
+            TEXT_COL_W = 350
+
+            # The images hold the bare pattern, so the four modules of quiet zone
+            # the spec demands are drawn here. Sizing the padding from the module
+            # count keeps it exact: too little and the code stops scanning, too
+            # much and it just wastes space.
+            mods = max(21, _pg.get("mods", 25))
+            quiet = 4.0 / mods
+            avail_w = mw - 68 - TEXT_COL_W - 24
+            qr_side = int(min(avail_w, body_h) / (1.0 + 2 * quiet))
+            pad = max(8, int(qr_side * quiet))
+
+            qr_x = mx + 34 + pad
+            qr_y = body_y + (body_h - qr_side) // 2
+            fill_rect(qr_x - pad, qr_y - pad, qr_side + pad * 2, qr_side + pad * 2,
+                      255, 255, 255, 255)
+            if not draw_proportional_boxart(_pg["img"], qr_x, qr_y, qr_side, qr_side):
+                draw_text("QR", font_title, qr_x + qr_side // 2, qr_y + qr_side // 2,
+                          40, 40, 40, center_x=True, center_y=True)
+
+            tx = qr_x + qr_side + pad + 34
+            tw = mx + mw - tx - 30
+            rows = _pg["rows"]
+            row_pitch = 96
+            ty = body_y + max(0, (body_h - len(rows) * row_pitch) // 2)
+            for lbl, val in rows:
+                draw_text(lbl, font_badge, tx, ty, 150, 175, 210, center_y=True)
+                draw_text(val, font_title, tx, ty + 42, 255, 255, 255, center_y=True)
+                fill_rect(tx, ty + 76, tw, 1, 45, 62, 95, 255)
+                ty += row_pitch
+
+            if _npages > 1:
+                # Dots rather than "1/2": the count is small and a filled dot
+                # reads at a glance without being counted.
+                dot_r = 7
+                gap = 16
+                total_w = _npages * dot_r * 2 + (_npages - 1) * gap
+                dx = mx + mw // 2 - total_w // 2
+                dy = my + mh - 52
+                for i in range(_npages):
+                    cx = dx + i * (dot_r * 2 + gap)
+                    if i == qr_modal["page"]:
+                        fill_rect(cx, dy, dot_r * 2, dot_r * 2, 0, 246, 246, 255)
+                    else:
+                        draw_rect(cx, dy, dot_r * 2, dot_r * 2, 90, 110, 145, 255, thickness=2)
+                draw_text(f"[L1/R1] {tr('qr_switch')}   [A/B] {tr('lib_filter_close')}",
+                          font_sub, mx + mw // 2, my + mh - 22, 160, 180, 210,
+                          center_x=True, center_y=True)
+            else:
+                draw_text(f"[A/B] {tr('lib_filter_close')}", font_sub,
+                          mx + mw // 2, my + mh - 30, 160, 180, 210,
+                          center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.3. LIBRARY SYSTEM FILTER MODAL
+        # ----------------------------------------------------------------------
+        elif pick_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+            rows = pick_modal["rows"]
+            sel = pick_modal["selected_idx"]
+            row_h = 54
+            shown = min(len(rows), 8)
+            # Scroll so the cursor stays inside the window when the card holds
+            # more systems than fit.
+            top = max(0, min(sel - shown // 2, len(rows) - shown))
+
+            # Width from the widest row actually in this list, measured with the
+            # real font rather than guessed from character counts: "Sega Genesis
+            # (MD / Mega Drive)" is 30 characters and ran past the fixed 520px.
+            name_w = max([measure_text(n, font_item) for _, n, _ in rows] or [0])
+            right_w = max([measure_text(r, font_sub) for _, _, r in rows if r] or [0])
+            title_w = measure_text(pick_modal["title"], font_item)
+            mw = max(520, min(state.SCREEN_W - 80,
+                              max(60 + name_w + 30 + right_w + 40, title_w + 80)))
+            mh = 110 + shown * row_h
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+            fill_rect(mx + 3, my + 3, mw - 6, 62, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 63, mw - 6, 2, 0, 246, 246, 255)
+            draw_text(pick_modal["title"], font_item, mx + mw // 2, my + 32,
+                      0, 246, 246, center_x=True, center_y=True)
+
+            for i in range(shown):
+                code, name, right = rows[top + i]
+                ry = my + 78 + i * row_h
+                is_sel = (top + i == sel)
+                if is_sel:
+                    fill_rect(mx + 14, ry, mw - 28, row_h - 6, 28, 44, 75, 255)
+                    draw_rect(mx + 14, ry, mw - 28, row_h - 6, 0, 246, 246, 255, thickness=2)
+                # Filled dot marks the filter in force; the font has no glyph for
+                # a checkmark, so it is drawn.
+                if code == pick_modal["current"]:
+                    fill_rect(mx + 30, ry + row_h // 2 - 9, 12, 12, 0, 246, 246, 255)
+                else:
+                    draw_rect(mx + 30, ry + row_h // 2 - 9, 12, 12, 90, 110, 145, 255, thickness=2)
+                draw_text(name, font_item, mx + 60, ry + row_h // 2 - 3,
+                          255, 255, 255, center_y=True)
+                if right:
+                    # Right-aligned. Drawn from a fixed x it grew rightwards, so a
+                    # five-digit count spilled past the modal edge.
+                    draw_text(right, font_sub,
+                              mx + mw - 40 - measure_text(right, font_sub),
+                              ry + row_h // 2 - 3, 150, 170, 200, center_y=True)
+
+            draw_text(f"[A] {tr('lib_filter_pick')}   [B] {tr('lib_filter_close')}",
+                      font_sub, mx + mw // 2, my + mh - 24, 160, 180, 210,
+                      center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.4. UPDATE AVAILABLE MODAL
+        # ----------------------------------------------------------------------
+        elif update_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+            mw = min(760, state.SCREEN_W - 60)
+            mh = 380
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+            fill_rect(mx + 3, my + 3, mw - 6, 70, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 71, mw - 6, 2, 0, 246, 246, 255)
+            draw_text(tr("upd_title"), font_title, mx + mw // 2, my + 36,
+                      0, 246, 246, center_x=True, center_y=True)
+
+            um = update_modal["manifest"] or {}
+            rows_y = my + 100
+            draw_text(f"{tr('upd_current')} {APP_VERSION}", font_item, mx + 45, rows_y, 200, 215, 235)
+            draw_text(f"{tr('upd_new')} {um.get('version', '?')}", font_item, mx + 45, rows_y + 40, 0, 246, 200)
+            draw_text(f"{tr('upd_files')} {len(update_modal['files'])}", font_sub, mx + 45, rows_y + 82, 150, 170, 200)
+            draw_text(tr("upd_note"), font_sub, mx + 45, rows_y + 116, 150, 170, 200)
+
+            if update_modal["busy"] or update_modal["failed"]:
+                colour = (255, 120, 120) if update_modal["failed"] else (0, 230, 255)
+                draw_text(update_modal["status"], font_item, mx + mw // 2, my + mh - 62,
+                          *colour, center_x=True, center_y=True)
+                if update_modal["failed"]:
+                    draw_text("[A/B] OK", font_sub, mx + mw // 2, my + mh - 26,
+                              200, 215, 235, center_x=True, center_y=True)
+            else:
+                labels = [tr("upd_install"), tr("upd_skip"), tr("upd_later")]
+                bw = (mw - 100) // 3
+                bh = 52
+                by = my + mh - 78
+                for i, lbl in enumerate(labels):
+                    bx = mx + 40 + i * (bw + 10)
+                    sel = (i == update_modal["selected_opt"])
+                    if sel:
+                        fill_rect(bx, by, bw, bh, 0, 120, 130, 255)
+                        draw_rect(bx, by, bw, bh, 0, 246, 246, 255, thickness=3)
+                    else:
+                        fill_rect(bx, by, bw, bh, 30, 42, 66, 255)
+                        draw_rect(bx, by, bw, bh, 70, 90, 125, 255, thickness=1)
+                    draw_text(lbl, font_badge, bx + bw // 2, by + bh // 2,
+                              255, 255, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.5. PRE-DOWNLOAD GAME DETAILS & PREVIEW MODAL (Requirement 5)
+        # ----------------------------------------------------------------------
+        elif pre_download_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            mw = min(960, state.SCREEN_W - 40)
+            mh = 480
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            g_info = pre_download_modal["game_info"]
+            g_title = g_info.get("title", "Game") if g_info else "Game"
+            sys_c = pre_download_modal["sys_code"]
+            sz_str = (pre_download_modal.get("dynamic_size_str") or g_info.get("file_size_str") or g_info.get("size") or "").strip() if g_info else ""
+            if sz_str in ("TOPO SHOP", "TOPO"):
+                sz_str = ""
+            fn_str = g_info.get("filename", "") if g_info else ""
+            img_p = pre_download_modal.get("img_path") or pre_download_modal.get("preview_cached_path")
+            sel_opt = pre_download_modal["selected_opt"]
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header
+            fill_rect(mx + 3, my + 3, mw - 6, 74, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 75, mw - 6, 2, 0, 246, 246, 255)
+            draw_text(tr("pre_dl_modal_title"), font_title, mx + mw // 2, my + 38, 0, 246, 246, center_x=True, center_y=True)
+
+            mid_y = my + 92
+            box_w = 230
+            box_h = 240
+            box_x = mx + 40
+            fill_rect(box_x, mid_y, box_w, box_h, 12, 16, 26, 255)
+            draw_rect(box_x, mid_y, box_w, box_h, 45, 65, 100, 255, thickness=1)
+
+            drawn = False
+            if img_p and os.path.exists(img_p):
+                drawn = draw_proportional_boxart(img_p, box_x + 6, mid_y + 6, box_w - 12, box_h - 12)
+            if not drawn:
+                if pre_download_modal.get("preview_status") == "loading":
+                    draw_text("Đang tải ảnh...", font_sub, box_x + box_w // 2, mid_y + box_h // 2 - 15, 0, 230, 255, center_x=True, center_y=True)
+                    draw_text(f"[{sys_c}]", font_item, box_x + box_w // 2, mid_y + box_h // 2 + 15, 180, 200, 220, center_x=True, center_y=True)
+                else:
+                    draw_default_boxart_avatar(box_x + 6, mid_y + 6, box_w - 12, box_h - 12, sys_c, g_title)
+
+            dt_x = box_x + box_w + 35
+
+            # Game Title
+            dt_title = f"[{sys_c}] {g_title}"
+            if len(dt_title) > 38:
+                dt_title = dt_title[:35] + "..."
+            draw_text(f"{tr('pre_dl_lbl_name')}{dt_title}", font_item, dt_x, mid_y + 20, 255, 255, 255)
+
+            # System
+            s_full = get_system_display_name(sys_c)
+            draw_text(f"{tr('pre_dl_lbl_sys')}{s_full}", font_modal_lbl, dt_x, mid_y + 65, 0, 230, 255)
+
+            # Size
+            size_display = sz_str if sz_str else ("Đang kiểm tra..." if (g_info and g_info.get("rom_url")) else ("Chuẩn ROM gốc" if state.current_lang == "VI" else "Standard ROM"))
+            draw_text(f"{tr('pre_dl_lbl_size')}{size_display}", font_modal_lbl, dt_x, mid_y + 110, 255, 215, 0)
+
+            # Filename
+            dt_fn = fn_str
+            if len(dt_fn) > 36:
+                dt_fn = dt_fn[:33] + "..."
+            draw_text(f"{tr('pre_dl_lbl_file')}{dt_fn}", font_modal_lbl, dt_x, mid_y + 155, 180, 205, 235)
+
+            # Source Server
+            cand_url = (g_info.get("topo_url") or g_info.get("rom_url") or g_info.get("mirror_url") or "") if g_info else ""
+            src_lbl = "TOPO SHOP CDN" if ("toposhop.vn" in cand_url or (g_info and g_info.get("topo_url"))) else ("Internet Archive CDN" if "archive.org" in cand_url else "Online Fast CDN")
+            draw_text(f"{tr('pre_dl_lbl_source')}{src_lbl}", font_modal_lbl, dt_x, mid_y + 200, 140, 230, 180)
+
+            # Destination directory. J2ME games are filed by handset resolution,
+            # so name the subfolder the jar will actually land in.
+            _dest = (rom_dir_for(fn_str) if sys_c in ("JAVA", "J2ME")
+                     else f"/mnt/SDCARD/Roms/{sys_c}")
+            draw_text(f"{tr('pre_dl_lbl_dest')}{_dest}/", font_sub, dt_x, mid_y + 242, 140, 160, 190)
+
+            # Bottom Action Buttons
+            btn_w = 260
+            btn_h = 60
+            gap_b = 35
+            bx1 = mx + (mw - (btn_w * 2 + gap_b)) // 2
+            bx2 = bx1 + btn_w + gap_b
+            by = my + mh - btn_h - 22
+
+            is_opt0 = (sel_opt == 0)
+            is_opt1 = (sel_opt == 1)
+
+            # Button 1: Start Download (Green)
+            if is_opt0:
+                fill_rect(bx1, by, btn_w, btn_h, 0, 200, 120, 255)
+                draw_rect(bx1, by, btn_w, btn_h, 255, 255, 255, 255, thickness=3)
+                draw_text(tr("pre_dl_btn_download"), font_badge, bx1 + btn_w // 2, by + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
+            else:
+                fill_rect(bx1, by, btn_w, btn_h, 16, 48, 36, 255)
+                draw_rect(bx1, by, btn_w, btn_h, 0, 200, 120, 255, thickness=1)
+                draw_text(tr("pre_dl_btn_download"), font_badge, bx1 + btn_w // 2, by + btn_h // 2, 0, 230, 140, center_x=True, center_y=True)
+
+            # Button 2: Cancel / Back (Red/Dark)
+            if is_opt1:
+                fill_rect(bx2, by, btn_w, btn_h, 200, 50, 50, 255)
+                draw_rect(bx2, by, btn_w, btn_h, 255, 255, 255, 255, thickness=3)
+                draw_text(tr("pre_dl_btn_cancel"), font_badge, bx2 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            else:
+                fill_rect(bx2, by, btn_w, btn_h, 45, 60, 90, 255)
+                draw_rect(bx2, by, btn_w, btn_h, 80, 110, 160, 255, thickness=1)
+                draw_text(tr("pre_dl_btn_cancel"), font_badge, bx2 + btn_w // 2, by + btn_h // 2, 200, 215, 235, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 6. DOWNLOADED GAME HORIZONTAL ACTION MODAL
+        # ----------------------------------------------------------------------
+        elif game_action_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            mw = min(960, state.SCREEN_W - 40)
+            mh = 480
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            g_title = game_action_modal["game_info"].get("title", "Game")
+            sys_c = game_action_modal.get("sys_code", current_rom_system)
+            sz_str = game_action_modal.get("size_str", "")
+            img_p = game_action_modal.get("img_path")
+            sel_opt = game_action_modal["selected_opt"]
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            fill_rect(mx + 3, my + 3, mw - 6, 76, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 77, mw - 6, 2, 0, 246, 246, 255)
+            
+            disp_g_title = f"[{sys_c}] {g_title}"
+            if len(disp_g_title) > 38:
+                disp_g_title = disp_g_title[:35] + "..."
+            draw_text(disp_g_title, font_title, mx + mw // 2, my + 40, 255, 255, 255, center_x=True, center_y=True)
+
+            mid_y = my + 95
+            box_w = 200
+            box_h = 175
+            box_x = mx + 45
+            fill_rect(box_x, mid_y, box_w, box_h, 12, 16, 26, 255)
+            draw_rect(box_x, mid_y, box_w, box_h, 45, 65, 100, 255, thickness=1)
+
+            drawn = False
+            if img_p and os.path.exists(img_p):
+                drawn = draw_proportional_boxart(img_p, box_x + 6, mid_y + 6, box_w - 12, box_h - 12)
+            if not drawn:
+                draw_default_boxart_avatar(box_x + 6, mid_y + 6, box_w - 12, box_h - 12, sys_c, g_title)
+
+            dt_x = box_x + box_w + 35
+            draw_text(f"• Hệ máy: {sys_c}", font_modal_lbl, dt_x, mid_y + 30, 0, 230, 255)
+            if sz_str:
+                draw_text(f"• Dung lượng: {sz_str}", font_modal_lbl, dt_x, mid_y + 75, 255, 215, 0)
+            if sys_c in ("JAVA", "J2ME"):
+                _r = pretty_resolution(resolution_of_path(game_action_modal.get("rom_path", "")))
+                draw_text(f"• Màn hình: {_r}", font_modal_lbl, dt_x, mid_y + 120, 0, 246, 200)
+            else:
+                draw_text(f"• Vị trí lưu: Roms/{sys_c}/", font_modal_lbl, dt_x, mid_y + 120, 200, 215, 235)
+
+            # Compact icon tiles: one short label each, no description line - five of
+            # them have to fit the same strip that used to hold four fat ones.
+            _act_look = {
+                "PLAY":  (tr("act_play_title"), (0, 230, 150)),
+                "DEL":   (tr("act_del_title"), (255, 80, 80)),
+                "RES":   (pretty_resolution(resolution_of_path(
+                             game_action_modal.get("rom_path", ""))), (255, 200, 0)),
+                "REGET": (tr("act_reget_title"), (255, 200, 0)),
+                "CLOSE": (tr("act_close_title"), (180, 200, 230)),
+            }
+            actions = [(i,) + _act_look[i] for i in _act_ids(sys_c)]
+
+            num_tiles = len(actions)
+            tile_gap = 18
+            total_tiles_w = mw - 70
+            tile_w = (total_tiles_w - (num_tiles - 1) * tile_gap) // num_tiles
+            tile_h = 76
+            tile_y = my + mh - tile_h - 25
+
+            for t_idx, (t_icon, t_title, t_col) in enumerate(actions):
+                tx = mx + 35 + t_idx * (tile_w + tile_gap)
+                is_t_sel = (t_idx == sel_opt)
+
+                if is_t_sel:
+                    fill_rect(tx, tile_y, tile_w, tile_h, 32, 50, 85, 255)
+                    draw_rect(tx, tile_y, tile_w, tile_h, 0, 246, 246, 255, thickness=3)
+                    fill_rect(tx + 4, tile_y + 4, tile_w - 8, 6, t_col[0], t_col[1], t_col[2], 255)
+                else:
+                    fill_rect(tx, tile_y, tile_w, tile_h, 20, 28, 46, 255)
+                    draw_rect(tx, tile_y, tile_w, tile_h, 45, 60, 95, 255, thickness=1)
+
+                ib_w = tile_w - 24
+                ib_h = 26
+                ib_x = tx + 12
+                ib_y = tile_y + 8
+                fill_rect(ib_x, ib_y, ib_w, ib_h, 14, 20, 34, 255)
+                draw_rect(ib_x, ib_y, ib_w, ib_h, t_col[0], t_col[1], t_col[2], 255, thickness=1)
+                draw_text(f"[{t_icon}]", font_badge, ib_x + ib_w // 2, ib_y + ib_h // 2, t_col[0], t_col[1], t_col[2], center_x=True, center_y=True)
+
+                draw_text(t_title, font_sub, tx + tile_w // 2, tile_y + 52,
+                          255, 255, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 6.5. ALPHABET QUICK JUMP MODAL (A - Z GRID)
+        # ----------------------------------------------------------------------
+        elif j2me_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            jw = 780
+            jh_ = 420
+            jx = (state.SCREEN_W - jw) // 2
+            jy = (state.SCREEN_H - jh_) // 2
+            fill_rect(jx, jy, jw, jh_, 16, 22, 38, 255)
+            draw_rect(jx, jy, jw, jh_, 0, 246, 246, 255, thickness=3)
+            fill_rect(jx + 3, jy + 3, jw - 6, 54, 24, 34, 58, 255)
+            draw_text(tr("j2me_info_title"), font_item, jx + jw // 2, jy + 30,
+                      0, 246, 246, center_x=True, center_y=True)
+
+            # Real status, not a fixed "success" line: say plainly what is missing.
+            missing = j2me_missing_parts()
+            if j2me_modal["busy"]:
+                st_txt, st_col = tr("j2me_st_installing"), (255, 200, 0)
+            elif missing:
+                st_txt, st_col = f"{tr('j2me_st_missing')} {', '.join(missing)}", (255, 90, 90)
+            else:
+                st_txt, st_col = tr("j2me_st_ready"), (0, 255, 160)
+
+            sy = jy + 78
+            fill_rect(jx + 22, sy - 6, jw - 44, 40, 22, 30, 48, 255)
+            draw_rect(jx + 22, sy - 6, jw - 44, 40, st_col[0], st_col[1], st_col[2], 200, thickness=2)
+            draw_text(st_txt, font_sub, jx + 40, sy + 14, st_col[0], st_col[1], st_col[2], center_y=True)
+
+            n_java = len([g for g in downloaded_games_list if g.get("sys_code") == "JAVA"])
+            for r_i, (lbl, val) in enumerate((
+                    (tr("j2me_row_games"), str(n_java)),
+                    (tr("j2me_row_emu"), "/mnt/SDCARD/Emus/JAVA/"),
+                    (tr("j2me_row_rom"), "/mnt/SDCARD/Roms/JAVA/"))):
+                ry_j = jy + 150 + r_i * 42
+                draw_text(lbl, font_sub, jx + 44, ry_j, 150, 165, 195)
+                draw_text(val, font_sub, jx + 290, ry_j, 225, 235, 250)
+
+            # Two buttons: reinstall and back. Without the second one there was no
+            # sign that B closes the panel.
+            ay = jy + jh_ - 74
+            bh = 52
+            gap = 20
+            bw = (jw - 44 - gap) // 2
+            for b_i, (b_txt, b_col, b_on) in enumerate((
+                    (tr("j2me_do_install"), (255, 200, 0), not j2me_modal["busy"]),
+                    (tr("j2me_do_close"), (180, 200, 230), not j2me_modal["busy"]))):
+                bx_j = jx + 22 + b_i * (bw + gap)
+                col = b_col if b_on else (110, 120, 140)
+                fill_rect(bx_j, ay, bw, bh, 24, 34, 58, 255)
+                draw_rect(bx_j, ay, bw, bh, col[0], col[1], col[2], 255, thickness=2)
+                draw_text(b_txt, font_sub, bx_j + bw // 2, ay + bh // 2,
+                          col[0], col[1], col[2], center_x=True, center_y=True)
+
+        elif key_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            k_cur = key_modal["key"]
+            k_names = {"OK": "OK / Chon (giua)", "*": "Phim  *", "#": "Phim  #",
+                       "\u5de6\u952e": "Phim mem TRAI", "\u53f3\u952e": "Phim mem PHAI"}
+            if state.current_lang != "VI":
+                k_names = {"OK": "OK / Select", "*": "Key  *", "#": "Key  #",
+                           "\u5de6\u952e": "LEFT softkey", "\u53f3\u952e": "RIGHT softkey"}
+            k_title = k_names.get(k_cur, ("Phim  " if state.current_lang == "VI" else "Key  ") + str(k_cur))
+
+            k_rows = [""] + VALID_BUTTONS
+            krow_h = 40
+            kw = 460
+            kh_ = 74 + krow_h * len(k_rows)
+            kx = (state.SCREEN_W - kw) // 2
+            ky = (state.SCREEN_H - kh_) // 2
+
+            fill_rect(kx, ky, kw, kh_, 16, 22, 38, 255)
+            draw_rect(kx, ky, kw, kh_, 0, 246, 246, 255, thickness=3)
+            fill_rect(kx + 3, ky + 3, kw - 6, 52, 24, 34, 58, 255)
+            draw_text(k_title, font_item, kx + kw // 2, ky + 29,
+                      0, 246, 246, center_x=True, center_y=True)
+
+            for b_i, b in enumerate(k_rows):
+                by_i = ky + 62 + b_i * krow_h
+                is_sel = (b_i == key_modal["selected_idx"])
+                is_cur = (b == j2me_keymap.get(k_cur, ""))
+                if is_sel:
+                    fill_rect(kx + 10, by_i, kw - 20, krow_h - 5, 32, 50, 85, 255)
+                    draw_rect(kx + 10, by_i, kw - 20, krow_h - 5, 0, 246, 246, 255, thickness=2)
+                lbl = b if b else ("(khong gan)" if state.current_lang == "VI" else "(unassigned)")
+                draw_text(lbl, font_sub, kx + 34, by_i + (krow_h - 5) // 2,
+                          *((0, 255, 160) if is_cur else (225, 235, 250)), center_y=True)
+
+                # name the key that currently holds this button, so it is clear the
+                # pick will swap rather than quietly unbind something else
+                holder = button_in_use(j2me_keymap, b, except_key=k_cur) if b else None
+                if holder:
+                    draw_text(k_names.get(holder, str(holder)), font_sub, kx + 190,
+                              by_i + (krow_h - 5) // 2, 150, 165, 195, center_y=True)
+
+                bx = kx + kw - 46
+                byy = by_i + (krow_h - 5) // 2 - 9
+                draw_rect(bx, byy, 18, 18, 90, 110, 145, 255, thickness=2)
+                if is_cur:
+                    fill_rect(bx + 5, byy + 5, 8, 8, 0, 255, 160, 255)
+
+        elif res_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            row_h = 54
+            rw = 420
+            rh_ = 96 + row_h * len(RESOLUTIONS)
+            rx = (state.SCREEN_W - rw) // 2
+            ry = (state.SCREEN_H - rh_) // 2
+
+            fill_rect(rx, ry, rw, rh_, 16, 22, 38, 255)
+            draw_rect(rx, ry, rw, rh_, 0, 246, 246, 255, thickness=3)
+            fill_rect(rx + 3, ry + 3, rw - 6, 56, 24, 34, 58, 255)
+            draw_text(tr("act_res_title"), font_item, rx + rw // 2, ry + 31,
+                      0, 246, 246, center_x=True, center_y=True)
+
+            cur_res = resolution_of_path(game_action_modal.get("rom_path", ""))
+            for r_i, r_folder in enumerate(RESOLUTIONS):
+                ry_i = ry + 68 + r_i * row_h
+                is_sel = (r_i == res_modal["selected_idx"])
+                is_cur = (r_folder == cur_res)
+                if is_sel:
+                    fill_rect(rx + 12, ry_i, rw - 24, row_h - 6, 32, 50, 85, 255)
+                    draw_rect(rx + 12, ry_i, rw - 24, row_h - 6, 0, 246, 246, 255, thickness=2)
+                # the size the game already uses stays marked, so a pick that changes
+                # nothing is obvious before pressing
+                col = (0, 255, 160) if is_cur else (225, 235, 250)
+                draw_text(pretty_resolution(r_folder), font_item, rx + 40,
+                          ry_i + (row_h - 6) // 2, col[0], col[1], col[2], center_y=True)
+                # Marker drawn from rectangles, not a glyph: the bundled font has no
+                # tick or bullet, and a text label was wide enough to push the layout.
+                bx = rx + rw - 46
+                by = ry_i + (row_h - 6) // 2 - 10
+                draw_rect(bx, by, 20, 20, 90, 110, 145, 255, thickness=2)
+                if is_cur:
+                    fill_rect(bx + 5, by + 5, 10, 10, 0, 255, 160, 255)
+
+        elif alphabet_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            mw = min(920, state.SCREEN_W - 40)
+            mh = 420
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header Bar
+            fill_rect(mx + 3, my + 3, mw - 6, 68, 24, 34, 58, 255)
+            draw_text(tr("alpha_title"), font_item, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+
+            # Subtitle guide
+            draw_text(tr("alpha_sub"), font_sub, mx + mw // 2, my + 95, 170, 185, 210, center_x=True, center_y=True)
+
+            # 3 Rows x 9 Columns Letter Grid
+            cols = 9
+            gap = 8
+            grid_pad_x = 30
+            cw = (mw - grid_pad_x * 2 - (cols - 1) * gap) // cols
+            ch = 62
+            grid_y = my + 120
+
+            for idx, let in enumerate(alphabet_modal["letters"]):
+                r = idx // cols
+                c = idx % cols
+                bx = mx + grid_pad_x + c * (cw + gap)
+                by = grid_y + r * (ch + gap)
+
+                is_sel = (idx == alphabet_modal["selected_idx"])
+                has_games = (let in alphabet_modal["available_map"])
+                cnt = alphabet_modal["counts_map"].get(let, 0)
+
+                if is_sel:
+                    fill_rect(bx, by, cw, ch, 255, 180, 0, 255)
+                    draw_rect(bx, by, cw, ch, 255, 255, 255, 255, thickness=3)
+                    draw_text(let, font_item, bx + cw // 2, by + ch // 2 - 10, 0, 0, 0, center_x=True, center_y=True)
+                    draw_text(f"{cnt}", font_badge, bx + cw // 2, by + ch // 2 + 14, 0, 0, 0, center_x=True, center_y=True)
+                elif has_games:
+                    fill_rect(bx, by, cw, ch, 24, 38, 62, 255)
+                    draw_rect(bx, by, cw, ch, 0, 210, 245, 255, thickness=1)
+                    draw_text(let, font_item, bx + cw // 2, by + ch // 2 - 10, 0, 246, 246, center_x=True, center_y=True)
+                    draw_text(f"{cnt}", font_badge, bx + cw // 2, by + ch // 2 + 14, 180, 220, 255, center_x=True, center_y=True)
+                else:
+                    fill_rect(bx, by, cw, ch, 18, 24, 36, 180)
+                    draw_rect(bx, by, cw, ch, 40, 50, 70, 255, thickness=1)
+                    draw_text(let, font_item, bx + cw // 2, by + ch // 2, 80, 95, 115, center_x=True, center_y=True)
+
+            # Bottom summary line
+            sel_let = alphabet_modal["letters"][alphabet_modal["selected_idx"]]
+            sel_cnt = alphabet_modal["counts_map"].get(sel_let, 0)
+            fill_rect(mx + 30, my + mh - 54, mw - 60, 36, 20, 28, 48, 255)
+            draw_rect(mx + 30, my + mh - 54, mw - 60, 36, 60, 85, 130, 255)
+            if sel_cnt > 0:
+                sum_txt = f"Chữ '{sel_let}': {sel_cnt} game trong hệ máy" if state.current_lang == "VI" else f"Letter '{sel_let}': {sel_cnt} games in system"
+                draw_text(sum_txt, font_sub, mx + mw // 2, my + mh - 36, 255, 215, 0, center_x=True, center_y=True)
+            else:
+                sum_txt = f"Chữ '{sel_let}': Không có game nào" if state.current_lang == "VI" else f"Letter '{sel_let}': No games available"
+                draw_text(sum_txt, font_sub, mx + mw // 2, my + mh - 36, 140, 155, 175, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 7. STRUCTURED INFO / GUIDE / STORAGE PROGRESS MODAL
+        # ----------------------------------------------------------------------
+        elif modal_title and modal_rows:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
+
+            mw = min(940, state.SCREEN_W - 40)
+            num_r = len(modal_rows)
+            is_progress_mode = isinstance(modal_rows[0], dict) and ("pct" in modal_rows[0])
+            # One line instead of two, so the table rows can be tighter.
+            LBL_COL_W = 250
+            if is_progress_mode:
+                row_h = 82
+            elif modal_style == "two_col":
+                row_h = 64
+            elif modal_style == "big":
+                row_h = 58
+            else:
+                row_h = 72
+            # The headline row carries a 54px address and needs the extra height;
+            # it is added once rather than paid by every row.
+            extra_first = 44 if modal_style == "big" else 0
+            row_gap = 10
+            header_box_h = 68
+            footer_btn_h = 65
+
+            mh = min(state.SCREEN_H - 40,
+                     header_box_h + (num_r * (row_h + row_gap)) + extra_first + footer_btn_h + 20)
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header
+            fill_rect(mx + 3, my + 3, mw - 6, header_box_h, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + header_box_h + 1, mw - 6, 2, 0, 246, 246, 255)
+            draw_text(modal_title, font_title, mx + mw // 2, my + header_box_h // 2 + 2, 0, 246, 246, center_x=True, center_y=True)
+
+            row_start_y = my + header_box_h + 14
+
+            for r_idx, row_data in enumerate(modal_rows):
+                ry = row_start_y + r_idx * (row_h + row_gap) + (extra_first if r_idx else 0)
+                this_h = row_h + (extra_first if r_idx == 0 else 0)
+                rx = mx + 25
+                rw = mw - 50
+
+                fill_rect(rx, ry, rw, this_h, 22, 30, 52, 255)
+                draw_rect(rx, ry, rw, this_h, 45, 65, 105, 255, thickness=1)
+
+                if is_progress_mode and isinstance(row_data, dict):
+                    r_title = row_data.get("title", "")
+                    r_sub = row_data.get("sub", "")
+                    r_pct = max(0, min(100, row_data.get("pct", 0)))
+                    r_badge = row_data.get("badge", f"{r_pct}%")
+
+                    # Color based on percentage load
+                    if r_pct >= 90:
+                        bar_r, bar_g, bar_b = 255, 65, 65
+                    elif r_pct >= 75:
+                        bar_r, bar_g, bar_b = 255, 175, 20
+                    else:
+                        bar_r, bar_g, bar_b = 0, 230, 255
+
+                    # Accent left bar
+                    fill_rect(rx + 2, ry + 2, 5, row_h - 4, bar_r, bar_g, bar_b, 255)
+
+                    # Line 1: Title
+                    draw_text(r_title, font_modal_lbl, rx + 18, ry + 16, 0, 246, 246, center_y=True)
+
+                    # Line 2: Visual Progress Bar Track
+                    track_x = rx + 18
+                    track_y = ry + 34
+                    track_w = rw - 36
+                    track_h = 13
+
+                    fill_rect(track_x, track_y, track_w, track_h, 12, 16, 28, 255)
+                    draw_rect(track_x, track_y, track_w, track_h, 45, 60, 90, 255)
+
+                    fill_w = int(track_w * (r_pct / 100.0))
+                    if fill_w > 0:
+                        fill_rect(track_x + 1, track_y + 1, fill_w - 2, track_h - 2, bar_r, bar_g, bar_b, 255)
+
+                    # Line 3: Subtitle detail
+                    draw_text(r_sub, font_sub, rx + 18, ry + 63, 185, 200, 225, center_y=True)
+                elif modal_style == "big" and r_idx == 0:
+                    # The address this screen exists to show, at a size readable
+                    # from arm's length while typing it into another machine.
+                    lbl, val = row_data
+                    fill_rect(rx + 2, ry + 2, 5, row_h - 4, 0, 230, 255, 255)
+                    draw_text(lbl, font_sub, rx + 22, ry + 22, 150, 175, 210, center_y=True)
+                    draw_text(val, font_huge, rx + 22, ry + 66, 0, 246, 246, center_y=True)
+
+                elif modal_style == "big":
+                    lbl, val = row_data
+                    fill_rect(rx + 2, ry + 2, 5, row_h - 4, 60, 80, 120, 255)
+                    draw_text(lbl, font_sub, rx + 22, ry + row_h // 2 - 2,
+                              150, 175, 210, center_y=True)
+                    draw_text(val, font_modal_val, rx + LBL_COL_W + 22, ry + row_h // 2 - 2,
+                              225, 235, 248, center_y=True)
+
+                elif modal_style == "two_col":
+                    # Table form: label and value side by side on one line, in the
+                    # larger list font. Only used where values are short enough to
+                    # fit the right column - the device and storage rows are not.
+                    lbl, val = row_data
+                    fill_rect(rx + 2, ry + 2, 5, row_h - 4, 0, 230, 255, 255)
+                    fill_rect(rx + LBL_COL_W, ry + 8, 1, row_h - 16, 60, 80, 120, 255)
+                    draw_text(lbl, font_item, rx + 22, ry + row_h // 2 - 2,
+                              0, 230, 255, center_y=True)
+                    val_col = (255, 215, 0) if val.startswith("http") else (235, 243, 255)
+                    draw_text(val, font_item, rx + LBL_COL_W + 22, ry + row_h // 2 - 2,
+                              val_col[0], val_col[1], val_col[2], center_y=True)
+
+                else:
+                    # Classic Tuple row (lbl, val)
+                    lbl, val = row_data
+                    fill_rect(rx + 2, ry + 2, 5, row_h - 4, 0, 230, 255, 255)
+                    draw_text(lbl, font_modal_lbl, rx + 20, ry + 18, 0, 230, 255, center_y=True)
+                    val_col = (255, 215, 0) if val.startswith("http") else (225, 235, 248)
+                    draw_text(val, font_modal_val, rx + 20, ry + 48, val_col[0], val_col[1], val_col[2], center_y=True)
+
+            # Close Button
+            btn_w = 260
+            btn_h = 46
+            bx = mx + (mw - btn_w) // 2
+            by = my + mh - 58
+
+            fill_rect(bx, by, btn_w, btn_h, 0, 200, 120, 255)
+            draw_rect(bx, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
+            draw_text("Đóng [Bấm A hoặc B]", font_badge, bx + btn_w // 2, by + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
+
+        sdl2.SDL_RenderPresent(renderer)
+
+        # Adaptive Dynamic Eco Power Saving (60 FPS when active, ~28 FPS when idle to save battery)
+        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None)
+        if is_active:
+            time.sleep(0.016)
+        else:
+            time.sleep(0.035)
+
+    # Cleanup
+    for c in controllers:
+        sdl2.SDL_GameControllerClose(c)
+    for j in joysticks:
+        sdl2.SDL_JoystickClose(j)
+
+    for item in text_texture_cache.values():
+        if item and item[0]:
+            sdl2.SDL_DestroyTexture(item[0])
+
+    for item in img_texture_cache.values():
+        if item and item[0]:
+            sdl2.SDL_DestroyTexture(item[0])
+
+    sdlttf.TTF_CloseFont(font_title)
+    sdlttf.TTF_CloseFont(font_sub)
+    sdlttf.TTF_CloseFont(font_item)
+    sdlttf.TTF_CloseFont(font_badge)
+    sdlttf.TTF_CloseFont(font_grid_title)
+    sdlttf.TTF_CloseFont(font_footer)
+    sdlttf.TTF_CloseFont(font_btn_badge)
+    sdlttf.TTF_CloseFont(font_toast)
+    sdlttf.TTF_CloseFont(font_modal_lbl)
+    sdlttf.TTF_CloseFont(font_modal_val)
+    sdlttf.TTF_CloseFont(font_kb)
+    sdlttf.TTF_CloseFont(font_huge)
+    sdlimage.IMG_Quit()
+    sdlttf.TTF_Quit()
+    sdl2.SDL_DestroyRenderer(renderer)
+    sdl2.SDL_DestroyWindow(window)
+    sdl2.SDL_Quit()
+
+if __name__ == "__main__":
+    main()
