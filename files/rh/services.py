@@ -2,6 +2,7 @@
 """On-device services the user can toggle: SFTPGo, SSH, ADB, MTP, screen streamer."""
 
 import os
+import sys
 import time
 import subprocess
 
@@ -83,12 +84,24 @@ def toggle_mtp():
         save_options(mtp_val="Y")
         return "Đã bật USB MTP Transfer" if state.current_lang == "VI" else "Enabled USB MTP Transfer"
 
+# The streamer shells out to ffmpeg to encode frames. Without it the feature
+# cannot work at all, so it is hidden rather than offered and then failing.
+FFMPEG = "/usr/bin/ffmpeg"
+
+
+def stream_supported():
+    return os.path.exists(FFMPEG)
+
+
 def toggle_streamer():
     if is_streamer_running():
         subprocess.call("pkill -9 -f streamer.py 2>/dev/null; killall -9 ffmpeg 2>/dev/null", shell=True)
         return "Đã tắt Stream màn hình" if state.current_lang == "VI" else "Disabled Screen Streamer"
     else:
-        subprocess.Popen(["/mnt/SDCARD/System/bin/python3", STREAMER_SCRIPT], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True, start_new_session=True)
+        # sys.executable, not a fixed path: /mnt/SDCARD/System/bin/python3 does
+        # not exist on the Brick Pro, where the interpreter is the one bundled
+        # with the app. Whatever is running this process can run the streamer.
+        subprocess.Popen([sys.executable, STREAMER_SCRIPT], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True, start_new_session=True)
         ip = get_ip()
         return f"Đã bật Stream (Web: http://{ip}:8088)" if state.current_lang == "VI" else f"Enabled Stream (Web: http://{ip}:8088)"
 
