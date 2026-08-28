@@ -210,8 +210,15 @@ def apply_update(manifest, files):
 
 
 def _purge_pycache():
-    """Remove __pycache__ trees so no stale cached module outranks a new one."""
+    """Remove __pycache__ trees so no stale cached module outranks a new one.
+
+    python/ is skipped: it is the bundled interpreter the Brick Pro needs, and
+    its stdlib ships precompiled. Those caches belong to files this updater
+    never touches, and wiping them on every update would only make the next
+    launch recompile the standard library on a slow card."""
     for root, dirs, _ in os.walk(APP_DIR):
+        if root == APP_DIR and "python" in dirs:
+            dirs.remove("python")
         for d in list(dirs):
             if d == "__pycache__":
                 shutil.rmtree(os.path.join(root, d), ignore_errors=True)
