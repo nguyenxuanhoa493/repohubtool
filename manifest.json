@@ -1,7 +1,7 @@
 {
-  "version": "1.21",
+  "version": "1.22",
   "python": "cpython-311",
-  "built": "2026-08-28T07:39:31+0700",
+  "built": "2026-08-28T07:48:18+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.py",
@@ -24,8 +24,8 @@
   "files": [
     {
       "path": "app.pyc",
-      "size": 207574,
-      "sha256": "93383d7c611250446de2d08a36e047994f4908853e5a8b0b085063129b7baa20"
+      "size": 209479,
+      "sha256": "d89633b2d528f5b3296b9b190471bdd6bd0c6b80411a41f231bf2508e33b8239"
     },
     {
       "path": "assets/flag_en.png",
@@ -36,6 +36,11 @@
       "path": "assets/flag_vi.png",
       "size": 1273,
       "sha256": "95cc00c7cdcc250ef7bf5b4af058e662a21cc4976ecf88da6eec5ba73b50b32f"
+    },
+    {
+      "path": "assets/qr_bmc.png",
+      "size": 2502,
+      "sha256": "fc9c509a7fca1b576973c2fe4cf7a59ee4bc4106a164d4def92e8960c5e721a4"
     },
     {
       "path": "assets/qr_donate.png",
@@ -84,8 +89,8 @@
     },
     {
       "path": "rh/i18n.pyc",
-      "size": 27700,
-      "sha256": "0344f71008d0b92caa7eec8b874f5225bc926c7f9db41a5f6d12e3175a1b36ee"
+      "size": 28012,
+      "sha256": "62480b28ee5af2808b94714a2c3d4a02c97a1e12bd6624259f6a2571505f2cfa"
     },
     {
       "path": "rh/j2me.pyc",
@@ -99,8 +104,8 @@
     },
     {
       "path": "rh/paths.pyc",
-      "size": 2007,
-      "sha256": "525a6c1d108f73a8fedc62a3c43b23bb37b999b37b41943938383f8ae7a6a9f4"
+      "size": 2107,
+      "sha256": "863ebfbc909d09b62f9504ba1d67d1ceb030fe36db06b31701c31f0377be1900"
     },
     {
       "path": "rh/services.pyc",
@@ -130,7 +135,7 @@
     {
       "path": "rh/version.pyc",
       "size": 1198,
-      "sha256": "b136b74623bf170a9a0099e3db740ac539ba2d52de497ff66010cf2b5fd92ff9"
+      "sha256": "216f7b08674c6731e722c3f5d91c91a9ce8a887ac8b8a23596eb5f0d59793a42"
     },
     {
       "path": "streamer.pyc",
