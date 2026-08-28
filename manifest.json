@@ -1,7 +1,7 @@
 {
-  "version": "1.25",
+  "version": "1.26",
   "python": "any",
-  "built": "2026-08-28T14:28:52+0700",
+  "built": "2026-08-28T14:36:05+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.pyc",
@@ -99,8 +99,8 @@
   "files": [
     {
       "path": "app.py",
-      "size": 209230,
-      "sha256": "7d5c9961bb60fdddb2e5544b7a838b11f9ee27b7ea6de700c406a3241c3fa744"
+      "size": 209299,
+      "sha256": "b999faca569eb6acacbd05cffed3909176f75ce6910bf3fbfe111cd7bc1b6a2c"
     },
     {
       "path": "assets/fallback.ttf",
@@ -194,8 +194,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 9368,
-      "sha256": "e117c72430c2d1a7a2c7dafc288dec29dfe95c31bd5cdade4375460131a006b2"
+      "size": 9841,
+      "sha256": "80e641fd7385cf24c4acec20aeb01be8218cc59b9b3fd8c2a1f33fce2d804ad3"
     },
     {
       "path": "rh/splash.py",
@@ -220,7 +220,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "35ea50eaf75fac70946ff3d1bfb49164b3044c5691993d4f75e95f7138171d87"
+      "sha256": "75657ea6774de21a7cd9525b52b02526a81bf2360ca277a632f83b5583649127"
     },
     {
       "path": "streamer.py",

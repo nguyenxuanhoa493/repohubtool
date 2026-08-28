@@ -72,6 +72,7 @@ from rh.services import (get_sftp_guide_rows,
     is_ssh_running,
     is_streamer_running,
     is_wifi_awake,
+    stream_supported,
     toggle_adb,
     toggle_mtp,
     toggle_sftpgo,
@@ -1384,9 +1385,10 @@ def main():
             items.append({"id": "mtp_toggle", "title": tr("mtp_item"), "type": "toggle", "state": mtp_on})
             # The streamer is a service you switch on like the rest, so it belongs
             # here rather than among the tools.
-            items.append({"id": "stream_toggle", "title": tr("stream_item"), "type": "toggle", "state": streamer_on})
-            if streamer_on:
-                items.append({"id": "stream_guide", "title": tr("stream_guide"), "label": tr("view"), "sub": True})
+            if stream_supported():
+                items.append({"id": "stream_toggle", "title": tr("stream_item"), "type": "toggle", "state": streamer_on})
+                if streamer_on:
+                    items.append({"id": "stream_guide", "title": tr("stream_guide"), "label": tr("view"), "sub": True})
             items.append({"id": "wifi_ps_toggle", "title": tr("wifi_ps_item"), "type": "toggle", "state": wifi_awake_on})
             number_items(items)
             items.append({"id": "back", "title": tr("back_home")})
