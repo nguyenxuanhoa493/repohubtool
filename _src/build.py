@@ -159,6 +159,7 @@ IDS = ["tinh-nang", "cach-cai", "tai-ve", "ung-ho", "lo-trinh", "lien-he"]
 SVG_TG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.9 4.3 18.7 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.3 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.3c.9-.3 1.6.2 1.4 1.5z"/></svg>'
 SVG_MAIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm9 7.2 8-4.7V6.5l-8 4.7-8-4.7v1L12 12.2z"/></svg>'
 SVG_TEL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .5 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.5-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/></svg>'
+SVG_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v8.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1v1h14v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z"/></svg>'
 SVG_CUP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13v3h2.5A2.5 2.5 0 0 1 22 9.5v1A3.5 3.5 0 0 1 18.5 14H17v1a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V4zm13 5v3h1.5A1.5 1.5 0 0 0 20 10.5v-1A.5.5 0 0 0 19.5 9H17zM3 21h15v2H3v-2z"/></svg>'
 
 
@@ -215,8 +216,20 @@ CSS = """
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
-  .dlcount{color:var(--muted);font-size:.9rem;margin:20px 0 0}
-  .dlcount b{color:var(--accent);font-size:1.05rem}
+  /* A pill rather than a line of text: it sits under two large buttons and had
+     to read as a badge, not as leftover caption. */
+  .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
+    padding:8px 18px 8px 14px;border-radius:999px;
+    background:linear-gradient(180deg,#16233c,#121c31);
+    border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.35);
+    animation:pop .45s cubic-bezier(.2,.9,.3,1.2)}
+  .dlcount svg{width:17px;height:17px;fill:var(--accent);flex:none;
+    filter:drop-shadow(0 0 6px rgba(0,246,246,.5))}
+  .dlcount b{color:var(--accent);font-size:1.12rem;font-variant-numeric:tabular-nums;
+    letter-spacing:.2px}
+  .dlcount span{color:var(--muted);font-size:.88rem}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}
+                 to{opacity:1;transform:none}}
 
   h2{font-size:1.4rem;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
   section{padding:52px 0 0}
@@ -405,8 +418,21 @@ JS = """
     if (!box) return;
     function put(n) {
       if (!n) return;                       // nothing to boast about yet
-      box.querySelector("b").textContent = n.toLocaleString();
+      var out = box.querySelector("b");
       box.hidden = false;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        out.textContent = n.toLocaleString();
+        return;
+      }
+      // Count up on reveal. Eased so it slows into the final figure instead of
+      // stopping dead, which reads as the number still loading.
+      var t0 = 0, DUR = 900;
+      requestAnimationFrame(function step(t) {
+        if (!t0) t0 = t;
+        var k = Math.min(1, (t - t0) / DUR);
+        out.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))).toLocaleString();
+        if (k < 1) requestAnimationFrame(step);
+      });
     }
     var cached = null;
     try { cached = sessionStorage.getItem("rh_dl"); } catch (e) {}
@@ -512,7 +538,7 @@ PAGE = """<!doctype html>
       <a class="btn" href="{REL}/{VER_FULL}">{dl_full}<small>{dl_full_sub}</small></a>
       <a class="btn ghost" href="{REL}/{VER_LITE}">{dl_lite}<small>{dl_lite_sub}</small></a>
     </div>
-    <p class="dlcount" id="dlcount" hidden><b></b> {dls}</p>
+    <p class="dlcount" id="dlcount" hidden>{SVG_DL}<b>0</b><span>{dls}</span></p>
   </div>
 </header>
 
@@ -652,6 +678,7 @@ def render(lang):
         "tagline": t["tagline"], "REL": REL, "VER_FULL": VER_FULL, "VER_LITE": VER_LITE,
         "steps": steps, "osrows": osrows, "roadrows": roadrows, "disc": disc,
         "SVG_TG": SVG_TG, "SVG_MAIL": SVG_MAIL, "SVG_TEL": SVG_TEL, "SVG_CUP": SVG_CUP,
+        "SVG_DL": SVG_DL,
         "js": js,
     }.items():
         out = out.replace("{%s}" % k, str(v))

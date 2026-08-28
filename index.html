@@ -109,8 +109,20 @@
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
-  .dlcount{color:var(--muted);font-size:.9rem;margin:20px 0 0}
-  .dlcount b{color:var(--accent);font-size:1.05rem}
+  /* A pill rather than a line of text: it sits under two large buttons and had
+     to read as a badge, not as leftover caption. */
+  .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
+    padding:8px 18px 8px 14px;border-radius:999px;
+    background:linear-gradient(180deg,#16233c,#121c31);
+    border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.35);
+    animation:pop .45s cubic-bezier(.2,.9,.3,1.2)}
+  .dlcount svg{width:17px;height:17px;fill:var(--accent);flex:none;
+    filter:drop-shadow(0 0 6px rgba(0,246,246,.5))}
+  .dlcount b{color:var(--accent);font-size:1.12rem;font-variant-numeric:tabular-nums;
+    letter-spacing:.2px}
+  .dlcount span{color:var(--muted);font-size:.88rem}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}
+                 to{opacity:1;transform:none}}
 
   h2{font-size:1.4rem;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
   section{padding:52px 0 0}
@@ -257,7 +269,7 @@
       <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.20/RetroHub-1.20-full.zip">Download full<small>75 MB · Java emulator included</small></a>
       <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.20/RetroHub-1.20.zip">Download lite<small>9.7 MB · no Java emulator</small></a>
     </div>
-    <p class="dlcount" id="dlcount" hidden><b></b> downloads so far</p>
+    <p class="dlcount" id="dlcount" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v8.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1v1h14v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z"/></svg><b>0</b><span>downloads so far</span></p>
   </div>
 </header>
 
@@ -407,8 +419,21 @@
     if (!box) return;
     function put(n) {
       if (!n) return;                       // nothing to boast about yet
-      box.querySelector("b").textContent = n.toLocaleString();
+      var out = box.querySelector("b");
       box.hidden = false;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        out.textContent = n.toLocaleString();
+        return;
+      }
+      // Count up on reveal. Eased so it slows into the final figure instead of
+      // stopping dead, which reads as the number still loading.
+      var t0 = 0, DUR = 900;
+      requestAnimationFrame(function step(t) {
+        if (!t0) t0 = t;
+        var k = Math.min(1, (t - t0) / DUR);
+        out.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))).toLocaleString();
+        if (k < 1) requestAnimationFrame(step);
+      });
     }
     var cached = null;
     try { cached = sessionStorage.getItem("rh_dl"); } catch (e) {}
