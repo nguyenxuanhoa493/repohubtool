@@ -1,0 +1,80 @@
+RetroHub - thanh phan cua ben thu ba / third-party components
+==============================================================================
+
+RetroHub dong goi lai mot so phan mem cua nguoi khac. Duoi day la tung thanh
+phan, giay phep, va cho lay ban goc.
+
+RetroHub bundles software written by other people. Each component, its licence
+and where the original came from is listed below.
+
+Ban chay J2ME (thu muc Emus/JAVA, chi co trong ban cai day du) co danh sach
+rieng trong JAVA/NOTICE.txt.
+The J2ME runtime (Emus/JAVA, full package only) has its own list in
+JAVA/NOTICE.txt.
+
+
+------------------------------------------------------------------------------
+1. CPython 3.11.16  ->  python/
+------------------------------------------------------------------------------
+Giay phep / Licence : Python Software Foundation License 2.0
+Toan van / Full text : python/lib/python3.11/LICENSE.txt
+Thuong nguon / Upstream : https://www.python.org
+Ban dung / Build : https://github.com/astral-sh/python-build-standalone
+
+Chi co trong ban cai kem Python. Da bo test/, idlelib/, tkinter/, pip va toan
+bo symlink; khong sua doi ma nguon.
+Only present in packages that bundle Python. test/, idlelib/, tkinter/, pip and
+all symlinks were removed; no source was modified.
+
+
+------------------------------------------------------------------------------
+2. PySDL2 0.9.15  ->  vendor/sdl2/
+------------------------------------------------------------------------------
+Giay phep / Licence : Public Domain (CC0), hoac zlib o noi luat khong cong nhan
+                      Public Domain
+Toan van / Full text : vendor/sdl2/COPYING.txt
+Thuong nguon / Upstream : https://github.com/py-sdl/py-sdl2
+Copyright (C) 2012-2020 Marcus von Appen
+
+CO MOT SUA DOI: vendor/sdl2/dll.py khong phai ban goc. No mang ban va cua
+PortMaster cho ham _finds_libs_at_path, giup tim thu vien SDL2 dung tren may
+cam tay. 74 tep con lai giong het ban thuong nguon.
+ONE MODIFICATION: vendor/sdl2/dll.py is not stock. It carries PortMaster's
+patch to _finds_libs_at_path, which is what makes SDL2 discovery work on these
+handhelds. The other 74 files are identical to upstream.
+
+PortMaster - giay phep MIT - https://github.com/PortsMaster/PortMaster-GUI
+
+
+------------------------------------------------------------------------------
+3. DejaVu Sans  ->  assets/fallback.ttf
+------------------------------------------------------------------------------
+Giay phep / Licence : Bitstream Vera Fonts License + Arev Fonts License
+Toan van / Full text : assets/fallback.ttf.LICENSE
+Thuong nguon / Upstream : https://dejavu-fonts.github.io
+
+Khong sua doi. Chi duoc dung khi may khong co font nao khac.
+Unmodified. Used only when the device has no other font.
+
+
+------------------------------------------------------------------------------
+4. SDL2, SDL2_ttf, SDL2_image  ->  KHONG di kem / NOT bundled
+------------------------------------------------------------------------------
+RetroHub dung thu vien SDL2 co san cua may tai /usr/trimui/lib. Chung thuoc ve
+nha san xuat may, khong duoc phan phat kem RetroHub.
+RetroHub uses the device's own SDL2 libraries at /usr/trimui/lib. They belong to
+the device vendor and are not redistributed with RetroHub.
+
+
+------------------------------------------------------------------------------
+Kho game / Game catalogue
+------------------------------------------------------------------------------
+RetroHub khong luu tru tep game nao. Danh muc chi chua duong dan toi cac nguon
+san co tren Internet, do ben thu ba van hanh. Moi tua game thuoc ban quyen cua
+chu so huu goc.
+
+RetroHub hosts no game files. The catalogue holds links to third-party sources
+already on the Internet. Every title remains the copyright of its owner.
+
+Chu so huu quyen muon go mot tua game khoi danh muc: nguyenxuanhoa493@gmail.com
+Rights holders wanting a title removed: nguyenxuanhoa493@gmail.com
