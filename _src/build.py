@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
 # One place to bump. Four strings drifted apart before this was a constant:
 # the two filenames, the release URL and the softwareVersion in the JSON-LD.
-VERSION = "1.23"
+VERSION = "1.24"
 VER_FULL = "RetroHub-%s-full.zip" % VERSION
 VER_LITE = "RetroHub-%s.zip" % VERSION
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
@@ -50,6 +50,9 @@ OS_ROWS = [
     ("ok",
      ("TrimUI Brick — stock OS", "Tested directly, every feature works"),
      ("TrimUI Brick — hệ gốc", "Đã thử trực tiếp, chạy đầy đủ mọi tính năng")),
+    ("ok",
+     ("TrimUI Brick Pro — stock OS", "Tested directly on firmware 1.1.1; Python ships with the app"),
+     ("TrimUI Brick Pro — hệ gốc", "Đã thử trực tiếp trên firmware 1.1.1; Python đóng gói sẵn trong app")),
     ("wait",
      ("TrimUI Smart Pro — stock OS", "Same firmware family, likely fine but untested"),
      ("TrimUI Smart Pro — hệ gốc", "Cùng dòng firmware, nhiều khả năng chạy được nhưng chưa thử")),
@@ -92,17 +95,17 @@ T = {
   "tagline": "Games and tools for handheld consoles",
   "nav": ["Features", "Install", "Download", "Support", "Roadmap", "Contact"],
   "dls": "downloads so far",
-  "dl_full": "Download full", "dl_full_sub": "75 MB · Java emulator included",
-  "dl_lite": "Download lite", "dl_lite_sub": "9.6 MB · no Java emulator",
+  "dl_full": "Download full", "dl_full_sub": "95 MB · Java emulator included",
+  "dl_lite": "Download lite", "dl_lite_sub": "30 MB · no Java emulator",
   "h_feat": "Highlights", "h_install": "How to install", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
   "steps": ["Unzip what you downloaded — you will see a <code>RetroHub</code> folder.",
             "Put the memory card in your computer and copy that whole folder into <code>/Apps/</code> on the card.",
             "Put the card back, open <b>Apps → RetroHub</b>."],
   "note": "You only do this once. From then on the app checks for a new build every time it opens and downloads only what changed — usually a few hundred KB.",
-  "full_t": "Full", "full_s": "75 MB",
+  "full_t": "Full", "full_s": "95 MB",
   "full_p": "The app, 39,971 games and the Java J2ME emulator. Pick this if you want to play Java games.",
-  "lite_t": "Lite", "lite_s": "9.6 MB",
+  "lite_t": "Lite", "lite_s": "30 MB",
   "lite_p": "The app and the game library, without the Java emulator. Quick to install, you can add Java later.",
   "h_os": "Supported systems",
   "sup_p": "RetroHub is a personal project, built and given away for free. If it is useful to you, a coffee keeps me going.",
@@ -129,17 +132,17 @@ T = {
   "tagline": "Kho game và tiện ích cho máy chơi game cầm tay",
   "nav": ["Tính năng", "Cách cài", "Tải về", "Ủng hộ", "Lộ trình", "Liên hệ"],
   "dls": "lượt tải",
-  "dl_full": "Tải bản đầy đủ", "dl_full_sub": "75 MB · kèm giả lập Java",
-  "dl_lite": "Tải bản gọn", "dl_lite_sub": "9,6 MB · không kèm Java",
+  "dl_full": "Tải bản đầy đủ", "dl_full_sub": "95 MB · kèm giả lập Java",
+  "dl_lite": "Tải bản gọn", "dl_lite_sub": "30 MB · không kèm Java",
   "h_feat": "Tính năng nổi bật", "h_install": "Cách cài", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
   "steps": ["Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.",
             "Cắm thẻ nhớ vào máy tính, chép cả thư mục đó vào <code>/Apps/</code> trên thẻ.",
             "Lắp thẻ lại vào máy, mở <b>Apps → RetroHub</b>."],
   "note": "Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.",
-  "full_t": "Bản đầy đủ", "full_s": "75 MB",
+  "full_t": "Bản đầy đủ", "full_s": "95 MB",
   "full_p": "Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.",
-  "lite_t": "Bản gọn", "lite_s": "9,6 MB",
+  "lite_t": "Bản gọn", "lite_s": "30 MB",
   "lite_p": "Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.",
   "h_os": "Hệ điều hành hỗ trợ",
   "sup_p": "RetroHub là dự án cá nhân, làm và phát hành miễn phí. Nếu nó có ích cho bạn, một ly cà phê cũng là động lực để tôi làm tiếp.",
