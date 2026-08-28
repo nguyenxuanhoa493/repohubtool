@@ -9,7 +9,7 @@ export PYSDL2_DLL_PATH="/usr/trimui/lib"
 
 while true; do
     rm -f /tmp/launch_game.sh
-    python3 app.pyc
+    python3 app.py
     
     if [ -f /tmp/launch_game.sh ]; then
         sh /tmp/launch_game.sh
