@@ -18,9 +18,13 @@ import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
-VER_FULL = "RetroHub-1.20-full.zip"
-VER_LITE = "RetroHub-1.20.zip"
-REL = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.20"
+# One place to bump. Four strings drifted apart before this was a constant:
+# the two filenames, the release URL and the softwareVersion in the JSON-LD.
+VERSION = "1.23"
+VER_FULL = "RetroHub-%s-full.zip" % VERSION
+VER_LITE = "RetroHub-%s.zip" % VERSION
+REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
+       % VERSION)
 
 # slug -> (title, description) per language. The slug is also the screenshot
 # filename, looked up under shots/<lang>/.
@@ -89,7 +93,7 @@ T = {
   "nav": ["Features", "Install", "Download", "Support", "Roadmap", "Contact"],
   "dls": "downloads so far",
   "dl_full": "Download full", "dl_full_sub": "75 MB · Java emulator included",
-  "dl_lite": "Download lite", "dl_lite_sub": "9.7 MB · no Java emulator",
+  "dl_lite": "Download lite", "dl_lite_sub": "9.6 MB · no Java emulator",
   "h_feat": "Highlights", "h_install": "How to install", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
   "steps": ["Unzip what you downloaded — you will see a <code>RetroHub</code> folder.",
@@ -98,7 +102,7 @@ T = {
   "note": "You only do this once. From then on the app checks for a new build every time it opens and downloads only what changed — usually a few hundred KB.",
   "full_t": "Full", "full_s": "75 MB",
   "full_p": "The app, 39,971 games and the Java J2ME emulator. Pick this if you want to play Java games.",
-  "lite_t": "Lite", "lite_s": "9.7 MB",
+  "lite_t": "Lite", "lite_s": "9.6 MB",
   "lite_p": "The app and the game library, without the Java emulator. Quick to install, you can add Java later.",
   "h_os": "Supported systems",
   "sup_p": "RetroHub is a personal project, built and given away for free. If it is useful to you, a coffee keeps me going.",
@@ -126,7 +130,7 @@ T = {
   "nav": ["Tính năng", "Cách cài", "Tải về", "Ủng hộ", "Lộ trình", "Liên hệ"],
   "dls": "lượt tải",
   "dl_full": "Tải bản đầy đủ", "dl_full_sub": "75 MB · kèm giả lập Java",
-  "dl_lite": "Tải bản gọn", "dl_lite_sub": "9,7 MB · không kèm Java",
+  "dl_lite": "Tải bản gọn", "dl_lite_sub": "9,6 MB · không kèm Java",
   "h_feat": "Tính năng nổi bật", "h_install": "Cách cài", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
   "steps": ["Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.",
@@ -135,7 +139,7 @@ T = {
   "note": "Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.",
   "full_t": "Bản đầy đủ", "full_s": "75 MB",
   "full_p": "Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.",
-  "lite_t": "Bản gọn", "lite_s": "9,7 MB",
+  "lite_t": "Bản gọn", "lite_s": "9,6 MB",
   "lite_p": "Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.",
   "h_os": "Hệ điều hành hỗ trợ",
   "sup_p": "RetroHub là dự án cá nhân, làm và phát hành miễn phí. Nếu nó có ích cho bạn, một ly cà phê cũng là động lực để tôi làm tiếp.",
@@ -645,7 +649,7 @@ def render(lang):
         "name": "RetroHub", "applicationCategory": "GameApplication",
         "operatingSystem": "TrimUI (Linux)", "url": canon,
         "downloadUrl": "https://github.com/nguyenxuanhoa493/repohubtool/releases/latest",
-        "softwareVersion": "1.20", "inLanguage": lang, "description": t["desc"],
+        "softwareVersion": VERSION, "inLanguage": lang, "description": t["desc"],
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "VND"},
         "author": {"@type": "Person", "name": "Nguyễn Xuân Hòa",
                    "url": "https://xuanhoa493.com"},
