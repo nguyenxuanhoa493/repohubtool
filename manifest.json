@@ -1,11 +1,11 @@
 {
-  "version": "1.39",
+  "version": "1.40",
   "python": "any",
-  "built": "2026-08-29T22:47:38+0700",
+  "built": "2026-08-29T23:25:24+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Kho game tự cập nhật trong máy, không cần cài lại",
-    "en": "The game library now updates in place, no reinstall"
+    "vi": "Chữ tiếng Việt không còn thành ô vuông trên máy dùng theme thiếu font",
+    "en": "Vietnamese text no longer shows as boxes on devices with a font-poor theme"
   },
   "remove": [
     "app.pyc",
@@ -16,6 +16,7 @@
     "rh/catalog.pyc",
     "rh/downloader.pyc",
     "rh/emulators.pyc",
+    "rh/fonts.pyc",
     "rh/i18n.pyc",
     "rh/j2me.pyc",
     "rh/media.pyc",
@@ -127,8 +128,8 @@
     },
     {
       "path": "app.py",
-      "size": 219059,
-      "sha256": "511adec3ab3d474a94f892d795c3ebf037c76d82c491f6454640a629f8bf48e3"
+      "size": 219121,
+      "sha256": "3e8350df4ec2f4189f8e9489dbccab39c27981a7c7218f0ce6f2553d14beb6bf"
     },
     {
       "path": "assets/fallback.ttf",
@@ -226,6 +227,11 @@
       "sha256": "ccfe0d2c99127e85292647eb70c033e0ff11eba4887405692595666443ffa853"
     },
     {
+      "path": "rh/fonts.py",
+      "size": 2302,
+      "sha256": "a49a5631669e17746783daa128d301b631d8bd1ebad1d94a57eed8b2b709d513"
+    },
+    {
       "path": "rh/i18n.py",
       "size": 28440,
       "sha256": "df271fa24e1432c0756e02dae5ca5ff1674fa2f9de1595ba9b63e9d68d0dba01"
@@ -288,7 +294,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "f9240e9f1f029198d36b5e233c10fd4be4e9bb4e0765bac1d0fbcfcf30e1d456"
+      "sha256": "589d85004c55101ba3a04a49b4b47ebf6dfecdf7bf3055369b3447d782aeab9c"
     },
     {
       "path": "streamer.py",
