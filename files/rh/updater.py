@@ -94,6 +94,28 @@ def fetch_manifest():
     return m
 
 
+def release_note(manifest, lang="VI"):
+    """Mot dong noi ban moi sua gi, lay tu manifest. "" khi khong co.
+
+    Man hinh cap nhat cu chi noi co ban moi va bao nhieu tep phai tai, tu do
+    khong ai biet co dang cai bay gio hay de sau. Manifest den tu mang va moi
+    ban phat hanh cu deu khong co truong nay, nen o day khong duoc tin gi ca:
+    thieu, sai kieu hay rong thi coi nhu khong co ghi chu."""
+    note = (manifest or {}).get("note") if isinstance(manifest, dict) else None
+    if isinstance(note, str):
+        note = {"vi": note, "en": note}
+    if not isinstance(note, dict):
+        return ""
+    key = str(lang or "VI").lower()
+    other = "en" if key == "vi" else "vi"
+    for k in (key, other):
+        text = note.get(k)
+        if isinstance(text, str) and text.strip():
+            # Modal ve tung dong nguyen van, nen ghi chu phai phang lam mot dong.
+            return " ".join(text.split())
+    return ""
+
+
 def pending_files(manifest):
     """Files whose on-disk hash differs from the manifest."""
     out = []

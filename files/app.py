@@ -90,7 +90,7 @@ from rh.j2me import (DEFAULT_KEYMAP, RESOLUTIONS, VALID_BUTTONS, VALID_KEYS,
     move_to_resolution, pretty_resolution, resolution_of_path, rom_dir_for,
     save_keymap)
 from rh.updater import (apply_update, check_for_update, download_update,
-    request_restart, skip_version)
+    release_note, request_restart, skip_version)
 from rh.version import APP_VERSION
 from rh.catalog import (VALID_EXTS, get_java_category_list,
     get_games_for_view,
@@ -2503,9 +2503,36 @@ def main():
                     # The store list and the search results build the same tile
                     # shape but were never wired to the detail modal, so pressing
                     # A on a game did nothing on either screen.
-                    open_pre_download_modal(cur_item["sys_code"],
-                                            cur_item["game_info"],
-                                            cur_item.get("img_path"))
+                    if cur_item.get("downloaded"):
+                        # Tile da deo bien [DA CO] roi ma bam vao van ra man hoi
+                        # "co tai khong": doc thanh may khong biet game dang nam
+                        # tren the. Game da co thi mo dung bang hanh dong nhu ben
+                        # thu vien - choi, xoa, tai lai.
+                        g_info = cur_item["game_info"]
+                        game_action_modal["active"] = True
+                        game_action_modal["game_info"] = g_info
+                        game_action_modal["rom_path"] = cur_item.get("rom_path", "")
+                        game_action_modal["sys_code"] = cur_item["sys_code"]
+                        game_action_modal["img_path"] = cur_item.get("img_path")
+                        # Dung luong that cua file tren the, dung cach thu vien
+                        # do; con so trong catalogue chi la uoc luong cua nguon.
+                        _rp = cur_item.get("rom_path", "")
+                        _sz_str = (g_info.get("file_size_str") or g_info.get("size") or "").strip()
+                        if _sz_str in ("TOPO SHOP", "TOPO"):
+                            _sz_str = ""
+                        try:
+                            _b = os.path.getsize(_rp)
+                            _sz_str = (f"{_b / (1024*1024):.1f} MB" if _b > 1024*1024
+                                       else f"{_b // 1024} KB")
+                        except OSError:
+                            pass
+                        game_action_modal["size_str"] = _sz_str
+                        game_action_modal["selected_opt"] = 0
+                        game_action_modal["from_downloaded_view"] = False
+                    else:
+                        open_pre_download_modal(cur_item["sys_code"],
+                                                cur_item["game_info"],
+                                                cur_item.get("img_path"))
                 elif item_id == "toggle_lang":
                     state.current_lang = "EN" if state.current_lang == "VI" else "VI"
                     state.save_settings()
@@ -3530,7 +3557,25 @@ def main():
             draw_text(f"{tr('upd_current')} {APP_VERSION}", font_item, mx + 45, rows_y, 200, 215, 235)
             draw_text(f"{tr('upd_new')} {um.get('version', '?')}", font_item, mx + 45, rows_y + 40, 0, 246, 200)
             draw_text(f"{tr('upd_files')} {len(update_modal['files'])}", font_sub, mx + 45, rows_y + 82, 150, 170, 200)
-            draw_text(tr("upd_note"), font_sub, mx + 45, rows_y + 116, 150, 170, 200)
+
+            # "Co ban moi, 5 tep" khong tra loi duoc cau hoi duy nhat nguoi dung
+            # dang hoi: cai bay gio hay de sau. Mot dong noi ban nay sua gi thi
+            # tra loi duoc. Ban phat hanh cu khong co ghi chu, va luc do bo cuc
+            # tro lai y nhu truoc.
+            note_y = rows_y + 116
+            rel_note = release_note(um, state.current_lang)
+            if rel_note:
+                note_txt = f"• {rel_note}"
+                # Modal ve nguyen van tung dong: cat cho vua be ngang, neu khong
+                # chu chay thang ra ngoai khung.
+                limit = mw - 90
+                if measure_text(note_txt, font_sub) > limit:
+                    while note_txt and measure_text(note_txt + "...", font_sub) > limit:
+                        note_txt = note_txt[:-1]
+                    note_txt = note_txt.rstrip() + "..."
+                draw_text(note_txt, font_sub, mx + 45, note_y, 0, 230, 180)
+                note_y += 34
+            draw_text(tr("upd_note"), font_sub, mx + 45, note_y, 150, 170, 200)
 
             if update_modal["busy"] or update_modal["failed"]:
                 colour = (255, 120, 120) if update_modal["failed"] else (0, 230, 255)
