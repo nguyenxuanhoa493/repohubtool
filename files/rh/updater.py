@@ -208,7 +208,10 @@ def apply_update(manifest, files):
         try:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             os.replace(src, dst)
-            if f["path"].endswith(".sh"):
+            # Binary giai nen cung phai chay duoc, khong chi script. Luat nay
+            # chi co tac dung tu ban SAU, vi ban cai lan nay la updater cu -
+            # rh.archive.sevenzip() tu bat co thuc thi nen khong phu thuoc no.
+            if f["path"].endswith(".sh") or f["path"].startswith("bin/"):
                 os.chmod(dst, 0o755)
             moved += 1
         except OSError as e:

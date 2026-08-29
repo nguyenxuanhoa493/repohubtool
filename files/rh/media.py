@@ -9,51 +9,9 @@ import sdl2.sdlimage as sdlimage
 
 from .paths import TEMP_DOWNLOAD_DIR
 
-ROM_EXT_PRIORITY = {
-    "GBA": [".gba"],
-    "SFC": [".sfc", ".smc", ".fig"],
-    "FC":  [".nes", ".fds", ".unf"],
-    "MD":  [".md", ".gen", ".smd", ".bin"],
-    "GB":  [".gb"],
-    "GBC": [".gbc", ".gb"],
-    "GG":  [".gg"],
-    "MS":  [".sms"],
-    "NDS": [".nds"],
-    "N64": [".z64", ".n64", ".v64"],
-    "PICO8": [".p8", ".png"],
-    "PS1": [".m3u", ".cue", ".chd", ".pbp"],
-    "PSP": [".iso", ".cso"],
-}
-GENERIC_ROM_EXTS = [".m3u", ".cue", ".chd", ".iso", ".gba", ".sfc", ".smc", ".nes",
-                    ".gb", ".gbc", ".gg", ".sms", ".md", ".gen", ".smd", ".nds",
-                    ".z64", ".n64", ".v64", ".p8", ".pbp", ".cso", ".bin"]
-SIDECAR_EXTS = (".nfo", ".diz", ".sfv", ".md5", ".sha1", ".dat", ".jpg", ".jpeg", ".gif", ".html")
-
-def pick_primary_rom(paths, sys_code):
-    """Choose the file the emulator should actually be launched with.
-
-    A zip holding a .cue/.bin pair, a multi-disc set, or bundled docs must not resolve
-    to whichever entry happened to be last in the archive.
-    """
-    if not paths:
-        return None
-    prefs = ROM_EXT_PRIORITY.get(sys_code, [])
-
-    def rank(p):
-        ext = os.path.splitext(p)[1].lower()
-        try:
-            size = os.path.getsize(p)
-        except Exception:
-            size = 0
-        if ext in prefs:
-            return (0, prefs.index(ext), -size)
-        if ext in GENERIC_ROM_EXTS:
-            return (1, GENERIC_ROM_EXTS.index(ext), -size)
-        if ext in SIDECAR_EXTS:
-            return (3, 0, -size)
-        return (2, 0, -size)
-
-    return sorted(paths, key=rank)[0]
+# Giu lai ten cu o day: rh/downloader.py va cac cho khac van import tu media.
+from .romfiles import (GENERIC_ROM_EXTS, ROM_EXT_PRIORITY,  # noqa: F401
+                       SIDECAR_EXTS, pick_primary_rom)
 
 IMG_MAGIC = (
     (b"\x89PNG\r\n\x1a\n", ".png"),

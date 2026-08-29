@@ -1,16 +1,17 @@
 {
-  "version": "1.32",
+  "version": "1.33",
   "python": "any",
-  "built": "2026-08-29T15:47:45+0700",
+  "built": "2026-08-29T16:27:53+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game đã tải mở bảng chơi/xoá/tải lại thay vì hỏi tải",
-    "en": "Owned games open play/delete, not the download prompt"
+    "vi": "Tải game .rar/.7z giờ tự giải nén ra ROM thật",
+    "en": "Downloads in .rar/.7z now extract to a real ROM"
   },
   "remove": [
     "app.pyc",
     "db.pyc",
     "rh/__init__.pyc",
+    "rh/archive.pyc",
     "rh/catalog.pyc",
     "rh/downloader.pyc",
     "rh/i18n.pyc",
@@ -18,6 +19,7 @@
     "rh/media.pyc",
     "rh/neterrors.pyc",
     "rh/paths.pyc",
+    "rh/romfiles.pyc",
     "rh/services.pyc",
     "rh/splash.pyc",
     "rh/state.pyc",
@@ -110,8 +112,8 @@
     },
     {
       "path": "NOTICE.txt",
-      "size": 3858,
-      "sha256": "8b26973a22be70bbe8d9ea29d0781e8166e3d6d800220a5f1e0146f0f24a3678"
+      "size": 4469,
+      "sha256": "863c75684cc870711cca8be5ffaa25da1ee49982b230f71723fdd5d132b6fe09"
     },
     {
       "path": "app.py",
@@ -154,6 +156,16 @@
       "sha256": "f76660dd8339d043088f99f9d5dfd61aeff34135cdbaeff394e03b954ab40418"
     },
     {
+      "path": "bin/7zz-License.txt",
+      "size": 6029,
+      "sha256": "99df5a516035baca9f2e8095977599d4a4340f58ba900f870238943996014f53"
+    },
+    {
+      "path": "bin/7zzs",
+      "size": 3117816,
+      "sha256": "17595ca8613132898c870558c018c4ab4b89f1bda5e23d227ee7925062d5728e"
+    },
+    {
       "path": "config.json",
       "size": 106,
       "sha256": "874769dade4841588a45bdca44e11e60294cf13a74e52a46f64d2fe8a40fb884"
@@ -179,19 +191,24 @@
       "sha256": "9c4745906c2f854ea1f12b6444a5fa35309d8b534cf4c958f5e54684ecfab82e"
     },
     {
+      "path": "rh/archive.py",
+      "size": 10940,
+      "sha256": "1d3fd7ab28dd923b4b81f9cf75f0f67a0c4ef7cefcfb7773f3f870bcab20d171"
+    },
+    {
       "path": "rh/catalog.py",
       "size": 8437,
       "sha256": "70d0864f1af3bc6241be6ea6e3968624691df3f3ff69e50e75b03e65830817d2"
     },
     {
       "path": "rh/downloader.py",
-      "size": 35282,
-      "sha256": "ff2544954e01e37faaa8e86979904113d23df6b11bfa71484471f357c4b33a06"
+      "size": 37511,
+      "sha256": "2c1e89c6cf69aa4044a0cb913af03a8ebf61035a8c13cd331ccd9ffff8c12c6b"
     },
     {
       "path": "rh/i18n.py",
-      "size": 26642,
-      "sha256": "8a2187ac499547239ccbc4d32e885746d9d3564be4ccf63da0d8675ca7a18617"
+      "size": 27474,
+      "sha256": "0c0703777243bd0c51a9cff446f42d4c14783adf21379f2e330feb5d2ad02bea"
     },
     {
       "path": "rh/j2me.py",
@@ -200,8 +217,8 @@
     },
     {
       "path": "rh/media.py",
-      "size": 4079,
-      "sha256": "26faf6cd90d9a7e139e268c8e57d6e55c548fa080dd02e9a1b14b5a1dd869f44"
+      "size": 2721,
+      "sha256": "6905dfa352f22d714b6eb160b129e5e5229f97c37d4299da443c2e5b55e3c9b3"
     },
     {
       "path": "rh/neterrors.py",
@@ -212,6 +229,11 @@
       "path": "rh/paths.py",
       "size": 1328,
       "sha256": "bd09e5b0c875ff51840665ae096358b3d3c7c89d23dd2606f916c594006249f6"
+    },
+    {
+      "path": "rh/romfiles.py",
+      "size": 1993,
+      "sha256": "ae5b2cc187056e96c225144499ac675f2a2a77f25c8b5e35dd504d2f2a55c1f4"
     },
     {
       "path": "rh/services.py",
@@ -240,13 +262,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 9659,
-      "sha256": "592893ccaa4dc5c5ea3519267e3ee065326f580ef13f2870cc8bc68e657eb2a4"
+      "size": 9925,
+      "sha256": "d7c8fd618e6dfe48ec85d801a3b9488479dd321ca227bd5b98ae33b7189978b8"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "fa4975bcce3e46374edf5f1085a5f3a27b883ca7e09cb42f60cde8e832fff530"
+      "sha256": "d8cacc2ee2de880c58a361a97abd485a5679cfab6cfbbfe44556ee245e3cd83d"
     },
     {
       "path": "streamer.py",
