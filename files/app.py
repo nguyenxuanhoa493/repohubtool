@@ -90,10 +90,11 @@ from rh.j2me import (RENDER_MODES, RESOLUTIONS,
     runtime_supports_renderer, safe_jar_name, save_render_mode)
 from rh.emulators import resolve as resolve_emulator
 from rh.fonts import VIET_PROBE, font_candidates, pick_font
-from rh.updater import (apply_catalog, apply_update, CATALOG_FAILED,
-    catalog_entry, catalog_pending, CatalogError, check_for_update,
-    download_catalog, download_update, release_note, request_restart,
-    skip_version)
+from rh.updater import (apply_catalog, apply_runtime, apply_update,
+    CATALOG_FAILED, catalog_entry, catalog_pending, CatalogError,
+    check_for_update, download_catalog, download_runtime, download_update,
+    release_note, request_restart, RUNTIME_FAILED, runtime_pending,
+    RuntimeUpdateError, skip_version)
 from rh.storage import human_bytes
 from rh.version import APP_VERSION, is_newer
 from rh.boxart import is_real_boxart_url
@@ -943,8 +944,8 @@ def main():
         update_modal["manifest"] = manifest
         update_modal["files"] = files
         update_modal["selected_opt"] = 0
-        # check_for_update() chi tra viec khi is_newer hoac catalog_pending;
-        # khong is_newer thi day chac chan la duong catalog_pending mot minh.
+        # check_for_update() chi tra viec khi is_newer, catalog_pending hoac
+        # runtime_pending; khong is_newer thi day la mot trong hai duong kia.
         update_modal["cat_only"] = not is_newer(manifest["version"], APP_VERSION)
         update_modal["active"] = True
 
@@ -967,6 +968,32 @@ def main():
                 ok = apply_update(m, files)
         except Exception as e:
             print(f"Update error: {e}")
+
+        # Bo gia lap di truoc kho game: no nho hon nhieu va la thu quyet dinh
+        # game Java co chay dung hay khong. Cung nhu kho game, hong o day khong
+        # duoc keo theo ban .py - app van len phien ban moi, lan kiem tra sau
+        # runtime_pending van dung nen no tu thu lai.
+        if ok:
+            try:
+                rt_pending = runtime_pending(m)
+            except Exception as e:
+                print(f"Runtime check error: {e}")
+                rt_pending = []
+            if rt_pending:
+                def rt_prog(done, total, path):
+                    update_modal["status"] = "%s %d/%d" % (
+                        tr("upd_rt_downloading"), done, total)
+                try:
+                    download_runtime(rt_pending, progress=rt_prog)
+                    update_modal["status"] = tr("upd_rt_installing")
+                    if not apply_runtime(rt_pending):
+                        raise RuntimeUpdateError(RUNTIME_FAILED, "cai dat that bai")
+                except RuntimeUpdateError as re_:
+                    print(f"Runtime update failed: {re_}")
+                    state.pending_catalog_notice = tr(re_.key)
+                except Exception as e:
+                    print(f"Runtime update error: {e}")
+                    state.pending_catalog_notice = tr(RUNTIME_FAILED)
 
         # Kho game di sau va di rieng: tai hong thi ban .py van giu nguyen va
         # app van len phien ban moi, chi la chua co bia. Lan kiem tra sau

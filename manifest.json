@@ -1,11 +1,11 @@
 {
-  "version": "1.45",
+  "version": "1.46",
   "python": "any",
-  "built": "2026-08-30T05:15:05+0700",
+  "built": "2026-08-30T05:29:18+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java hỏi nhập tên nhân vật giờ chơi được; ô nhập có sẵn chữ mặc định vì máy không có bàn phím",
-    "en": "Java games that ask you to type a name now work; the field carries a default because the handheld has no keyboard"
+    "vi": "Giả lập Java giờ tự cập nhật trong app, không cần cài lại bản đầy đủ",
+    "en": "The Java emulator now updates in the app, no full reinstall needed"
   },
   "remove": [
     "app.pyc",
@@ -115,6 +115,40 @@
     "size": 10007993,
     "size_plain": 34463744
   },
+  "runtime": {
+    "files": [
+      {
+        "path": "NOTICE.txt",
+        "url": "files/emus/JAVA/NOTICE.txt",
+        "size": 6657,
+        "sha256": "faf54b3361b33822fbcdd44f4de2073441feee1ffb5255cb0012d5a8acc23219"
+      },
+      {
+        "path": "config.json",
+        "url": "files/emus/JAVA/config.json",
+        "size": 263,
+        "sha256": "88510b7895c9b4364c2ae2c17c099f6d2edc0c60e05f46fb168593757902ffb6"
+      },
+      {
+        "path": "launch.sh",
+        "url": "files/emus/JAVA/launch.sh",
+        "size": 1608,
+        "sha256": "c5d059cfa552b3c1402a625f6e5303f6beeef5a68d7b555f272f440e87dff92c"
+      },
+      {
+        "path": "zulu17/bin/freej2me-sdl.jar",
+        "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
+        "size": 1479020,
+        "sha256": "0e61ff4620198bb65769a09eb629863cd8aae5116c7ea88e95c59ffb6bda9c48"
+      },
+      {
+        "path": "zulu17/bin/sdl_interface",
+        "url": "files/emus/JAVA/zulu17/bin/sdl_interface",
+        "size": 450072,
+        "sha256": "ea0282c5eaa0bc1d4c8325526c378a9863a91001c033f929cd35d37c8c05bf72"
+      }
+    ]
+  },
   "files": [
     {
       "path": "LICENSE",
@@ -128,8 +162,8 @@
     },
     {
       "path": "app.py",
-      "size": 218495,
-      "sha256": "022fa9fa94aa5ea993441ccced3afe7af5f769c3d3fb5b584226d6136afba25e"
+      "size": 219905,
+      "sha256": "0a42fef052717375f11e70017d8f48090c2a517abd12c9591b7429f08b332f38"
     },
     {
       "path": "assets/fallback.ttf",
@@ -233,8 +267,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 29580,
-      "sha256": "507c8895f47800756a900129c678dd6bf69cb6ffdd825a9fca61db9ecf4fd569"
+      "size": 30272,
+      "sha256": "182abd65d8a7fb1a89c346a84938fbfdb0b30bf9be1896fc5331012fcffa3a0a"
     },
     {
       "path": "rh/j2me.py",
@@ -288,13 +322,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 17770,
-      "sha256": "897a92c3ebc7b6d6af95fa5d9e325c811560359329f8477ad713d3b432dd8cfe"
+      "size": 23049,
+      "sha256": "327ff2bc00b34105082076ecdec7553c5d4395a4e1d61869571f2f50ef5ea71b"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "b9d0dc22a9ff4a370e63ce5fb2800366edea4f1eea2279c84041f14a3ab45f13"
+      "sha256": "5279f5fea62e4c7f9a9a9830fa375ed1c9bcd04f9d8ccdb9844b7db166cf7625"
     },
     {
       "path": "streamer.py",

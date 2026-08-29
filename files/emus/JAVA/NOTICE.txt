@@ -1,0 +1,133 @@
+RetroHub - J2ME runtime
+Thanh phan cua ben thu ba va giay phep / Third-party components and licences
+==============================================================================
+
+Thu muc JAVA/ nay khong phai do RetroHub viet. No dong goi lai phan mem cua
+nguoi khac de chay game J2ME tren may cam tay. Duoi day la tung thanh phan,
+giay phep, va cho lay ma nguon.
+
+This JAVA/ directory is not written by RetroHub. It repackages other people's
+software so that J2ME games run on the handheld. Each component, its licence
+and where to get its source is listed below.
+
+
+------------------------------------------------------------------------------
+1. FreeJ2ME  ->  zulu17/bin/freej2me-sdl.jar, zulu17/bin/sdl_interface
+------------------------------------------------------------------------------
+Giay phep / Licence : GNU General Public License v3  (xem LICENSES/GPL-3.0.txt)
+Thuong nguon / Upstream : https://github.com/hex007/freej2me
+
+Day KHONG phai ban goc cua thuong nguon. Day la mot ban phan nhanh co sua doi
+danh cho TrimUI Brick Pro, bien dich ngay 2025-08-21, them cac tinh nang:
+renderer.conf (ba kieu hien thi pixel/smooth/hq), vong bo tri nut H/K/X luu
+trong control_profile.cfg va control_cycle.cfg, va hop xac nhan thoat game.
+
+This is NOT the upstream build. It is a modified fork for the TrimUI Brick Pro,
+compiled 2025-08-21, adding: renderer.conf (three display modes pixel/smooth/hq),
+the H/K/X pad-layout cycle stored in control_profile.cfg and control_cycle.cfg,
+and an exit confirmation dialog.
+
+RetroHub CON SUA THEM vao ban .jar nay, o muc bytecode, bon cho:
+
+  1. Display$SerialCallTimerTask.run
+     removeElement(Integer.valueOf(0))  ->  removeElementAt(0)
+  2. Displayable.notifySetCurrent   rong  ->  goi render()
+  3. Displayable.keyPressed(int)    rong  ->  goi keyPressedCommands(int)
+  4. TextBox.<init> va TextBox.setString  ->  luon cat mot chuoi mac dinh
+
+Ba cho dau sua loi khien man hinh khong phai Canvas khong bao gio duoc ve va
+khong nhan duoc phim. Cho thu tu la mot cach lam viec quanh: may cam tay khong
+co ban phim va ban gia lap nay khong co ban phim ao.
+
+Cong cu tai lap nam trong ma nguon RetroHub tai tools/patch_j2me_runtime.py.
+Chay no tren ban .jar goc se ra dung ban .jar di kem day. Tep do ghi ro tung
+byte bi doi va ly do - day la thu thay cho ma nguon ma chung toi co the cung
+cap trung thuc, vi ma nguon cua ban phan nhanh khong nam trong tay chung toi.
+
+RetroHub ALSO MODIFIES this .jar at the bytecode level, in four places - see
+the list above. The first three fix screens other than Canvas never being drawn
+and never receiving keys; the fourth works around the handheld having no
+keyboard and this build having no on-screen one.
+
+The tool that reproduces them is tools/patch_j2me_runtime.py in the RetroHub
+source. Running it against the upstream .jar produces exactly the .jar shipped
+here. It documents every changed byte and why, which is the honest stand-in we
+can offer for source we do not have.
+
+Ma nguon tuong ung cua CHINH ban phan nhanh nay HIEN CHUA DUOC CONG BO. Anh
+chup thuong nguon o dia chi duoi day la ban goc cua hex007/freej2me, KHONG chua
+cac sua doi noi tren, nen no khong phai ma nguon tuong ung cua ban nhi phan nay:
+
+The corresponding source for THIS fork is NOT currently published. The snapshot
+at the address below is upstream hex007/freej2me and does NOT contain the
+modifications listed above, so it is not the corresponding source for this
+binary:
+
+  https://github.com/nguyenxuanhoa493/repohubtool/releases/tag/j2me-sources
+
+Neu ban can ma nguon tuong ung cua ban nhi phan nay, xin lien he
+nguyenxuanhoa493@gmail.com - toi se cung cap, hoac go thanh phan nay khoi ban
+phat hanh.
+
+If you need the corresponding source for this binary, contact
+nguyenxuanhoa493@gmail.com and it will be provided, or this component will be
+removed from the release.
+
+FreeJ2ME nhung ObjectWeb ASM (giay phep BSD 3 dieu khoan, khong phai GPL) -
+toan van o LICENSES/FreeJ2ME-LICENSE.txt.
+FreeJ2ME embeds ObjectWeb ASM (BSD 3-clause, not GPL) - full text in
+LICENSES/FreeJ2ME-LICENSE.txt.
+
+
+------------------------------------------------------------------------------
+2. OpenJDK 17 (ban dung Azul Zulu)  ->  zulu17/
+------------------------------------------------------------------------------
+Giay phep / Licence : GNU General Public License v2 kem Classpath Exception
+                      (xem LICENSES/GPL-2.0.txt va zulu17/legal/)
+Thuong nguon / Upstream : https://github.com/openjdk/jdk17u
+                          https://www.azul.com/downloads/?package=jdk
+
+Day la mot ban rut gon bang jlink, chi giu bay module: java.base,
+java.datatransfer, java.xml, java.prefs, java.desktop, jdk.unsupported,
+jdk.zipfs. Van ban giay phep goc cua tung module nam trong zulu17/legal/.
+
+Loi chao cap ma nguon: trong ba nam ke tu ngay ban nhan duoc ban phat hanh
+nay, toi se cung cap ma nguon day du tuong ung cua ban OpenJDK nay theo yeu
+cau, voi chi phi khong vuot qua chi phi phan phoi. Lien he
+nguyenxuanhoa493@gmail.com.
+
+Written offer: for three years from the date you received this release, the
+complete corresponding source for this OpenJDK build will be provided on
+request, for no more than the cost of distribution. Contact
+nguyenxuanhoa493@gmail.com.
+
+
+------------------------------------------------------------------------------
+3. Font  ->  zulu17/bin/font.ttf
+------------------------------------------------------------------------------
+Noto Sans SC Regular
+Giay phep / Licence : SIL Open Font License 1.1  (xem LICENSES/OFL-1.1.txt)
+Thuong nguon / Upstream : https://github.com/google/fonts/tree/main/ofl/notosanssc
+
+Da co dinh ve net Regular (wght=400) tu ban font bien thien goc. Khong sua doi
+nao khac.
+Instanced to Regular (wght=400) from the upstream variable font. No other
+modification.
+
+
+------------------------------------------------------------------------------
+4. Bo mau nhac cu TiMidity  ->  timidity/
+------------------------------------------------------------------------------
+timidity.cfg va 192 tep .pat la bo mau nhac cu dinh dang GUS, khong phai
+chuong trinh TiMidity++. Bo nay luu hanh rong rai trong cong dong tu thap nien
+1990 (thuong duoc goi la "eawpats"), nhung RetroHub CHUA XAC MINH DUOC dieu
+khoan cap phep goc cua no.
+
+These are GUS-format instrument patches, not the TiMidity++ program. The set
+has circulated widely since the 1990s (commonly called "eawpats"), but RetroHub
+has NOT been able to verify its original licensing terms.
+
+Neu ban la chu so huu quyen doi voi bo mau nay, xin lien he
+nguyenxuanhoa493@gmail.com - toi se go ngay.
+If you hold rights in this patch set, contact nguyenxuanhoa493@gmail.com and it
+will be removed.
