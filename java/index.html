@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Java J2ME on RetroHub — the guide</title>
+<meta name="description" content="How to run Java J2ME games on a TrimUI handheld with RetroHub: resolution folders, phone modes, pad layouts, display modes and where saves live.">
+<meta name="keywords" content="RetroHub, J2ME, Java games, FreeJ2ME, TrimUI Brick, TrimUI Brick Pro, phone mode, key mapping, handheld">
+<meta name="author" content="Nguyễn Xuân Hòa">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0d1220">
+<link rel="canonical" href="https://retrohub.xuanhoa493.com/java/">
+<link rel="alternate" hreflang="en" href="https://retrohub.xuanhoa493.com/java/">
+<link rel="alternate" hreflang="vi" href="https://retrohub.xuanhoa493.com/vi/java/">
+<link rel="alternate" hreflang="x-default" href="https://retrohub.xuanhoa493.com/java/">
+<link rel="icon" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="RetroHub">
+<meta property="og:url" content="https://retrohub.xuanhoa493.com/java/">
+<meta property="og:title" content="Java J2ME on RetroHub — the guide">
+<meta property="og:description" content="Resolution folders, phone modes, pad layouts, display modes and saves — everything needed to run J2ME games well on a TrimUI handheld.">
+<meta property="og:image" content="https://retrohub.xuanhoa493.com/og-en.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Java J2ME on RetroHub — the guide">
+<meta name="twitter:description" content="Resolution folders, phone modes, pad layouts, display modes and saves — everything needed to run J2ME games well on a TrimUI handheld.">
+<meta name="twitter:image" content="https://retrohub.xuanhoa493.com/og-en.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Java J2ME on RetroHub — the guide",
+  "description": "How to run Java J2ME games on a TrimUI handheld with RetroHub: resolution folders, phone modes, pad layouts, display modes and where saves live.",
+  "inLanguage": "en",
+  "url": "https://retrohub.xuanhoa493.com/java/",
+  "author": {
+    "@type": "Person",
+    "name": "Nguyễn Xuân Hòa",
+    "url": "https://xuanhoa493.com"
+  },
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "RetroHub",
+    "url": "https://retrohub.xuanhoa493.com"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#0d1220; --panel:#16223a; --line:#2b3d5e;
+    --accent:#00f6f6; --accent-dim:#0a8f96;
+    --text:#eef3fb; --muted:#93a4c0; --gold:#ffcf3c; --green:#3ddc97;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:74px}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+  nav{position:sticky;top:0;z-index:50;background:rgba(13,18,32,.86);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .navin{display:flex;align-items:center;gap:16px;height:58px;
+    max-width:1080px;margin:0 auto;padding:0 22px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;
+    text-decoration:none;color:var(--text);letter-spacing:-.2px;flex:none}
+  .brand img{width:26px;height:26px}
+  .navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:.93rem;
+    padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
+  .navlinks a:hover{color:var(--text);background:#1b2c49}
+  .navlinks a.here{color:var(--accent);background:#14243d}
+  /* Language switch shows the flag of the language you would move to, so the
+     button says what it does rather than what you already have. */
+  .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
+    padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:999px;
+    text-decoration:none;color:var(--muted);font-size:.88rem;
+    transition:border-color .15s,color .15s,background .15s}
+  .lang:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
+  .lang img{width:24px;height:16px;border-radius:3px;display:block}
+
+  header{padding:70px 0 52px;text-align:center;
+    background:radial-gradient(900px 400px at 50% -140px,rgba(0,246,246,.16),transparent)}
+  .logo{width:118px;height:118px;display:block;margin:0 auto;
+    filter:drop-shadow(0 6px 22px rgba(0,246,246,.28));animation:float 5s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  h1{font-size:clamp(2.1rem,5.6vw,3rem);margin:18px 0 8px;letter-spacing:-.6px}
+  .sub{color:var(--muted);font-size:1.12rem;margin:0 0 28px}
+
+  .cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .btn{position:relative;display:inline-block;text-align:center;text-decoration:none;
+    font-weight:700;padding:14px 24px;border-radius:10px;background:var(--accent);
+    color:#04121b;transition:transform .18s cubic-bezier(.2,.8,.3,1),box-shadow .18s,filter .18s}
+  .btn:hover{transform:translateY(-3px);filter:brightness(1.1);
+    box-shadow:0 12px 26px rgba(0,246,246,.3)}
+  .btn:active{transform:translateY(-1px)}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
+  .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
+  .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
+
+  /* A pill rather than a line of text: it sits under two large buttons and had
+     to read as a badge, not as leftover caption. */
+  .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
+    padding:8px 18px 8px 14px;border-radius:999px;
+    background:linear-gradient(180deg,#16233c,#121c31);
+    border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.35);
+    animation:pop .45s cubic-bezier(.2,.9,.3,1.2)}
+  .dlcount svg{width:17px;height:17px;fill:var(--accent);flex:none;
+    filter:drop-shadow(0 0 6px rgba(0,246,246,.5))}
+  .dlcount b{color:var(--accent);font-size:1.12rem;font-variant-numeric:tabular-nums;
+    letter-spacing:.2px}
+  .dlcount span{color:var(--muted);font-size:.88rem}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}
+                 to{opacity:1;transform:none}}
+
+  h2{font-size:1.4rem;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  section{padding:52px 0 0}
+  main{padding-bottom:64px}
+  ol{padding-left:22px} ol li{margin:12px 0}
+  code{background:#0a1120;border:1px solid var(--line);border-radius:6px;
+    padding:2px 7px;font-size:.9em;color:var(--accent);white-space:nowrap}
+  .note{background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
+    border-radius:10px;padding:14px 18px;color:#f4e3b8;font-size:.94rem}
+
+  .show{display:grid;gap:26px;grid-template-columns:340px 1fr;align-items:start}
+  .tabs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .tab{position:relative;overflow:hidden;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:13px 16px;
+    cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+  .tab:hover{border-color:var(--accent-dim);transform:translateX(3px)}
+  .tab[aria-selected="true"]{border-color:var(--accent);background:#1b2c49}
+  .tab b{display:block;color:var(--accent);font-size:.95rem}
+  .tab span{color:var(--muted);font-size:.87rem;line-height:1.45;display:block;margin-top:2px}
+  .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--accent)}
+  .stage{position:relative;border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;background:#0a1120;aspect-ratio:4/3}
+  .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    opacity:0;transform:scale(1.015);transition:opacity .45s ease,transform .45s ease}
+  .stage img.on{opacity:1;transform:scale(1)}
+
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
+    display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
+  .card:hover{transform:translateY(-4px);border-color:var(--accent-dim)}
+  .card.main{border-color:var(--accent-dim)}
+  .card h3{margin:0 0 4px;font-size:1.1rem}
+  .size{color:var(--gold);font-weight:600;font-size:.9rem}
+  .card p{color:var(--muted);font-size:.94rem;margin:12px 0 20px;flex:1}
+  .card .btn{display:block}
+
+  .os{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .os li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:13px 16px;font-size:.94rem;display:flex;gap:11px;align-items:flex-start}
+  .dot{width:10px;height:10px;border-radius:50%;margin-top:7px;flex:none}
+  .dot.ok{background:var(--green);box-shadow:0 0 10px rgba(61,220,151,.6)}
+  .dot.wait{background:#5d6f8e}
+  .os b{display:block} .os span{color:var(--muted);font-size:.87rem}
+
+  .road{list-style:none;padding:0;margin:0;position:relative}
+  .road::before{content:"";position:absolute;left:11px;top:10px;bottom:10px;
+    width:2px;background:var(--line)}
+  .road li{position:relative;padding:0 0 22px 42px}
+  .road li:last-child{padding-bottom:0}
+  .pin{position:absolute;left:2px;top:3px;width:20px;height:20px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--line)}
+  .road li.done .pin{border-color:var(--green);background:var(--green);
+    box-shadow:0 0 12px rgba(61,220,151,.5)}
+  .road b{display:block;font-size:1.02rem} .road span{color:var(--muted);font-size:.9rem}
+  .badge{display:inline-block;font-size:.75rem;font-weight:700;border-radius:999px;
+    padding:2px 10px;margin-left:8px;vertical-align:2px}
+  .badge.ok{background:rgba(61,220,151,.16);color:var(--green);border:1px solid rgba(61,220,151,.45)}
+  .badge.next{background:#1b2c49;color:var(--muted);border:1px solid var(--line)}
+
+  .donate{display:grid;gap:26px;align-items:start;grid-template-columns:220px 1fr;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .qr{width:220px;height:220px;background:#fff;border-radius:10px;padding:10px;display:block}
+  .bankhdr{color:var(--muted);font-size:.8rem;text-transform:uppercase;
+    letter-spacing:.06em;margin:0 0 4px}
+  .rows{margin:0;display:grid;gap:2px}
+  .rows div{display:flex;justify-content:space-between;gap:16px;
+    padding:9px 0;border-bottom:1px solid var(--line)}
+  .rows div:last-child{border-bottom:0}
+  .rows dt{color:var(--muted);font-size:.92rem}
+  .rows dd{margin:0;font-weight:600}
+  .bmc{display:inline-flex;align-items:center;gap:10px;margin-top:18px;
+    background:var(--gold);color:#1a1200}
+  .bmc:hover{box-shadow:0 12px 26px rgba(255,207,60,.28)}
+  .bmc svg{width:20px;height:20px;fill:currentColor;flex:none}
+
+  .who{display:grid;gap:26px;grid-template-columns:132px 1fr;align-items:start;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .ava{width:132px;height:132px;border-radius:50%;background:#0a1120;
+    border:1px solid var(--line);padding:14px}
+  .whoin b{display:block;font-size:1.25rem;letter-spacing:-.2px}
+  .whoin > span{color:var(--accent);font-size:.9rem}
+  .whoin p{color:var(--muted);font-size:.95rem;margin:14px 0 18px}
+  .joinbtn{display:inline-flex;align-items:center;gap:9px}
+  .joinbtn svg{width:19px;height:19px;fill:currentColor}
+  .chips{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .chips a{display:flex;align-items:center;gap:12px;text-decoration:none;
+    background:#0f1a2e;border:1px solid var(--line);border-radius:10px;
+    padding:11px 14px;color:var(--text);
+    transition:border-color .15s,transform .15s,background .15s}
+  .chips a:hover{border-color:var(--accent-dim);background:#14243d;transform:translateY(-2px)}
+  .chips svg{width:20px;height:20px;fill:var(--accent);flex:none}
+  .chips span{display:block;min-width:0;font-size:.94rem;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .chips i{display:block;font-style:normal;color:var(--muted);font-size:.78rem}
+
+  .disc{border-left:3px solid var(--accent-dim);background:#111b2e;
+    border-radius:0 12px 12px 0;padding:20px 24px}
+  .disc p{color:var(--muted);font-size:.92rem;margin:0 0 10px;line-height:1.6}
+  .disc p:last-child{margin-bottom:0}
+  .disc b{color:var(--text)}
+  .disc a{color:var(--accent);text-decoration:none}
+  .disc a:hover{text-decoration:underline}
+
+  .rise{opacity:0;transform:translateY(22px);
+    transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.3,1)}
+  .rise.seen{opacity:1;transform:none}
+
+  @media (max-width:860px){
+    .show{grid-template-columns:1fr}
+    .donate{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .who{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .chips a{text-align:left}
+    .rows div{justify-content:center;flex-direction:column;gap:0;text-align:center}
+    .brand span{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .logo{animation:none}
+    .rise{opacity:1;transform:none;transition:none}
+    .stage img{transition:none;transform:none}
+    .btn:hover,.card:hover,.tab:hover,.chips a:hover{transform:none}
+  }
+
+  .guide h3{margin:30px 0 10px;font-size:1.08rem;color:var(--accent)}
+  .guide p{color:var(--muted)}
+  .guide p b,.guide li b{color:var(--text)}
+  .guide ul{color:var(--muted);padding-left:22px}
+  .guide ul li{margin:8px 0}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;
+    background:var(--panel);margin:18px 0}
+  table{border-collapse:collapse;width:100%;font-size:.93rem;min-width:460px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);
+    vertical-align:top}
+  thead th{color:var(--accent);font-size:.82rem;text-transform:uppercase;
+    letter-spacing:.05em;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td:first-child{color:var(--text);font-weight:600;white-space:nowrap}
+  td{color:var(--muted)}
+  .keys{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+  .keys li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 15px}
+  .keys b{display:block;color:var(--accent);font-size:.95rem;
+    font-variant-numeric:tabular-nums}
+  .keys span{color:var(--muted);font-size:.88rem}
+  .folders{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0 0;padding:0;list-style:none}
+  .folders li{background:#0a1120;border:1px solid var(--line);border-radius:8px;
+    padding:7px 13px;color:var(--accent);font-size:.92rem}
+  .qa{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+  .qa li{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px 20px}
+  .qa b{display:block;margin-bottom:6px}
+  .qa span{color:var(--muted);font-size:.94rem}
+  .qa code{white-space:normal}
+  @media (max-width:600px){ td:first-child{white-space:normal} }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="navin">
+    <a class="brand" href="/"><img src="/logo.png" alt=""><span>RetroHub</span></a>
+    <div class="navlinks"><a href="#cai-dat">Install</a><a href="#thu-muc">Where games go</a><a href="#che-do-may">Phone modes</a><a href="#nut-bam">Button layouts</a><a href="#hinh-anh">Display</a><a href="#toan-man-hinh">Full screen</a><a href="#luu-game">Saves</a><a href="#su-co">Troubleshooting</a></div>
+    <a class="lang" href="/vi/java/" hreflang="vi" title="Tiếng Việt">
+      <img src="/files/assets/flag_vi.png" alt=""><span>Tiếng Việt</span></a>
+  </div>
+</nav>
+
+<header style="padding:56px 0 34px">
+  <div class="wrap">
+    <h1 style="margin-top:0">Java J2ME on RetroHub</h1>
+    <p class="sub" style="max-width:760px;margin:0 auto">RetroHub runs J2ME games on FreeJ2ME, straight onto the screen — no RetroArch and no libretro core involved. This page covers the parts that are not obvious, starting with the one that confuses everybody: why two games can map their buttons differently.</p>
+  </div>
+</header>
+
+<main class="wrap guide">
+
+  <section id="cai-dat" class="rise" style="padding-top:26px">
+    <h2>Install</h2>
+    <p>The emulator is 66 MB and ships inside the app rather than being downloaded, so it works with no network.</p>
+    <ul><li>Installed <b>RetroHub-x-full.zip</b>? You already have it. Open <b>Utilities → Install Java Emulator</b> once and it unpacks.</li><li>Installed the lite package? Java is not in it. Download the full one and copy it over the folder you have — nothing else is lost.</li><li>From version 1.43, an emulator older than the one inside the app is upgraded automatically the next time you open RetroHub. Saves are kept.</li></ul>
+  </section>
+
+  <section id="thu-muc" class="rise">
+    <h2>Where games go</h2>
+    <p>Every J2ME game was written for one specific handset screen, and the emulator has no way to guess which. So the folder a game sits in is what tells it: a jar in <code>Roms/JAVA/240320/</code> is handed a 240×320 canvas.</p>
+    <h3>The five folders</h3>
+    <ul class="folders"><li>240320</li><li>320240</li><li>128128</li><li>176208</li><li>640360</li></ul>
+    <p>Only about a quarter of the titles in the library state a size in their filename, so anything unrecognised lands in <code>240320</code> — the commonest size. If a game looks cropped or squashed, it is probably in the wrong folder.</p>
+    <p>To move one: open the game in RetroHub, press the action button and choose <b>Resolution</b>. Doing it in the app rather than by hand matters — it also clears the system menu's game-list cache, which would otherwise keep pointing at the old path.</p>
+  </section>
+
+  <section id="che-do-may" class="rise">
+    <h2>Phone modes</h2>
+    <p>This is the answer to “why does every game map its keys differently”. J2ME games do not agree on how to read the keypad. Some ask for GameAction (up/down/left/right/fire), some read the raw digits 2/4/6/8, some use codes specific to one manufacturer. The emulator has to translate differently for each, so it carries five phone modes.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Mode</th><th>What it means</th></tr></thead>
+      <tbody><tr><td>P</td><td>Plain keypad. The D-pad sends the digits 2/4/6/8 and OK sends 5.</td></tr><tr><td>N</td><td>Nokia. The D-pad and OK arrive as GameAction — what most games expect.</td></tr><tr><td>E</td><td>Sony Ericsson. A handful of titles need this and nothing else works.</td></tr><tr><td>S</td><td>Siemens.</td></tr><tr><td>M</td><td>Motorola.</td></tr></tbody>
+    </table></div>
+    <p>The mode is remembered <b>per game</b>, in <code>zulu17/bin/config/&lt;game&gt;/game.conf</code>. That is why the game you played yesterday and the one you opened today behave differently — each keeps its own setting. To change it, hold <b>START</b> and tap <b>SELECT</b> until the letter you want appears in the corner; it is saved for that game alone.</p>
+    <p class="note">If a game's D-pad does nothing while its other buttons work, it is on <b>P</b>. Switch it to <b>N</b>.</p>
+  </section>
+
+  <section id="nut-bam" class="rise">
+    <h2>Button layouts</h2>
+    <p>H, K and X are three physical pad layouts. Unlike the phone mode these are global — one layout for every game. <b>H</b> is the default and is what the five phone modes P/N/E/S/M all use; picking K or X switches the phone mode to N automatically.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Button</th><th>Layout H</th><th>Layout K</th><th>Layout X</th></tr></thead>
+      <tbody><tr><td>A</td><td>Right softkey</td><td>D-pad right</td><td>OK</td></tr><tr><td>B</td><td>Key 0</td><td>D-pad down</td><td>Right softkey</td></tr><tr><td>X</td><td>OK</td><td>D-pad up</td><td>Left softkey</td></tr><tr><td>Y</td><td>Left softkey</td><td>D-pad left</td><td>Key 0</td></tr><tr><td>D-pad up</td><td>D-pad up</td><td>Key 1</td><td>D-pad up</td></tr><tr><td>D-pad down</td><td>D-pad down</td><td>Key 3</td><td>D-pad down</td></tr><tr><td>D-pad left</td><td>D-pad left</td><td>Key 7</td><td>D-pad left</td></tr><tr><td>D-pad right</td><td>D-pad right</td><td>Key 9</td><td>D-pad right</td></tr><tr><td>L1</td><td>Key 1</td><td>*</td><td>Key 1</td></tr><tr><td>L2</td><td>Key 3</td><td>#</td><td>Key 3</td></tr><tr><td>R1</td><td>Key 9</td><td>Right softkey</td><td>Key 9</td></tr><tr><td>R2</td><td>Key 7</td><td>OK</td><td>Key 7</td></tr><tr><td>L3</td><td>*</td><td>Key 0</td><td>*</td></tr><tr><td>R3</td><td>#</td><td>Left softkey</td><td>#</td></tr><tr><td>Left stick</td><td>D-pad</td><td>D-pad</td><td>D-pad</td></tr><tr><td>Right stick</td><td>2 / 4 / 6 / 8</td><td>2 / 4 / 6 / 8</td><td>2 / 4 / 6 / 8</td></tr><tr><td>SELECT</td><td>Key 5</td><td>Key 5</td><td>Key 5</td></tr><tr><td>START</td><td>—</td><td>—</td><td>—</td></tr></tbody>
+    </table></div>
+    <p>Both analog sticks click, and those clicks are L3 and R3 — that is how you reach the display shortcut. The stick dead zone is 8000 to press and 6000 to release; pushed diagonally, the emulator takes whichever axis is further from centre so you do not get two directions flickering.</p>
+    <h3>Shortcut summary</h3>
+    <ul class="keys"><li><b>START + SELECT</b><span>Cycle P → N → E → S → M → H → K → X</span></li><li><b>START + R3</b><span>Cycle PIXEL → SMOOTH → HQ</span></li><li><b>START + B</b><span>Rotate the screen</span></li><li><b>START + Y</b><span>Mouse mode on/off (X clicks)</span></li><li><b>MENU</b><span>Ask whether to quit the game</span></li><li><b>SELECT on its own</b><span>Key 5</span></li></ul>
+    <h3>Quitting a game</h3>
+    <p>Press <b>MENU</b> and a confirmation box appears — the game does not close straight away. <b>NO</b> is selected by default so a stray press costs nothing. Left or up picks YES, right or down picks NO, then A or X confirms; B or MENU again cancels. L3 and R3 are no longer quit buttons.</p>
+  </section>
+
+  <section id="hinh-anh" class="rise">
+    <h2>Display</h2>
+    <p>Three presets, switchable in the app or in-game.</p>
+    <ul><li><b>PIXEL</b> — nearest-neighbour, no colour blending between pixels, whole-number scale factors. The one to try first for anything pixel-art.</li><li><b>SMOOTH</b> — linear filtering, fits the largest area that keeps the proportions right. Can look soft on pixel art.</li><li><b>HQ</b> — asks SDL2 for its best quality. On this driver that is often identical to SMOOTH, so treat it as experimental.</li></ul>
+    <p>In the app: <b>Utilities → Java display mode</b>, which writes the whole preset. In game: hold <b>START</b> and press <b>R3</b>, which changes the mode and the integer-scaling flag and leaves the other keys alone. Either way the choice is saved to <code>renderer.conf</code> and used again next time.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Key</th><th>Values</th><th>What it does</th></tr></thead>
+      <tbody><tr><td><code>render_mode</code></td><td>pixel, smooth, hq</td><td>Filter used when SDL scales the finished frame.</td></tr><tr><td><code>integer_scaling</code></td><td>true, false</td><td>Round the scale factor down to a whole number while magnifying.</td></tr><tr><td><code>keep_aspect</code></td><td>true, false</td><td>Keep the game's proportions. false stretches to fill the panel.</td></tr><tr><td><code>text_aa</code></td><td>true, false</td><td>Anti-alias Java/AWT text.</td></tr><tr><td><code>shape_aa</code></td><td>true, false</td><td>Anti-alias Java/AWT lines and shapes.</td></tr><tr><td><code>m3g_filter</code></td><td>auto, nearest, linear</td><td>Texture filter for 3D (M3G) games.</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section id="toan-man-hinh" class="rise">
+    <h2>Full screen</h2>
+    <p>A 240×320 game is portrait; the Brick Pro panel is 1024×768, landscape. The two proportions are opposites, so no setting both fills the screen and keeps the picture honest. Here is what each choice actually gives you.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Choice</th><th>Picture size</th><th>Shape</th><th>Notes</th></tr></thead>
+      <tbody><tr><td>SMOOTH or HQ</td><td>576 × 768</td><td>Correct</td><td>Scale 2.4×, the largest that fits. Fills the full height, 224 px of border each side.</td></tr><tr><td>PIXEL</td><td>480 × 640</td><td>Correct</td><td>Rounds 2.4 down to 2×, so the picture is smaller and there is border on all four sides.</td></tr><tr><td>keep_aspect=false</td><td>1024 × 768</td><td>Stretched 1.78×</td><td>Truly fills the panel. Width is magnified 4.27× against 2.4× for height, so everything looks fat.</td></tr><tr><td>Rotate the screen</td><td>1024 × 768</td><td>Correct</td><td>START + B. Rotated the game is 320×240 — exactly 4:3, so it lands on the panel at 3.2× with no border at all. You hold the device sideways.</td></tr><tr><td>Move to the 320240 folder</td><td>1024 × 768</td><td>Correct</td><td>The game is handed a 320×240 landscape canvas, which also fits at 3.2×. Games that adapt to the canvas look best this way; games with a fixed portrait layout break.</td></tr></tbody>
+    </table></div>
+    <p>The last two rows are the only ways to genuinely fill the panel without distortion, and both ask something of you: one asks you to hold the device sideways, the other only works on games that adapt to the canvas they are given.</p>
+  </section>
+
+  <section id="luu-game" class="rise">
+    <h2>Saves</h2>
+    <p>J2ME saves live in <code>Emus/JAVA/zulu17/bin/rms/</code>, one folder per game, and per-game settings in <code>zulu17/bin/config/</code>.</p>
+    <p>Both sit inside the emulator folder, which is why reinstalling the emulator used to delete them. Since RetroHub 1.42 they are moved aside before the folder is replaced and put back afterwards — including when the install fails halfway.</p>
+  </section>
+
+  <section id="su-co" class="rise">
+    <h2>Troubleshooting</h2>
+    <ul class="qa"><li><b>The D-pad does nothing but the other buttons work</b><span>The game is in the wrong phone mode. It is almost certainly set to <b>P</b>, where the D-pad sends the digits 2/4/6/8 — a game that listens for GameAction hears nothing. Hold START, tap SELECT until <b>N</b> shows in the corner.</span></li><li><b>Two games map their buttons differently</b><span>That is by design: the phone mode is remembered per game, in <code>zulu17/bin/config/&lt;game&gt;/game.conf</code>. Set each game once and it sticks. To reset one, delete its folder there.</span></li><li><b>The display row in Utilities says OLD and will not open</b><span>The emulator on the card is older than the one inside the app — the in-app update carries the app only, not the 66 MB emulator. From 1.43 the app upgrades it by itself the next time you open it. Before that, press <b>Utilities → Install Java Emulator</b>.</span></li><li><b>A game will not start after you moved it</b><span>The system menu caches its game list. RetroHub drops that cache whenever it moves a game, so use the app's resolution screen rather than moving the file by hand.</span></li><li><b>Rebuilding the emulator lost my saves</b><span>Only on 1.41 and earlier: reinstalling wiped the whole runtime folder, and saves live inside it. Fixed in 1.42 — saves and per-game settings are moved aside and put back.</span></li></ul>
+  </section>
+
+  <section class="rise">
+    <p style="margin-top:34px">
+      <a class="btn ghost" href="/">Back to the home page</a>
+      <a class="btn ghost" href="https://t.me/retrohubtool" style="margin-left:10px">Ask in the Telegram group</a>
+    </p>
+  </section>
+
+</main>
+
+<script>
+  // Same reveal-on-scroll as the landing page, and the same escape hatch for
+  // anyone who has asked their system not to animate things.
+  (function(){
+    var els = document.querySelectorAll('.rise');
+    if (!('IntersectionObserver' in window) ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(function(el){ el.classList.add('seen'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); }
+      });
+    }, {rootMargin: '0px 0px -60px 0px'});
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+</body>
+</html>

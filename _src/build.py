@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
 # One place to bump. Four strings drifted apart before this was a constant:
 # the two filenames, the release URL and the softwareVersion in the JSON-LD.
-VERSION = "1.39"
+VERSION = "1.43"
 VER_FULL = "RetroHub-%s-full.zip" % VERSION
 VER_LITE = "RetroHub-%s.zip" % VERSION
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
@@ -107,6 +107,9 @@ T = {
   "full_p": "The app, 39,971 games and the Java J2ME emulator. Pick this if you want to play Java games.",
   "lite_t": "Lite", "lite_s": "32 MB",
   "lite_p": "The app and the game library, without the Java emulator. Quick to install, you can add Java later.",
+  "java_guide": ('Playing Java games? There is a separate guide for that: '
+                 '<a href="/java/" style="color:var(--accent)">Java J2ME on RetroHub</a> '
+                 '— resolution folders, phone modes, pad layouts and display settings.'),
   "h_os": "Supported systems",
   "sup_p": "RetroHub is a personal project, built and given away for free. If it is useful to you, a coffee keeps me going.",
   "bank": "Bank", "holder": "Account holder", "acct": "Account number",
@@ -144,6 +147,9 @@ T = {
   "full_p": "Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.",
   "lite_t": "Bản gọn", "lite_s": "32 MB",
   "lite_p": "Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.",
+  "java_guide": ('Định chơi game Java? Có hướng dẫn riêng: '
+                 '<a href="/vi/java/" style="color:var(--accent)">Chơi game Java J2ME trên RetroHub</a> '
+                 '— thư mục độ phân giải, chế độ máy, bố trí nút và kiểu hiển thị.'),
   "h_os": "Hệ điều hành hỗ trợ",
   "sup_p": "RetroHub là dự án cá nhân, làm và phát hành miễn phí. Nếu nó có ích cho bạn, một ly cà phê cũng là động lực để tôi làm tiếp.",
   "bank": "Ngân hàng", "holder": "Chủ tài khoản", "acct": "Số tài khoản",
@@ -578,6 +584,7 @@ PAGE = """<!doctype html>
         <a class="btn ghost" href="{REL}/{VER_LITE}">{dl_lite}</a>
       </div>
     </div>
+    <p style="margin:18px 0 0;color:var(--muted);font-size:.94rem">{java_guide}</p>
     <h3 style="margin:34px 0 0;font-size:1.05rem">{h_os}</h3>
     <ul class="os">{osrows}</ul>
   </section>

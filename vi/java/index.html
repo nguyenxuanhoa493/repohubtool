@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chơi game Java J2ME trên RetroHub — hướng dẫn</title>
+<meta name="description" content="Cách chơi game Java J2ME trên máy TrimUI với RetroHub: thư mục độ phân giải, chế độ máy, bố trí nút, kiểu hiển thị và chỗ lưu save game.">
+<meta name="keywords" content="RetroHub, J2ME, game Java, FreeJ2ME, TrimUI Brick, TrimUI Brick Pro, chế độ máy, gán phím, máy chơi game cầm tay">
+<meta name="author" content="Nguyễn Xuân Hòa">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0d1220">
+<link rel="canonical" href="https://retrohub.xuanhoa493.com/vi/java/">
+<link rel="alternate" hreflang="en" href="https://retrohub.xuanhoa493.com/java/">
+<link rel="alternate" hreflang="vi" href="https://retrohub.xuanhoa493.com/vi/java/">
+<link rel="alternate" hreflang="x-default" href="https://retrohub.xuanhoa493.com/java/">
+<link rel="icon" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:site_name" content="RetroHub">
+<meta property="og:url" content="https://retrohub.xuanhoa493.com/vi/java/">
+<meta property="og:title" content="Chơi game Java J2ME trên RetroHub — hướng dẫn">
+<meta property="og:description" content="Thư mục độ phân giải, chế độ máy, bố trí nút, kiểu hiển thị và save game — đủ thứ cần biết để chơi game J2ME cho ra hồn trên máy TrimUI.">
+<meta property="og:image" content="https://retrohub.xuanhoa493.com/og-vi.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Chơi game Java J2ME trên RetroHub — hướng dẫn">
+<meta name="twitter:description" content="Thư mục độ phân giải, chế độ máy, bố trí nút, kiểu hiển thị và save game — đủ thứ cần biết để chơi game J2ME cho ra hồn trên máy TrimUI.">
+<meta name="twitter:image" content="https://retrohub.xuanhoa493.com/og-vi.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Chơi game Java J2ME trên RetroHub — hướng dẫn",
+  "description": "Cách chơi game Java J2ME trên máy TrimUI với RetroHub: thư mục độ phân giải, chế độ máy, bố trí nút, kiểu hiển thị và chỗ lưu save game.",
+  "inLanguage": "vi",
+  "url": "https://retrohub.xuanhoa493.com/vi/java/",
+  "author": {
+    "@type": "Person",
+    "name": "Nguyễn Xuân Hòa",
+    "url": "https://xuanhoa493.com"
+  },
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "RetroHub",
+    "url": "https://retrohub.xuanhoa493.com"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#0d1220; --panel:#16223a; --line:#2b3d5e;
+    --accent:#00f6f6; --accent-dim:#0a8f96;
+    --text:#eef3fb; --muted:#93a4c0; --gold:#ffcf3c; --green:#3ddc97;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:74px}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+  nav{position:sticky;top:0;z-index:50;background:rgba(13,18,32,.86);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .navin{display:flex;align-items:center;gap:16px;height:58px;
+    max-width:1080px;margin:0 auto;padding:0 22px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;
+    text-decoration:none;color:var(--text);letter-spacing:-.2px;flex:none}
+  .brand img{width:26px;height:26px}
+  .navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:.93rem;
+    padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
+  .navlinks a:hover{color:var(--text);background:#1b2c49}
+  .navlinks a.here{color:var(--accent);background:#14243d}
+  /* Language switch shows the flag of the language you would move to, so the
+     button says what it does rather than what you already have. */
+  .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
+    padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:999px;
+    text-decoration:none;color:var(--muted);font-size:.88rem;
+    transition:border-color .15s,color .15s,background .15s}
+  .lang:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
+  .lang img{width:24px;height:16px;border-radius:3px;display:block}
+
+  header{padding:70px 0 52px;text-align:center;
+    background:radial-gradient(900px 400px at 50% -140px,rgba(0,246,246,.16),transparent)}
+  .logo{width:118px;height:118px;display:block;margin:0 auto;
+    filter:drop-shadow(0 6px 22px rgba(0,246,246,.28));animation:float 5s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  h1{font-size:clamp(2.1rem,5.6vw,3rem);margin:18px 0 8px;letter-spacing:-.6px}
+  .sub{color:var(--muted);font-size:1.12rem;margin:0 0 28px}
+
+  .cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .btn{position:relative;display:inline-block;text-align:center;text-decoration:none;
+    font-weight:700;padding:14px 24px;border-radius:10px;background:var(--accent);
+    color:#04121b;transition:transform .18s cubic-bezier(.2,.8,.3,1),box-shadow .18s,filter .18s}
+  .btn:hover{transform:translateY(-3px);filter:brightness(1.1);
+    box-shadow:0 12px 26px rgba(0,246,246,.3)}
+  .btn:active{transform:translateY(-1px)}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
+  .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
+  .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
+
+  /* A pill rather than a line of text: it sits under two large buttons and had
+     to read as a badge, not as leftover caption. */
+  .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
+    padding:8px 18px 8px 14px;border-radius:999px;
+    background:linear-gradient(180deg,#16233c,#121c31);
+    border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.35);
+    animation:pop .45s cubic-bezier(.2,.9,.3,1.2)}
+  .dlcount svg{width:17px;height:17px;fill:var(--accent);flex:none;
+    filter:drop-shadow(0 0 6px rgba(0,246,246,.5))}
+  .dlcount b{color:var(--accent);font-size:1.12rem;font-variant-numeric:tabular-nums;
+    letter-spacing:.2px}
+  .dlcount span{color:var(--muted);font-size:.88rem}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}
+                 to{opacity:1;transform:none}}
+
+  h2{font-size:1.4rem;margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  section{padding:52px 0 0}
+  main{padding-bottom:64px}
+  ol{padding-left:22px} ol li{margin:12px 0}
+  code{background:#0a1120;border:1px solid var(--line);border-radius:6px;
+    padding:2px 7px;font-size:.9em;color:var(--accent);white-space:nowrap}
+  .note{background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
+    border-radius:10px;padding:14px 18px;color:#f4e3b8;font-size:.94rem}
+
+  .show{display:grid;gap:26px;grid-template-columns:340px 1fr;align-items:start}
+  .tabs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .tab{position:relative;overflow:hidden;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:13px 16px;
+    cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+  .tab:hover{border-color:var(--accent-dim);transform:translateX(3px)}
+  .tab[aria-selected="true"]{border-color:var(--accent);background:#1b2c49}
+  .tab b{display:block;color:var(--accent);font-size:.95rem}
+  .tab span{color:var(--muted);font-size:.87rem;line-height:1.45;display:block;margin-top:2px}
+  .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--accent)}
+  .stage{position:relative;border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;background:#0a1120;aspect-ratio:4/3}
+  .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    opacity:0;transform:scale(1.015);transition:opacity .45s ease,transform .45s ease}
+  .stage img.on{opacity:1;transform:scale(1)}
+
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
+    display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
+  .card:hover{transform:translateY(-4px);border-color:var(--accent-dim)}
+  .card.main{border-color:var(--accent-dim)}
+  .card h3{margin:0 0 4px;font-size:1.1rem}
+  .size{color:var(--gold);font-weight:600;font-size:.9rem}
+  .card p{color:var(--muted);font-size:.94rem;margin:12px 0 20px;flex:1}
+  .card .btn{display:block}
+
+  .os{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .os li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:13px 16px;font-size:.94rem;display:flex;gap:11px;align-items:flex-start}
+  .dot{width:10px;height:10px;border-radius:50%;margin-top:7px;flex:none}
+  .dot.ok{background:var(--green);box-shadow:0 0 10px rgba(61,220,151,.6)}
+  .dot.wait{background:#5d6f8e}
+  .os b{display:block} .os span{color:var(--muted);font-size:.87rem}
+
+  .road{list-style:none;padding:0;margin:0;position:relative}
+  .road::before{content:"";position:absolute;left:11px;top:10px;bottom:10px;
+    width:2px;background:var(--line)}
+  .road li{position:relative;padding:0 0 22px 42px}
+  .road li:last-child{padding-bottom:0}
+  .pin{position:absolute;left:2px;top:3px;width:20px;height:20px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--line)}
+  .road li.done .pin{border-color:var(--green);background:var(--green);
+    box-shadow:0 0 12px rgba(61,220,151,.5)}
+  .road b{display:block;font-size:1.02rem} .road span{color:var(--muted);font-size:.9rem}
+  .badge{display:inline-block;font-size:.75rem;font-weight:700;border-radius:999px;
+    padding:2px 10px;margin-left:8px;vertical-align:2px}
+  .badge.ok{background:rgba(61,220,151,.16);color:var(--green);border:1px solid rgba(61,220,151,.45)}
+  .badge.next{background:#1b2c49;color:var(--muted);border:1px solid var(--line)}
+
+  .donate{display:grid;gap:26px;align-items:start;grid-template-columns:220px 1fr;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .qr{width:220px;height:220px;background:#fff;border-radius:10px;padding:10px;display:block}
+  .bankhdr{color:var(--muted);font-size:.8rem;text-transform:uppercase;
+    letter-spacing:.06em;margin:0 0 4px}
+  .rows{margin:0;display:grid;gap:2px}
+  .rows div{display:flex;justify-content:space-between;gap:16px;
+    padding:9px 0;border-bottom:1px solid var(--line)}
+  .rows div:last-child{border-bottom:0}
+  .rows dt{color:var(--muted);font-size:.92rem}
+  .rows dd{margin:0;font-weight:600}
+  .bmc{display:inline-flex;align-items:center;gap:10px;margin-top:18px;
+    background:var(--gold);color:#1a1200}
+  .bmc:hover{box-shadow:0 12px 26px rgba(255,207,60,.28)}
+  .bmc svg{width:20px;height:20px;fill:currentColor;flex:none}
+
+  .who{display:grid;gap:26px;grid-template-columns:132px 1fr;align-items:start;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .ava{width:132px;height:132px;border-radius:50%;background:#0a1120;
+    border:1px solid var(--line);padding:14px}
+  .whoin b{display:block;font-size:1.25rem;letter-spacing:-.2px}
+  .whoin > span{color:var(--accent);font-size:.9rem}
+  .whoin p{color:var(--muted);font-size:.95rem;margin:14px 0 18px}
+  .joinbtn{display:inline-flex;align-items:center;gap:9px}
+  .joinbtn svg{width:19px;height:19px;fill:currentColor}
+  .chips{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .chips a{display:flex;align-items:center;gap:12px;text-decoration:none;
+    background:#0f1a2e;border:1px solid var(--line);border-radius:10px;
+    padding:11px 14px;color:var(--text);
+    transition:border-color .15s,transform .15s,background .15s}
+  .chips a:hover{border-color:var(--accent-dim);background:#14243d;transform:translateY(-2px)}
+  .chips svg{width:20px;height:20px;fill:var(--accent);flex:none}
+  .chips span{display:block;min-width:0;font-size:.94rem;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .chips i{display:block;font-style:normal;color:var(--muted);font-size:.78rem}
+
+  .disc{border-left:3px solid var(--accent-dim);background:#111b2e;
+    border-radius:0 12px 12px 0;padding:20px 24px}
+  .disc p{color:var(--muted);font-size:.92rem;margin:0 0 10px;line-height:1.6}
+  .disc p:last-child{margin-bottom:0}
+  .disc b{color:var(--text)}
+  .disc a{color:var(--accent);text-decoration:none}
+  .disc a:hover{text-decoration:underline}
+
+  .rise{opacity:0;transform:translateY(22px);
+    transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.3,1)}
+  .rise.seen{opacity:1;transform:none}
+
+  @media (max-width:860px){
+    .show{grid-template-columns:1fr}
+    .donate{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .who{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .chips a{text-align:left}
+    .rows div{justify-content:center;flex-direction:column;gap:0;text-align:center}
+    .brand span{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .logo{animation:none}
+    .rise{opacity:1;transform:none;transition:none}
+    .stage img{transition:none;transform:none}
+    .btn:hover,.card:hover,.tab:hover,.chips a:hover{transform:none}
+  }
+
+  .guide h3{margin:30px 0 10px;font-size:1.08rem;color:var(--accent)}
+  .guide p{color:var(--muted)}
+  .guide p b,.guide li b{color:var(--text)}
+  .guide ul{color:var(--muted);padding-left:22px}
+  .guide ul li{margin:8px 0}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;
+    background:var(--panel);margin:18px 0}
+  table{border-collapse:collapse;width:100%;font-size:.93rem;min-width:460px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);
+    vertical-align:top}
+  thead th{color:var(--accent);font-size:.82rem;text-transform:uppercase;
+    letter-spacing:.05em;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td:first-child{color:var(--text);font-weight:600;white-space:nowrap}
+  td{color:var(--muted)}
+  .keys{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:10px;
+    grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+  .keys li{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 15px}
+  .keys b{display:block;color:var(--accent);font-size:.95rem;
+    font-variant-numeric:tabular-nums}
+  .keys span{color:var(--muted);font-size:.88rem}
+  .folders{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0 0;padding:0;list-style:none}
+  .folders li{background:#0a1120;border:1px solid var(--line);border-radius:8px;
+    padding:7px 13px;color:var(--accent);font-size:.92rem}
+  .qa{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+  .qa li{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px 20px}
+  .qa b{display:block;margin-bottom:6px}
+  .qa span{color:var(--muted);font-size:.94rem}
+  .qa code{white-space:normal}
+  @media (max-width:600px){ td:first-child{white-space:normal} }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="navin">
+    <a class="brand" href="/vi/"><img src="/logo.png" alt=""><span>RetroHub</span></a>
+    <div class="navlinks"><a href="#cai-dat">Cài giả lập</a><a href="#thu-muc">Bỏ game vào đâu</a><a href="#che-do-may">Chế độ máy</a><a href="#nut-bam">Bố trí nút</a><a href="#hinh-anh">Hình ảnh</a><a href="#toan-man-hinh">Toàn màn hình</a><a href="#luu-game">Save game</a><a href="#su-co">Xử lý sự cố</a></div>
+    <a class="lang" href="/java/" hreflang="en" title="English">
+      <img src="/files/assets/flag_en.png" alt=""><span>English</span></a>
+  </div>
+</nav>
+
+<header style="padding:56px 0 34px">
+  <div class="wrap">
+    <h1 style="margin-top:0">Chơi game Java J2ME trên RetroHub</h1>
+    <p class="sub" style="max-width:760px;margin:0 auto">RetroHub chạy game J2ME bằng FreeJ2ME, vẽ thẳng lên màn hình — không qua RetroArch, không dùng core libretro. Trang này nói những chỗ không hiển nhiên, bắt đầu bằng cái làm ai cũng thắc mắc: vì sao hai game lại map nút khác nhau.</p>
+  </div>
+</header>
+
+<main class="wrap guide">
+
+  <section id="cai-dat" class="rise" style="padding-top:26px">
+    <h2>Cài giả lập</h2>
+    <p>Bộ giả lập nặng 66 MB và nằm sẵn trong app chứ không phải tải về, nên không có mạng vẫn cài được.</p>
+    <ul><li>Đã cài <b>RetroHub-x-full.zip</b>? Máy có sẵn rồi. Vào <b>Tiện ích → Cài đặt Giả lập Java</b> một lần là nó bung ra.</li><li>Đã cài bản gọn? Bản đó không kèm Java. Tải bản đầy đủ rồi chép đè lên thư mục đang có, không mất gì cả.</li><li>Từ bản 1.43, nếu giả lập trên thẻ cũ hơn gói trong app thì app tự nâng cấp ở lần mở kế tiếp. Save giữ nguyên.</li></ul>
+  </section>
+
+  <section id="thu-muc" class="rise">
+    <h2>Bỏ game vào đâu</h2>
+    <p>Mỗi game J2ME được viết cho đúng một khổ màn điện thoại, mà emulator thì không có cách nào đoán ra khổ nào. Nên thư mục chứa game chính là chỗ báo cho nó: một file jar nằm trong <code>Roms/JAVA/240320/</code> sẽ được cấp khung 240×320.</p>
+    <h3>Năm thư mục</h3>
+    <ul class="folders"><li>240320</li><li>320240</li><li>128128</li><li>176208</li><li>640360</li></ul>
+    <p>Chỉ khoảng một phần tư số game trong kho có ghi kích thước trong tên file, nên game nào không nhận ra được sẽ vào <code>240320</code> — khổ phổ biến nhất. Thấy game bị cắt xén hay méo mó thì phần nhiều là đang nằm sai thư mục.</p>
+    <p>Muốn chuyển: mở game trong RetroHub, bấm nút thao tác rồi chọn <b>Độ phân giải</b>. Làm trong app khác với chuyển tay ở chỗ nó xoá luôn bộ nhớ đệm danh sách game của menu hệ thống — không xoá thì menu vẫn trỏ vào đường dẫn cũ.</p>
+  </section>
+
+  <section id="che-do-may" class="rise">
+    <h2>Chế độ máy</h2>
+    <p>Đây là câu trả lời cho “sao mỗi game lại map phím một kiểu”. Game J2ME không thống nhất cách đọc bàn phím. Có game hỏi GameAction (lên/xuống/trái/phải/bắn), có game đọc thẳng số 2/4/6/8, có game dùng mã riêng của một hãng. Emulator buộc phải dịch khác nhau cho từng loại, nên nó mang sẵn năm chế độ máy.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Chế độ</th><th>Nghĩa là gì</th></tr></thead>
+      <tbody><tr><td>P</td><td>Bàn phím số phổ thông. D-pad gửi ra số 2/4/6/8, OK gửi số 5.</td></tr><tr><td>N</td><td>Nokia. D-pad và OK tới game dưới dạng GameAction — thứ đa số game chờ.</td></tr><tr><td>E</td><td>Sony Ericsson. Vài tựa chỉ chạy đúng ở chế độ này.</td></tr><tr><td>S</td><td>Siemens.</td></tr><tr><td>M</td><td>Motorola.</td></tr></tbody>
+    </table></div>
+    <p>Chế độ được nhớ <b>riêng cho từng game</b>, trong <code>zulu17/bin/config/&lt;tên game&gt;/game.conf</code>. Đó là lý do game chơi hôm qua và game mở hôm nay lại khác nhau — mỗi game giữ cài đặt của nó. Muốn đổi thì giữ <b>START</b> rồi bấm <b>SELECT</b> tới khi góc màn hiện chữ mình muốn; nó chỉ lưu cho riêng game đó.</p>
+    <p class="note">Game nào D-pad không ăn gì mà các nút khác vẫn chạy thì nó đang ở <b>P</b>. Chuyển sang <b>N</b>.</p>
+  </section>
+
+  <section id="nut-bam" class="rise">
+    <h2>Bố trí nút</h2>
+    <p>H, K và X là ba bố trí nút vật lý. Khác với chế độ máy, ba cái này dùng chung — một bố trí cho mọi game. <b>H</b> là mặc định, và cả năm chế độ máy P/N/E/S/M đều dùng nó; chọn K hay X thì chế độ máy tự chuyển về N.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Nút</th><th>Bố trí H</th><th>Bố trí K</th><th>Bố trí X</th></tr></thead>
+      <tbody><tr><td>A</td><td>Phím chọn phải</td><td>D-pad phải</td><td>OK</td></tr><tr><td>B</td><td>Số 0</td><td>D-pad xuống</td><td>Phím chọn phải</td></tr><tr><td>X</td><td>OK</td><td>D-pad lên</td><td>Phím chọn trái</td></tr><tr><td>Y</td><td>Phím chọn trái</td><td>D-pad trái</td><td>Số 0</td></tr><tr><td>D-pad lên</td><td>D-pad lên</td><td>Số 1</td><td>D-pad lên</td></tr><tr><td>D-pad xuống</td><td>D-pad xuống</td><td>Số 3</td><td>D-pad xuống</td></tr><tr><td>D-pad trái</td><td>D-pad trái</td><td>Số 7</td><td>D-pad trái</td></tr><tr><td>D-pad phải</td><td>D-pad phải</td><td>Số 9</td><td>D-pad phải</td></tr><tr><td>L1</td><td>Số 1</td><td>*</td><td>Số 1</td></tr><tr><td>L2</td><td>Số 3</td><td>#</td><td>Số 3</td></tr><tr><td>R1</td><td>Số 9</td><td>Phím chọn phải</td><td>Số 9</td></tr><tr><td>R2</td><td>Số 7</td><td>OK</td><td>Số 7</td></tr><tr><td>L3</td><td>*</td><td>Số 0</td><td>*</td></tr><tr><td>R3</td><td>#</td><td>Phím chọn trái</td><td>#</td></tr><tr><td>Cần trái</td><td>D-pad</td><td>D-pad</td><td>D-pad</td></tr><tr><td>Cần phải</td><td>2 / 4 / 6 / 8</td><td>2 / 4 / 6 / 8</td><td>2 / 4 / 6 / 8</td></tr><tr><td>SELECT</td><td>Số 5</td><td>Số 5</td><td>Số 5</td></tr><tr><td>START</td><td>—</td><td>—</td><td>—</td></tr></tbody>
+    </table></div>
+    <p>Hai cần analog đều bấm lún xuống được, và cú bấm đó chính là L3 với R3 — đường để dùng tổ hợp đổi hình ảnh. Vùng chết của cần là 8000 để tính nhấn và 6000 để tính nhả; đẩy chéo thì emulator lấy trục nào lệch tâm nhiều hơn, để không bị rung hai hướng.</p>
+    <h3>Tóm tắt phím tắt</h3>
+    <ul class="keys"><li><b>START + SELECT</b><span>Chạy vòng P → N → E → S → M → H → K → X</span></li><li><b>START + R3</b><span>Chạy vòng PIXEL → SMOOTH → HQ</span></li><li><b>START + B</b><span>Xoay màn hình</span></li><li><b>START + Y</b><span>Bật/tắt mouse mode (X là click)</span></li><li><b>MENU</b><span>Hỏi có thoát game không</span></li><li><b>SELECT bấm riêng</b><span>Số 5</span></li></ul>
+    <h3>Thoát game</h3>
+    <p>Bấm <b>MENU</b> sẽ hiện hộp xác nhận — game không thoát ngay. Mặc định con trỏ nằm ở <b>NO</b> để bấm nhầm cũng không sao. Trái hoặc lên chọn YES, phải hoặc xuống chọn NO, rồi A hay X để xác nhận; B hoặc MENU lần nữa là huỷ. L3 và R3 không còn là lệnh thoát.</p>
+  </section>
+
+  <section id="hinh-anh" class="rise">
+    <h2>Hình ảnh</h2>
+    <p>Ba preset, đổi được trong app hoặc ngay trong game.</p>
+    <ul><li><b>PIXEL</b> — nearest-neighbor, không trộn màu giữa hai pixel, hệ số phóng là số nguyên. Nên thử đầu tiên với game pixel-art.</li><li><b>SMOOTH</b> — lọc linear, lấp vùng lớn nhất mà vẫn giữ đúng tỉ lệ. Có thể hơi mềm với pixel-art.</li><li><b>HQ</b> — xin SDL2 mức chất lượng tốt nhất. Trên driver này thường ra y hệt SMOOTH, nên coi như còn thử nghiệm.</li></ul>
+    <p>Trong app: <b>Tiện ích → Kiểu hiển thị game Java</b>, ghi trọn cả preset. Trong game: giữ <b>START</b> bấm <b>R3</b>, đổi kiểu hiển thị cùng cờ phóng nguyên và không đụng các khoá còn lại. Đằng nào lựa chọn cũng được ghi vào <code>renderer.conf</code> và dùng lại lần sau.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Khoá</th><th>Giá trị</th><th>Tác dụng</th></tr></thead>
+      <tbody><tr><td><code>render_mode</code></td><td>pixel, smooth, hq</td><td>Bộ lọc khi SDL phóng khung hình cuối.</td></tr><tr><td><code>integer_scaling</code></td><td>true, false</td><td>Làm tròn hệ số phóng xuống số nguyên khi đang phóng to.</td></tr><tr><td><code>keep_aspect</code></td><td>true, false</td><td>Giữ đúng tỉ lệ hình. Để false là kéo giãn cho đầy màn.</td></tr><tr><td><code>text_aa</code></td><td>true, false</td><td>Khử răng cưa chữ Java/AWT.</td></tr><tr><td><code>shape_aa</code></td><td>true, false</td><td>Khử răng cưa đường và vùng vector Java/AWT.</td></tr><tr><td><code>m3g_filter</code></td><td>auto, nearest, linear</td><td>Bộ lọc texture cho game 3D (M3G).</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section id="toan-man-hinh" class="rise">
+    <h2>Toàn màn hình</h2>
+    <p>Game 240×320 là khổ dựng đứng; màn Brick Pro là 1024×768, nằm ngang. Hai tỉ lệ ngược nhau, nên không cấu hình nào vừa lấp kín màn vừa giữ hình cho thật. Đây là cái mỗi lựa chọn thật sự cho ra.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Cách</th><th>Cỡ hình</th><th>Tỉ lệ</th><th>Ghi chú</th></tr></thead>
+      <tbody><tr><td>SMOOTH hoặc HQ</td><td>576 × 768</td><td>Đúng</td><td>Phóng 2,4× — mức lớn nhất lọt màn. Đầy trọn chiều cao, mỗi bên còn 224 px viền.</td></tr><tr><td>PIXEL</td><td>480 × 640</td><td>Đúng</td><td>Làm tròn 2,4 xuống 2×, nên hình nhỏ hơn và viền cả bốn phía.</td></tr><tr><td>keep_aspect=false</td><td>1024 × 768</td><td>Bè ngang 1,78 lần</td><td>Lấp kín màn thật. Ngang phóng 4,27× trong khi dọc chỉ 2,4×, nên hình bè hẳn ra.</td></tr><tr><td>Xoay màn hình</td><td>1024 × 768</td><td>Đúng</td><td>START + B. Xoay xong game thành 320×240 — đúng 4:3, khít màn ở 3,2×, không một pixel viền. Đổi lại phải cầm máy nằm ngang.</td></tr><tr><td>Chuyển sang thư mục 320240</td><td>1024 × 768</td><td>Đúng</td><td>Game được cấp khung 320×240 nằm ngang, cũng khít ở 3,2×. Game nào tự co giãn theo khung thì đẹp hẳn; game vẽ cứng theo khổ dọc thì vỡ bố cục.</td></tr></tbody>
+    </table></div>
+    <p>Hai dòng cuối là hai cách duy nhất lấp kín màn mà không méo, và cả hai đều đòi hỏi thứ gì đó: một cái bắt cầm máy nằm ngang, một cái chỉ ăn với game biết tự co giãn theo khung được cấp.</p>
+  </section>
+
+  <section id="luu-game" class="rise">
+    <h2>Save game</h2>
+    <p>Save game J2ME nằm ở <code>Emus/JAVA/zulu17/bin/rms/</code>, mỗi game một thư mục, còn cấu hình riêng từng game ở <code>zulu17/bin/config/</code>.</p>
+    <p>Cả hai nằm bên trong thư mục giả lập, nên trước đây cài lại giả lập là xoá mất. Từ RetroHub 1.42 chúng được cất ra chỗ khác trước khi thay thư mục rồi đặt lại — kể cả khi bản cài hỏng giữa chừng.</p>
+  </section>
+
+  <section id="su-co" class="rise">
+    <h2>Xử lý sự cố</h2>
+    <ul class="qa"><li><b>D-pad không ăn gì trong khi các nút khác vẫn chạy</b><span>Game đang sai chế độ máy. Gần như chắc chắn nó đang ở <b>P</b>, mà ở chế độ đó D-pad gửi ra số 2/4/6/8 — game nào chờ GameAction sẽ không nghe thấy gì. Giữ START, bấm SELECT tới khi góc màn hiện <b>N</b>.</span></li><li><b>Hai game lại map nút khác nhau</b><span>Đó là cố ý: chế độ máy được nhớ riêng cho từng game, trong <code>zulu17/bin/config/&lt;tên game&gt;/game.conf</code>. Đặt một lần cho mỗi game là xong. Muốn đưa game nào về mặc định thì xoá thư mục của nó ở đó.</span></li><li><b>Dòng kiểu hiển thị trong Tiện ích ghi BẢN CŨ và không mở</b><span>Giả lập trên thẻ cũ hơn gói trong app — bản cập nhật trong app chỉ mang mã ứng dụng, không mang 66 MB giả lập. Từ 1.43 app tự nâng cấp ở lần mở kế tiếp. Trước đó thì bấm <b>Tiện ích → Cài đặt Giả lập Java</b>.</span></li><li><b>Game không mở được sau khi chuyển thư mục</b><span>Menu hệ thống có lưu đệm danh sách game. RetroHub tự xoá đệm đó mỗi khi nó chuyển game, nên hãy đổi bằng màn độ phân giải trong app thay vì chuyển tay.</span></li><li><b>Cài lại giả lập làm mất save</b><span>Chỉ xảy ra ở 1.41 trở về trước: cài lại xoá cả thư mục giả lập, mà save nằm bên trong đó. Đã sửa ở 1.42 — save và cấu hình từng game được cất ra rồi đặt lại.</span></li></ul>
+  </section>
+
+  <section class="rise">
+    <p style="margin-top:34px">
+      <a class="btn ghost" href="/vi/">Về trang chủ</a>
+      <a class="btn ghost" href="https://t.me/retrohubtool" style="margin-left:10px">Hỏi trong nhóm Telegram</a>
+    </p>
+  </section>
+
+</main>
+
+<script>
+  // Same reveal-on-scroll as the landing page, and the same escape hatch for
+  // anyone who has asked their system not to animate things.
+  (function(){
+    var els = document.querySelectorAll('.rise');
+    if (!('IntersectionObserver' in window) ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(function(el){ el.classList.add('seen'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); }
+      });
+    }, {rootMargin: '0px 0px -60px 0px'});
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+</body>
+</html>
