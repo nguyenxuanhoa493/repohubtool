@@ -89,6 +89,7 @@ from rh.j2me import (DEFAULT_KEYMAP, RESOLUTIONS, VALID_BUTTONS, VALID_KEYS,
     load_keymap,
     move_to_resolution, pretty_resolution, resolution_of_path, rom_dir_for,
     save_keymap)
+from rh.emulators import resolve as resolve_emulator
 from rh.updater import (apply_update, check_for_update, download_update,
     release_note, request_restart, skip_version)
 from rh.version import APP_VERSION
@@ -1044,21 +1045,17 @@ def main():
         if not rom_p or not os.path.exists(rom_p):
             return False, "Không tìm thấy tập tin ROM!" if state.current_lang == "VI" else "ROM file not found!"
 
-        emu_script = f"/mnt/SDCARD/Emus/{sys_c}/launch.sh"
-        if not os.path.exists(emu_script):
+        # Ten thu muc gia lap khong nhat thiet trung ten he, va script mo game
+        # khong nhat thiet la launch.sh: Emus/PPSSPP phuc vu Roms/PSP bang
+        # launch_performance_vulkan.sh. Doc config.json de biet ca hai, thay vi
+        # ghep duong dan roi doan.
+        emu_dir, emu_script = resolve_emulator(sys_c)
+        if not emu_script:
             if sys_c == "JAVA":
                 install_j2me_emulator()
-            else:
+                emu_dir, emu_script = resolve_emulator(sys_c)
+            if not emu_script:
                 return False, f"Chưa cấu hình Giả lập {sys_c}!" if state.current_lang == "VI" else f"{sys_c} Emulator not configured!"
-            for alt in [f"/mnt/SDCARD/Emus/{sys_c.upper()}/launch.sh", f"/mnt/SDCARD/Emus/{sys_c.lower()}/launch.sh"]:
-                if os.path.exists(alt):
-                    emu_script = alt
-                    break
-
-        if not os.path.exists(emu_script):
-            return False, f"Không tìm thấy giả lập hệ {sys_c}!" if state.current_lang == "VI" else f"Emulator for {sys_c} not found!"
-
-        emu_dir = os.path.dirname(emu_script)
         
         # Write handoff script for launch.sh to execute cleanly after RetroHub releases all GPU/RAM resources
         try:
