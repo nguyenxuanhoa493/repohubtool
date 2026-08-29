@@ -11,10 +11,17 @@ import urllib.error
 
 # Khong con mang thi thu lai la vo ich: nguoi goi dung vong retry khi thay key nay.
 NO_NET = "dl_err_no_net"
+# The nho khong nhan lenh ghi. Doi mirror khac la vo ich y het NO_NET, nen
+# nguoi goi cung dung vong retry khi thay key nay.
+READONLY = "dl_err_readonly"
 GENERIC = "fail_msg"
 
 # Loi "khong co duong ra": phan biet voi mot server that su tu choi.
 _OFFLINE_ERRNOS = (errno.ENETUNREACH, errno.EHOSTUNREACH)
+
+# EROFS khi kernel biet mount la chi doc; EACCES/EPERM khi chinh tang FAT hay
+# exfat-fuse tu choi, la truong hop hay gap hon tren may that.
+_READONLY_ERRNOS = (errno.EACCES, errno.EPERM, errno.EROFS)
 
 _HTTP_KEYS = {
     401: "dl_err_blocked",
@@ -30,7 +37,8 @@ _HTTP_KEYS = {
 # Toan bo tu vung ma classify_error co the tra ve. Test i18n duyet tap nay,
 # nen them mot ly do moi ma quen dich se hong test chu khong hong tren may.
 ALL_KEYS = frozenset(
-    [NO_NET, GENERIC, "dl_err_timeout", "dl_err_disk_full", "dl_err_truncated"]
+    [NO_NET, READONLY, GENERIC, "dl_err_timeout", "dl_err_disk_full",
+     "dl_err_truncated"]
     + list(_HTTP_KEYS.values())
 )
 
@@ -63,6 +71,11 @@ def classify_error(ex):
             return NO_NET
         if ex.errno == errno.ENOSPC:
             return "dl_err_disk_full"
+        # The exFAT bi co dirty (rut khoi may tinh khong an toan) duoc mount
+        # lai o che do chi doc, va file DOS mang co read-only cung ra EACCES.
+        # Ca hai deu la "the khong cho ghi", khong phai loi mang hay loi nguon.
+        if ex.errno in _READONLY_ERRNOS:
+            return READONLY
         return GENERIC
 
     if isinstance(ex, ValueError):
