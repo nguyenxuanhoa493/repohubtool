@@ -83,11 +83,11 @@ from rh.splash import (apply_splash_update,
     restore_original_splash,
     scan_directory_for_images,
     scan_splash_images)
-from rh.j2me import (DEFAULT_KEYMAP, RESOLUTIONS, VALID_BUTTONS, VALID_KEYS,
-    button_in_use, install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
-    load_keymap,
-    move_to_resolution, pretty_resolution, resolution_of_path, rom_dir_for,
-    save_keymap)
+from rh.j2me import (RENDER_MODES, RESOLUTIONS,
+    install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
+    load_render_mode, move_to_resolution, pretty_resolution, resolution_of_path,
+    rom_dir_for, runtime_supports_renderer,
+    save_render_mode)
 from rh.emulators import resolve as resolve_emulator
 from rh.fonts import VIET_PROBE, font_candidates, pick_font
 from rh.updater import (apply_catalog, apply_update, CATALOG_FAILED,
@@ -564,7 +564,7 @@ def main():
     # Search Systems Filter Options. These come from the catalogue DB rather than
     # the static catalogs.json: the DB carries 29 systems where the JSON listed only
     # 13, so PS, PSP, DC, SS, N64 and friends were missing from the filter entirely.
-    j2me_keymap = {}
+    j2me_render_mode = None     # filled when the display screen is opened
     _sys_rows = get_source_systems_list("ALL")
     _sys_counts = dict(_sys_rows)
     sys_keys_list = ["ALL"] + [c for c, _ in _sys_rows if c != "ALL"]
@@ -820,11 +820,6 @@ def main():
     # Screen-size picker for Java games. A list rather than a cycling button: five
     # sizes is too many to step through blind, and you cannot see what is on offer.
     res_modal = {"active": False, "selected_idx": 0}
-
-    # Button picker for one phone key. Cycling was useless here: the shipped keymap
-    # already uses all ten pad buttons, so stepping through "free" ones offered
-    # nothing but unset-and-back. Picking from a list lets a taken button be swapped.
-    key_modal = {"active": False, "key": None, "selected_idx": 0}
 
     # Java emulator info + reinstall. `pending` defers the actual work by one frame
     # so the "installing" line is on screen before the UI thread blocks on it.
@@ -1245,8 +1240,12 @@ def main():
                 j2me_label = "READY" if is_j2me_installed else "AUTO"
             items.append({"id": "install_j2me_emu", "title": tr("util_j2me_title"), "label": j2me_label})
             if is_j2me_installed:
-                items.append({"id": "nav_j2me_keys", "title": tr("util_j2me_keys"),
-                              "label": tr("view"), "sub": True})
+                # An in-app update does not carry the runtime, so this app can
+                # be sitting on the older emulator, which has no renderer.conf.
+                can_render = runtime_supports_renderer()
+                items.append({"id": "nav_j2me_render", "title": tr("util_j2me_render"),
+                              "label": tr("view") if can_render else tr("j2me_render_old"),
+                              "sub": True, "render_ok": can_render})
             
             doctor_label = "TỐT" if is_j2me_installed else "VÁ"
             if state.current_lang != "VI":
@@ -1260,19 +1259,15 @@ def main():
             number_items(items)
             items.append({"id": "back", "title": tr("back_home")})
 
-        # JAVA KEY MAPPING: one row per phone key the native side actually honours
-        elif current_screen == "j2me_keys":
-            header_title = tr("j2me_keys_title")
-            key_labels = {"OK": "OK / Chọn (giữa)", "*": "Phím  *", "#": "Phím  #",
-                          "\u5de6\u952e": "Phím mềm TRÁI", "\u53f3\u952e": "Phím mềm PHẢI"}
-            if state.current_lang != "VI":
-                key_labels = {"OK": "OK / Select (fire)", "*": "Key  *", "#": "Key  #",
-                              "\u5de6\u952e": "LEFT softkey", "\u53f3\u952e": "RIGHT softkey"}
-            for k in VALID_KEYS:
-                lbl = key_labels.get(k, ("Phím  " if state.current_lang == "VI" else "Key  ") + k)
-                items.append({"id": f"j2mekey_{k}", "j2me_key": k, "title": lbl,
-                              "label": j2me_keymap.get(k) or tr("j2me_key_none")})
-            items.append({"id": "j2me_keys_reset", "title": tr("j2me_keys_reset"), "sub": True})
+        # JAVA DISPLAY: one row per render preset. Pad layout is not here - this
+        # build takes it from control_profile.cfg, cycled on the device itself.
+        elif current_screen == "j2me_render":
+            header_title = tr("j2me_render_title")
+            for m in RENDER_MODES:
+                items.append({"id": f"j2merender_{m}", "render_mode": m,
+                              "title": tr(f"j2me_render_{m}"),
+                              "label": tr("j2me_render_cur") if m == j2me_render_mode else ""})
+            items.append({"id": "j2me_render_note", "title": tr("j2me_render_note"), "sub": True})
             items.append({"id": "back", "title": tr("back_home")})
 
         # SETTINGS: things that shape the app itself, kept out of Utilities which is
@@ -2075,36 +2070,6 @@ def main():
                 j2me_modal["busy"] = True
                 j2me_modal["pending"] = True
 
-        elif key_modal["active"]:
-            n_opt = len(VALID_BUTTONS) + 1          # +1 for the "unassigned" row
-            if btn_up or btn_left:
-                key_modal["selected_idx"] = (key_modal["selected_idx"] - 1) % n_opt
-            elif btn_down or btn_right:
-                key_modal["selected_idx"] = (key_modal["selected_idx"] + 1) % n_opt
-            elif btn_b or btn_x:
-                key_modal["active"] = False
-            elif btn_a:
-                k = key_modal["key"]
-                idx = key_modal["selected_idx"]
-                pick = "" if idx == 0 else VALID_BUTTONS[idx - 1]
-                old_btn = j2me_keymap.get(k, "")
-                if pick:
-                    # Swap rather than steal: whoever held this button takes the one
-                    # this key is giving up, so no key is silently left unbound.
-                    holder = button_in_use(j2me_keymap, pick, except_key=k)
-                    if holder:
-                        if old_btn:
-                            j2me_keymap[holder] = old_btn
-                        else:
-                            j2me_keymap.pop(holder, None)
-                    j2me_keymap[k] = pick
-                else:
-                    j2me_keymap.pop(k, None)
-                if save_keymap(j2me_keymap):
-                    toast_msg = tr("j2me_keys_saved")
-                    toast_timer = time.time()
-                key_modal["active"] = False
-
         elif res_modal["active"]:
             if btn_up or btn_left:
                 res_modal["selected_idx"] = (res_modal["selected_idx"] - 1) % len(RESOLUTIONS)
@@ -2454,21 +2419,26 @@ def main():
                 elif item_id == "nav_utilities":
                     selected_indices["utilities"] = 0
                     screen_stack.append("utilities")
-                elif item_id == "nav_j2me_keys":
-                    j2me_keymap = load_keymap()
-                    selected_indices["j2me_keys"] = 0
-                    screen_stack.append("j2me_keys")
-                elif item_id.startswith("j2mekey_"):
-                    k = cur_item.get("j2me_key")
-                    cur_btn = j2me_keymap.get(k, "")
-                    key_modal["key"] = k
-                    key_modal["selected_idx"] = (VALID_BUTTONS.index(cur_btn) + 1
-                                                 if cur_btn in VALID_BUTTONS else 0)
-                    key_modal["active"] = True
-                elif item_id == "j2me_keys_reset":
-                    j2me_keymap = dict(DEFAULT_KEYMAP)
-                    save_keymap(j2me_keymap)
-                    toast_msg = tr("j2me_keys_saved")
+                elif item_id == "nav_j2me_render":
+                    if not cur_item.get("render_ok"):
+                        # Opening it would offer settings the installed emulator
+                        # cannot act on; say why instead.
+                        toast_msg = tr("j2me_render_old_hint")
+                        toast_timer = time.time()
+                    else:
+                        # Read fresh: START+R3 on the device rewrites the same file,
+                        # so a value cached from an earlier visit shows the wrong row.
+                        j2me_render_mode = load_render_mode()
+                        selected_indices["j2me_render"] = 0
+                        screen_stack.append("j2me_render")
+                elif item_id.startswith("j2merender_"):
+                    m = cur_item.get("render_mode")
+                    if save_render_mode(m):
+                        j2me_render_mode = m
+                        toast_msg = tr("j2me_render_saved")
+                        toast_timer = time.time()
+                elif item_id == "j2me_render_note":
+                    toast_msg = tr("j2me_render_note")
                     toast_timer = time.time()
                 elif item_id == "nav_settings":
                     selected_indices["settings"] = 0
@@ -3974,54 +3944,6 @@ def main():
                 draw_rect(bx_j, ay, bw, bh, col[0], col[1], col[2], 255, thickness=2)
                 draw_text(b_txt, font_sub, bx_j + bw // 2, ay + bh // 2,
                           col[0], col[1], col[2], center_x=True, center_y=True)
-
-        elif key_modal["active"]:
-            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
-
-            k_cur = key_modal["key"]
-            k_names = {"OK": "OK / Chon (giua)", "*": "Phim  *", "#": "Phim  #",
-                       "\u5de6\u952e": "Phim mem TRAI", "\u53f3\u952e": "Phim mem PHAI"}
-            if state.current_lang != "VI":
-                k_names = {"OK": "OK / Select", "*": "Key  *", "#": "Key  #",
-                           "\u5de6\u952e": "LEFT softkey", "\u53f3\u952e": "RIGHT softkey"}
-            k_title = k_names.get(k_cur, ("Phim  " if state.current_lang == "VI" else "Key  ") + str(k_cur))
-
-            k_rows = [""] + VALID_BUTTONS
-            krow_h = 40
-            kw = 460
-            kh_ = 74 + krow_h * len(k_rows)
-            kx = (state.SCREEN_W - kw) // 2
-            ky = (state.SCREEN_H - kh_) // 2
-
-            fill_rect(kx, ky, kw, kh_, 16, 22, 38, 255)
-            draw_rect(kx, ky, kw, kh_, 0, 246, 246, 255, thickness=3)
-            fill_rect(kx + 3, ky + 3, kw - 6, 52, 24, 34, 58, 255)
-            draw_text(k_title, font_item, kx + kw // 2, ky + 29,
-                      0, 246, 246, center_x=True, center_y=True)
-
-            for b_i, b in enumerate(k_rows):
-                by_i = ky + 62 + b_i * krow_h
-                is_sel = (b_i == key_modal["selected_idx"])
-                is_cur = (b == j2me_keymap.get(k_cur, ""))
-                if is_sel:
-                    fill_rect(kx + 10, by_i, kw - 20, krow_h - 5, 32, 50, 85, 255)
-                    draw_rect(kx + 10, by_i, kw - 20, krow_h - 5, 0, 246, 246, 255, thickness=2)
-                lbl = b if b else ("(khong gan)" if state.current_lang == "VI" else "(unassigned)")
-                draw_text(lbl, font_sub, kx + 34, by_i + (krow_h - 5) // 2,
-                          *((0, 255, 160) if is_cur else (225, 235, 250)), center_y=True)
-
-                # name the key that currently holds this button, so it is clear the
-                # pick will swap rather than quietly unbind something else
-                holder = button_in_use(j2me_keymap, b, except_key=k_cur) if b else None
-                if holder:
-                    draw_text(k_names.get(holder, str(holder)), font_sub, kx + 190,
-                              by_i + (krow_h - 5) // 2, 150, 165, 195, center_y=True)
-
-                bx = kx + kw - 46
-                byy = by_i + (krow_h - 5) // 2 - 9
-                draw_rect(bx, byy, 18, 18, 90, 110, 145, 255, thickness=2)
-                if is_cur:
-                    fill_rect(bx + 5, byy + 5, 8, 8, 0, 255, 160, 255)
 
         elif res_modal["active"]:
             fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)

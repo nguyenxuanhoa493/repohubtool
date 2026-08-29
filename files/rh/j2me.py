@@ -7,10 +7,14 @@ libretro core are involved.
 
 Screen size is chosen by which folder a game sits in - Roms/JAVA/240320 and friends -
 because J2ME titles are each built for one specific handset resolution.
+
+The build is the Brick Pro one, which adds a renderer.conf and picks its pad layout
+from control_profile.cfg. Everything the player can change in game - display mode
+on START+R3, layout on START+SELECT - writes to those files, so this module reads
+them fresh rather than holding a copy.
 """
 
 import os
-import json
 import shutil
 import tarfile
 
@@ -29,29 +33,24 @@ PAYLOAD = os.path.join(APP_DIR, "payload", "j2me_sdl.tar.gz")
 RESOLUTIONS = ["240320", "320240", "128128", "176208", "640360"]
 DEFAULT_RESOLUTION = "240320"   # 644 of the 957 titles that state a size
 
-# Phone keys the native side actually honours, in the order its lookup table lists
-# them. The two Chinese names are the left and right softkeys (KEY_LEFT/KEY_RIGHT);
-# they are stored as UTF-8 in the binary, which is why an ASCII-only scan misses
-# them. There is no key 5 - OK is the centre/fire key that games use in its place.
-SOFT_LEFT = "\u5de6\u952e"
-SOFT_RIGHT = "\u53f3\u952e"
-VALID_KEYS = [SOFT_LEFT, SOFT_RIGHT, "OK", "*", "#", "0", "1", "3", "7", "9"]
-# Pad buttons that can be bound to them.
-VALID_BUTTONS = ["A", "B", "X", "Y", "L", "R", "L2", "R2", "SELECT", "START"]
-
-# The package's own mapping, copied from the keymap.cfg inside the payload so the
-# two cannot drift. This is what the emulator ships with and what works.
-DEFAULT_KEYMAP = {
-    "左键": "Y",
-    "右键": "A",
-    "OK": "X",
-    "*": "SELECT",
-    "#": "START",
-    "0": "B",
-    "1": "L",
-    "3": "R",
-    "7": "L2",
-    "9": "R2",
+# Display presets, straight out of the emulator's own guide. The renderer is the
+# one thing about this build worth setting from the app: the three modes differ by
+# five keys at once, not one, and getting a mismatched pair (say pixel mode with
+# integer scaling off) looks broken rather than different.
+#
+# There is deliberately no key mapping here any more. This build ignores
+# keymap.cfg - it parses the file at startup and never reads the values back - and
+# picks the pad layout from control_profile.cfg/control_cycle.cfg instead, which
+# the player cycles on the device with START+SELECT.
+RENDER_MODES = ["pixel", "smooth", "hq"]
+DEFAULT_RENDER_MODE = "pixel"
+RENDER_PRESETS = {
+    "pixel":  {"render_mode": "pixel",  "integer_scaling": "true",  "keep_aspect": "true",
+               "text_aa": "false", "shape_aa": "false", "m3g_filter": "nearest"},
+    "smooth": {"render_mode": "smooth", "integer_scaling": "false", "keep_aspect": "true",
+               "text_aa": "true",  "shape_aa": "true",  "m3g_filter": "linear"},
+    "hq":     {"render_mode": "hq",     "integer_scaling": "false", "keep_aspect": "true",
+               "text_aa": "true",  "shape_aa": "true",  "m3g_filter": "linear"},
 }
 
 
@@ -76,50 +75,70 @@ def is_j2me_runtime_ready():
     return not j2me_missing_parts()
 
 
+def runtime_supports_renderer():
+    """True when the installed sdl_interface is a build that reads renderer.conf.
+
+    An in-app update carries only the app's .py files - the 66MB runtime ships
+    with the full package, not on every update - so a device can end up running
+    this version of the app against the older emulator. That build has no
+    renderer.conf at all, and a display screen wired to a binary that ignores it
+    is a screen that does nothing.
+    """
+    sdl = j2me_runtime_paths()["sdl"]
+    try:
+        with open(sdl, "rb") as f:
+            return b"renderer.conf" in f.read()
+    except Exception:
+        return False
+
+
 def has_payload():
     """True when the bundled installer archive is present in the app folder."""
     return os.path.exists(PAYLOAD)
 
 
-# ------------------------------------------------------------------ key mapping
-def keymap_path():
-    return f"{RUNTIME_DIR}/bin/keymap.cfg"
+# ------------------------------------------------------------------ renderer
+def renderer_conf_path():
+    return f"{RUNTIME_DIR}/bin/renderer.conf"
 
 
-def load_keymap():
-    """Current phone-key -> pad-button map, falling back to the default."""
+def load_render_mode():
+    """Which of the three presets is in force, from renderer.conf.
+
+    The player can also change this on the device with START+R3, which rewrites
+    the same file, so this is read fresh every time rather than cached.
+    """
     try:
-        with open(keymap_path(), "r", encoding="utf-8") as f:
-            raw = json.load(f)
-        # Drop entries the native side does not understand rather than passing
-        # them on; they would look bound in the UI but do nothing in game.
-        cleaned = {k: v for k, v in raw.items()
-                   if k in VALID_KEYS and v in VALID_BUTTONS}
-        return cleaned or dict(DEFAULT_KEYMAP)
+        with open(renderer_conf_path(), "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                if k.strip() == "render_mode":
+                    v = v.strip().lower()
+                    return v if v in RENDER_MODES else DEFAULT_RENDER_MODE
     except Exception:
-        return dict(DEFAULT_KEYMAP)
+        pass
+    return DEFAULT_RENDER_MODE
 
 
-def save_keymap(mapping):
-    """Write the map back, keeping only bindings the native side honours."""
-    cleaned = {k: v for k, v in mapping.items()
-               if k in VALID_KEYS and v in VALID_BUTTONS}
+def save_render_mode(mode):
+    """Write a whole preset out. Returns True when the file was replaced."""
+    if mode not in RENDER_MODES:
+        return False
+    preset = RENDER_PRESETS[mode]
+    lines = ["# FreeJ2ME Brick Pro renderer",
+             "# pixel = nearest-neighbor; smooth = linear; hq = SDL best-quality fallback"]
+    lines += [f"{k}={v}" for k, v in preset.items()]
     try:
-        os.makedirs(os.path.dirname(keymap_path()), exist_ok=True)
-        with open(keymap_path(), "w", encoding="utf-8") as f:
-            json.dump(cleaned, f, ensure_ascii=False, indent=4)
+        os.makedirs(os.path.dirname(renderer_conf_path()), exist_ok=True)
+        with open(renderer_conf_path(), "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
         return True
     except Exception as e:
-        print(f"Error saving J2ME keymap: {e}")
+        print(f"Error saving J2ME renderer.conf: {e}")
         return False
-
-
-def button_in_use(mapping, button, except_key=None):
-    """Which phone key currently holds this button, if any."""
-    for k, v in mapping.items():
-        if v == button and k != except_key:
-            return k
-    return None
 
 
 # ------------------------------------------------------------------ rom folders
@@ -200,13 +219,13 @@ def install_j2me_emulator(force=False):
     network - the archive is ~65MB of JRE, which is why it is not re-downloaded.
 
     force=True wipes the runtime first and unpacks it again, for repairing an
-    install that has gone bad. The key mapping is kept: it is validated on load, so
-    a damaged one cannot break the emulator, and losing it would be a nasty
-    surprise for someone who only wanted to fix a crash.
+    install that has gone bad. The chosen display preset is kept: it is validated
+    on load, so a damaged one cannot break the emulator, and losing it would be a
+    nasty surprise for someone who only wanted to fix a crash.
     """
     vi = state.current_lang == "VI"
     try:
-        saved_keys = load_keymap() if force else None
+        saved_mode = load_render_mode() if force else None
         if force and os.path.isdir(RUNTIME_DIR):
             shutil.rmtree(RUNTIME_DIR, ignore_errors=True)
         os.makedirs(EMU_DIR, exist_ok=True)
@@ -228,11 +247,15 @@ def install_j2me_emulator(force=False):
                 os.chmod(p, 0o755)
 
         # Restore any missing config file from the payload rather than generating
-        # one. These three are the package's own, known-good files; hand-written
-        # replacements are what broke a working install before.
+        # one. These are the package's own, known-good files; hand-written
+        # replacements are what broke a working install before. control_cycle and
+        # control_profile decide the pad layout, so a missing one leaves the player
+        # with buttons that do not match what the emulator's guide describes.
         for member, dest in (("JAVA/config.json", f"{EMU_DIR}/config.json"),
                              ("JAVA/launch.sh", f"{EMU_DIR}/launch.sh"),
-                             ("JAVA/zulu17/bin/keymap.cfg", keymap_path())):
+                             ("JAVA/zulu17/bin/renderer.conf", renderer_conf_path()),
+                             ("JAVA/zulu17/bin/control_cycle.cfg", f"{RUNTIME_DIR}/bin/control_cycle.cfg"),
+                             ("JAVA/zulu17/bin/control_profile.cfg", f"{RUNTIME_DIR}/bin/control_profile.cfg")):
             if os.path.exists(dest) or not has_payload():
                 continue
             try:
@@ -249,10 +272,10 @@ def install_j2me_emulator(force=False):
         if os.path.exists(lp):
             os.chmod(lp, 0o755)
 
-        # A reinstall wipes zulu17, and the keymap lives inside it, so put the
-        # user's bindings back on top of the restored default.
-        if saved_keys:
-            save_keymap(saved_keys)
+        # A reinstall wipes zulu17, and renderer.conf lives inside it, so put the
+        # user's display preset back on top of the restored default.
+        if saved_mode:
+            save_render_mode(saved_mode)
 
         # The stock menu caches its rom list; a stale cache would keep launching the
         # old flat paths and never find games in the resolution folders.
