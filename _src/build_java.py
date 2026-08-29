@@ -18,7 +18,7 @@ import json
 import os
 import re
 
-from build import CSS, DOMAIN
+from build import CSS, DOMAIN, navlinks_for
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -214,6 +214,12 @@ EXTRA_CSS = """
   .qa b{display:block;margin-bottom:6px}
   .qa span{color:var(--muted);font-size:.94rem}
   .qa code{white-space:normal}
+  .toc{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px;
+    justify-content:center}
+  .toc a{display:block;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:7px 15px;color:var(--muted);text-decoration:none;
+    font-size:.9rem;transition:border-color .15s,color .15s,background .15s}
+  .toc a:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
   @media (max-width:600px){ td:first-child{white-space:normal} }
 """
 
@@ -442,7 +448,8 @@ PAGE = """<!doctype html>
 <header style="padding:56px 0 34px">
   <div class="wrap">
     <h1 style="margin-top:0">{h1}</h1>
-    <p class="sub" style="max-width:760px;margin:0 auto">{lead}</p>
+    <p class="sub" style="max-width:760px;margin:0 auto 26px">{lead}</p>
+    <ul class="toc">{toc}</ul>
   </div>
 </header>
 
@@ -562,8 +569,13 @@ def render(lang):
     canon = DOMAIN + t["self"]
     idx = 1 if lang == "en" else 2
 
-    navlinks = "".join('<a href="#%s">%s</a>' % (sid, s[idx])
-                       for s in SECTIONS for sid in [s[0]])
+    # The top menu is the site's, not this page's - same items, same order, from
+    # one function in build.py so the two cannot drift. The page's own sections
+    # move into a table of contents under the heading, where they are still one
+    # click away without competing with the site menu.
+    navlinks = navlinks_for(lang, "java")
+    toc = "".join('<li><a href="#%s">%s</a></li>' % (sec[0], sec[idx])
+                  for sec in SECTIONS)
     folders = "".join("<li>%s</li>" % f for f in RES_FOLDERS)
     cai_li = "".join("<li>%s</li>" % s for s in t["cai_li"])
     hinh_li = "".join("<li>%s</li>" % s for s in t["hinh_li"])
@@ -597,7 +609,7 @@ def render(lang):
         "oglocale": "en_US" if lang == "en" else "vi_VN",
         "ldjson": json.dumps(ld, ensure_ascii=False, indent=2),
         "css": CSS, "extracss": EXTRA_CSS, "navlinks": navlinks,
-        "folders": folders, "cai_li": cai_li, "hinh_li": hinh_li,
+        "toc": toc, "folders": folders, "cai_li": cai_li, "hinh_li": hinh_li,
         "padrows": padrows, "phonerows": phonerows, "confrows": confrows,
         "fitrows": fitrows, "shortcuts": shortcuts, "trouble": trouble,
         "join": "Ask in the Telegram group" if lang == "en" else "Hỏi trong nhóm Telegram",

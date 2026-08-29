@@ -276,6 +276,12 @@
   .qa b{display:block;margin-bottom:6px}
   .qa span{color:var(--muted);font-size:.94rem}
   .qa code{white-space:normal}
+  .toc{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px;
+    justify-content:center}
+  .toc a{display:block;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:7px 15px;color:var(--muted);text-decoration:none;
+    font-size:.9rem;transition:border-color .15s,color .15s,background .15s}
+  .toc a:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
   @media (max-width:600px){ td:first-child{white-space:normal} }
 </style>
 </head>
@@ -284,7 +290,7 @@
 <nav>
   <div class="navin">
     <a class="brand" href="/vi/"><img src="/logo.png" alt=""><span>RetroHub</span></a>
-    <div class="navlinks"><a href="#cai-dat">Cài giả lập</a><a href="#thu-muc">Bỏ game vào đâu</a><a href="#che-do-may">Chế độ máy</a><a href="#nut-bam">Bố trí nút</a><a href="#hinh-anh">Hình ảnh</a><a href="#toan-man-hinh">Toàn màn hình</a><a href="#luu-game">Save game</a><a href="#su-co">Xử lý sự cố</a></div>
+    <div class="navlinks"><a href="/vi/#tinh-nang">Tính năng</a><a href="/vi/#cach-cai">Cách cài</a><a href="/vi/#tai-ve">Tải về</a><a class="here" href="/vi/java/">Hướng dẫn Java</a><a href="/vi/#ung-ho">Ủng hộ</a><a href="/vi/#lo-trinh">Lộ trình</a><a href="/vi/#lien-he">Liên hệ</a></div>
     <a class="lang" href="/java/" hreflang="en" title="English">
       <img src="/files/assets/flag_en.png" alt=""><span>English</span></a>
   </div>
@@ -293,7 +299,8 @@
 <header style="padding:56px 0 34px">
   <div class="wrap">
     <h1 style="margin-top:0">Chơi game Java J2ME trên RetroHub</h1>
-    <p class="sub" style="max-width:760px;margin:0 auto">RetroHub chạy game J2ME bằng FreeJ2ME, vẽ thẳng lên màn hình — không qua RetroArch, không dùng core libretro. Trang này nói những chỗ không hiển nhiên, bắt đầu bằng cái làm ai cũng thắc mắc: vì sao hai game lại map nút khác nhau.</p>
+    <p class="sub" style="max-width:760px;margin:0 auto 26px">RetroHub chạy game J2ME bằng FreeJ2ME, vẽ thẳng lên màn hình — không qua RetroArch, không dùng core libretro. Trang này nói những chỗ không hiển nhiên, bắt đầu bằng cái làm ai cũng thắc mắc: vì sao hai game lại map nút khác nhau.</p>
+    <ul class="toc"><li><a href="#cai-dat">Cài giả lập</a></li><li><a href="#thu-muc">Bỏ game vào đâu</a></li><li><a href="#che-do-may">Chế độ máy</a></li><li><a href="#nut-bam">Bố trí nút</a></li><li><a href="#hinh-anh">Hình ảnh</a></li><li><a href="#toan-man-hinh">Toàn màn hình</a></li><li><a href="#luu-game">Save game</a></li><li><a href="#su-co">Xử lý sự cố</a></li></ul>
   </div>
 </header>
 
