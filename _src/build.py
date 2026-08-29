@@ -107,6 +107,7 @@ T = {
   "full_p": "The app, 39,971 games and the Java J2ME emulator. Pick this if you want to play Java games.",
   "lite_t": "Lite", "lite_s": "32 MB",
   "lite_p": "The app and the game library, without the Java emulator. Quick to install, you can add Java later.",
+  "nav_java": "Java guide", "java_url": "/java/",
   "java_guide": ('Playing Java games? There is a separate guide for that: '
                  '<a href="/java/" style="color:var(--accent)">Java J2ME on RetroHub</a> '
                  '— resolution folders, phone modes, pad layouts and display settings.'),
@@ -147,6 +148,7 @@ T = {
   "full_p": "Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.",
   "lite_t": "Bản gọn", "lite_s": "32 MB",
   "lite_p": "Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.",
+  "nav_java": "Hướng dẫn Java", "java_url": "/vi/java/",
   "java_guide": ('Định chơi game Java? Có hướng dẫn riêng: '
                  '<a href="/vi/java/" style="color:var(--accent)">Chơi game Java J2ME trên RetroHub</a> '
                  '— thư mục độ phân giải, chế độ máy, bố trí nút và kiểu hiển thị.'),
@@ -201,6 +203,13 @@ CSS = """
     padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
   .navlinks a:hover{color:var(--text);background:#1b2c49}
   .navlinks a.here{color:var(--accent);background:#14243d}
+  /* The one nav item that leaves the page. The arrow says so before the click,
+     and the accent tint stops it reading as just another section. */
+  .navlinks a.out{color:var(--accent)}
+  /* The arrow goes in as the character itself. Written as a CSS escape it would
+     be read as an octal escape by Python first and arrive as a control byte. */
+  .navlinks a.out::after{content:"↗";margin-left:5px;font-size:.85em;opacity:.75}
+  .navlinks a.out:hover{background:#14243d}
   /* Language switch shows the flag of the language you would move to, so the
      button says what it does rather than what you already have. */
   .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
@@ -665,7 +674,16 @@ def render(lang):
                    "url": "https://xuanhoa493.com"},
     }
 
-    navlinks = "".join('<a href="#%s">%s</a>' % (i, n) for i, n in zip(IDS, t["nav"]))
+    # Every other nav item is an anchor into this page; the Java guide is a page
+    # of its own, so it carries a real href and a marker class that gives it the
+    # small arrow. It sits straight after Download because that is the point at
+    # which somebody actually needs it.
+    navlinks = ""
+    for i, n in zip(IDS, t["nav"]):
+        navlinks += '<a href="#%s">%s</a>' % (i, n)
+        if i == "tai-ve":
+            navlinks += '<a class="out" href="%s">%s</a>' % (t["java_url"],
+                                                             t["nav_java"])
     steps = "".join("<li>%s</li>" % s for s in t["steps"])
     osrows = "".join(
         '<li><span class="dot %s"></span><div><b>%s</b><span>%s</span></div></li>'
