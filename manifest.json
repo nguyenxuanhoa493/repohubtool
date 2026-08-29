@@ -1,7 +1,7 @@
 {
-  "version": "1.30",
+  "version": "1.31",
   "python": "any",
-  "built": "2026-08-29T08:47:15+0700",
+  "built": "2026-08-29T15:25:47+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.pyc",
@@ -17,6 +17,7 @@
     "rh/services.pyc",
     "rh/splash.pyc",
     "rh/state.pyc",
+    "rh/storage.pyc",
     "rh/sysinfo.pyc",
     "rh/updater.pyc",
     "rh/version.pyc",
@@ -180,13 +181,13 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 33255,
-      "sha256": "b3ba8242cace3bd7018c260f6886e40517768a0d0f31235764f9100f1f621a83"
+      "size": 35282,
+      "sha256": "ff2544954e01e37faaa8e86979904113d23df6b11bfa71484471f357c4b33a06"
     },
     {
       "path": "rh/i18n.py",
-      "size": 26391,
-      "sha256": "b4f569466e57aef29e47fb2869e58c8976f1426dd59008426bbdd1a7972cdff1"
+      "size": 26642,
+      "sha256": "8a2187ac499547239ccbc4d32e885746d9d3564be4ccf63da0d8675ca7a18617"
     },
     {
       "path": "rh/j2me.py",
@@ -200,8 +201,8 @@
     },
     {
       "path": "rh/neterrors.py",
-      "size": 2989,
-      "sha256": "41e515d54ef57f85fab2bc50067e8e83cbb5de721fbd7de12da8c10a5a5e44d2"
+      "size": 3665,
+      "sha256": "379319bada496f70030cfb875403fa34981032da120e5c30ca33fbdf1de0e0bd"
     },
     {
       "path": "rh/paths.py",
@@ -224,6 +225,11 @@
       "sha256": "0d74cf29e6fe9cb00a0d442fc08d32e85d0ee623dbeb2bcb5aedc2e223c40f9b"
     },
     {
+      "path": "rh/storage.py",
+      "size": 934,
+      "sha256": "3e2e7026e7d084b9e3efd22392061e0fb1bf526c163b66c165330bc4153a306f"
+    },
+    {
       "path": "rh/sysinfo.py",
       "size": 11541,
       "sha256": "df42b4cfa96f120a8982483f9cbc80ebf7f4962e5160a0334fe9a9663271439a"
@@ -236,7 +242,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "ed25584628b5f296c11e53aa07f9f00e8bc11c24de0f0d61a75aaf0e9542489f"
+      "sha256": "c5704180dcbf5ec55bf62c494a8b5f797850fafdf305e3147c2e54d2d2bad1ce"
     },
     {
       "path": "streamer.py",

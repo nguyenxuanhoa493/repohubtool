@@ -226,6 +226,7 @@ TEXTS = {
         "dl_err_busy": "MÁY CHỦ ĐANG QUÁ TẢI!\nThử lại sau ít phút.",
         "dl_err_timeout": "MẠNG QUÁ CHẬM!\nHết thời gian chờ, thử lại.",
         "dl_err_disk_full": "THẺ NHỚ ĐÃ ĐẦY!\nXoá bớt game rồi tải lại.",
+        "dl_err_readonly": "THẺ NHỚ ĐANG KHOÁ GHI!\nCắm thẻ vào máy tính sửa lỗi,\nrồi tháo an toàn và tải lại.",
         "dl_err_truncated": "TẢI HỤT FILE!\nMạng chập chờn, hãy thử lại.",
         
         "pre_dl_modal_title": "THÔNG TIN GAME & TẢI XUỐNG",
@@ -480,6 +481,7 @@ TEXTS = {
         "dl_err_busy": "SERVER IS BUSY!\nTry again in a few minutes.",
         "dl_err_timeout": "NETWORK TOO SLOW!\nConnection timed out, retry.",
         "dl_err_disk_full": "SD CARD IS FULL!\nDelete some games and retry.",
+        "dl_err_readonly": "SD CARD IS WRITE-LOCKED!\nRepair it on a PC, eject safely,\nthen download again.",
         "dl_err_truncated": "DOWNLOAD CUT SHORT!\nUnstable network, please retry.",
         
         "pre_dl_modal_title": "GAME DETAILS & DOWNLOAD",

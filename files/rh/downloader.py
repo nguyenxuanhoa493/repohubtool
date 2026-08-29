@@ -13,6 +13,7 @@ import concurrent.futures
 from .paths import SDCARD_PATH, TEMP_DOWNLOAD_DIR
 from . import state
 from . import neterrors
+from .storage import unlock
 from .i18n import tr
 from .media import pick_primary_rom, save_boxart_png
 from .sysinfo import get_ip
@@ -213,15 +214,25 @@ def start_download_thread(sys_code, game_info, background=False):
         img_dir = sys_data.get("img_dir", f"{SDCARD_PATH}/Imgs/{target_sys}")
         tmp_dir = TEMP_DOWNLOAD_DIR
 
-        os.makedirs(rom_dir, exist_ok=True)
-        os.makedirs(img_dir, exist_ok=True)
-        os.makedirs(tmp_dir, exist_ok=True)
+        # Khong tao noi thu muc thi khong mirror nao cuu duoc. Bat ngay tai day:
+        # de no roi xuong bay top-level thi nguoi dung nhan mot chuoi Errno bi
+        # cat cut giua duong dan, kem loi khuyen "vui long thu lai" vo nghia.
+        try:
+            os.makedirs(rom_dir, exist_ok=True)
+            os.makedirs(img_dir, exist_ok=True)
+            os.makedirs(tmp_dir, exist_ok=True)
+        except OSError as mk_err:
+            print(f"Cannot create download folders: {mk_err}")
+            dl_state["msg"] = tr(neterrors.classify_error(mk_err))
+            dl_state["status"] = "error"
+            return
         
         tmp_zip_path = os.path.join(tmp_dir, filename)
         img_url = game_info.get("img_url", "")
 
         # Always clean previous leftover temporary file before starting
         if os.path.exists(tmp_zip_path):
+            unlock(tmp_zip_path)
             try: os.remove(tmp_zip_path)
             except: pass
 
@@ -302,6 +313,7 @@ def start_download_thread(sys_code, game_info, background=False):
         # cho moi nguyen nhan.
         last_error = None
         offline_abort = False
+        readonly_abort = False
         max_workers_cfg = 4
         num_workers = max_workers_cfg
 
@@ -548,10 +560,15 @@ def start_download_thread(sys_code, game_info, background=False):
                     if neterrors.classify_error(ex) == neterrors.NO_NET:
                         offline_abort = True
                         break
+                    # The khoa ghi thi mirror nao cung ghi truot y het. Dung
+                    # luon, va cau bao loi cuoi cung se noi dung ve cai the.
+                    if neterrors.classify_error(ex) == neterrors.READONLY:
+                        readonly_abort = True
+                        break
                     dl_state["msg"] = f"Đang kết nối lại ({retry_count}/{max_retries})..." if state.current_lang == "VI" else f"Reconnecting ({retry_count}/{max_retries})..."
                     time.sleep(1.5)
 
-            if offline_abort:
+            if offline_abort or readonly_abort:
                 break
 
         if dl_state["cancel_requested"]:
@@ -579,6 +596,7 @@ def start_download_thread(sys_code, game_info, background=False):
                                 fname = os.path.basename(member.filename)
                                 if fname:
                                     target_path = os.path.join(rom_dir, fname)
+                                    unlock(target_path)
                                     with zf.open(member) as source, open(target_path, "wb") as dest:
                                         shutil.copyfileobj(source, dest, length=1024*1024)
                                     extracted_files.append(target_path)
@@ -588,7 +606,27 @@ def start_download_thread(sys_code, game_info, background=False):
 
             if not extracted_rom_path or not os.path.exists(extracted_rom_path):
                 target_rom = os.path.join(rom_dir, filename)
-                shutil.copy2(tmp_zip_path, target_rom)
+                # Ban cu cua chinh game nay co the dang mang co read-only cua DOS
+                # (chep tu Windows/macOS, hay bung ra tu zip): ghi de len no tra
+                # EACCES du ca phan con lai cua the van ghi tot.
+                # copyfile chu khong phai copy2: buoc copystat cua copy2 goi chmod
+                # len the FAT/exFAT, va cu chmod do co the bi tu choi ngay khi
+                # file da chep xong - du de bao nham "the khoa ghi" cho mot lan
+                # tai that ra da thanh cong.
+                try:
+                    unlock(target_rom)
+                    shutil.copyfile(tmp_zip_path, target_rom)
+                except OSError as cp_err:
+                    print(f"Cannot write ROM into {rom_dir}: {cp_err}")
+                    try: os.remove(tmp_zip_path)
+                    except: pass
+                    dl_state["msg"] = tr(neterrors.classify_error(cp_err))
+                    dl_state["status"] = "error"
+                    return
+                try:
+                    shutil.copystat(tmp_zip_path, target_rom)
+                except OSError:
+                    pass
                 extracted_rom_path = target_rom
 
             try:
