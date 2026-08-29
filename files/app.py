@@ -3,7 +3,6 @@
 
 import os
 import sys
-import glob
 import time
 import ssl
 import shlex
@@ -55,7 +54,7 @@ except ImportError as _e:
 # INTERNALS (split out of this file - see rh/)
 # ==============================================================================
 from rh import state
-from rh.paths import (ASSETS_DIR, FLAG_FILES, QR_BMC_FILE, QR_DONATE_FILE,
+from rh.paths import (FLAG_FILES, QR_BMC_FILE, QR_DONATE_FILE,
     QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW)
 from rh.i18n import tr, wrap_title_2lines
 from rh.sysinfo import (detect_device_platform,
@@ -90,6 +89,7 @@ from rh.j2me import (DEFAULT_KEYMAP, RESOLUTIONS, VALID_BUTTONS, VALID_KEYS,
     move_to_resolution, pretty_resolution, resolution_of_path, rom_dir_for,
     save_keymap)
 from rh.emulators import resolve as resolve_emulator
+from rh.fonts import VIET_PROBE, font_candidates, pick_font
 from rh.updater import (apply_catalog, apply_update, CATALOG_FAILED,
     catalog_entry, catalog_pending, CatalogError, check_for_update,
     download_catalog, download_update, release_note, request_restart,
@@ -343,26 +343,29 @@ def main():
         window = sdl2.SDL_CreateWindow(b"RetroHub", 0, 0, state.SCREEN_W, state.SCREEN_H, sdl2.SDL_WINDOW_SHOWN)
     renderer = sdl2.SDL_CreateRenderer(window, -1, sdl2.SDL_RENDERER_ACCELERATED)
 
-    # The font used to be pinned to the TRIMUI Blue theme. Anyone on a different
-    # theme got a null font from TTF_OpenFont, which nothing checked, so every
-    # later draw fed SDL a null pointer. Search the themes that are installed.
-    # assets/fallback.ttf is the last resort. A device stripped of themes and of
-    # /usr/trimui/res used to leave the app with no font at all, which killed it
-    # before anything was drawn. The bundled face covers Vietnamese but not CJK,
-    # so a theme font is still preferred - Japanese game titles need one.
-    font_path = None
-    for cand in glob.glob("/mnt/SDCARD/Themes/*/wqy-microhei.ttf") + \
-                glob.glob("/mnt/SDCARD/Themes/*/msyh.ttf") + \
-                glob.glob("/mnt/SDCARD/Themes/*/*.ttf") + \
-                glob.glob("/usr/trimui/res/*.ttf") + \
-                [os.path.join(ASSETS_DIR, "fallback.ttf")]:
-        if os.path.exists(cand):
-            font_path = cand.encode("utf-8")
-            break
-    if not font_path:
-        sys.stderr.write("\nRetroHub khong khoi dong duoc: khong tim thay font .ttf nao, "
+    # The font used to be pinned to the TRIMUI Blue theme, then to whichever
+    # .ttf a theme happened to carry. Both trusted a filename. Microsoft YaHei -
+    # the face every stock theme ships - has no o-horn, no u-horn and nothing
+    # from Latin Extended Additional, so on a device whose themes had lost
+    # wqy-microhei, 93 of the 119 Vietnamese letters drew as .notdef boxes. Open
+    # each candidate and ask it for Vietnamese before committing. A theme font
+    # is still tried first: assets/fallback.ttf answers yes but has no CJK, and
+    # a handful of Chinese titles in the catalogue need it.
+    def _font_has_vietnamese(path):
+        probe = sdlttf.TTF_OpenFont(path.encode("utf-8"), 16)
+        if not probe:
+            return None
+        try:
+            return all(sdlttf.TTF_GlyphIsProvided(probe, cp) for cp in VIET_PROBE)
+        finally:
+            sdlttf.TTF_CloseFont(probe)
+
+    picked = pick_font(font_candidates(), _font_has_vietnamese)
+    if not picked:
+        sys.stderr.write("\nRetroHub khong khoi dong duoc: khong mo duoc font .ttf nao, "
                          "ke ca font du phong trong assets/.\n\n")
         return
+    font_path = picked.encode("utf-8")
 
     font_title = sdlttf.TTF_OpenFont(font_path, 40)
     font_sub = sdlttf.TTF_OpenFont(font_path, 26)
