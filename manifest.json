@@ -1,11 +1,11 @@
 {
-  "version": "1.34",
+  "version": "1.35",
   "python": "any",
-  "built": "2026-08-29T17:00:55+0700",
+  "built": "2026-08-29T17:24:42+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game giải nén xong giữ đúng tên, màn hình báo rõ file nào",
-    "en": "Extracted games keep their proper name; the file is named on screen"
+    "vi": "Mở game bằng đúng giả lập và đúng chế độ máy đang chọn",
+    "en": "Games launch with the emulator and mode the device has selected"
   },
   "remove": [
     "app.pyc",
@@ -14,6 +14,7 @@
     "rh/archive.pyc",
     "rh/catalog.pyc",
     "rh/downloader.pyc",
+    "rh/emulators.pyc",
     "rh/i18n.pyc",
     "rh/j2me.pyc",
     "rh/media.pyc",
@@ -117,8 +118,8 @@
     },
     {
       "path": "app.py",
-      "size": 213078,
-      "sha256": "8eef7ba560e631ab44154f3ee315f8a04f4a8ffcafec9b99c69ac1e8b56e2cbb"
+      "size": 212997,
+      "sha256": "7da0de642b4d22f6756ca94e42ebeae05a108bb3d17f0d2bd1270a0b19fec68e"
     },
     {
       "path": "assets/fallback.ttf",
@@ -206,6 +207,11 @@
       "sha256": "40fc392b5540c73c21b2c60432d622e3b68e64af1ca443d934026e163ddfa26c"
     },
     {
+      "path": "rh/emulators.py",
+      "size": 2819,
+      "sha256": "ccfe0d2c99127e85292647eb70c033e0ff11eba4887405692595666443ffa853"
+    },
+    {
       "path": "rh/i18n.py",
       "size": 27474,
       "sha256": "0c0703777243bd0c51a9cff446f42d4c14783adf21379f2e330feb5d2ad02bea"
@@ -268,7 +274,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "6c0907617931f58561d6a000933de8d9b0d2875f6acd40957950e6701b4b9eb3"
+      "sha256": "476b3c031f102c5ee59c22d7cd13e2df123d4693a9507de6c0009792246e4bbf"
     },
     {
       "path": "streamer.py",
