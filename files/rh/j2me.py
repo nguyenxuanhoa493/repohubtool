@@ -15,6 +15,7 @@ them fresh rather than holding a copy.
 """
 
 import os
+import re
 import shutil
 import tarfile
 import tempfile
@@ -231,6 +232,22 @@ def pretty_resolution(folder):
     return folder
 
 
+# Characters the emulator cannot survive in a file name. It opens a jar by
+# building a "jar:file:<path>" URI and handing that to the zip filesystem, with
+# nothing percent-encoded - so a single space makes java.net.URI throw
+# "Illegal character in opaque part", the manifest goes unread, and the game
+# dies with a null MIDlet class before drawing anything. Brackets do the same.
+# 758 of the 3,357 Java sources in the catalogue carry one of these.
+_UNSAFE_IN_URI = re.compile(r'[\s"<>#%{}|\\^`\[\]]+')
+
+
+def safe_jar_name(filename):
+    """A file name this emulator can actually open. Extension is kept."""
+    stem, ext = os.path.splitext(filename or "")
+    stem = _UNSAFE_IN_URI.sub("_", stem).strip("_")
+    return (stem or "game") + ext
+
+
 def rom_dir_for(filename):
     """Destination folder for a downloaded jar."""
     return os.path.join(ROM_DIR, resolution_from_filename(filename))
@@ -260,15 +277,104 @@ def move_to_resolution(rom_path, folder):
         if os.path.abspath(dst) == os.path.abspath(rom_path):
             return rom_path
         shutil.move(rom_path, dst)
-        for db in ("JAVA_cache7.db", "JAVA_cache6.db", "JAVA_cache.db"):
-            try:
-                os.remove(os.path.join(ROM_DIR, db))
-            except Exception:
-                pass
+        drop_rom_cache()
         return dst
     except Exception as e:
         print(f"move_to_resolution failed: {e}")
         return None
+
+
+def _rename_game_data(old_stem, new_stem, res):
+    """Follow a renamed jar with the folders the emulator keeps for it.
+
+    Both config/ and rms/ are named after the jar's stem with the resolution
+    stuck on the end - "Ninja School 1" in 240320 becomes "Ninja School 1240320"
+    - so a jar that changes name would otherwise leave its saves behind under a
+    name nothing looks for again.
+    """
+    for sub in ("config", "rms"):
+        src = os.path.join(RUNTIME_DIR, "bin", sub, old_stem + res)
+        dst = os.path.join(RUNTIME_DIR, "bin", sub, new_stem + res)
+        if os.path.isdir(src) and not os.path.exists(dst):
+            try:
+                os.rename(src, dst)
+            except Exception as e:
+                print(f"rename {sub}/{old_stem}{res} failed: {e}")
+
+    # Box art is filed under the rom's own stem, so it has to move too or the
+    # game loses its picture the moment the jar is renamed.
+    src = os.path.join(IMG_DIR, old_stem + ".png")
+    dst = os.path.join(IMG_DIR, new_stem + ".png")
+    if os.path.isfile(src) and not os.path.exists(dst):
+        try:
+            os.rename(src, dst)
+        except Exception as e:
+            print(f"rename boxart {old_stem} failed: {e}")
+
+
+def repair_unsafe_jar_names():
+    """Rename jars this emulator cannot open. Returns how many were renamed.
+
+    A file name with a space in it is not a cosmetic problem here: the emulator
+    cannot read the jar's manifest at all, so the game dies before drawing a
+    frame. Games downloaded before this was fixed are already sitting on the
+    card under those names, and re-downloading would not help - the fix has to
+    reach the files that are already there.
+    """
+    # Every folder the app would find a game in, not just the five resolution
+    # ones: the local scan picks up jars sitting loose in Roms/JAVA and in any
+    # subfolder, so a repair that only swept the known five would leave a file
+    # the app still lists, still offers, and still cannot open.
+    folders = [(ROM_DIR, "")]
+    try:
+        for name in sorted(os.listdir(ROM_DIR)):
+            path = os.path.join(ROM_DIR, name)
+            if os.path.isdir(path):
+                folders.append((path, name))
+    except OSError:
+        pass
+
+    renamed = 0
+    for folder, res in folders:
+        try:
+            entries = sorted(os.listdir(folder))
+        except OSError:
+            continue
+        for name in entries:
+            if not name.lower().endswith(".jar"):
+                continue
+            safe = safe_jar_name(name)
+            if safe == name:
+                continue
+            src, dst = os.path.join(folder, name), os.path.join(folder, safe)
+            # A copy under the safe name already there means the player has the
+            # game twice; renaming over it would destroy the working one.
+            if os.path.exists(dst):
+                continue
+            try:
+                os.rename(src, dst)
+            except Exception as e:
+                print(f"rename {name} failed: {e}")
+                continue
+            _rename_game_data(os.path.splitext(name)[0],
+                              os.path.splitext(safe)[0], res)
+            renamed += 1
+    if renamed:
+        drop_rom_cache()
+    return renamed
+
+
+def drop_rom_cache():
+    """Forget the stock menu's cached game list.
+
+    It caches by path, so after anything moves or is renamed it keeps launching
+    a file that is no longer there.
+    """
+    for db in ("JAVA_cache7.db", "JAVA_cache6.db", "JAVA_cache.db"):
+        try:
+            os.remove(os.path.join(ROM_DIR, db))
+        except Exception:
+            pass
 
 
 # ------------------------------------------------------------------ launcher
@@ -396,11 +502,7 @@ def install_j2me_emulator(force=False):
 
         # The stock menu caches its rom list; a stale cache would keep launching the
         # old flat paths and never find games in the resolution folders.
-        for db in ("JAVA_cache7.db", "JAVA_cache6.db", "JAVA_cache.db"):
-            try:
-                os.remove(os.path.join(ROM_DIR, db))
-            except Exception:
-                pass
+        drop_rom_cache()
 
         missing = j2me_missing_parts()
         if missing:

@@ -86,8 +86,8 @@ from rh.splash import (apply_splash_update,
 from rh.j2me import (RENDER_MODES, RESOLUTIONS,
     install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
     load_render_mode, move_to_resolution, pretty_resolution, resolution_of_path,
-    rom_dir_for, runtime_is_stale, runtime_supports_renderer,
-    save_render_mode)
+    repair_unsafe_jar_names, rom_dir_for, runtime_is_stale,
+    runtime_supports_renderer, safe_jar_name, save_render_mode)
 from rh.emulators import resolve as resolve_emulator
 from rh.fonts import VIET_PROBE, font_candidates, pick_font
 from rh.updater import (apply_catalog, apply_update, CATALOG_FAILED,
@@ -212,6 +212,22 @@ def auto_check_and_supplement_environment():
                 repaired_items.append(msg_up)
     except Exception as e:
         print(f"Error upgrading J2ME runtime: {e}")
+
+    # 1c. Jars the emulator cannot open. It builds a "jar:file:<path>" URI and
+    # never escapes it, so one space in the name and it cannot read the manifest
+    # - the game dies before drawing a frame. Games downloaded before this was
+    # fixed are already on the card under those names, and re-downloading would
+    # not help, so the files themselves get renamed here. Saves follow.
+    try:
+        n_fixed = repair_unsafe_jar_names()
+        if n_fixed:
+            msg_fix = (f"Đã sửa tên {n_fixed} game Java để mở được"
+                       if state.current_lang == "VI"
+                       else f"Renamed {n_fixed} Java games so they will open")
+            startup_notice["msg"] = msg_fix
+            repaired_items.append(msg_fix)
+    except Exception as e:
+        print(f"Error repairing J2ME jar names: {e}")
 
     # 2. Wi-Fi power save is a runtime kernel setting that resets on reboot, so the
     # user's saved choice has to be reapplied here or the toggle would not stick.
@@ -1055,6 +1071,19 @@ def main():
     local_cache_map = {}
     last_cache_time = {}
 
+    def resolve_local_name(fn, sys_code, local_files):
+        """The name this game actually has on the card.
+
+        Java jars are saved under a cleaned name - the emulator cannot open one
+        with a space in it - so the file on disk does not match the catalogue's
+        spelling. Without this, all 758 such titles read as never downloaded and
+        offer to download again over a copy that is already there.
+        """
+        if fn in local_files or sys_code not in ("JAVA", "J2ME"):
+            return fn
+        safe = safe_jar_name(fn)
+        return safe if safe in local_files else fn
+
     def get_local_cache(sys_code):
         now_t = time.time()
         if sys_code in local_cache_map and now_t - last_cache_time.get(sys_code, 0) < 4.0:
@@ -1548,6 +1577,8 @@ def main():
                 rom_dir = state.catalogs.get(g_sys, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{g_sys}")
                 img_dir = state.catalogs.get(g_sys, {}).get("img_dir", f"{SDCARD_PATH}/Imgs/{g_sys}")
                 local_files = get_local_cache(g_sys)
+                fn = resolve_local_name(fn, g_sys, local_files)
+                base_name = os.path.splitext(fn)[0]
 
                 is_downloaded = (fn in local_files)
                 found_rom_path = local_files.get(fn) if is_downloaded else None
@@ -1616,6 +1647,7 @@ def main():
                 # Catalogue rows may store a category path here, but only
                 # the last component is the name the file has on disk.
                 fn = os.path.basename(str(g.get("filename", "")).replace("\\", "/"))
+                fn = resolve_local_name(fn, s_code, local_files)
                 base_name = os.path.splitext(fn)[0]
 
                 is_downloaded = (fn in local_files)
