@@ -227,6 +227,10 @@ TEXTS = {
         "dl_err_timeout": "MẠNG QUÁ CHẬM!\nHết thời gian chờ, thử lại.",
         "dl_err_disk_full": "THẺ NHỚ ĐÃ ĐẦY!\nXoá bớt game rồi tải lại.",
         "dl_err_readonly": "THẺ NHỚ ĐANG KHOÁ GHI!\nCắm thẻ vào máy tính sửa lỗi,\nrồi tháo an toàn và tải lại.",
+        "dl_err_no_extractor": "THIẾU CÔNG CỤ GIẢI NÉN!\nCập nhật RetroHub rồi tải lại.",
+        "dl_err_extract_space": "KHÔNG ĐỦ CHỖ ĐỂ GIẢI NÉN!\nXoá bớt game rồi tải lại.",
+        "dl_err_extract_failed": "GIẢI NÉN THẤT BẠI!\nFile tải về hỏng, hãy thử lại.",
+        "dl_err_patch_only": "ĐÂY LÀ BẢN VÁ ROM HACK!\nCần ROM gốc để vá, máy chưa\nlàm được việc này.",
         "dl_err_truncated": "TẢI HỤT FILE!\nMạng chập chờn, hãy thử lại.",
         
         "pre_dl_modal_title": "THÔNG TIN GAME & TẢI XUỐNG",
@@ -482,6 +486,10 @@ TEXTS = {
         "dl_err_timeout": "NETWORK TOO SLOW!\nConnection timed out, retry.",
         "dl_err_disk_full": "SD CARD IS FULL!\nDelete some games and retry.",
         "dl_err_readonly": "SD CARD IS WRITE-LOCKED!\nRepair it on a PC, eject safely,\nthen download again.",
+        "dl_err_no_extractor": "EXTRACTOR MISSING!\nUpdate RetroHub, then retry.",
+        "dl_err_extract_space": "NOT ENOUGH ROOM TO EXTRACT!\nDelete some games and retry.",
+        "dl_err_extract_failed": "EXTRACTION FAILED!\nThe download is damaged, retry.",
+        "dl_err_patch_only": "THIS IS A ROM HACK PATCH!\nIt needs the original ROM,\nwhich RetroHub cannot do yet.",
         "dl_err_truncated": "DOWNLOAD CUT SHORT!\nUnstable network, please retry.",
         
         "pre_dl_modal_title": "GAME DETAILS & DOWNLOAD",

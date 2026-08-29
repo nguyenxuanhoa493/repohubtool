@@ -13,6 +13,7 @@ import concurrent.futures
 from .paths import SDCARD_PATH, TEMP_DOWNLOAD_DIR
 from . import state
 from . import neterrors
+from . import archive as archive_tool
 from .storage import unlock
 from .i18n import tr
 from .media import pick_primary_rom, save_boxart_png
@@ -581,6 +582,12 @@ def start_download_thread(sys_code, game_info, background=False):
             return
 
         if download_success and os.path.exists(tmp_zip_path):
+            # Mirror /romhacks/ cua retrostic tra ve file dinh nguyen mot khoi
+            # header HTTP o dau. zipfile bo qua duoc, nhung 7-Zip tu choi mo,
+            # va gia lap doc thang file .zip cung khong chac bo qua.
+            if archive_tool.strip_http_prefix(tmp_zip_path):
+                print("Stripped mirror HTTP header from download")
+
             dl_state["msg"] = tr("extracting")
             dl_state["status"] = "extracting"
             dl_state["progress_pct"] = 100
@@ -603,6 +610,39 @@ def start_download_thread(sys_code, game_info, background=False):
                     extracted_rom_path = pick_primary_rom(extracted_files, target_sys)
                 except Exception as ze:
                     print(f"Zip extraction exception: {ze}")
+
+            # Ngoai zip thi Python khong tu bung duoc: .rar/.7z phai nho toi 7zz.
+            # Ban scene PSP con long them mot tang - vo STORE chua bo RAR volume,
+            # bo do moi chua ISO - nen unpack_to_rom lap chu khong bung mot lan.
+            # Truoc day ca hai deu roi xuong nhanh chep nguyen khoi ben duoi, va
+            # gia lap nhan duoc dung cai .rar: "could not load game".
+            elif (target_sys not in NO_EXTRACT_SYSTEMS
+                    and archive_tool.looks_like_archive(tmp_zip_path)):
+                dl_state["status"] = "extracting"
+                dl_state["progress_pct"] = 0
+
+                def _extract_progress(pct):
+                    dl_state["progress_pct"] = pct
+                    dl_state["msg"] = (f"Đang giải nén: {pct}%" if state.current_lang == "VI"
+                                       else f"Extracting: {pct}%")
+
+                try:
+                    extracted_rom_path = archive_tool.unpack_to_rom(
+                        tmp_zip_path, rom_dir, target_sys,
+                        exe=archive_tool.sevenzip(),
+                        work_dir=os.path.join(tmp_dir, "giai-nen"),
+                        progress=_extract_progress)
+                except archive_tool.ArchiveError as ae:
+                    print(f"Archive extraction failed: {ae}")
+                    try: os.remove(tmp_zip_path)
+                    except: pass
+                    # Con so "can 1,2 GB, con 400 MB" la thu duy nhat giup nguoi
+                    # dung biet phai xoa bao nhieu; cac ly do khac da du ro.
+                    detail = (f"\n({ae.detail})"
+                              if ae.detail and ae.key == archive_tool.NO_SPACE else "")
+                    dl_state["msg"] = f"{tr(ae.key)}{detail}"
+                    dl_state["status"] = "error"
+                    return
 
             if not extracted_rom_path or not os.path.exists(extracted_rom_path):
                 target_rom = os.path.join(rom_dir, filename)

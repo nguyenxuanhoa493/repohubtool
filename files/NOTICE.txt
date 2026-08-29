@@ -78,3 +78,14 @@ already on the Internet. Every title remains the copyright of its owner.
 
 Chu so huu quyen muon go mot tua game khoi danh muc: nguyenxuanhoa493@gmail.com
 Rights holders wanting a title removed: nguyenxuanhoa493@gmail.com
+
+7-Zip (bin/7zzs)
+  Copyright (C) 1999-2025 Igor Pavlov
+  Phien ban 25.01, ban dung san cho Linux aarch64.
+  Nguon: https://www.7-zip.org/a/7z2501-linux-arm64.tar.xz
+  sha256 (goi tai ve): 39c5140f02ce4436599303c59a149f654cb1bbc47cdc105a942120d747ae040d
+  sha256 (7zzs):       17595ca8613132898c870558c018c4ab4b89f1bda5e23d227ee7925062d5728e
+  Giay phep: GNU LGPL kem "unRAR license restriction", cung BSD 3-clause va
+  BSD 2-clause cho mot so phan. Toan van o bin/7zz-License.txt.
+  Rang buoc unRAR: ma giai nen RAR khong duoc dung de dung lai bo NEN RAR.
+  RetroHub chi goi 7zzs de GIAI NEN, khong nen gi ca.
