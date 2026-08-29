@@ -12,8 +12,10 @@ import concurrent.futures
 
 from .paths import SDCARD_PATH, TEMP_DOWNLOAD_DIR
 from . import state
+from . import neterrors
 from .i18n import tr
 from .media import pick_primary_rom, save_boxart_png
+from .sysinfo import get_ip
 
 try:
     import db
@@ -177,6 +179,16 @@ def start_download_thread(sys_code, game_info, background=False):
         dl_state["game_info"] = game_info
         dl_state["img_url"] = game_info.get("img_url", "")
 
+        # Khong co mang thi khong mirror nao chay duoc, ma vong thu lai van ngoi
+        # het ~20s timeout roi moi chiu bao. Te hon: man xac nhan van hien dung
+        # luong - no lay tu catalogue duoi the, khong phai vua hoi server - nen
+        # nguoi dung doc thanh "hoi duoc server ma tai khong duoc" va di trach
+        # nguon game. Noi thang ra la chua bat Wi-Fi, ngay lap tuc.
+        if neterrors.wifi_offline(get_ip):
+            dl_state["msg"] = tr(neterrors.NO_NET)
+            dl_state["status"] = "error"
+            return
+
         # Some catalogue rows carry a whole path in `filename`, because the source
         # site groups its jars into category folders ("category/Game Tieng Anh 3/
         # x.jar"). Only the last component names the local file: joining the raw
@@ -286,6 +298,10 @@ def start_download_thread(sys_code, game_info, background=False):
         ctx = ssl._create_unverified_context()
         max_retries = 3
         download_success = False
+        # Loi cuoi cung quyet dinh cau bao cho nguoi dung, thay vi mot cau chung
+        # cho moi nguyen nhan.
+        last_error = None
+        offline_abort = False
         max_workers_cfg = 4
         num_workers = max_workers_cfg
 
@@ -519,14 +535,24 @@ def start_download_thread(sys_code, game_info, background=False):
 
                 except Exception as ex:
                     retry_count += 1
+                    last_error = ex
                     print(f"Download attempt {retry_count} for {target_url} failed: {ex}")
                     if dl_state["cancel_requested"]:
                         break
                     if os.path.exists(tmp_zip_path) and os.path.getsize(tmp_zip_path) < 5000:
                         try: os.remove(tmp_zip_path)
                         except: pass
+                    # Rot Wi-Fi giua chung: moi lan thu lai, tren moi mirror, deu
+                    # hong y het. Dung luon thay vi tieu them ~20s de ra dung cau
+                    # bao loi nay.
+                    if neterrors.classify_error(ex) == neterrors.NO_NET:
+                        offline_abort = True
+                        break
                     dl_state["msg"] = f"Đang kết nối lại ({retry_count}/{max_retries})..." if state.current_lang == "VI" else f"Reconnecting ({retry_count}/{max_retries})..."
                     time.sleep(1.5)
+
+            if offline_abort:
+                break
 
         if dl_state["cancel_requested"]:
             if os.path.exists(tmp_zip_path):
@@ -590,7 +616,7 @@ def start_download_thread(sys_code, game_info, background=False):
             if os.path.exists(tmp_zip_path):
                 try: os.remove(tmp_zip_path)
                 except: pass
-            dl_state["msg"] = tr("fail_msg")
+            dl_state["msg"] = tr(neterrors.classify_error(last_error))
             dl_state["status"] = "error"
 
     def safe_worker():
@@ -605,7 +631,11 @@ def start_download_thread(sys_code, game_info, background=False):
             if os.path.exists(tmp_p):
                 try: os.remove(tmp_p)
                 except: pass
-            dl_state["msg"] = f"{tr('fail_msg')}\n({str(e_top)[:40]})"
+            top_key = neterrors.classify_error(e_top)
+            # Chi kem chuoi exception khi khong doan duoc gi hon; da co cau ro
+            # rang roi thi day them ky tu la chi lam roi man hinh.
+            detail = f"\n({str(e_top)[:40]})" if top_key == neterrors.GENERIC else ""
+            dl_state["msg"] = f"{tr(top_key)}{detail}"
             dl_state["status"] = "error"
 
     def worker_then_next():
