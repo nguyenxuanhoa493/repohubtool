@@ -1,8 +1,12 @@
 {
-  "version": "1.31",
+  "version": "1.32",
   "python": "any",
-  "built": "2026-08-29T15:25:47+0700",
+  "built": "2026-08-29T15:47:45+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
+  "note": {
+    "vi": "Game đã tải mở bảng chơi/xoá/tải lại thay vì hỏi tải",
+    "en": "Owned games open play/delete, not the download prompt"
+  },
   "remove": [
     "app.pyc",
     "db.pyc",
@@ -111,8 +115,8 @@
     },
     {
       "path": "app.py",
-      "size": 209299,
-      "sha256": "b999faca569eb6acacbd05cffed3909176f75ce6910bf3fbfe111cd7bc1b6a2c"
+      "size": 212010,
+      "sha256": "a689f3849570ac257705f6b5c0c6932e8663b51ce0cde673294903eb47084712"
     },
     {
       "path": "assets/fallback.ttf",
@@ -236,13 +240,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 8728,
-      "sha256": "f1883110e7cf0c3ab41833bd4f63f63faa7f141665465e27386172f0560fe2e0"
+      "size": 9659,
+      "sha256": "592893ccaa4dc5c5ea3519267e3ee065326f580ef13f2870cc8bc68e657eb2a4"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "c5704180dcbf5ec55bf62c494a8b5f797850fafdf305e3147c2e54d2d2bad1ce"
+      "sha256": "fa4975bcce3e46374edf5f1085a5f3a27b883ca7e09cb42f60cde8e832fff530"
     },
     {
       "path": "streamer.py",
