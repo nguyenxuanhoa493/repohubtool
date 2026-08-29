@@ -1,11 +1,11 @@
 {
-  "version": "1.42",
+  "version": "1.43",
   "python": "any",
-  "built": "2026-08-30T02:04:31+0700",
+  "built": "2026-08-30T02:24:52+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Cài lại giả lập Java không còn xoá save game và cấu hình riêng từng game",
-    "en": "Reinstalling the Java emulator no longer wipes game saves and per-game settings"
+    "vi": "Máy còn giả lập Java cũ sẽ tự được nâng cấp lên bản mới khi mở app, save game giữ nguyên",
+    "en": "A device still on the old Java emulator is upgraded automatically at startup, saves kept"
   },
   "remove": [
     "app.pyc",
@@ -128,8 +128,8 @@
     },
     {
       "path": "app.py",
-      "size": 215124,
-      "sha256": "06da8aa45ec95a2be6d6d12aa47c19b83db8b8a0a2ef20f9794f323c0ad30cce"
+      "size": 216822,
+      "sha256": "a2b56ce0ee4b5a23adaa81a62fad32f6eca0876345110cf8f1de11b374001839"
     },
     {
       "path": "assets/fallback.ttf",
@@ -233,13 +233,13 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 29275,
-      "sha256": "83ca0490d9e96afc48660f17d78f568a9b790b1bfc9cc00a768047c5243261ce"
+      "size": 29580,
+      "sha256": "507c8895f47800756a900129c678dd6bf69cb6ffdd825a9fca61db9ecf4fd569"
     },
     {
       "path": "rh/j2me.py",
-      "size": 14826,
-      "sha256": "ec1e6058aca7302b64a765d60ce126e994d49851eb6dc92ef21fed3f486f7506"
+      "size": 17494,
+      "sha256": "28503dc2bd2fcbb9feebda6acf0977cbdddbbf8b6ba31555bce8dfdf0865c688"
     },
     {
       "path": "rh/media.py",
@@ -294,7 +294,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "96c013074b2e2b7d84d48dae381d2d3ff6d644dda26ac0e4cccbf90988863f7f"
+      "sha256": "706f65d96562e945931a468df28564cc9ed40958c8a5d2601ed41125f7805fc9"
     },
     {
       "path": "streamer.py",

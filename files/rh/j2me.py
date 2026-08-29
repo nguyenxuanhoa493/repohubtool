@@ -83,6 +83,31 @@ def is_j2me_runtime_ready():
     return not j2me_missing_parts()
 
 
+# Answers cached against each file's own (size, mtime): the menus rebuild their
+# rows every frame, and reading a 450KB binary - let alone a 66MB archive - at
+# 60fps is not something to do to an SD card.
+_probe_cache = {}
+
+
+def _cached_probe(path, key, probe):
+    """Run `probe` once per version of `path`, keyed on its size and mtime."""
+    try:
+        st = os.stat(path)
+        stamp = (st.st_size, st.st_mtime_ns)
+    except Exception:
+        _probe_cache.pop(key, None)
+        return False
+    hit = _probe_cache.get(key)
+    if hit and hit[0] == stamp:
+        return hit[1]
+    try:
+        answer = probe(path)
+    except Exception:
+        answer = False
+    _probe_cache[key] = (stamp, answer)
+    return answer
+
+
 def runtime_supports_renderer():
     """True when the installed sdl_interface is a build that reads renderer.conf.
 
@@ -92,12 +117,39 @@ def runtime_supports_renderer():
     renderer.conf at all, and a display screen wired to a binary that ignores it
     is a screen that does nothing.
     """
-    sdl = j2me_runtime_paths()["sdl"]
-    try:
-        with open(sdl, "rb") as f:
+    def probe(path):
+        with open(path, "rb") as f:
             return b"renderer.conf" in f.read()
-    except Exception:
+    return _cached_probe(j2me_runtime_paths()["sdl"], "runtime", probe)
+
+
+def payload_supports_renderer():
+    """True when the archive shipped inside the app holds the newer build.
+
+    Reads tar headers only and stops at the entry it wants, which sits early in
+    the stream: measured at 1.9s on a Brick Pro against 2.0s for the whole
+    archive. Cached, so that is paid once per version of the payload.
+    """
+    def probe(path):
+        with tarfile.open(path, "r:gz") as tf:
+            for m in tf:
+                if m.name.endswith("zulu17/bin/renderer.conf"):
+                    return True
         return False
+    return _cached_probe(PAYLOAD, "payload", probe)
+
+
+def runtime_is_stale():
+    """True when the emulator on the card is older than the one inside the app.
+
+    This is the ordinary state after dropping a newer full package over an
+    existing install: the new archive lands in the app folder while the old
+    emulator stays untouched in Emus/JAVA, because the installer only ever
+    unpacked when nothing was there at all.
+    """
+    return (is_j2me_runtime_ready()
+            and not runtime_supports_renderer()
+            and payload_supports_renderer())
 
 
 def has_payload():
@@ -272,10 +324,18 @@ def install_j2me_emulator(force=False):
     install that has gone bad. Game saves, per-game settings and the chosen
     display preset all survive that: someone repairing a crash is not asking to
     lose their progress.
+
+    A runtime older than the bundled archive is replaced the same way, without
+    being asked. Leaving it in place was the old behaviour and it stranded
+    people: the emulator they had still ran, so nothing looked broken, while
+    every feature the newer one added stayed permanently out of reach.
     """
     vi = state.current_lang == "VI"
     stash = None
+    upgraded = False
     try:
+        stale = (not force) and runtime_is_stale()
+        force = force or stale
         saved_mode = load_render_mode() if force else None
         if force and os.path.isdir(RUNTIME_DIR):
             stash = tempfile.mkdtemp(prefix=".rh_j2me_", dir=EMU_DIR)
@@ -285,14 +345,18 @@ def install_j2me_emulator(force=False):
         os.makedirs(IMG_DIR, exist_ok=True)
         ensure_rom_dirs()
 
-        # Unpack the runtime only when it is not already there; re-extracting 65MB
-        # on every press would take minutes on this hardware.
+        # Unpack only when there is nothing there - a repair and an upgrade both
+        # cleared the folder above, so both land here. Re-extracting 65MB on every
+        # press would take minutes on this hardware.
         if not os.path.exists(f"{RUNTIME_DIR}/bin/java"):
             if not has_payload():
                 return False, ("Thiếu gói cài trong app (payload/j2me_sdl.tar.gz)"
                                if vi else "Installer payload missing from app folder")
             with tarfile.open(PAYLOAD, "r:gz") as tf:
                 tf.extractall(f"{SDCARD_PATH}/Emus")
+            upgraded = stale
+            # The binary on disk just changed under the cached answer.
+            _probe_cache.pop("runtime", None)
 
         for rel in ("zulu17/bin/java", "zulu17/bin/sdl_interface"):
             p = os.path.join(EMU_DIR, rel)
@@ -347,6 +411,9 @@ def install_j2me_emulator(force=False):
                 "system_name": "Java J2ME (Mobile .jar)",
                 "rom_dir": ROM_DIR, "img_dir": IMG_DIR, "games": [],
             }
+        if upgraded:
+            return True, ("Đã nâng cấp giả lập Java J2ME lên bản mới"
+                          if vi else "Java J2ME emulator upgraded to the new build")
         if force:
             return True, ("Đã cài lại giả lập Java J2ME" if vi else "Java J2ME emulator reinstalled")
         return True, ("Đã cài giả lập Java J2ME" if vi else "Java J2ME emulator installed")
