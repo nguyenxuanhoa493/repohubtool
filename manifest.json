@@ -1,11 +1,11 @@
 {
-  "version": "1.40",
+  "version": "1.41",
   "python": "any",
-  "built": "2026-08-29T23:25:24+0700",
+  "built": "2026-08-30T01:46:32+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Chữ tiếng Việt không còn thành ô vuông trên máy dùng theme thiếu font",
-    "en": "Vietnamese text no longer shows as boxes on devices with a font-poor theme"
+    "vi": "Giả lập Java đổi sang bản FreeJ2ME mới cho Brick Pro: chọn được kiểu hiển thị, đổi bố trí nút ngay trên máy",
+    "en": "Java emulator swapped for the new Brick Pro FreeJ2ME build: pick a display mode, cycle pad layouts on the device"
   },
   "remove": [
     "app.pyc",
@@ -128,8 +128,8 @@
     },
     {
       "path": "app.py",
-      "size": 219121,
-      "sha256": "3e8350df4ec2f4189f8e9489dbccab39c27981a7c7218f0ce6f2553d14beb6bf"
+      "size": 215124,
+      "sha256": "06da8aa45ec95a2be6d6d12aa47c19b83db8b8a0a2ef20f9794f323c0ad30cce"
     },
     {
       "path": "assets/fallback.ttf",
@@ -233,13 +233,13 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 28440,
-      "sha256": "df271fa24e1432c0756e02dae5ca5ff1674fa2f9de1595ba9b63e9d68d0dba01"
+      "size": 29275,
+      "sha256": "83ca0490d9e96afc48660f17d78f568a9b790b1bfc9cc00a768047c5243261ce"
     },
     {
       "path": "rh/j2me.py",
-      "size": 10832,
-      "sha256": "a4042d0df6209bebb7053c76902a99629a00d859cf5e30d54f960ae64d0723b5"
+      "size": 12616,
+      "sha256": "3b372231658ca0fc4b3cb7b5dad95f096a6a063fb6009553179b69b75c0d2612"
     },
     {
       "path": "rh/media.py",
@@ -294,7 +294,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "589d85004c55101ba3a04a49b4b47ebf6dfecdf7bf3055369b3447d782aeab9c"
+      "sha256": "5784bb781c0d7f794b4ec7967778db1e2d4091f431ad6119317892e67b66a6ca"
     },
     {
       "path": "streamer.py",
