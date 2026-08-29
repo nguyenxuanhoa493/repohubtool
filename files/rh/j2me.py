@@ -17,6 +17,7 @@ them fresh rather than holding a copy.
 import os
 import shutil
 import tarfile
+import tempfile
 
 from .paths import SDCARD_PATH, APP_DIR
 from . import state
@@ -52,6 +53,13 @@ RENDER_PRESETS = {
     "hq":     {"render_mode": "hq",     "integer_scaling": "false", "keep_aspect": "true",
                "text_aa": "true",  "shape_aa": "true",  "m3g_filter": "linear"},
 }
+
+
+# The player's own data lives *inside* the runtime folder: rms/ holds J2ME game
+# saves and config/ holds the per-game settings the emulator writes. A repair
+# that wipes zulu17 to unpack a fresh copy would take both with it, so they are
+# moved aside first and put back afterwards.
+USER_DATA_DIRS = ("bin/rms", "bin/config")
 
 
 def j2me_runtime_paths():
@@ -212,6 +220,48 @@ def move_to_resolution(rom_path, folder):
 
 
 # ------------------------------------------------------------------ launcher
+def _stash_user_data(stash):
+    """Move save data out of the runtime into `stash`. Returns what was moved."""
+    moved = []
+    for rel in USER_DATA_DIRS:
+        src = os.path.join(RUNTIME_DIR, rel)
+        if not os.path.isdir(src):
+            continue
+        dst = os.path.join(stash, rel)
+        try:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.move(src, dst)
+            moved.append(rel)
+        except Exception as e:
+            print(f"stash {rel} failed: {e}")
+    return moved
+
+
+def _restore_user_data(stash):
+    """Put stashed data back, merging over whatever the fresh runtime created.
+
+    The unpacked archive carries rms/ and config/ as empty folders, so this walks
+    the entries rather than moving the folder itself - a plain move would fail on
+    a destination that already exists.
+    """
+    for rel in USER_DATA_DIRS:
+        src = os.path.join(stash, rel)
+        if not os.path.isdir(src):
+            continue
+        dst = os.path.join(RUNTIME_DIR, rel)
+        try:
+            os.makedirs(dst, exist_ok=True)
+            for name in os.listdir(src):
+                s_path, d_path = os.path.join(src, name), os.path.join(dst, name)
+                if os.path.isdir(d_path):
+                    shutil.rmtree(d_path, ignore_errors=True)
+                elif os.path.exists(d_path):
+                    os.remove(d_path)
+                shutil.move(s_path, d_path)
+        except Exception as e:
+            print(f"restore {rel} failed: {e}")
+
+
 def install_j2me_emulator(force=False):
     """Install the SDL runtime from the bundled payload and wire JAVA into the menu.
 
@@ -219,14 +269,17 @@ def install_j2me_emulator(force=False):
     network - the archive is ~65MB of JRE, which is why it is not re-downloaded.
 
     force=True wipes the runtime first and unpacks it again, for repairing an
-    install that has gone bad. The chosen display preset is kept: it is validated
-    on load, so a damaged one cannot break the emulator, and losing it would be a
-    nasty surprise for someone who only wanted to fix a crash.
+    install that has gone bad. Game saves, per-game settings and the chosen
+    display preset all survive that: someone repairing a crash is not asking to
+    lose their progress.
     """
     vi = state.current_lang == "VI"
+    stash = None
     try:
         saved_mode = load_render_mode() if force else None
         if force and os.path.isdir(RUNTIME_DIR):
+            stash = tempfile.mkdtemp(prefix=".rh_j2me_", dir=EMU_DIR)
+            _stash_user_data(stash)
             shutil.rmtree(RUNTIME_DIR, ignore_errors=True)
         os.makedirs(EMU_DIR, exist_ok=True)
         os.makedirs(IMG_DIR, exist_ok=True)
@@ -300,3 +353,9 @@ def install_j2me_emulator(force=False):
     except Exception as e:
         print(f"J2ME install error: {e}")
         return False, (f"Lỗi cài đặt: {e}" if vi else f"Install failed: {e}")
+    finally:
+        # Even when the unpack blew up: the saves go back where they belong
+        # rather than staying in a hidden folder nobody will ever look in.
+        if stash:
+            _restore_user_data(stash)
+            shutil.rmtree(stash, ignore_errors=True)

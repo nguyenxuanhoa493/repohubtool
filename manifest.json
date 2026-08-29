@@ -1,11 +1,11 @@
 {
-  "version": "1.41",
+  "version": "1.42",
   "python": "any",
-  "built": "2026-08-30T01:46:32+0700",
+  "built": "2026-08-30T02:04:31+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Giả lập Java đổi sang bản FreeJ2ME mới cho Brick Pro: chọn được kiểu hiển thị, đổi bố trí nút ngay trên máy",
-    "en": "Java emulator swapped for the new Brick Pro FreeJ2ME build: pick a display mode, cycle pad layouts on the device"
+    "vi": "Cài lại giả lập Java không còn xoá save game và cấu hình riêng từng game",
+    "en": "Reinstalling the Java emulator no longer wipes game saves and per-game settings"
   },
   "remove": [
     "app.pyc",
@@ -238,8 +238,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 12616,
-      "sha256": "3b372231658ca0fc4b3cb7b5dad95f096a6a063fb6009553179b69b75c0d2612"
+      "size": 14826,
+      "sha256": "ec1e6058aca7302b64a765d60ce126e994d49851eb6dc92ef21fed3f486f7506"
     },
     {
       "path": "rh/media.py",
@@ -294,7 +294,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "5784bb781c0d7f794b4ec7967778db1e2d4091f431ad6119317892e67b66a6ca"
+      "sha256": "96c013074b2e2b7d84d48dae381d2d3ff6d644dda26ac0e4cccbf90988863f7f"
     },
     {
       "path": "streamer.py",
