@@ -27,6 +27,14 @@ update_url = ""
 # Version an update just installed. Written before the restart and cleared on
 # the next launch, which is the only moment the new build can confirm itself.
 pending_update = ""
+# sha256 cua catalogue dang nam tren may. So chuoi nay voi manifest re hon doc
+# lai 33 MB tu the moi lan kiem tra cap nhat.
+catalog_sha = ""
+# Thong bao loi catalogue tu lan cap nhat truoc, cho toi khi restart xong moi
+# co man hinh de hien. Cung mot ly do voi pending_update: ghi truoc luc
+# restart, doc va xoa o lan khoi dong ke tiep - khong the hien ngay vi
+# request_restart() ket thuc vong lap chinh chi mot nhip sau do.
+pending_catalog_notice = ""
 
 if os.path.exists(SETTINGS_FILE):
     try:
@@ -39,6 +47,8 @@ if os.path.exists(SETTINGS_FILE):
             skipped_versions = cfg.get("skipped_versions", []) or []
             update_url = cfg.get("update_url", "") or ""
             pending_update = cfg.get("pending_update", "") or ""
+            catalog_sha = cfg.get("catalog_sha", "") or ""
+            pending_catalog_notice = cfg.get("pending_catalog_notice", "") or ""
     except:
         current_lang = "VI"
         downloaded_view_mode = "grid"
@@ -63,7 +73,9 @@ def save_settings():
                     "auto_update": auto_update,
                     "skipped_versions": skipped_versions,
                     "update_url": update_url,
-                    "pending_update": pending_update
+                    "pending_update": pending_update,
+                    "catalog_sha": catalog_sha,
+                    "pending_catalog_notice": pending_catalog_notice
                 }, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())

@@ -9,6 +9,25 @@ EACCES trong khi ca phan con lai cua the van ghi binh thuong."""
 import os
 
 
+def human_bytes(n):
+    """Doc duoc o moi co. Lam tron xuong MB thi mot the gan day bao "con 0 MB",
+    khong noi len duoc gi ca."""
+    if n >= 1024 ** 3:
+        return "%.1f GB" % (n / (1024.0 ** 3))
+    if n >= 1024 ** 2:
+        return "%d MB" % (n // (1024 ** 2))
+    return "%d KB" % (n // 1024)
+
+
+def free_space(path):
+    """Cho trong that su ghi duoc vao *path*.
+
+    f_bavail chu khong phai f_bfree: he thong danh rieng mot phan cho root, va
+    phan do khong phai cho ma nguoi dung ghi duoc vao."""
+    st = os.statvfs(path)
+    return st.f_bavail * st.f_frsize
+
+
 def unlock(path):
     """Go co read-only khoi *path* neu can. True khi duong ghi da thong.
 
