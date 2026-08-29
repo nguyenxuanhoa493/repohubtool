@@ -19,7 +19,7 @@ import urllib.error
 import urllib.request
 
 from . import state
-from .paths import APP_DIR
+from .paths import APP_DIR, SDCARD_PATH
 from .storage import free_space as _free_space, human_bytes as _human
 from .version import APP_VERSION, is_newer
 
@@ -57,6 +57,23 @@ CATALOG_NO_SPACE = "upd_cat_err_space"
 CATALOG_BAD_HASH = "upd_cat_err_hash"
 CATALOG_FAILED = "upd_cat_err_failed"
 CATALOG_KEYS = frozenset([CATALOG_NO_SPACE, CATALOG_BAD_HASH, CATALOG_FAILED])
+
+# Bo gia lap Java. Ca thu muc runtime nang 66 MB va gan het la ban JRE - thu
+# chua bao gio doi - nen duong cap nhat chi mang nhung tep that su co the doi
+# giua hai ban: tep .jar, tep nhi phan SDL va may tep cau hinh. Bang liet ke do
+# nam trong manifest; goc thi chot cung o day chu khong lay tu manifest, vi
+# manifest den tu mang va khong duoc phep chi ung dung ghi vao dau.
+RUNTIME_ROOT = os.path.join(SDCARD_PATH, "Emus", "JAVA")
+RUNTIME_STAGING_DIR = os.path.join(RUNTIME_ROOT, ".rh_runtime_staging")
+# Tep can quyen chay sau khi thay. Thu muc goc nam tren the FAT/exFAT nen chmod
+# co the bi tu choi - do khong phai ly do de coi ban cai la that bai.
+RUNTIME_EXECUTABLE = ("zulu17/bin/sdl_interface", "zulu17/bin/java", "launch.sh")
+MAX_RUNTIME_BYTES = 24 * 1024 * 1024
+
+RUNTIME_NO_SPACE = "upd_rt_err_space"
+RUNTIME_BAD_HASH = "upd_rt_err_hash"
+RUNTIME_FAILED = "upd_rt_err_failed"
+RUNTIME_KEYS = frozenset([RUNTIME_NO_SPACE, RUNTIME_BAD_HASH, RUNTIME_FAILED])
 
 
 class CatalogError(Exception):
@@ -178,6 +195,124 @@ def catalog_pending(manifest):
     tra cap nhat se bien mot thao tac gan nhu tuc thi thanh vai giay."""
     c = catalog_entry(manifest)
     return bool(c) and c["sha256_plain"] != state.catalog_sha
+
+
+class RuntimeUpdateError(Exception):
+    """That bai khi lay bo gia lap, kem mot key dich duoc va so lieu di kem."""
+
+    def __init__(self, key, detail=""):
+        super().__init__(f"{key}: {detail}" if detail else key)
+        self.key = key
+        self.detail = detail
+
+
+def runtime_entry(manifest):
+    """Khoa "runtime" cua manifest khi no dung dinh dang, None khi khong.
+
+    Manifest den tu mang nen khong tin gi ca. Ban truoc 1.46 khong co khoa nay
+    va do la truong hop binh thuong chu khong phai loi.
+    """
+    r = (manifest or {}).get("runtime")
+    if not isinstance(r, dict):
+        return None
+    files = r.get("files")
+    if not isinstance(files, list) or not files:
+        return None
+    for f in files:
+        if not isinstance(f, dict):
+            return None
+        path, url, sha = f.get("path"), f.get("url"), f.get("sha256")
+        if not isinstance(path, str) or not isinstance(url, str) or not isinstance(sha, str):
+            return None
+        if not _safe_rel(path) or not _safe_rel(url):
+            return None
+        if len(sha) != 64 or not isinstance(f.get("size"), int):
+            return None
+        if f["size"] < 0 or f["size"] > MAX_RUNTIME_BYTES:
+            return None
+    return r
+
+
+def runtime_pending(manifest):
+    """Tep cua bo gia lap khac voi thu dang nam tren the.
+
+    Rong khi chua cai gia lap: luc do khong co gi de nang cap, ban cai day du
+    moi la duong dung. Cung rong khi manifest khong mang khoa runtime.
+    """
+    r = runtime_entry(manifest)
+    if not r:
+        return []
+    # Chua co gia lap thi khong tu dung tao ra mot cai nua tep.
+    if not os.path.exists(os.path.join(RUNTIME_ROOT, "zulu17", "bin", "java")):
+        return []
+    out = []
+    for f in r["files"]:
+        if sha256_of(os.path.join(RUNTIME_ROOT, f["path"])) != f["sha256"]:
+            out.append(f)
+    return out
+
+
+def download_runtime(pending, progress=None):
+    """Tai va kiem tung tep vao staging. Tra duong dan thu muc staging.
+
+    Nem RuntimeUpdateError o moi loi, va don sach staging - mot ban tai do
+    dang de lai chi lam lan sau kho doan hon.
+    """
+    total = sum(f["size"] for f in pending)
+    try:
+        free = _free_space(RUNTIME_ROOT)
+    except OSError:
+        free = None
+    if free is not None and free < total * 2:
+        raise RuntimeUpdateError(
+            RUNTIME_NO_SPACE, "can %s, con %s" % (_human(total * 2), _human(free)))
+
+    shutil.rmtree(RUNTIME_STAGING_DIR, ignore_errors=True)
+    try:
+        os.makedirs(RUNTIME_STAGING_DIR, exist_ok=True)
+        for i, f in enumerate(pending, 1):
+            if progress:
+                progress(i, len(pending), f["path"])
+            blob = _get("%s/%s" % (base_url(), f["url"]), MAX_RUNTIME_BYTES)
+            if hashlib.sha256(blob).hexdigest() != f["sha256"]:
+                raise RuntimeUpdateError(RUNTIME_BAD_HASH, f["path"])
+            dst = os.path.join(RUNTIME_STAGING_DIR, f["path"])
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            with open(dst, "wb") as out:
+                out.write(blob)
+    except RuntimeUpdateError:
+        shutil.rmtree(RUNTIME_STAGING_DIR, ignore_errors=True)
+        raise
+    except Exception as e:
+        shutil.rmtree(RUNTIME_STAGING_DIR, ignore_errors=True)
+        raise RuntimeUpdateError(RUNTIME_FAILED, str(e))
+    return RUNTIME_STAGING_DIR
+
+
+def apply_runtime(pending):
+    """Doi cac tep da kiem sang cho that. True khi xong.
+
+    Chi chay sau khi tat ca da tai va kiem xong, nen khong co canh nua cu nua
+    moi. Sau buoc nay, phep so kich thuoc trong rh.j2me se thay runtime da
+    khop voi payload va thoi bao la ban cu.
+    """
+    try:
+        for f in pending:
+            src = os.path.join(RUNTIME_STAGING_DIR, f["path"])
+            dst = os.path.join(RUNTIME_ROOT, f["path"])
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            os.replace(src, dst)
+            if f["path"] in RUNTIME_EXECUTABLE:
+                try:
+                    os.chmod(dst, 0o755)
+                except OSError:
+                    pass
+    except OSError as e:
+        print("Runtime update failed: %s" % e)
+        return False
+    finally:
+        shutil.rmtree(RUNTIME_STAGING_DIR, ignore_errors=True)
+    return True
 
 
 def pending_files(manifest):
@@ -320,7 +455,8 @@ def check_for_update(force=False):
     # Catalogue di lech mot minh la chuyen thuong: ban .py cai xong roi khoi
     # dong lai thi phien ban da bang nhau, ma kho game thi chua ve. Chi xet
     # phien ban thoi se bo quen no mai mai.
-    if not is_newer(m["version"], APP_VERSION) and not catalog_pending(m):
+    if (not is_newer(m["version"], APP_VERSION)
+            and not catalog_pending(m) and not runtime_pending(m)):
         return None
     if not force and m["version"] in (state.skipped_versions or []):
         return None
