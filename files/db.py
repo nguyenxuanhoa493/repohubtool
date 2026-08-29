@@ -255,8 +255,10 @@ def get_java_categories():
     return [("ALL", total)] + [(r["cat"], r["cnt"]) for r in rows]
 
 
-def get_games_page(source_type, sys_code, sort_by="downloads", limit=1000, offset=0,
+def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offset=0,
                    category=None):
+    """limit=None nghia la lay het. Man hinh rom_games nap ca ke roi cache lai,
+    nen mot tran cung o day se lam bien mat phan duoi danh sach."""
     conn = get_db_connection()
     cursor = conn.cursor()
     query = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str, (SELECT COUNT(*) FROM game_sources WHERE game_id = g.id AND is_alive = 1) as mirror_count FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE 1=1"
@@ -269,7 +271,7 @@ def get_games_page(source_type, sys_code, sort_by="downloads", limit=1000, offse
     elif source_type == "HITS":
         query += " AND g.download_count > 0"
         sort_by = "downloads"
-        limit = min(limit, 100)
+        limit = 100 if limit is None else min(limit, 100)
     elif source_type == "JAVA":
         query += " AND g.sys_code = 'JAVA'"
     elif source_type == "ARCHIVE":
@@ -297,7 +299,8 @@ def get_games_page(source_type, sys_code, sort_by="downloads", limit=1000, offse
         query += " ORDER BY g.rating DESC, g.download_count DESC LIMIT ? OFFSET ?"
     else: # title / alpha / A-Z
         query += " ORDER BY g.title ASC LIMIT ? OFFSET ?"
-    params.extend([limit, offset])
+    # SQLite coi LIMIT -1 la khong gioi han, van giu duoc OFFSET.
+    params.extend([-1 if limit is None else limit, offset])
     
     cursor.execute(query, params)
     rows = [dict(r) for r in cursor.fetchall()]

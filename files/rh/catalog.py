@@ -179,13 +179,31 @@ def get_java_category_list():
     return []
 
 
+def alpha_index(games):
+    """(vi_tri_dau_tien, so_luong) theo tung chu cai, tinh tren danh sach dua vao.
+
+    Index chi co nghia trong dung mot thu tu, nen ham phai duoc goi voi chinh
+    danh sach se hien ra sau khi nhay; dua nham thu tu thi bam "A" se roi vao
+    mot game bat dau bang chu khac. Ten khong bat dau bang chu cai - "1942",
+    "<unknown>", ten rong - deu ve chung ke "#"."""
+    avail = {}
+    counts = {}
+    for idx, g in enumerate(games):
+        title = (g.get("title") or "").strip().upper()
+        ch = title[0] if title and title[0].isalpha() else "#"
+        if ch not in avail:
+            avail[ch] = idx
+        counts[ch] = counts.get(ch, 0) + 1
+    return avail, counts
+
+
 def get_games_for_view(src_code, sys_code, sort_by=None, category=None):
     """Returns list of game dicts for the specified source and system filter using SQLite DAO."""
     active_sort = sort_by or state.rom_sort_mode
     if db and os.path.exists(db.DB_PATH):
         try:
             return db.get_games_page(src_code, sys_code, sort_by=active_sort,
-                                     limit=1000, offset=0, category=category)
+                                     category=category)
         except Exception as e:
             print(f"DB get_games_page error: {e}")
 

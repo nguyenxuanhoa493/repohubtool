@@ -261,6 +261,7 @@ TEXTS = {
         "alpha_sub": "D-Pad: Chọn chữ | [A]: Nhảy đến game | [B]: Đóng",
         "alpha_jump_toast": "Đã nhảy đến chữ: ",
         "alpha_no_games": "Không có game bắt đầu bằng chữ ",
+        "alpha_jump_sorted": " - đã xếp A-Z",
         "alpha_btn_footer": "Chữ cái"
     },
     "EN": {
@@ -520,6 +521,7 @@ TEXTS = {
         "alpha_sub": "D-Pad: Select letter | [A]: Jump to game | [B]: Close",
         "alpha_jump_toast": "Jumped to letter: ",
         "alpha_no_games": "No games starting with ",
+        "alpha_jump_sorted": " - sorted A-Z",
         "alpha_btn_footer": "Alphabet"
     }
 }

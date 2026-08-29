@@ -16,6 +16,7 @@ from . import neterrors
 from . import archive as archive_tool
 from .storage import unlock
 from .i18n import tr
+from .boxart import is_real_boxart_url
 from .media import pick_primary_rom, save_boxart_png
 from .sysinfo import get_ip
 
@@ -675,7 +676,7 @@ def start_download_thread(sys_code, game_info, background=False):
             except:
                 pass
 
-            if img_url and img_url != "null":
+            if is_real_boxart_url(img_url):
                 try:
                     rom_base = os.path.splitext(os.path.basename(extracted_rom_path))[0]
                     target_img = os.path.join(img_dir, f"{rom_base}.png")
