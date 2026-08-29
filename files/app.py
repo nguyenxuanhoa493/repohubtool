@@ -86,7 +86,7 @@ from rh.splash import (apply_splash_update,
 from rh.j2me import (RENDER_MODES, RESOLUTIONS,
     install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
     load_render_mode, move_to_resolution, pretty_resolution, resolution_of_path,
-    rom_dir_for, runtime_supports_renderer,
+    rom_dir_for, runtime_is_stale, runtime_supports_renderer,
     save_render_mode)
 from rh.emulators import resolve as resolve_emulator
 from rh.fonts import VIET_PROBE, font_candidates, pick_font
@@ -176,6 +176,11 @@ SYS_BADGE = {
     "JAVA": ("JAVA", (205, 97, 85)),
 }
 
+# Written by the startup repair thread, drained by the main loop into a toast: a
+# background thread has no business touching the UI's own state.
+startup_notice = {"msg": None}
+
+
 def auto_check_and_supplement_environment():
     """Silently checks and auto-supplements missing libraries, emulator cores, and fixes permissions."""
     repaired_items = []
@@ -192,6 +197,21 @@ def auto_check_and_supplement_environment():
             repaired_items.append("Đã bổ sung cấu hình hệ máy Java J2ME" if state.current_lang == "VI" else "Restored Java J2ME system config")
         except Exception as e:
             print(f"Error restoring J2ME config: {e}")
+
+    # 1b. An emulator older than the archive shipped inside the app. This is what
+    # a newer full package dropped over an existing install leaves behind, and
+    # nothing used to notice: the old emulator still ran, so the card looked
+    # healthy while every feature the new build added was unreachable. Saves are
+    # kept. This runs off the startup thread, so the notice goes through
+    # startup_notice rather than straight to a toast.
+    try:
+        if runtime_is_stale():
+            ok_up, msg_up = install_j2me_emulator()
+            if ok_up:
+                startup_notice["msg"] = msg_up
+                repaired_items.append(msg_up)
+    except Exception as e:
+        print(f"Error upgrading J2ME runtime: {e}")
 
     # 2. Wi-Fi power save is a runtime kernel setting that resets on reboot, so the
     # user's saved choice has to be reapplied here or the toggle would not stick.
@@ -1238,6 +1258,10 @@ def main():
             j2me_label = "ĐÃ CÓ" if is_j2me_installed else "TỰ CÀI"
             if state.current_lang != "VI":
                 j2me_label = "READY" if is_j2me_installed else "AUTO"
+            # "Installed" is not the same as "current". Without this the row reads
+            # as nothing-to-do while the display row below refuses to open.
+            if is_j2me_installed and runtime_is_stale():
+                j2me_label = tr("j2me_needs_upgrade")
             items.append({"id": "install_j2me_emu", "title": tr("util_j2me_title"), "label": j2me_label})
             if is_j2me_installed:
                 # An in-app update does not carry the runtime, so this app can
@@ -2732,6 +2756,13 @@ def main():
             update_modal["notice"] = None
             toast_timer = time.time()
 
+        # Same for the startup repair thread, which may have upgraded the J2ME
+        # emulator while the user was still looking at the home screen.
+        if startup_notice.get("msg"):
+            toast_msg = startup_notice["msg"]
+            startup_notice["msg"] = None
+            toast_timer = time.time()
+
         # ----------------------------------------------------------------------
         # DRAWING UI (Re-sync active screen & cursor index after event handling)
         # ----------------------------------------------------------------------
@@ -3912,6 +3943,9 @@ def main():
                 st_txt, st_col = tr("j2me_st_installing"), (255, 200, 0)
             elif missing:
                 st_txt, st_col = f"{tr('j2me_st_missing')} {', '.join(missing)}", (255, 90, 90)
+            elif runtime_is_stale():
+                # Five files present is not the same as the right five files.
+                st_txt, st_col = tr("j2me_st_stale"), (255, 200, 0)
             else:
                 st_txt, st_col = tr("j2me_st_ready"), (0, 255, 160)
 
