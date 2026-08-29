@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
 # One place to bump. Four strings drifted apart before this was a constant:
 # the two filenames, the release URL and the softwareVersion in the JSON-LD.
-VERSION = "1.43"
+VERSION = "1.44"
 VER_FULL = "RetroHub-%s-full.zip" % VERSION
 VER_LITE = "RetroHub-%s.zip" % VERSION
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
@@ -108,6 +108,7 @@ T = {
   "lite_t": "Lite", "lite_s": "32 MB",
   "lite_p": "The app and the game library, without the Java emulator. Quick to install, you can add Java later.",
   "nav_java": "Java guide", "java_url": "/java/",
+  "nav_changelog": "Changelog", "changelog_url": "/changelog/",
   "java_guide": ('Playing Java games? There is a separate guide for that: '
                  '<a href="/java/" style="color:var(--accent)">Java J2ME on RetroHub</a> '
                  '— resolution folders, phone modes, pad layouts and display settings.'),
@@ -149,6 +150,7 @@ T = {
   "lite_t": "Bản gọn", "lite_s": "32 MB",
   "lite_p": "Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.",
   "nav_java": "Hướng dẫn Java", "java_url": "/vi/java/",
+  "nav_changelog": "Nhật ký bản", "changelog_url": "/vi/changelog/",
   "java_guide": ('Định chơi game Java? Có hướng dẫn riêng: '
                  '<a href="/vi/java/" style="color:var(--accent)">Chơi game Java J2ME trên RetroHub</a> '
                  '— thư mục độ phân giải, chế độ máy, bố trí nút và kiểu hiển thị.'),
@@ -170,6 +172,11 @@ T = {
 }
 
 IDS = ["tinh-nang", "cach-cai", "tai-ve", "ung-ho", "lo-trinh", "lien-he"]
+
+# Pages of their own rather than sections of the home page, keyed by the nav item
+# they sit after: the Java guide right behind Download, because that is when it
+# is needed, and the changelog beside the roadmap it is the other half of.
+CROSS_PAGES = {"tai-ve": "java", "lo-trinh": "changelog"}
 
 SVG_TG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.9 4.3 18.7 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.3 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.3c.9-.3 1.6.2 1.4 1.5z"/></svg>'
 SVG_MAIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm9 7.2 8-4.7V6.5l-8 4.7-8-4.7v1L12 12.2z"/></svg>'
@@ -664,17 +671,19 @@ def navlinks_for(lang, page="home"):
     sections exist. From the home page itself the link is same-document, so
     smooth scrolling behaves exactly as it did.
 
-    The Java guide is the one item that is a page rather than a section: it
-    carries a real href and, from anywhere else, a small arrow saying you are
-    about to leave. On the guide itself it is marked as where you already are.
+    Two items are pages rather than sections. They carry a real href and, seen
+    from anywhere else, a small arrow saying you are about to leave; on the page
+    itself the item is marked as where you already are.
     """
     t = T[lang]
     out = ""
     for i, n in zip(IDS, t["nav"]):
         out += '<a href="%s#%s">%s</a>' % (t["home"], i, n)
-        if i == "tai-ve":
+        key = CROSS_PAGES.get(i)
+        if key:
             out += '<a class="%s" href="%s">%s</a>' % (
-                "here" if page == "java" else "out", t["java_url"], t["nav_java"])
+                "here" if page == key else "out",
+                t[key + "_url"], t["nav_" + key])
     return out
 
 
