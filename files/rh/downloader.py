@@ -631,7 +631,8 @@ def start_download_thread(sys_code, game_info, background=False):
                         tmp_zip_path, rom_dir, target_sys,
                         exe=archive_tool.sevenzip(),
                         work_dir=os.path.join(tmp_dir, "giai-nen"),
-                        progress=_extract_progress)
+                        progress=_extract_progress,
+                        prefer_name=os.path.splitext(filename)[0])
                 except archive_tool.ArchiveError as ae:
                     print(f"Archive extraction failed: {ae}")
                     try: os.remove(tmp_zip_path)
@@ -688,7 +689,8 @@ def start_download_thread(sys_code, game_info, background=False):
             # Report where the file actually landed. Rebuilding the path from
             # target_sys named the wrong folder for J2ME, whose jars go into a
             # per-resolution subfolder of rom_dir.
-            dl_state["msg"] = f"{tr('success_msg')}\n• {rom_dir}/"
+            dl_state["msg"] = (f"{tr('success_msg')}\n• {rom_dir}/"
+                               f"\n• {os.path.basename(extracted_rom_path)}")
             dl_state["status"] = "success"
         else:
             if os.path.exists(tmp_zip_path):

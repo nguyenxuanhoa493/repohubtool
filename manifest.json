@@ -1,11 +1,11 @@
 {
-  "version": "1.33",
+  "version": "1.34",
   "python": "any",
-  "built": "2026-08-29T16:27:53+0700",
+  "built": "2026-08-29T17:00:55+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tải game .rar/.7z giờ tự giải nén ra ROM thật",
-    "en": "Downloads in .rar/.7z now extract to a real ROM"
+    "vi": "Game giải nén xong giữ đúng tên, màn hình báo rõ file nào",
+    "en": "Extracted games keep their proper name; the file is named on screen"
   },
   "remove": [
     "app.pyc",
@@ -117,8 +117,8 @@
     },
     {
       "path": "app.py",
-      "size": 212010,
-      "sha256": "a689f3849570ac257705f6b5c0c6932e8663b51ce0cde673294903eb47084712"
+      "size": 213078,
+      "sha256": "8eef7ba560e631ab44154f3ee315f8a04f4a8ffcafec9b99c69ac1e8b56e2cbb"
     },
     {
       "path": "assets/fallback.ttf",
@@ -192,8 +192,8 @@
     },
     {
       "path": "rh/archive.py",
-      "size": 10940,
-      "sha256": "1d3fd7ab28dd923b4b81f9cf75f0f67a0c4ef7cefcfb7773f3f870bcab20d171"
+      "size": 12161,
+      "sha256": "4c6f830d6ac5564b1acd7cabc342565a9f3892c60dcfe43bf71aacf6af1111c2"
     },
     {
       "path": "rh/catalog.py",
@@ -202,8 +202,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 37511,
-      "sha256": "2c1e89c6cf69aa4044a0cb913af03a8ebf61035a8c13cd331ccd9ffff8c12c6b"
+      "size": 37659,
+      "sha256": "40fc392b5540c73c21b2c60432d622e3b68e64af1ca443d934026e163ddfa26c"
     },
     {
       "path": "rh/i18n.py",
@@ -268,7 +268,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "d8cacc2ee2de880c58a361a97abd485a5679cfab6cfbbfe44556ee245e3cd83d"
+      "sha256": "6c0907617931f58561d6a000933de8d9b0d2875f6acd40957950e6701b4b9eb3"
     },
     {
       "path": "streamer.py",

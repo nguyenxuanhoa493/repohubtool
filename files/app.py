@@ -3336,7 +3336,12 @@ def main():
                 if fill_w > 0:
                     fill_rect(pb_x + 2, pb_y + 2, fill_w - 4, pb_h - 4, 0, 230, 150, 255)
 
-                lines = dl_state["msg"].split("\n")
+                # Modal ve nguyen van tung dong: ten file cua ban scene, hay
+                # duong dan thu muc J2ME, dai hon be ngang khung thi chu chay
+                # thang ra ngoai - dung nhu dong Errno tung bi cat cut o mep.
+                lines = []
+                for _raw in dl_state["msg"].split("\n"):
+                    lines.extend(wrap_text_to_width(_raw, font_sub, mw - 90, max_lines=2))
                 line_y = my + 215
                 for l in lines:
                     draw_text(l, font_sub, mx + 45, line_y, 220, 230, 245)
@@ -3358,7 +3363,12 @@ def main():
                 draw_text(tr("dl_btn_cancel"), font_badge, bx2 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
 
             elif dl_state["status"] == "success":
-                lines = dl_state["msg"].split("\n")
+                # Modal ve nguyen van tung dong: ten file cua ban scene, hay
+                # duong dan thu muc J2ME, dai hon be ngang khung thi chu chay
+                # thang ra ngoai - dung nhu dong Errno tung bi cat cut o mep.
+                lines = []
+                for _raw in dl_state["msg"].split("\n"):
+                    lines.extend(wrap_text_to_width(_raw, font_sub, mw - 90, max_lines=2))
                 line_y = my + 155
                 for l in lines:
                     draw_text(l, font_sub, mx + 45, line_y, 0, 246, 246)
@@ -3389,7 +3399,12 @@ def main():
                 draw_text(f"[B] {tr('act_close_title').capitalize()}", font_badge, bx2 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
 
             elif dl_state["status"] in ("error", "cancelled"):
-                lines = dl_state["msg"].split("\n")
+                # Modal ve nguyen van tung dong: ten file cua ban scene, hay
+                # duong dan thu muc J2ME, dai hon be ngang khung thi chu chay
+                # thang ra ngoai - dung nhu dong Errno tung bi cat cut o mep.
+                lines = []
+                for _raw in dl_state["msg"].split("\n"):
+                    lines.extend(wrap_text_to_width(_raw, font_sub, mw - 90, max_lines=2))
                 line_y = my + 155
                 for l in lines:
                     draw_text(l, font_sub, mx + 45, line_y, 255, 100, 100)

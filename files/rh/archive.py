@@ -243,7 +243,13 @@ def next_volume(paths):
 
 
 def _human(n):
-    return "%.1f GB" % (n / (1024.0 ** 3)) if n >= 1024 ** 3 else "%d MB" % (n // (1024 * 1024))
+    """Doc duoc o moi co. Lam tron xuong MB thi mot the gan day bao "con 0 MB",
+    khong noi len duoc gi ca."""
+    if n >= 1024 ** 3:
+        return "%.1f GB" % (n / (1024.0 ** 3))
+    if n >= 1024 ** 2:
+        return "%d MB" % (n // (1024 ** 2))
+    return "%d KB" % (n // 1024)
 
 
 def _free_space(path):
@@ -252,11 +258,17 @@ def _free_space(path):
 
 
 def unpack_to_rom(archive_path, rom_dir, sys_code, exe=None, work_dir=None,
-                  progress=None, free_space=None):
+                  progress=None, free_space=None, prefer_name=None):
     """Bung *archive_path* cho toi khi ra ROM, tra ve duong dan ROM trong rom_dir.
 
     Lap tung tang chu khong doan truoc ca chuoi: chi sau khi bung xong vo ngoai
-    moi biet ISO ben trong nang bao nhieu."""
+    moi biet ISO ben trong nang bao nhieu.
+
+    *prefer_name* la ten (khong duoi) ma kho game da hien cho nguoi dung. Ban
+    scene dat ten file kieu "a-nfsmwu.iso"; giu nguyen thi trong launcher game
+    hien la "a-nfsmwu" va nguoi dung mo thu muc ra khong nhan ra game vua tai.
+    Chi doi ten khi archive nha ra dung mot file: doi ten mot .cue se lam no
+    tro nham ten .bin ghi ben trong."""
     if not exe:
         raise ArchiveError(NO_TOOL)
     free_space = free_space or _free_space
@@ -281,8 +293,20 @@ def unpack_to_rom(archive_path, rom_dir, sys_code, exe=None, work_dir=None,
             rom = pick_primary_rom(
                 [f for f in files if os.path.splitext(f)[1].lower() in known], sys_code)
             if rom:
-                dest = os.path.join(rom_dir, os.path.basename(rom))
-                os.replace(rom, dest)
+                # Chuyen ca file di kem trong cung tang: mot .cue khong co .bin
+                # ben canh la mot file tro vao khoang khong, ma cay tam thi bi
+                # xoa ngay sau day.
+                companions = [f for f in files
+                              if f != rom and not f.lower().endswith(SIDECAR_EXTS)]
+                dest = None
+                for src in [rom] + companions:
+                    name = os.path.basename(src)
+                    if src == rom and prefer_name and not companions:
+                        name = prefer_name + os.path.splitext(src)[1].lower()
+                    target = os.path.join(rom_dir, name)
+                    os.replace(src, target)
+                    if src == rom:
+                        dest = target
                 return dest
 
             nxt = next_volume(files)
