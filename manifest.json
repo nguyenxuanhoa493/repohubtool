@@ -1,7 +1,7 @@
 {
-  "version": "1.29",
+  "version": "1.30",
   "python": "any",
-  "built": "2026-08-28T15:28:15+0700",
+  "built": "2026-08-29T08:47:15+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "remove": [
     "app.pyc",
@@ -12,6 +12,7 @@
     "rh/i18n.pyc",
     "rh/j2me.pyc",
     "rh/media.pyc",
+    "rh/neterrors.pyc",
     "rh/paths.pyc",
     "rh/services.pyc",
     "rh/splash.pyc",
@@ -179,13 +180,13 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 31760,
-      "sha256": "9fba19b0bc19f4eface99419241797d9a5f7e73b44bbc7cc672bc22d8746664e"
+      "size": 33255,
+      "sha256": "b3ba8242cace3bd7018c260f6886e40517768a0d0f31235764f9100f1f621a83"
     },
     {
       "path": "rh/i18n.py",
-      "size": 25222,
-      "sha256": "de2033e806d66698bf493967c2d96f687f5971da6565d80f25f5b03a1c34ac24"
+      "size": 26391,
+      "sha256": "b4f569466e57aef29e47fb2869e58c8976f1426dd59008426bbdd1a7972cdff1"
     },
     {
       "path": "rh/j2me.py",
@@ -196,6 +197,11 @@
       "path": "rh/media.py",
       "size": 4079,
       "sha256": "26faf6cd90d9a7e139e268c8e57d6e55c548fa080dd02e9a1b14b5a1dd869f44"
+    },
+    {
+      "path": "rh/neterrors.py",
+      "size": 2989,
+      "sha256": "41e515d54ef57f85fab2bc50067e8e83cbb5de721fbd7de12da8c10a5a5e44d2"
     },
     {
       "path": "rh/paths.py",
@@ -230,7 +236,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "ed7bd266cd422dbe2e7e36fb1b2624a6663d37f7e286c8dc2d07e56e72e85d50"
+      "sha256": "ed25584628b5f296c11e53aa07f9f00e8bc11c24de0f0d61a75aaf0e9542489f"
     },
     {
       "path": "streamer.py",
