@@ -656,6 +656,28 @@ PAGE = """<!doctype html>
 """
 
 
+def navlinks_for(lang, page="home"):
+    """The one top menu, shared by every page on the site.
+
+    Anchors are written against the language's home page rather than as bare
+    fragments, so the same menu still works from /java/, where none of those
+    sections exist. From the home page itself the link is same-document, so
+    smooth scrolling behaves exactly as it did.
+
+    The Java guide is the one item that is a page rather than a section: it
+    carries a real href and, from anywhere else, a small arrow saying you are
+    about to leave. On the guide itself it is marked as where you already are.
+    """
+    t = T[lang]
+    out = ""
+    for i, n in zip(IDS, t["nav"]):
+        out += '<a href="%s#%s">%s</a>' % (t["home"], i, n)
+        if i == "tai-ve":
+            out += '<a class="%s" href="%s">%s</a>' % (
+                "here" if page == "java" else "out", t["java_url"], t["nav_java"])
+    return out
+
+
 def render(lang):
     t = T[lang]
     canon = DOMAIN + ("/" if lang == "en" else "/vi/")
@@ -674,16 +696,7 @@ def render(lang):
                    "url": "https://xuanhoa493.com"},
     }
 
-    # Every other nav item is an anchor into this page; the Java guide is a page
-    # of its own, so it carries a real href and a marker class that gives it the
-    # small arrow. It sits straight after Download because that is the point at
-    # which somebody actually needs it.
-    navlinks = ""
-    for i, n in zip(IDS, t["nav"]):
-        navlinks += '<a href="#%s">%s</a>' % (i, n)
-        if i == "tai-ve":
-            navlinks += '<a class="out" href="%s">%s</a>' % (t["java_url"],
-                                                             t["nav_java"])
+    navlinks = navlinks_for(lang)
     steps = "".join("<li>%s</li>" % s for s in t["steps"])
     osrows = "".join(
         '<li><span class="dot %s"></span><div><b>%s</b><span>%s</span></div></li>'
