@@ -208,9 +208,16 @@ def start_download_thread(sys_code, game_info, background=False):
         # reads that from the folder name - so a jar has to land in the right one.
         if target_sys in ("JAVA", "J2ME"):
             try:
-                from .j2me import rom_dir_for, ensure_rom_dirs
+                from .j2me import rom_dir_for, ensure_rom_dirs, safe_jar_name
                 ensure_rom_dirs()
                 rom_dir = rom_dir_for(filename)
+                # The emulator opens a jar through a "jar:file:<path>" URI it
+                # never escapes, so a space in the name means it cannot read the
+                # manifest and the game dies before drawing anything. 758 of the
+                # 3,357 Java sources in the catalogue are named that way, so the
+                # name has to be cleaned on the way in rather than left to the
+                # player to notice.
+                filename = safe_jar_name(filename)
             except Exception as e:
                 print(f"J2ME rom dir resolve failed: {e}")
         img_dir = sys_data.get("img_dir", f"{SDCARD_PATH}/Imgs/{target_sys}")

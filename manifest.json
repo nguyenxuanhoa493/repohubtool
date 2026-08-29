@@ -1,11 +1,11 @@
 {
-  "version": "1.43",
+  "version": "1.44",
   "python": "any",
-  "built": "2026-08-30T02:24:52+0700",
+  "built": "2026-08-30T03:42:38+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Máy còn giả lập Java cũ sẽ tự được nâng cấp lên bản mới khi mở app, save game giữ nguyên",
-    "en": "A device still on the old Java emulator is upgraded automatically at startup, saves kept"
+    "vi": "Game Java có dấu cách trong tên tệp giờ mở được; tệp đã tải trước đó tự đổi tên, save và ảnh bìa theo cùng",
+    "en": "Java games with a space in the filename now open; files already on the card are renamed, saves and box art follow"
   },
   "remove": [
     "app.pyc",
@@ -128,8 +128,8 @@
     },
     {
       "path": "app.py",
-      "size": 216822,
-      "sha256": "a2b56ce0ee4b5a23adaa81a62fad32f6eca0876345110cf8f1de11b374001839"
+      "size": 218495,
+      "sha256": "022fa9fa94aa5ea993441ccced3afe7af5f769c3d3fb5b584226d6136afba25e"
     },
     {
       "path": "assets/fallback.ttf",
@@ -218,8 +218,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 37696,
-      "sha256": "6f905a451ea6fd5f6af7ffb887b5639f4be64d7c618c216fcec70581c9c51c5c"
+      "size": 38198,
+      "sha256": "040745008d152b1d1a8d3df87461353319da038605377cc02afb61030b4f7552"
     },
     {
       "path": "rh/emulators.py",
@@ -238,8 +238,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 17494,
-      "sha256": "28503dc2bd2fcbb9feebda6acf0977cbdddbbf8b6ba31555bce8dfdf0865c688"
+      "size": 21544,
+      "sha256": "022616ea0aba949eff2ac02bbe35c0091b05c4886ee9fd272277ce9d56cc9a5b"
     },
     {
       "path": "rh/media.py",
@@ -294,7 +294,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "706f65d96562e945931a468df28564cc9ed40958c8a5d2601ed41125f7805fc9"
+      "sha256": "145702805fee6a1076fc12f30f35f6deaad17bc31b24a287b02b0478689a1a3d"
     },
     {
       "path": "streamer.py",
