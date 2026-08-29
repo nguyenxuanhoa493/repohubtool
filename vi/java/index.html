@@ -71,6 +71,13 @@
     padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
   .navlinks a:hover{color:var(--text);background:#1b2c49}
   .navlinks a.here{color:var(--accent);background:#14243d}
+  /* The one nav item that leaves the page. The arrow says so before the click,
+     and the accent tint stops it reading as just another section. */
+  .navlinks a.out{color:var(--accent)}
+  /* The arrow goes in as the character itself. Written as a CSS escape it would
+     be read as an octal escape by Python first and arrive as a control byte. */
+  .navlinks a.out::after{content:"↗";margin-left:5px;font-size:.85em;opacity:.75}
+  .navlinks a.out:hover{background:#14243d}
   /* Language switch shows the flag of the language you would move to, so the
      button says what it does rather than what you already have. */
   .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
