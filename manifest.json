@@ -1,11 +1,11 @@
 {
-  "version": "1.38",
+  "version": "1.39",
   "python": "any",
-  "built": "2026-08-29T19:29:02+0700",
+  "built": "2026-08-29T22:47:38+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Không còn ảnh 404 ở box art; game chưa có bìa hiện ô tên game và hệ máy",
-    "en": "No more placeholder box art; games without a cover show a name-and-system tile"
+    "vi": "Kho game tự cập nhật trong máy, không cần cài lại",
+    "en": "The game library now updates in place, no reinstall"
   },
   "remove": [
     "app.pyc",
@@ -106,6 +106,14 @@
     "vendor/sdl2/video.pyc",
     "vendor/sdl2/vulkan.pyc"
   ],
+  "catalog": {
+    "path": "catalog/roms_store.sqlite3",
+    "url": "catalog/roms_store.sqlite3.gz",
+    "sha256": "c6d2ccdb3721eae9419e8f02f02d6651cfb0b741b4e61f0fb1427edcd4a3f2bd",
+    "sha256_plain": "2f2c495da431262f377448bc9448ab055b8f98f701dd3a9d15c45f073680d496",
+    "size": 10007993,
+    "size_plain": 34463744
+  },
   "files": [
     {
       "path": "LICENSE",
@@ -119,8 +127,8 @@
     },
     {
       "path": "app.py",
-      "size": 213973,
-      "sha256": "aab9d3cf09e2f2425adc11ee62dfd59485db69dea396dbb975f778cef02b55ae"
+      "size": 219059,
+      "sha256": "511adec3ab3d474a94f892d795c3ebf037c76d82c491f6454640a629f8bf48e3"
     },
     {
       "path": "assets/fallback.ttf",
@@ -194,8 +202,8 @@
     },
     {
       "path": "rh/archive.py",
-      "size": 12161,
-      "sha256": "4c6f830d6ac5564b1acd7cabc342565a9f3892c60dcfe43bf71aacf6af1111c2"
+      "size": 11843,
+      "sha256": "ec758260ce493499babaa5257527dfc8f710c16cbe4293c4e3bb1bf21b5ba774"
     },
     {
       "path": "rh/boxart.py",
@@ -219,8 +227,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 27570,
-      "sha256": "78c439735a2c8958a61ff7cb676b670d2aa7d89acc00e6d96075faa3b626b812"
+      "size": 28440,
+      "sha256": "df271fa24e1432c0756e02dae5ca5ff1674fa2f9de1595ba9b63e9d68d0dba01"
     },
     {
       "path": "rh/j2me.py",
@@ -259,13 +267,13 @@
     },
     {
       "path": "rh/state.py",
-      "size": 3511,
-      "sha256": "0d74cf29e6fe9cb00a0d442fc08d32e85d0ee623dbeb2bcb5aedc2e223c40f9b"
+      "size": 4225,
+      "sha256": "9d21d980a444abafdce77560b4beb5e7337ff07bcbcee8a8cb2ba92904624d07"
     },
     {
       "path": "rh/storage.py",
-      "size": 934,
-      "sha256": "3e2e7026e7d084b9e3efd22392061e0fb1bf526c163b66c165330bc4153a306f"
+      "size": 1510,
+      "sha256": "396c24a129948c52d28fe6a056e2c603c77dba5380271421841199b8599140fa"
     },
     {
       "path": "rh/sysinfo.py",
@@ -274,13 +282,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 9925,
-      "sha256": "d7c8fd618e6dfe48ec85d801a3b9488479dd321ca227bd5b98ae33b7189978b8"
+      "size": 17770,
+      "sha256": "897a92c3ebc7b6d6af95fa5d9e325c811560359329f8477ad713d3b432dd8cfe"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "a2b72f3ae39cd5eb44a9b068662a9d7638b378cdeab430af2aa8e5df38bc36f1"
+      "sha256": "f9240e9f1f029198d36b5e233c10fd4be4e9bb4e0765bac1d0fbcfcf30e1d456"
     },
     {
       "path": "streamer.py",

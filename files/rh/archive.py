@@ -16,6 +16,7 @@ import subprocess
 from .paths import APP_DIR
 from .romfiles import (GENERIC_ROM_EXTS, ROM_EXT_PRIORITY, SIDECAR_EXTS,
                        pick_primary_rom)
+from .storage import free_space as _free_space, human_bytes as _human
 
 # Ly do that bai, la key cua rh.i18n de nguoi goi tu dich.
 NO_TOOL = "dl_err_no_extractor"
@@ -240,21 +241,6 @@ def next_volume(paths):
                     best = (rank, p)
                 break
     return best[1] if best else None
-
-
-def _human(n):
-    """Doc duoc o moi co. Lam tron xuong MB thi mot the gan day bao "con 0 MB",
-    khong noi len duoc gi ca."""
-    if n >= 1024 ** 3:
-        return "%.1f GB" % (n / (1024.0 ** 3))
-    if n >= 1024 ** 2:
-        return "%d MB" % (n // (1024 ** 2))
-    return "%d KB" % (n // 1024)
-
-
-def _free_space(path):
-    st = os.statvfs(path)
-    return st.f_bavail * st.f_frsize
 
 
 def unpack_to_rom(archive_path, rom_dir, sys_code, exe=None, work_dir=None,

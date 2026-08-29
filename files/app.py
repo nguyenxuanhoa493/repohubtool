@@ -90,9 +90,12 @@ from rh.j2me import (DEFAULT_KEYMAP, RESOLUTIONS, VALID_BUTTONS, VALID_KEYS,
     move_to_resolution, pretty_resolution, resolution_of_path, rom_dir_for,
     save_keymap)
 from rh.emulators import resolve as resolve_emulator
-from rh.updater import (apply_update, check_for_update, download_update,
-    release_note, request_restart, skip_version)
-from rh.version import APP_VERSION
+from rh.updater import (apply_catalog, apply_update, CATALOG_FAILED,
+    catalog_entry, catalog_pending, CatalogError, check_for_update,
+    download_catalog, download_update, release_note, request_restart,
+    skip_version)
+from rh.storage import human_bytes
+from rh.version import APP_VERSION, is_newer
 from rh.boxart import is_real_boxart_url
 from rh.catalog import (VALID_EXTS, alpha_index, get_java_category_list,
     get_games_for_view,
@@ -831,14 +834,31 @@ def main():
     qr_modal = {"active": False, "pages": [], "page": 0}
 
     # Filled in by the startup check thread; the main loop shows it when a newer
-    # release is published. selected_opt: 0 install, 1 skip this version, 2 later.
+    # release is published. selected_opt: 0 install, 1 skip this version, 2
+    # later - tru khi cat_only, xem update_modal_labels().
     update_modal = {
         "active": False, "manifest": None, "files": [],
         "selected_opt": 0, "busy": False, "status": "", "failed": False,
         # Set while a manual check is in flight, and used by the worker thread to
         # hand a message back - toast_msg is a local of the main loop.
         "checking": False, "notice": None,
+        # True khi phien ban khong doi va chi co catalogue dang cho: man hinh
+        # phai noi ve kho game chu khong phai "ban moi" trung voi ban dang
+        # chay, va nut giua khong duoc mang nghia "bo qua phien ban" nua.
+        "cat_only": False,
     }
+
+    def update_modal_labels():
+        """Nhan cac nut modal cap nhat, theo dung thu tu voi selected_opt.
+
+        cat_only bo han nut "Bo qua ban nay": phia duoi skip_version() ghi
+        thang so hieu manifest vao skipped_versions, ma o day so hieu do
+        chinh la ban dang chay - bam "bo qua" se khoa catalogue toi tan ban
+        ke tiep, con lau hon la khong bam gi ca. An nut la cach ro nhat de
+        khong con duong bam nham."""
+        if update_modal["cat_only"]:
+            return [tr("upd_install"), tr("upd_later")]
+        return [tr("upd_install"), tr("upd_skip"), tr("upd_later")]
 
     alphabet_modal = {
         "active": False,
@@ -889,6 +909,9 @@ def main():
         update_modal["manifest"] = manifest
         update_modal["files"] = files
         update_modal["selected_opt"] = 0
+        # check_for_update() chi tra viec khi is_newer hoac catalog_pending;
+        # khong is_newer thi day chac chan la duong catalog_pending mot minh.
+        update_modal["cat_only"] = not is_newer(manifest["version"], APP_VERSION)
         update_modal["active"] = True
 
     def run_update():
@@ -910,6 +933,42 @@ def main():
                 ok = apply_update(m, files)
         except Exception as e:
             print(f"Update error: {e}")
+
+        # Kho game di sau va di rieng: tai hong thi ban .py van giu nguyen va
+        # app van len phien ban moi, chi la chua co bia. Lan kiem tra sau
+        # catalog_pending van dung nen no tu thu lai.
+        if ok and catalog_pending(m):
+            # Tai va giai nen deu nam trong download_catalog; on_phase bao dung
+            # luc no chuyen tu tai sang giai nen, de nhan tren man hinh khong
+            # noi sai dang lam gi. apply_catalog chi la doi ten mot file, tu
+            # chua da xong nen khong can nhan rieng.
+            def enter_unpack():
+                update_modal["status"] = tr("upd_cat_unpacking")
+            try:
+                update_modal["status"] = tr("upd_cat_downloading")
+                staged = download_catalog(m, on_phase=enter_unpack)
+                # apply_catalog tra False khi os.replace hong (vd giua duong
+                # bi rut the); ep no thanh CatalogError de di chung mot nhanh
+                # xu ly voi loi tai - khong the de mot lan cai hong lang le
+                # trong khi mot lan tai hong thi nguoi dung duoc bao.
+                if not apply_catalog(m, staged):
+                    raise CatalogError(CATALOG_FAILED, "cai dat that bai")
+            except CatalogError as ce:
+                print(f"Catalog update failed: {ce}")
+                # Khong ghi thang vao update_modal: request_restart() sap ket
+                # thuc vong lap chi mot nhip sau, toast khong kip doc. Ghi vao
+                # settings nhu pending_update, hien o lan khoi dong ke tiep.
+                # Chi giu key da dich: modal ve mot dong khong xuong dong, va
+                # ce.detail (vd "can 111 MB, con 18 MB") thuong dai hon cho
+                # con lai duoi tran 34 ky tu.
+                state.pending_catalog_notice = tr(ce.key)
+            except Exception as e:
+                # Bat het con lai: vd os.statvfs trong download_catalog nem
+                # OSError truoc ca try cua no, nen no khong di theo nhanh
+                # CatalogError o tren. Loi kieu nay van phai co notice, khong
+                # duoc im lang nhu truoc.
+                print(f"Catalog update error: {e}")
+                state.pending_catalog_notice = tr(CATALOG_FAILED)
 
         if ok:
             update_modal["status"] = tr("upd_done")
@@ -941,6 +1000,7 @@ def main():
             update_modal["manifest"] = manifest
             update_modal["files"] = files
             update_modal["selected_opt"] = 0
+            update_modal["cat_only"] = not is_newer(manifest["version"], APP_VERSION)
             update_modal["failed"] = False
             update_modal["active"] = True
         else:
@@ -954,6 +1014,15 @@ def main():
         if state.pending_update == APP_VERSION:
             update_modal["notice"] = f"{tr('upd_success')}{APP_VERSION}"
         state.pending_update = ""
+        state.save_settings()
+
+    # Cung mot ly do: loi catalogue ghi truoc luc restart vi khong con nhip
+    # nao de nguoi dung doc toast. Uu tien no hon "upd_success" o tren neu ca
+    # hai cung co - mat kho game la thu dang bao hon la ban vua len phien ban
+    # moi thanh cong.
+    if state.pending_catalog_notice:
+        update_modal["notice"] = state.pending_catalog_notice
+        state.pending_catalog_notice = ""
         state.save_settings()
 
     if state.auto_update:
@@ -1919,19 +1988,25 @@ def main():
                 if btn_a or btn_b:
                     update_modal["active"] = False
             elif btn_left:
-                update_modal["selected_opt"] = (update_modal["selected_opt"] - 1) % 3
+                n_opts = len(update_modal_labels())
+                update_modal["selected_opt"] = (update_modal["selected_opt"] - 1) % n_opts
             elif btn_right:
-                update_modal["selected_opt"] = (update_modal["selected_opt"] + 1) % 3
+                n_opts = len(update_modal_labels())
+                update_modal["selected_opt"] = (update_modal["selected_opt"] + 1) % n_opts
             elif btn_b:
                 update_modal["active"] = False
             elif btn_a:
+                labels = update_modal_labels()
                 opt = update_modal["selected_opt"]
-                if opt == 1:
+                # cat_only khong co nut skip (xem update_modal_labels), nen
+                # "opt == 1" o day chi con dung nghia "bo qua ban nay" khi
+                # dang o modal 3 nut - o modal 2 nut, opt == 1 la "De sau".
+                if not update_modal["cat_only"] and opt == 1:
                     skip_version(update_modal["manifest"]["version"])
                     update_modal["active"] = False
                     toast_msg = tr("upd_skipped")
                     toast_timer = time.time()
-                elif opt == 2:
+                elif opt == len(labels) - 1:
                     update_modal["active"] = False
                 else:
                     update_modal["busy"] = True
@@ -3583,8 +3658,18 @@ def main():
             um = update_modal["manifest"] or {}
             rows_y = my + 100
             draw_text(f"{tr('upd_current')} {APP_VERSION}", font_item, mx + 45, rows_y, 200, 215, 235)
-            draw_text(f"{tr('upd_new')} {um.get('version', '?')}", font_item, mx + 45, rows_y + 40, 0, 246, 200)
-            draw_text(f"{tr('upd_files')} {len(update_modal['files'])}", font_sub, mx + 45, rows_y + 82, 150, 170, 200)
+            if update_modal["cat_only"]:
+                # Phien ban khong doi: "Ban moi: 1.39" trung voi dong tren se
+                # doc nhu mot loi hien thi. Noi dung dang thay la kho game,
+                # va so tep = 0 (catalog di lech duong "files") vo nghia hon
+                # la dung luong phai tai.
+                cat = catalog_entry(um) or {}
+                size_txt = human_bytes(cat["size"]) if cat else ""
+                draw_text(tr("upd_cat_new"), font_item, mx + 45, rows_y + 40, 0, 246, 200)
+                draw_text(f"{tr('game_size')}{size_txt}", font_sub, mx + 45, rows_y + 82, 150, 170, 200)
+            else:
+                draw_text(f"{tr('upd_new')} {um.get('version', '?')}", font_item, mx + 45, rows_y + 40, 0, 246, 200)
+                draw_text(f"{tr('upd_files')} {len(update_modal['files'])}", font_sub, mx + 45, rows_y + 82, 150, 170, 200)
 
             # "Co ban moi, 5 tep" khong tra loi duoc cau hoi duy nhat nguoi dung
             # dang hoi: cai bay gio hay de sau. Mot dong noi ban nay sua gi thi
@@ -3613,8 +3698,8 @@ def main():
                     draw_text("[A/B] OK", font_sub, mx + mw // 2, my + mh - 26,
                               200, 215, 235, center_x=True, center_y=True)
             else:
-                labels = [tr("upd_install"), tr("upd_skip"), tr("upd_later")]
-                bw = (mw - 100) // 3
+                labels = update_modal_labels()
+                bw = (mw - 100) // len(labels)
                 bh = 52
                 by = my + mh - 78
                 for i, lbl in enumerate(labels):
