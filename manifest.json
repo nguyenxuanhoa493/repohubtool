@@ -1,11 +1,11 @@
 {
-  "version": "1.44",
+  "version": "1.45",
   "python": "any",
-  "built": "2026-08-30T03:42:38+0700",
+  "built": "2026-08-30T05:15:05+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java có dấu cách trong tên tệp giờ mở được; tệp đã tải trước đó tự đổi tên, save và ảnh bìa theo cùng",
-    "en": "Java games with a space in the filename now open; files already on the card are renamed, saves and box art follow"
+    "vi": "Game Java hỏi nhập tên nhân vật giờ chơi được; ô nhập có sẵn chữ mặc định vì máy không có bàn phím",
+    "en": "Java games that ask you to type a name now work; the field carries a default because the handheld has no keyboard"
   },
   "remove": [
     "app.pyc",
@@ -238,8 +238,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 21544,
-      "sha256": "022616ea0aba949eff2ac02bbe35c0091b05c4886ee9fd272277ce9d56cc9a5b"
+      "size": 22412,
+      "sha256": "484125ddb8b751c3b8047b61614420d56ee70c24169ca69d687a0f50a1521208"
     },
     {
       "path": "rh/media.py",
@@ -294,7 +294,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "145702805fee6a1076fc12f30f35f6deaad17bc31b24a287b02b0478689a1a3d"
+      "sha256": "b9d0dc22a9ff4a370e63ce5fb2800366edea4f1eea2279c84041f14a3ab45f13"
     },
     {
       "path": "streamer.py",

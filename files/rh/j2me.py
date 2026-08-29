@@ -124,33 +124,58 @@ def runtime_supports_renderer():
     return _cached_probe(j2me_runtime_paths()["sdl"], "runtime", probe)
 
 
-def payload_supports_renderer():
-    """True when the archive shipped inside the app holds the newer build.
+# The two files that decide which emulator is installed. Sizes are compared
+# rather than hashes: hashing 66MB on this hardware costs seconds, while the tar
+# header carries the size for free and no two builds of these have ever matched
+# byte-count without being the same build.
+_VERSIONED = {"jar": "zulu17/bin/freej2me-sdl.jar",
+              "sdl": "zulu17/bin/sdl_interface"}
 
-    Reads tar headers only and stops at the entry it wants, which sits early in
-    the stream: measured at 1.9s on a Brick Pro against 2.0s for the whole
-    archive. Cached, so that is paid once per version of the payload.
+
+def payload_binary_sizes():
+    """Sizes of the emulator binaries inside the bundled archive.
+
+    Reads tar headers and stops once both are seen - they sit early in the
+    stream. Measured at about 2s on a Brick Pro, and cached, so that is paid
+    once per version of the payload.
     """
     def probe(path):
+        want = dict(_VERSIONED)
+        found = {}
         with tarfile.open(path, "r:gz") as tf:
             for m in tf:
-                if m.name.endswith("zulu17/bin/renderer.conf"):
-                    return True
-        return False
-    return _cached_probe(PAYLOAD, "payload", probe)
+                for key, tail in want.items():
+                    if m.name.endswith(tail):
+                        found[key] = m.size
+                if len(found) == len(want):
+                    break
+        return found or False
+    return _cached_probe(PAYLOAD, "payload", probe) or {}
 
 
 def runtime_is_stale():
-    """True when the emulator on the card is older than the one inside the app.
+    """True when the emulator on the card is not the one inside the app.
 
-    This is the ordinary state after dropping a newer full package over an
-    existing install: the new archive lands in the app folder while the old
-    emulator stays untouched in Emus/JAVA, because the installer only ever
-    unpacked when nothing was there at all.
+    This is the ordinary state after an in-app update: updates carry the app's
+    own files, never the 66MB runtime, so a device keeps whatever emulator it
+    was installed with until something notices. Comparing against the payload
+    rather than looking for one particular feature means a later change to the
+    emulator is picked up too, without this having to learn a new marker each
+    time.
     """
-    return (is_j2me_runtime_ready()
-            and not runtime_supports_renderer()
-            and payload_supports_renderer())
+    if not is_j2me_runtime_ready():
+        return False
+    sizes = payload_binary_sizes()
+    if not sizes:
+        return False
+    paths = j2me_runtime_paths()
+    for key, size in sizes.items():
+        try:
+            if os.path.getsize(paths[key]) != size:
+                return True
+        except OSError:
+            return True
+    return False
 
 
 def has_payload():
@@ -461,7 +486,7 @@ def install_j2me_emulator(force=False):
             with tarfile.open(PAYLOAD, "r:gz") as tf:
                 tf.extractall(f"{SDCARD_PATH}/Emus")
             upgraded = stale
-            # The binary on disk just changed under the cached answer.
+            # Both binaries on disk just changed under the cached answers.
             _probe_cache.pop("runtime", None)
 
         for rel in ("zulu17/bin/java", "zulu17/bin/sdl_interface"):
