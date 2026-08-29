@@ -93,7 +93,8 @@ from rh.emulators import resolve as resolve_emulator
 from rh.updater import (apply_update, check_for_update, download_update,
     release_note, request_restart, skip_version)
 from rh.version import APP_VERSION
-from rh.catalog import (VALID_EXTS, get_java_category_list,
+from rh.boxart import is_real_boxart_url
+from rh.catalog import (VALID_EXTS, alpha_index, get_java_category_list,
     get_games_for_view,
     get_source_systems_list,
     get_system_display_name,
@@ -767,7 +768,7 @@ def main():
 
         if local_img_path and os.path.exists(local_img_path):
             pre_download_modal["preview_status"] = "ready"
-        elif img_url and img_url != "null" and img_url.startswith("http") and "default.jpg" not in img_url:
+        elif is_real_boxart_url(img_url):
             url_hash = hashlib.md5(img_url.encode("utf-8")).hexdigest()[:12]
             ext = ".jpg" if (".jpg" in img_url.lower() or ".jpeg" in img_url.lower()) else ".png"
             tmp_prev = f"/tmp/prev_{url_hash}{ext}"
@@ -845,7 +846,9 @@ def main():
         "letters": ["#"] + [chr(c) for c in range(ord('A'), ord('Z') + 1)],
         "available_map": {},
         "counts_map": {},
-        "sys_code": None
+        "sys_code": None,
+        # Dang xep theo luot tai thi nhay chu cai se doi danh sach ve A-Z.
+        "needs_alpha_sort": False
     }
 
     modal_title = None
@@ -1966,12 +1969,21 @@ def main():
                 sel_let = alphabet_modal["letters"][alphabet_modal["selected_idx"]]
                 if sel_let in alphabet_modal["available_map"]:
                     target_idx = alphabet_modal["available_map"][sel_let]
+                    # Index duoc tinh theo thu tu A-Z, nen danh sach phai ve A-Z
+                    # thi no moi tro dung game. Doi khoa cache khien man hinh nap
+                    # lai dung thu tu do ngay khung hinh sau.
+                    switched = alphabet_modal.get("needs_alpha_sort", False)
+                    if switched:
+                        state.rom_sort_mode = "alpha"
                     selected_idx = target_idx
                     selected_indices["rom_games"] = target_idx
                     scroll_offsets["rom_games"] = target_idx
                     alphabet_modal["active"] = False
                     cnt = alphabet_modal["counts_map"].get(sel_let, 0)
-                    toast_msg = f"{tr('alpha_jump_toast')}{sel_let} ({cnt} game)" if state.current_lang == "VI" else f"{tr('alpha_jump_toast')}{sel_let} ({cnt} games)"
+                    unit = "game" if state.current_lang == "VI" else "games"
+                    toast_msg = f"{tr('alpha_jump_toast')}{sel_let} ({cnt} {unit})"
+                    if switched:
+                        toast_msg += tr("alpha_jump_sorted")
                     toast_timer = time.time()
                 else:
                     toast_msg = f"{tr('alpha_no_games')}'{sel_let}'"
@@ -2244,19 +2256,23 @@ def main():
                     toast_timer = time.time()
 
             elif current_screen == "rom_games" and btn_y:
-                # Open Alphabet Quick Jump Modal A-Z
-                games_list = get_games_for_view(current_source, current_rom_system, sort_by="title")
-                avail = {}
-                counts = {}
-                for idx, g in enumerate(games_list):
-                    t = g.get("title", "").strip().upper()
-                    first_ch = t[0] if t and t[0].isalpha() else "#"
-                    if first_ch not in avail:
-                        avail[first_ch] = idx
-                    counts[first_ch] = counts.get(first_ch, 0) + 1
+                # Open Alphabet Quick Jump Modal A-Z.
+                # Ban do chu cai chi co nghia tren danh sach xep A-Z, nen no phai
+                # duoc tinh tren chinh danh sach se hien sau khi nhay - dung ca
+                # the loai dang loc. Dang xep theo luot tai thi cu nhay se doi
+                # danh sach ve A-Z.
+                _alpha_cat = current_java_cat if current_source == "JAVA" else None
+                _alpha_key = (current_source, current_rom_system, "alpha", current_java_cat)
+                if _alpha_key == rom_games_cache_key:
+                    games_list = rom_games_cache
+                else:
+                    games_list = get_games_for_view(current_source, current_rom_system,
+                                                    sort_by="title", category=_alpha_cat)
+                avail, counts = alpha_index(games_list)
                 alphabet_modal["available_map"] = avail
                 alphabet_modal["counts_map"] = counts
                 alphabet_modal["sys_code"] = current_rom_system
+                alphabet_modal["needs_alpha_sort"] = state.rom_sort_mode != "alpha"
                 alphabet_modal["selected_idx"] = 0
                 alphabet_modal["active"] = True
 

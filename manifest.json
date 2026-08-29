@@ -1,17 +1,18 @@
 {
-  "version": "1.35",
+  "version": "1.38",
   "python": "any",
-  "built": "2026-08-29T17:24:42+0700",
+  "built": "2026-08-29T19:29:02+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Mở game bằng đúng giả lập và đúng chế độ máy đang chọn",
-    "en": "Games launch with the emulator and mode the device has selected"
+    "vi": "Không còn ảnh 404 ở box art; game chưa có bìa hiện ô tên game và hệ máy",
+    "en": "No more placeholder box art; games without a cover show a name-and-system tile"
   },
   "remove": [
     "app.pyc",
     "db.pyc",
     "rh/__init__.pyc",
     "rh/archive.pyc",
+    "rh/boxart.pyc",
     "rh/catalog.pyc",
     "rh/downloader.pyc",
     "rh/emulators.pyc",
@@ -118,8 +119,8 @@
     },
     {
       "path": "app.py",
-      "size": 212997,
-      "sha256": "7da0de642b4d22f6756ca94e42ebeae05a108bb3d17f0d2bd1270a0b19fec68e"
+      "size": 213973,
+      "sha256": "aab9d3cf09e2f2425adc11ee62dfd59485db69dea396dbb975f778cef02b55ae"
     },
     {
       "path": "assets/fallback.ttf",
@@ -173,8 +174,8 @@
     },
     {
       "path": "db.py",
-      "size": 17153,
-      "sha256": "47f68887d513bd4a3a1083412d4e1971099dede0f244d46d8fe75e95c05d6ed8"
+      "size": 17418,
+      "sha256": "dd320e97a25e98d094d2bf0f484824de5c34122b4961aee4120834c9333a5e8e"
     },
     {
       "path": "icon.png",
@@ -197,14 +198,19 @@
       "sha256": "4c6f830d6ac5564b1acd7cabc342565a9f3892c60dcfe43bf71aacf6af1111c2"
     },
     {
+      "path": "rh/boxart.py",
+      "size": 1374,
+      "sha256": "8c56849409a2a36c1c5265bf682a4cb1e3beb6d3c5d59823b501e2c3c9c9fd78"
+    },
+    {
       "path": "rh/catalog.py",
-      "size": 8437,
-      "sha256": "70d0864f1af3bc6241be6ea6e3968624691df3f3ff69e50e75b03e65830817d2"
+      "size": 9119,
+      "sha256": "c8e135a98cd4e9cd744df4d41b1fc025c9dbf76f6654e97fc1bef53e0199340a"
     },
     {
       "path": "rh/downloader.py",
-      "size": 37659,
-      "sha256": "40fc392b5540c73c21b2c60432d622e3b68e64af1ca443d934026e163ddfa26c"
+      "size": 37696,
+      "sha256": "6f905a451ea6fd5f6af7ffb887b5639f4be64d7c618c216fcec70581c9c51c5c"
     },
     {
       "path": "rh/emulators.py",
@@ -213,8 +219,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 27474,
-      "sha256": "0c0703777243bd0c51a9cff446f42d4c14783adf21379f2e330feb5d2ad02bea"
+      "size": 27570,
+      "sha256": "78c439735a2c8958a61ff7cb676b670d2aa7d89acc00e6d96075faa3b626b812"
     },
     {
       "path": "rh/j2me.py",
@@ -274,7 +280,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "476b3c031f102c5ee59c22d7cd13e2df123d4693a9507de6c0009792246e4bbf"
+      "sha256": "a2b72f3ae39cd5eb44a9b068662a9d7638b378cdeab430af2aa8e5df38bc36f1"
     },
     {
       "path": "streamer.py",
