@@ -1,11 +1,11 @@
 {
-  "version": "1.49",
+  "version": "1.50",
   "python": "any",
-  "built": "2026-08-30T12:46:22+0700",
+  "built": "2026-08-31T01:57:17+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa lỗi game bản 320x240 bị tải vào thư mục 240x320 nên chạy không lấp kín màn",
-    "en": "Fixed 320x240 builds landing in the 240x320 folder and so not filling the screen"
+    "vi": "Sửa game Java không mở được vì tệp chứa một mục rỗng bị đánh dấu khoá",
+    "en": "Fixed Java games refusing to open because the jar carries an empty entry flagged as encrypted"
   },
   "remove": [
     "app.pyc",
@@ -162,8 +162,8 @@
     },
     {
       "path": "app.py",
-      "size": 220339,
-      "sha256": "1e264d020ea3a37660c53a862bb05dda72fb5f5d5a4096e5d9dd3787a55cffb6"
+      "size": 221179,
+      "sha256": "145b3010f5c6b4071eb2bd0ee6e5485ce7a07d09ebbf6bcbec6701b906424074"
     },
     {
       "path": "assets/fallback.ttf",
@@ -252,8 +252,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 38198,
-      "sha256": "040745008d152b1d1a8d3df87461353319da038605377cc02afb61030b4f7552"
+      "size": 39011,
+      "sha256": "deeb4e0725226c3d501b46948f48c519d99c1d5481a6ee63af721a75b19e79e2"
     },
     {
       "path": "rh/emulators.py",
@@ -272,8 +272,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 23427,
-      "sha256": "ec731ae9bbbf4a3b76a23ee244785156fd8b1df74c9cc644e969339d2c1fe102"
+      "size": 25795,
+      "sha256": "19e069f2b2a126494bcb804a2bd10a2ef2095e7bddf450c4a280ed07ff746e3a"
     },
     {
       "path": "rh/media.py",
@@ -328,7 +328,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "8fc18771a081d07d4a3e5f232720bbc685ef3bbdb88c28154253a49eb151ddef"
+      "sha256": "8978657014751c7baebf561a4471d1e4e4b26b74baabd01527a7b38a90f62050"
     },
     {
       "path": "streamer.py",
