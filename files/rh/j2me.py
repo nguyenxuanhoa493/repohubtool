@@ -229,18 +229,38 @@ def save_render_mode(mode):
 
 # ------------------------------------------------------------------ rom folders
 def resolution_from_filename(filename):
-    """Folder a jar belongs in, guessed from its name, e.g. Game_240x320.jar.
+    """Folder a jar belongs in, read out of its name, e.g. Game_240x320.jar.
 
-    Only 957 of 3357 Java entries state a size and nothing else does - the jar
-    manifest has no size attribute and the catalogue has no column for it - so
-    anything unrecognised goes to the default and can be moved afterwards.
+    Two things a single leftmost match gets wrong, both seen in the catalogue:
+
+    A year is not a screen size. "Wimbledon-2009-320x240.jar" contains "009-320"
+    before it contains "320x240", and a hyphen used to count as a separator - so
+    the first match was a pair no folder is named after, and the whole name fell
+    through to the default. That put 320x240 builds in the 240x320 folder.
+
+    A variant name carries both sizes. These sources name a variant by appending
+    its size to the base name, so "Sushi-Suffle-240x320-320x240.jar" is the
+    320x240 build of a jar whose own name already said 240x320. The size that
+    counts is the last one, not the first.
+
+    So: every explicit "x" pair is considered and the last valid one wins, and
+    the looser separators are only consulted when no "x" pair names a folder.
+
+    Only about a quarter of Java entries state a size at all - the jar manifest
+    has no size attribute and the catalogue has no column for it - so anything
+    unrecognised goes to the default and can be moved afterwards.
     """
-    import re
-    m = re.search(r"(\d{2,3})\s*[xX_\-]\s*(\d{2,3})", filename or "")
-    if m:
-        for cand in (m.group(1) + m.group(2), m.group(2) + m.group(1)):
-            if cand in RESOLUTIONS:
-                return cand
+    name = filename or ""
+    for pattern in (r"(\d{2,3})\s*[xX]\s*(\d{2,3})",
+                    r"(\d{2,3})\s*[_\-]\s*(\d{2,3})"):
+        found = None
+        for m in re.finditer(pattern, name):
+            for cand in (m.group(1) + m.group(2), m.group(2) + m.group(1)):
+                if cand in RESOLUTIONS:
+                    found = cand
+                    break
+        if found:
+            return found
     return DEFAULT_RESOLUTION
 
 
