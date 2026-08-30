@@ -24,7 +24,7 @@ FALLBACK_FONT = os.path.join(ASSETS_DIR, "fallback.ttf")
 
 
 def font_candidates():
-    """Theme fonts first - they carry the CJK that 5 of the catalogue's 39,971
+    """Theme fonts first - they carry the CJK that 5 of the catalogue's 40,090
     titles need - then the firmware's own, then our bundled DejaVu, the only one
     we ship and therefore the only one we know covers Vietnamese."""
     return (sorted(glob.glob(f"{SDCARD_PATH}/Themes/*/wqy-microhei.ttf")) +

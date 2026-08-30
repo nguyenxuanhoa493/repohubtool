@@ -1,11 +1,11 @@
 {
-  "version": "1.46",
+  "version": "1.47",
   "python": "any",
-  "built": "2026-08-30T05:29:18+0700",
+  "built": "2026-08-30T12:06:03+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Giả lập Java giờ tự cập nhật trong app, không cần cài lại bản đầy đủ",
-    "en": "The Java emulator now updates in the app, no full reinstall needed"
+    "vi": "Thêm 164 game Java từ giaitri321.vip, ưu tiên bản 320x240 chơi lấp kín màn hình",
+    "en": "164 more Java games from giaitri321.vip, preferring the 320x240 build that fills the screen"
   },
   "remove": [
     "app.pyc",
@@ -110,9 +110,9 @@
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
     "url": "catalog/roms_store.sqlite3.gz",
-    "sha256": "c6d2ccdb3721eae9419e8f02f02d6651cfb0b741b4e61f0fb1427edcd4a3f2bd",
-    "sha256_plain": "2f2c495da431262f377448bc9448ab055b8f98f701dd3a9d15c45f073680d496",
-    "size": 10007993,
+    "sha256": "8dd9eb410ab3119703223df2fd69cfdd1f2be690dd2e01e8a106d7d05969c626",
+    "sha256_plain": "ee0690b79bfcd25168c4e29451e00ef2990f1e8fc2f8e991fd6acec4b87f7bfc",
+    "size": 9987857,
     "size_plain": 34463744
   },
   "runtime": {
@@ -263,7 +263,7 @@
     {
       "path": "rh/fonts.py",
       "size": 2302,
-      "sha256": "a49a5631669e17746783daa128d301b631d8bd1ebad1d94a57eed8b2b709d513"
+      "sha256": "423bacf4e8d95afc0239b6134e0ea0793090c37e165888c633fae72795f5d67d"
     },
     {
       "path": "rh/i18n.py",
@@ -328,7 +328,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "5279f5fea62e4c7f9a9a9830fa375ed1c9bcd04f9d8ccdb9844b7db166cf7625"
+      "sha256": "c2fdf9b760b4733d86ff05afe0cbcf14758c03196cdfb29f7f36ac585f3c169e"
     },
     {
       "path": "streamer.py",
