@@ -19,9 +19,9 @@ REG = "/System/Library/Fonts/Supplemental/Arial.ttf"
 
 CARDS = {
     "en": ("Games and tools for handheld consoles",
-           "40,090 games  ·  Java J2ME  ·  Wi-Fi transfer  ·  self-updating"),
+           "40,114 games  ·  Java J2ME  ·  Wi-Fi transfer  ·  self-updating"),
     "vi": ("Kho game và tiện ích cho máy chơi game cầm tay",
-           "40.090 game  ·  Java J2ME  ·  Truyền file Wi-Fi  ·  Tự cập nhật"),
+           "40.114 game  ·  Java J2ME  ·  Truyền file Wi-Fi  ·  Tự cập nhật"),
 }
 
 

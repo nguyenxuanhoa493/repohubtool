@@ -98,6 +98,7 @@ from rh.updater import (apply_catalog, apply_runtime, apply_update,
 from rh.storage import human_bytes
 from rh.version import APP_VERSION, is_newer
 from rh.boxart import is_real_boxart_url
+from db import CAT_GIAITRI321, CAT_LANDSCAPE
 from rh.catalog import (VALID_EXTS, alpha_index, get_java_category_list,
     get_games_for_view,
     get_source_systems_list,
@@ -1144,6 +1145,22 @@ def main():
         last_cache_time[sys_code] = now_t
         return res
 
+    def java_cat_label(code):
+        """Ten hien ra cho mot ke game Java.
+
+        Hai ke ghim mang ma bat dau bang "@" - chung duoc tinh ra chu khong phai
+        thu muc cua nguon - nen phai co nhan rieng, khong the in thang ma ra.
+        Mot cho duy nhat, dung cho ca danh sach ke lan tieu de man hinh game."""
+        if code == "ALL":
+            return tr("java_cat_all")
+        if code == CAT_GIAITRI321:
+            return tr("java_cat_giaitri321")
+        if code == CAT_LANDSCAPE:
+            return tr("java_cat_landscape")
+        if code == "":
+            return tr("java_cat_none")
+        return code
+
     def number_items(rows):
         """Prefix a running number onto the primary rows of a menu.
 
@@ -1434,12 +1451,7 @@ def main():
             if not java_cats_cache:
                 java_cats_cache = get_java_category_list()
             for code, cnt in java_cats_cache:
-                if code == "ALL":
-                    label = tr("java_cat_all")
-                elif code == "":
-                    label = tr("java_cat_none")
-                else:
-                    label = code
+                label = java_cat_label(code)
                 items.append({"id": f"javacat_{code}", "java_cat": code,
                               "title": f"• {label} ({cnt})"})
             items.append({"id": "back", "title": tr("back_store_menu")})
@@ -1581,8 +1593,7 @@ def main():
             elif current_source == "HACK":
                 header_title = f"ROM Hacks {sys_disp} [{cur_pos}/{total_g}]"
             elif current_source == "JAVA":
-                _jc = ("" if current_java_cat == "ALL"
-                       else f" - {tr('java_cat_none') if current_java_cat == '' else current_java_cat}")
+                _jc = "" if current_java_cat == "ALL" else " - " + java_cat_label(current_java_cat)
                 header_title = f"Game Java J2ME{_jc} [{cur_pos}/{total_g}]"
             elif current_source == "VIET":
                 header_title = f"Game Việt Hóa {sys_disp} [{cur_pos}/{total_g}]"
