@@ -683,6 +683,19 @@ def start_download_thread(sys_code, game_info, background=False):
             except:
                 pass
 
+            # Mot so ban dong goi de lai mot muc rong gan co ma hoa trong tep
+            # .jar. Khong ai doc muc do, nhung zip filesystem cua Java tu choi
+            # nguyen ca kho nen khi thay co do - "invalid CEN header" - nen game
+            # khong bao gio mo duoc. Don ngay sau khi tai, luc con biet chac day
+            # la tep vua ve chu khong phai thu nguoi dung tu chep vao.
+            if target_sys in ("JAVA", "J2ME") and extracted_rom_path:
+                try:
+                    from .j2me import strip_encrypted_markers
+                    if strip_encrypted_markers(extracted_rom_path):
+                        print(f"Cleaned encrypted marker from {os.path.basename(extracted_rom_path)}")
+                except Exception as e:
+                    print(f"J2ME jar cleanup failed: {e}")
+
             if is_real_boxart_url(img_url):
                 try:
                     rom_base = os.path.splitext(os.path.basename(extracted_rom_path))[0]

@@ -86,7 +86,7 @@ from rh.splash import (apply_splash_update,
 from rh.j2me import (RENDER_MODES, RESOLUTIONS,
     install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
     load_render_mode, move_to_resolution, pretty_resolution, resolution_of_path,
-    repair_unsafe_jar_names, rom_dir_for, runtime_is_stale,
+    repair_encrypted_jars, repair_unsafe_jar_names, rom_dir_for, runtime_is_stale,
     runtime_supports_renderer, safe_jar_name, save_render_mode)
 from rh.emulators import resolve as resolve_emulator
 from rh.fonts import VIET_PROBE, font_candidates, pick_font
@@ -230,6 +230,22 @@ def auto_check_and_supplement_environment():
             repaired_items.append(msg_fix)
     except Exception as e:
         print(f"Error repairing J2ME jar names: {e}")
+
+    # 1d. Jars the emulator refuses to open. Java's zip filesystem rejects a whole
+    # archive when any entry carries the encryption bit, even a zero-byte marker
+    # some packers leave behind, so one such entry makes an otherwise perfect
+    # game unopenable. Cheap to check: it reads each jar's central directory, not
+    # its contents.
+    try:
+        n_jar = repair_encrypted_jars()
+        if n_jar:
+            msg_jar = (f"Đã sửa {n_jar} game Java bị khoá sai để mở được"
+                       if state.current_lang == "VI"
+                       else f"Repaired {n_jar} Java games the emulator refused to open")
+            startup_notice["msg"] = msg_jar
+            repaired_items.append(msg_jar)
+    except Exception as e:
+        print(f"Error repairing encrypted J2ME jars: {e}")
 
     # 2. Wi-Fi power save is a runtime kernel setting that resets on reboot, so the
     # user's saved choice has to be reapplied here or the toggle would not stick.

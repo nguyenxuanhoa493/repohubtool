@@ -19,6 +19,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import zipfile
 
 from .paths import SDCARD_PATH, APP_DIR
 from . import state
@@ -329,6 +330,65 @@ def move_to_resolution(rom_path, folder):
         return None
 
 
+def strip_encrypted_markers(jar_path):
+    """Drop zero-length entries flagged encrypted. True when the jar was rewritten.
+
+    The emulator opens a jar as a Java zip filesystem, and that refuses the whole
+    archive the moment any entry carries the encryption bit - "invalid CEN header
+    (encrypted entry)" - even when nothing ever reads that entry. Some packers
+    leave a zero-byte "Password" entry with the bit set as a watermark, and one
+    of those makes an otherwise perfect game unopenable.
+
+    Only empty entries are dropped. One that actually carries bytes might be
+    something the game needs, and quietly deleting it would be damaging the game
+    rather than repairing it - better to leave it and let the failure stay
+    visible.
+    """
+    try:
+        with zipfile.ZipFile(jar_path) as zin:
+            infos = zin.infolist()
+            marked = [i for i in infos if i.flag_bits & 0x1]
+            if not marked or any(i.file_size for i in marked):
+                return False
+            keep = [i for i in infos if not (i.flag_bits & 0x1)]
+            tmp = jar_path + ".rh_tmp"
+            with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+                for i in keep:
+                    zout.writestr(i, zin.read(i.filename))
+    except Exception as e:
+        print(f"strip markers {os.path.basename(jar_path)} failed: {e}")
+        try:
+            os.remove(jar_path + ".rh_tmp")
+        except OSError:
+            pass
+        return False
+    try:
+        os.replace(tmp, jar_path)
+    except OSError as e:
+        print(f"replace {os.path.basename(jar_path)} failed: {e}")
+        return False
+    return True
+
+
+def repair_encrypted_jars():
+    """Rewrite jars the emulator cannot open. Returns how many were fixed.
+
+    Cheap enough to run at every startup: it reads each jar's central directory,
+    not its contents, and only rewrites the ones that carry the marker.
+    """
+    fixed = 0
+    for folder, _ in _rom_folders():
+        try:
+            entries = sorted(os.listdir(folder))
+        except OSError:
+            continue
+        for name in entries:
+            if name.lower().endswith(".jar") and strip_encrypted_markers(
+                    os.path.join(folder, name)):
+                fixed += 1
+    return fixed
+
+
 def _rename_game_data(old_stem, new_stem, res):
     """Follow a renamed jar with the folders the emulator keeps for it.
 
@@ -357,6 +417,25 @@ def _rename_game_data(old_stem, new_stem, res):
             print(f"rename boxart {old_stem} failed: {e}")
 
 
+def _rom_folders():
+    """[(duong dan, ten thu muc)] cho moi cho co the chua game Java.
+
+    Khong chi nam thu muc do phan giai: phep quet noi bo cua app nhat ca tep nam
+    thang trong Roms/JAVA lan trong bat ky thu muc con nao, nen mot lan sua chi
+    di qua nam thu muc quen thuoc se bo lai tep ma app van liet ke va van khong
+    mo duoc.
+    """
+    out = [(ROM_DIR, "")]
+    try:
+        for name in sorted(os.listdir(ROM_DIR)):
+            path = os.path.join(ROM_DIR, name)
+            if os.path.isdir(path):
+                out.append((path, name))
+    except OSError:
+        pass
+    return out
+
+
 def repair_unsafe_jar_names():
     """Rename jars this emulator cannot open. Returns how many were renamed.
 
@@ -366,21 +445,8 @@ def repair_unsafe_jar_names():
     card under those names, and re-downloading would not help - the fix has to
     reach the files that are already there.
     """
-    # Every folder the app would find a game in, not just the five resolution
-    # ones: the local scan picks up jars sitting loose in Roms/JAVA and in any
-    # subfolder, so a repair that only swept the known five would leave a file
-    # the app still lists, still offers, and still cannot open.
-    folders = [(ROM_DIR, "")]
-    try:
-        for name in sorted(os.listdir(ROM_DIR)):
-            path = os.path.join(ROM_DIR, name)
-            if os.path.isdir(path):
-                folders.append((path, name))
-    except OSError:
-        pass
-
     renamed = 0
-    for folder, res in folders:
+    for folder, res in _rom_folders():
         try:
             entries = sorted(os.listdir(folder))
         except OSError:
