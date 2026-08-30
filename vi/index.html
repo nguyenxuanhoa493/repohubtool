@@ -41,7 +41,7 @@
   "operatingSystem": "TrimUI (Linux)",
   "url": "https://retrohub.xuanhoa493.com/vi/",
   "downloadUrl": "https://github.com/nguyenxuanhoa493/repohubtool/releases/latest",
-  "softwareVersion": "1.44",
+  "softwareVersion": "1.46",
   "inLanguage": "vi",
   "description": "RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI. Cài một lần, tự cập nhật mãi.",
   "offers": {
@@ -114,6 +114,11 @@
   .btn:active{transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
+  /* Nut thu ba khong phai ban tai cua RetroHub ma cua mot nguoi khac. Mau vang
+     va mui ten de no khong bi doc nham la mot lua chon cai RetroHub. */
+  .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
+  .btn.alt::after{content:"↗";margin-left:7px;font-size:.85em;opacity:.75}
+  .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
   /* A pill rather than a line of text: it sits under two large buttons and had
@@ -273,8 +278,9 @@
     <h1>RetroHub</h1>
     <p class="sub">Kho game và tiện ích cho máy chơi game cầm tay</p>
     <div class="cta">
-      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.44/RetroHub-1.44-full.zip">Tải bản đầy đủ<small>95 MB · kèm giả lập Java</small></a>
-      <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.44/RetroHub-1.44.zip">Tải bản gọn<small>32 MB · không kèm Java</small></a>
+      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.46/RetroHub-1.46-full.zip">Tải bản đầy đủ<small>95 MB · kèm giả lập Java</small></a>
+      <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.46/RetroHub-1.46.zip">Tải bản gọn<small>32 MB · không kèm Java</small></a>
+      <a class="btn alt" href="https://github.com/DTH-RetroHandheld/assets_brickpro/releases">ROM stock + full giả lập<small>Bộ thẻ SD nền · của DTH-RetroHandheld</small></a>
     </div>
     <p class="dlcount" id="dlcount" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v8.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1v1h14v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z"/></svg><b>0</b><span>lượt tải</span></p>
   </div>
@@ -301,12 +307,12 @@
       <div class="card main">
         <h3>Bản đầy đủ</h3><span class="size">95 MB</span>
         <p>Ứng dụng, kho 39.971 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.</p>
-        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.44/RetroHub-1.44-full.zip">Tải bản đầy đủ</a>
+        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.46/RetroHub-1.46-full.zip">Tải bản đầy đủ</a>
       </div>
       <div class="card">
         <h3>Bản gọn</h3><span class="size">32 MB</span>
         <p>Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.</p>
-        <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.44/RetroHub-1.44.zip">Tải bản gọn</a>
+        <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.46/RetroHub-1.46.zip">Tải bản gọn</a>
       </div>
     </div>
     <p style="margin:18px 0 0;color:var(--muted);font-size:.94rem">Định chơi game Java? Có hướng dẫn riêng: <a href="/vi/java/" style="color:var(--accent)">Chơi game Java J2ME trên RetroHub</a> — thư mục độ phân giải, chế độ máy, bố trí nút và kiểu hiển thị.</p>

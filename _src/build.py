@@ -18,9 +18,28 @@ import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
-# One place to bump. Four strings drifted apart before this was a constant:
-# the two filenames, the release URL and the softwareVersion in the JSON-LD.
-VERSION = "1.44"
+def _published_version(fallback="1.46"):
+    """The version this repo is actually serving, read from manifest.json.
+
+    Hard-coding it here drifted three times in one day - the site offered 1.39
+    while 1.43 was out, then 1.44 while 1.46 was out - because the number lived
+    in a different file from the release that set it. manifest.json is written
+    by tools/build_release.py into this same repo, so it cannot disagree with
+    what the download buttons point at.
+    """
+    try:
+        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
+            v = json.load(f).get("version")
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    except Exception as e:
+        print("  canh bao: khong doc duoc manifest.json (%s), dung %s" % (e, fallback))
+    return fallback
+
+
+# The two filenames, the release URL and the softwareVersion in the JSON-LD all
+# come from here.
+VERSION = _published_version()
 VER_FULL = "RetroHub-%s-full.zip" % VERSION
 VER_LITE = "RetroHub-%s.zip" % VERSION
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
@@ -97,6 +116,9 @@ T = {
   "dls": "downloads so far",
   "dl_full": "Download full", "dl_full_sub": "95 MB · Java emulator included",
   "dl_lite": "Download lite", "dl_lite_sub": "32 MB · no Java emulator",
+  "dl_sd": "Stock ROMs + emulators",
+  "dl_sd_sub": "SD base package · by DTH-RetroHandheld",
+  "sd_url": "https://github.com/DTH-RetroHandheld/assets_brickpro/releases",
   "h_feat": "Highlights", "h_install": "How to install", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
   "steps": ["Unzip what you downloaded — you will see a <code>RetroHub</code> folder.",
@@ -139,6 +161,9 @@ T = {
   "dls": "lượt tải",
   "dl_full": "Tải bản đầy đủ", "dl_full_sub": "95 MB · kèm giả lập Java",
   "dl_lite": "Tải bản gọn", "dl_lite_sub": "32 MB · không kèm Java",
+  "dl_sd": "ROM stock + full giả lập",
+  "dl_sd_sub": "Bộ thẻ SD nền · của DTH-RetroHandheld",
+  "sd_url": "https://github.com/DTH-RetroHandheld/assets_brickpro/releases",
   "h_feat": "Tính năng nổi bật", "h_install": "Cách cài", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
   "steps": ["Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.",
@@ -243,6 +268,11 @@ CSS = """
   .btn:active{transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
+  /* Nut thu ba khong phai ban tai cua RetroHub ma cua mot nguoi khac. Mau vang
+     va mui ten de no khong bi doc nham la mot lua chon cai RetroHub. */
+  .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
+  .btn.alt::after{content:"↗";margin-left:7px;font-size:.85em;opacity:.75}
+  .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
   /* A pill rather than a line of text: it sits under two large buttons and had
@@ -566,6 +596,7 @@ PAGE = """<!doctype html>
     <div class="cta">
       <a class="btn" href="{REL}/{VER_FULL}">{dl_full}<small>{dl_full_sub}</small></a>
       <a class="btn ghost" href="{REL}/{VER_LITE}">{dl_lite}<small>{dl_lite_sub}</small></a>
+      <a class="btn alt" href="{sd_url}">{dl_sd}<small>{dl_sd_sub}</small></a>
     </div>
     <p class="dlcount" id="dlcount" hidden>{SVG_DL}<b>0</b><span>{dls}</span></p>
   </div>
