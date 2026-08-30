@@ -1,11 +1,11 @@
 {
-  "version": "1.47",
+  "version": "1.48",
   "python": "any",
-  "built": "2026-08-30T12:06:03+0700",
+  "built": "2026-08-30T12:26:08+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Thêm 164 game Java từ giaitri321.vip, ưu tiên bản 320x240 chơi lấp kín màn hình",
-    "en": "164 more Java games from giaitri321.vip, preferring the 320x240 build that fills the screen"
+    "vi": "Thêm 130 game Gameloft; hai danh mục mới ở đầu menu game Java: nguồn GiaiTri321 và game 320x240 lấp kín màn",
+    "en": "130 more Gameloft games; two new shelves at the top of the Java menu: the GiaiTri321 source and 320x240 games"
   },
   "remove": [
     "app.pyc",
@@ -110,9 +110,9 @@
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
     "url": "catalog/roms_store.sqlite3.gz",
-    "sha256": "8dd9eb410ab3119703223df2fd69cfdd1f2be690dd2e01e8a106d7d05969c626",
-    "sha256_plain": "ee0690b79bfcd25168c4e29451e00ef2990f1e8fc2f8e991fd6acec4b87f7bfc",
-    "size": 9987857,
+    "sha256": "c1a7a379961004ea8ed225d3894690817e65658497593e5c67f1f53ca0d8db8a",
+    "sha256_plain": "0d6320dd5384b5b2c807c65840fbf5f8426263f39f3ec1860508d4be295110cd",
+    "size": 9978611,
     "size_plain": 34463744
   },
   "runtime": {
@@ -162,8 +162,8 @@
     },
     {
       "path": "app.py",
-      "size": 219905,
-      "sha256": "0a42fef052717375f11e70017d8f48090c2a517abd12c9591b7429f08b332f38"
+      "size": 220339,
+      "sha256": "1e264d020ea3a37660c53a862bb05dda72fb5f5d5a4096e5d9dd3787a55cffb6"
     },
     {
       "path": "assets/fallback.ttf",
@@ -217,8 +217,8 @@
     },
     {
       "path": "db.py",
-      "size": 17418,
-      "sha256": "dd320e97a25e98d094d2bf0f484824de5c34122b4961aee4120834c9333a5e8e"
+      "size": 18953,
+      "sha256": "4d63585e4bbad4ab9b2ed520f13a4693f971fc63ea860914d16abc5826375557"
     },
     {
       "path": "icon.png",
@@ -267,8 +267,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 30272,
-      "sha256": "182abd65d8a7fb1a89c346a84938fbfdb0b30bf9be1896fc5331012fcffa3a0a"
+      "size": 30523,
+      "sha256": "f12e7c58bfdbd5a67b1eecb97b372f371c55873ca8b9e31fcc74e5d1f54b0df1"
     },
     {
       "path": "rh/j2me.py",
@@ -328,7 +328,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "c2fdf9b760b4733d86ff05afe0cbcf14758c03196cdfb29f7f36ac585f3c169e"
+      "sha256": "3bcea8b9c37a39bbe3fe8c8fc7ac89ae21b3bbb919dbe5d81cc8a70fdf91191d"
     },
     {
       "path": "streamer.py",

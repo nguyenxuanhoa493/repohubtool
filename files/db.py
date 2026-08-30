@@ -236,6 +236,25 @@ _CAT_EXPR = ("CASE WHEN s.filename LIKE 'category/%/%' "
              "THEN substr(s.filename, 10, instr(substr(s.filename, 10), '/') - 1) "
              "ELSE '' END")
 
+# Hai ke khong den tu thu muc cua nguon ma duoc tinh ra, va duoc ghim len dau
+# danh sach. Ma cua chung bat dau bang "@" - ky tu khong the co trong ten thu muc
+# mot nguon dat ra - nen khong the dung ten voi mot ke that.
+CAT_GIAITRI321 = "@giaitri321"
+CAT_LANDSCAPE = "@320x240"
+PINNED_CATS = (CAT_GIAITRI321, CAT_LANDSCAPE)
+
+# "Da chon" chu khong phai "co ton tai": ke 320x240 phai la nhung game that su
+# tai ve ban ngang. Mot game co ban 320x240 nam lam mirror nhung mac dinh van
+# tai ban doc thi de trong ke nay la noi doi voi nguoi bam vao.
+_DEFAULT_SRC = ("(SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1"
+                " ORDER BY priority ASC, id ASC LIMIT 1)")
+_PINNED_SQL = {
+    CAT_GIAITRI321: ("EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id"
+                     " AND is_alive = 1 AND source_name = 'GIAITRI321')"),
+    CAT_LANDSCAPE: ("EXISTS (SELECT 1 FROM game_sources WHERE id = %s"
+                    " AND lower(filename) LIKE '%%320x240%%')" % _DEFAULT_SRC),
+}
+
 
 def get_java_categories():
     """[(category, count)] for JAVA, most populated first, with ALL on top.
@@ -251,8 +270,18 @@ def get_java_categories():
     rows = cursor.fetchall()
     cursor.execute("SELECT COUNT(*) FROM games WHERE sys_code = 'JAVA'")
     total = cursor.fetchone()[0]
+
+    # Hai ke tinh ra, ghim ngay sau ALL. Dem rieng chu khong lay tu vong group o
+    # tren: chung cat ngang cac ke that chu khong phai mot ke nua trong so do.
+    pinned = []
+    for code in PINNED_CATS:
+        cursor.execute("SELECT COUNT(*) FROM games g WHERE g.sys_code = 'JAVA'"
+                       " AND " + _PINNED_SQL[code])
+        cnt = cursor.fetchone()[0]
+        if cnt:
+            pinned.append((code, cnt))
     conn.close()
-    return [("ALL", total)] + [(r["cat"], r["cnt"]) for r in rows]
+    return [("ALL", total)] + pinned + [(r["cat"], r["cnt"]) for r in rows]
 
 
 def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offset=0,
@@ -283,7 +312,9 @@ def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offse
         query += " AND g.sys_code = ?"
         params.append(sys_code)
 
-    if category is not None and category != "ALL":
+    if category in _PINNED_SQL:
+        query += " AND " + _PINNED_SQL[category]
+    elif category is not None and category != "ALL":
         if category:
             query += (" AND EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id"
                       " AND is_alive = 1 AND filename LIKE 'category/' || ? || '/%')")
