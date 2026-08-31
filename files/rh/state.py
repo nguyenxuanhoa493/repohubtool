@@ -11,8 +11,9 @@ import threading
 
 from .paths import SETTINGS_FILE, CATALOG_FILE
 
-# Load Settings
-current_lang = "VI"
+# Load Settings. Tieng Anh la mac dinh cho may cai moi; may da co
+# settings.json thi giu nguyen lua chon cu cua nguoi dung ben duoi.
+current_lang = "EN"
 downloaded_view_mode = "grid" # Default to Grid Mode
 # Keep the Wi-Fi radio awake between packets. Off saves battery but drops idle
 # SSH sessions and can interrupt a long download, so it is user-controlled.
@@ -40,7 +41,7 @@ if os.path.exists(SETTINGS_FILE):
     try:
         with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
             cfg = json.load(f)
-            current_lang = cfg.get("language", "VI")
+            current_lang = cfg.get("language", "EN")
             downloaded_view_mode = cfg.get("view_mode", "grid")
             wifi_awake = cfg.get("wifi_awake", False)
             auto_update = cfg.get("auto_update", True)
@@ -50,7 +51,7 @@ if os.path.exists(SETTINGS_FILE):
             catalog_sha = cfg.get("catalog_sha", "") or ""
             pending_catalog_notice = cfg.get("pending_catalog_notice", "") or ""
     except:
-        current_lang = "VI"
+        current_lang = "EN"
         downloaded_view_mode = "grid"
 _save_lock = threading.Lock()
 

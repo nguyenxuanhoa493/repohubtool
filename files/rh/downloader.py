@@ -710,6 +710,26 @@ def start_download_thread(sys_code, game_info, background=False):
                 except Exception as e:
                     print(f"MAME device ROM check failed: {e}")
 
+            # Kho gan nhan MAME cho ca game NAOMI/Atomiswave, nhung core
+            # mamearcade khong chay duoc chung: mot ben lech bo ROM, mot ben nap
+            # 142 MB roi bi kernel giet vi het RAM. Ca hai chay tot tren flycast,
+            # tuc la he DC. Chuyen TRUOC khi tai anh bia, de anh roi thang vao
+            # Imgs/DC va .media cua DC thay vi phai di don sau.
+            if target_sys == "MAME" and extracted_rom_path:
+                try:
+                    from .arcade_routing import route_to_dc
+                    dc_data = state.catalogs.get("DC", {})
+                    dc_rom_dir = dc_data.get("rom_dir") or resolve_rom_dir("DC")
+                    dc_img_dir = dc_data.get("img_dir", f"{SDCARD_PATH}/Imgs/DC")
+                    moved = route_to_dc(extracted_rom_path, img_dir, dc_rom_dir, dc_img_dir)
+                    if moved:
+                        print(f"Routed {os.path.basename(moved)} to the DC system (flycast)")
+                        extracted_rom_path = moved
+                        rom_dir, img_dir = dc_rom_dir, dc_img_dir
+                        dl_state["sys_code"] = "DC"
+                except Exception as e:
+                    print(f"NAOMI/Atomiswave routing failed: {e}")
+
             if is_real_boxart_url(img_url):
                 try:
                     rom_base = os.path.splitext(os.path.basename(extracted_rom_path))[0]

@@ -1,20 +1,22 @@
 {
-  "version": "1.51",
+  "version": "1.52",
   "python": "any",
-  "built": "2026-08-31T14:48:07+0700",
+  "built": "2026-09-01T04:04:34+0700",
   "base_url": "",
   "note": {
-    "vi": "Sua game CPS2 he MAME (Marvel vs Capcom, Street Fighter Alpha...) khong mo duoc",
-    "en": "Fixes CPS2 arcade games in the MAME system failing to launch"
+    "vi": "Game NAOMI/Atomiswave (Metal Slug 6, Marvel vs Capcom 2) ve dung he DC; them muc doi gia lap trong Tien ich",
+    "en": "NAOMI/Atomiswave games now route to the DC system; new emulator switcher in Utilities"
   },
   "remove": [
     "app.pyc",
     "db.pyc",
     "rh/__init__.pyc",
     "rh/arcade_device_roms.pyc",
+    "rh/arcade_routing.pyc",
     "rh/archive.pyc",
     "rh/boxart.pyc",
     "rh/catalog.pyc",
+    "rh/corepicker.pyc",
     "rh/downloader.pyc",
     "rh/emulators.pyc",
     "rh/fonts.pyc",
@@ -111,9 +113,9 @@
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
     "url": "catalog/roms_store.sqlite3.gz",
-    "sha256": "c1a7a379961004ea8ed225d3894690817e65658497593e5c67f1f53ca0d8db8a",
-    "sha256_plain": "0d6320dd5384b5b2c807c65840fbf5f8426263f39f3ec1860508d4be295110cd",
-    "size": 9978611,
+    "sha256": "81cdbed23c96f65a6b23aa0ebb4e63881998e88688808d1aea952cd230f0849b",
+    "sha256_plain": "73cc63d9242e9d81fda5b0659b9836074933cb593f77c10994a37a6bef7f6978",
+    "size": 9975415,
     "size_plain": 34463744
   },
   "runtime": {
@@ -163,8 +165,8 @@
     },
     {
       "path": "app.py",
-      "size": 220836,
-      "sha256": "f68d33c8f46b81d2f2b283d9477dce4a8b0d593476a83cc6f7fe04216d611191"
+      "size": 220190,
+      "sha256": "b10eea9855e543c76305b2cc38f6f09ea58057dd0c6f80e5e4453aef23efe165"
     },
     {
       "path": "assets/fallback.ttf",
@@ -242,6 +244,11 @@
       "sha256": "81ad0b17991d349f04c3cb4abd48cf3b26e833f0ed89a98f12fc35160df3f5b0"
     },
     {
+      "path": "rh/arcade_routing.py",
+      "size": 2922,
+      "sha256": "49af7d1306a09d2280ec31b6b6c9d1ced73e1eb29be5a4be60122b83e7e09f2e"
+    },
+    {
       "path": "rh/archive.py",
       "size": 11843,
       "sha256": "ec758260ce493499babaa5257527dfc8f710c16cbe4293c4e3bb1bf21b5ba774"
@@ -257,9 +264,14 @@
       "sha256": "9ec500c0c9832b9106b3054c9774f923fe26703d60242a68f3d19c6388408461"
     },
     {
+      "path": "rh/corepicker.py",
+      "size": 6700,
+      "sha256": "e2c657e394f38566422b8067f64d19dae7ffc3a756aa860598f53fde86db4392"
+    },
+    {
       "path": "rh/downloader.py",
-      "size": 40316,
-      "sha256": "07d779f9e64c328f8fbd475f385009ce8a7aa8f6dd858310427d4d46ddd6edde"
+      "size": 41551,
+      "sha256": "a1006c4d3f3a808037618c0629e1b40b8924aea081b221cd7f226879cd188f38"
     },
     {
       "path": "rh/emulators.py",
@@ -273,13 +285,13 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 30523,
-      "sha256": "f12e7c58bfdbd5a67b1eecb97b372f371c55873ca8b9e31fcc74e5d1f54b0df1"
+      "size": 31450,
+      "sha256": "d3a5964a18d63c8e9332e03d8c29ed95f5fa7370e181bdb1e749681f3b903aa0"
     },
     {
       "path": "rh/j2me.py",
-      "size": 26818,
-      "sha256": "d246e66a3e59737043f803e88f8534a70d10a33fa3b1fd7f68d377269ab77482"
+      "size": 27132,
+      "sha256": "5082662b836625e43bb1607759fc49cafb2a7df77a4a9c535f58c29f24242f1a"
     },
     {
       "path": "rh/media.py",
@@ -313,8 +325,8 @@
     },
     {
       "path": "rh/state.py",
-      "size": 4225,
-      "sha256": "9d21d980a444abafdce77560b4beb5e7337ff07bcbcee8a8cb2ba92904624d07"
+      "size": 4343,
+      "sha256": "7a35ef70574c0d5fb1550d2c2b12ff250b59b3e0933b6135f48f8672e03198db"
     },
     {
       "path": "rh/storage.py",
@@ -334,7 +346,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "3b9ba6a4de2491a99f364892a08985c9ca610fadabb4a83993756365a2c6a766"
+      "sha256": "b55f1b7d0d2c16c93f2156c017060972d441bb6669855f8cf21fe5b7ce9cbb5b"
     },
     {
       "path": "streamer.py",
