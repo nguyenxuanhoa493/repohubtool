@@ -253,7 +253,6 @@ CSS = """
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
-  .btn.alt::after{content:"↗";margin-left:7px;font-size:.85em;opacity:.75}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
