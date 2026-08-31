@@ -44,6 +44,21 @@ ALTERNATIVES = {
 }
 
 
+# Mot dong trong menu doi giai lap phai gop ca ten he lan ten giai lap dang chay.
+# Badge ben phai rong co dinh 130px va ve chu can giua, nen ten dai tran ca hai
+# dau - "PPSSPP Vulkan Performance Mode" la 30 ky tu. Vi vay ten giai lap di vao
+# tieu de, con badge chi con nhan ngan. 46 la so ky tu app.py cho phep o mot dong
+# co badge.
+ROW_TITLE_MAX = 46
+
+
+def row_title(row, limit=ROW_TITLE_MAX):
+    """'<he>  ·  <giai lap dang chay>', da cat sao cho khong tran khoi dong."""
+    text = "%s  ·  %s" % (row.get("label") or row.get("code") or "",
+                          row.get("current") or "")
+    return text if len(text) <= limit else text[:limit - 1] + "…"
+
+
 def _read_config(path):
     """utf-8-sig: vai config.json tren the co BOM va json.loads nghen ngay ky tu dau."""
     with open(path, encoding="utf-8-sig") as f:

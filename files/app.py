@@ -58,10 +58,8 @@ from rh.paths import (FLAG_FILES, is_nextui, QR_BMC_FILE, QR_DONATE_FILE,
     QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW)
 from rh import corepicker
 from rh.i18n import tr, wrap_title_2lines
-from rh.sysinfo import (detect_device_platform,
-    get_battery_info,
+from rh.sysinfo import (get_battery_info,
     get_device_info_rows,
-    get_ram_info,
     get_storage_info_rows)
 from rh.services import (get_sftp_guide_rows,
     get_ssh_guide_rows,
@@ -1328,8 +1326,12 @@ def main():
         elif current_screen == "core_sys":
             header_title = tr("core_sys_title")
             for row in core_sys_rows:
+                # Ten giai lap nam trong tieu de chu khong phai badge: badge rong
+                # co dinh 130px va ve chu can giua, nen "PPSSPP Vulkan Performance
+                # Mode" tran ca hai dau. Tieu de thi co 46 ky tu va tu cat bang "...".
                 items.append({"id": f"coresys_{row['code']}", "core_row": row,
-                              "title": row["label"], "label": row["current"]})
+                              "title": corepicker.row_title(row),
+                              "label": tr("view")})
             if not core_sys_rows:
                 items.append({"id": "core_none", "title": tr("core_none"), "sub": True})
             items.append({"id": "core_note", "title": tr("core_note"), "sub": True})
