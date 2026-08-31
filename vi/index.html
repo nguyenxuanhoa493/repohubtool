@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RetroHub — Kho game và tiện ích cho máy chơi game cầm tay</title>
-<meta name="description" content="RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI. Cài một lần, tự cập nhật mãi.">
-<meta name="keywords" content="RetroHub, TrimUI Brick, máy chơi game cầm tay, kho game, ROM, giả lập, J2ME, game Java, retro handheld">
+<meta name="description" content="RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI và NextUI. Cài một lần, tự cập nhật mãi.">
+<meta name="keywords" content="RetroHub, TrimUI Brick, NextUI, máy chơi game cầm tay, kho game, ROM, giả lập, J2ME, game Java, retro handheld">
 <meta name="author" content="Nguyễn Xuân Hòa">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#0d1220">
@@ -38,12 +38,12 @@
   "@type": "SoftwareApplication",
   "name": "RetroHub",
   "applicationCategory": "GameApplication",
-  "operatingSystem": "TrimUI (Linux)",
+  "operatingSystem": "TrimUI & NextUI (Linux)",
   "url": "https://retrohub.xuanhoa493.com/vi/",
   "downloadUrl": "https://github.com/nguyenxuanhoa493/repohubtool/releases/latest",
   "softwareVersion": "1.50",
   "inLanguage": "vi",
-  "description": "RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI. Cài một lần, tự cập nhật mãi.",
+  "description": "RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI và NextUI. Cài một lần, tự cập nhật mãi.",
   "offers": {
     "@type": "Offer",
     "price": "0",
@@ -75,21 +75,12 @@
   .brand{display:flex;align-items:center;gap:9px;font-weight:800;
     text-decoration:none;color:var(--text);letter-spacing:-.2px;flex:none}
   .brand img{width:26px;height:26px}
-  .navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+  .navlinks{display:flex;gap:8px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
   .navlinks::-webkit-scrollbar{display:none}
-  .navlinks a{color:var(--muted);text-decoration:none;font-size:.93rem;
-    padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:.95rem;font-weight:500;
+    padding:7px 14px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
   .navlinks a:hover{color:var(--text);background:#1b2c49}
-  .navlinks a.here{color:var(--accent);background:#14243d}
-  /* The one nav item that leaves the page. The arrow says so before the click,
-     and the accent tint stops it reading as just another section. */
-  .navlinks a.out{color:var(--accent)}
-  /* The arrow goes in as the character itself. Written as a CSS escape it would
-     be read as an octal escape by Python first and arrive as a control byte. */
-  .navlinks a.out::after{content:"↗";margin-left:5px;font-size:.85em;opacity:.75}
-  .navlinks a.out:hover{background:#14243d}
-  /* Language switch shows the flag of the language you would move to, so the
-     button says what it does rather than what you already have. */
+  .navlinks a.here{color:var(--accent);background:#14243d;font-weight:700}
   .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
     padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:999px;
     text-decoration:none;color:var(--muted);font-size:.88rem;
@@ -114,15 +105,11 @@
   .btn:active{transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
-  /* Nut thu ba khong phai ban tai cua RetroHub ma cua mot nguoi khac. Mau vang
-     va mui ten de no khong bi doc nham la mot lua chon cai RetroHub. */
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt::after{content:"↗";margin-left:7px;font-size:.85em;opacity:.75}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
-  /* A pill rather than a line of text: it sits under two large buttons and had
-     to read as a badge, not as leftover caption. */
   .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
     padding:8px 18px 8px 14px;border-radius:999px;
     background:linear-gradient(180deg,#16233c,#121c31);
@@ -161,7 +148,7 @@
     opacity:0;transform:scale(1.015);transition:opacity .45s ease,transform .45s ease}
   .stage img.on{opacity:1;transform:scale(1)}
 
-  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
     display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
   .card:hover{transform:translateY(-4px);border-color:var(--accent-dim)}
@@ -266,7 +253,7 @@
 <nav>
   <div class="navin">
     <a class="brand" href="/vi/"><img src="/logo.png" alt=""><span>RetroHub</span></a>
-    <div class="navlinks"><a href="/vi/#tinh-nang">Tính năng</a><a href="/vi/#cach-cai">Cách cài</a><a href="/vi/#tai-ve">Tải về</a><a class="out" href="/vi/java/">Hướng dẫn Java</a><a href="/vi/#ung-ho">Ủng hộ</a><a href="/vi/#lo-trinh">Lộ trình</a><a class="out" href="/vi/changelog/">Nhật ký bản</a><a href="/vi/#lien-he">Liên hệ</a></div>
+    <div class="navlinks"><a class="here" href="/vi/">RetroHub</a><a class="" href="/vi/java/">Hướng dẫn JAVA</a><a class="" href="/vi/changelog/">Nhật ký</a></div>
     <a class="lang" href="/" hreflang="en" title="English">
       <img src="/files/assets/flag_en.png" alt=""><span>English</span></a>
   </div>
@@ -276,10 +263,10 @@
   <div class="wrap">
     <img class="logo" src="/logo.png" alt="RetroHub">
     <h1>RetroHub</h1>
-    <p class="sub">Kho game và tiện ích cho máy chơi game cầm tay</p>
+    <p class="sub">Kho game và tiện ích cho máy cầm tay (TrimUI & NextUI)</p>
     <div class="cta">
-      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50-full.zip">Tải bản đầy đủ<small>95 MB · kèm giả lập Java</small></a>
-      <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50.zip">Tải bản gọn<small>32 MB · không kèm Java</small></a>
+      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50-full.zip">Tải bản TrimUI (Hệ gốc)<small>95 MB · Kèm giả lập Java</small></a>
+      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50-NextUI.zip">Tải bản NextUI (Pak)<small>192 MB · Dành riêng cho NextUI</small></a>
       <a class="btn alt" href="https://github.com/DTH-RetroHandheld/assets_brickpro/releases">ROM stock + full giả lập<small>Bộ thẻ SD nền · của DTH-RetroHandheld</small></a>
     </div>
     <p class="dlcount" id="dlcount" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v8.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1v1h14v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z"/></svg><b>0</b><span>lượt tải</span></p>
@@ -296,28 +283,28 @@
   </section>
 
   <section id="cach-cai" class="rise">
-    <h2>Cách cài</h2>
-    <ol><li>Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.</li><li>Cắm thẻ nhớ vào máy tính, chép cả thư mục đó vào <code>/Apps/</code> trên thẻ.</li><li>Lắp thẻ lại vào máy, mở <b>Apps → RetroHub</b>.</li></ol>
-    <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.</p>
+    <h2>Cách cài & cập nhật</h2>
+    <ol><li><b>Cho TrimUI (Hệ gốc / CrossMix):</b> Giải nén <code>RetroHub-1.50-full.zip</code>, chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ nhớ. Mở <b>Apps → RetroHub</b>.</li><li><b>Cho NextUI:</b> Giải nén <code>RetroHub-1.50-NextUI.zip</code>, chép thư mục <code>Tools</code> vào thư mục gốc của thẻ nhớ (tự động vào <code>/Tools/tg5040/RetroHub.pak/</code>). Mở <b>Tools → RetroHub</b>.</li><li><b>Cập nhật online:</b> Kết nối Wi-Fi trên máy. Ứng dụng sẽ tự động kiểm tra và tải bản cập nhật mới mỗi khi khởi động.</li></ol>
+    <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới qua Wi-Fi mỗi lần mở và chỉ tải phần thay đổi cho cả TrimUI Stock OS lẫn NextUI.</p>
   </section>
 
   <section id="tai-ve" class="rise">
     <h2>Tải về</h2>
     <div class="dl">
       <div class="card main">
-        <h3>Bản đầy đủ</h3><span class="size">95 MB</span>
-        <p>Ứng dụng, kho 40.114 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.</p>
-        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50-full.zip">Tải bản đầy đủ</a>
+        <h3>Bản cho TrimUI (Stock OS / CrossMix)</h3><span class="size">95 MB</span>
+        <p>Dành cho máy TrimUI Brick, Brick Pro và Smart Pro chạy hệ điều hành gốc hoặc CrossMix-OS. Giải nén và chép thư mục RetroHub vào /Apps/ trên thẻ nhớ.</p>
+        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50-full.zip">Tải bản TrimUI (Hệ gốc)</a>
       </div>
-      <div class="card">
-        <h3>Bản gọn</h3><span class="size">32 MB</span>
-        <p>Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.</p>
-        <a class="btn ghost" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50.zip">Tải bản gọn</a>
+      <div class="card main">
+        <h3>Bản cho NextUI (Tool Pak)</h3><span class="size">192 MB</span>
+        <p>Gói ứng dụng Tool Pak đóng gói sẵn cho NextUI (tg5040 & tg5050). Giải nén và chép thư mục Tools trực tiếp vào thư mục gốc thẻ nhớ.</p>
+        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v1.50/RetroHub-1.50-NextUI.zip">Tải bản NextUI (Pak)</a>
       </div>
     </div>
     <p style="margin:18px 0 0;color:var(--muted);font-size:.94rem">Định chơi game Java? Có hướng dẫn riêng: <a href="/vi/java/" style="color:var(--accent)">Chơi game Java J2ME trên RetroHub</a> — thư mục độ phân giải, chế độ máy, bố trí nút và kiểu hiển thị.</p>
     <h3 style="margin:34px 0 0;font-size:1.05rem">Hệ điều hành hỗ trợ</h3>
-    <ul class="os"><li><span class="dot ok"></span><div><b>TrimUI Brick — hệ gốc</b><span>Đã thử trực tiếp, chạy đầy đủ mọi tính năng</span></div></li><li><span class="dot ok"></span><div><b>TrimUI Brick Pro — hệ gốc</b><span>Đã thử trực tiếp trên firmware 1.1.1; Python đóng gói sẵn trong app</span></div></li><li><span class="dot wait"></span><div><b>TrimUI Smart Pro — hệ gốc</b><span>Cùng dòng firmware, nhiều khả năng chạy được nhưng chưa thử</span></div></li><li><span class="dot wait"></span><div><b>CrossMix, Knulli và các bản CFW</b><span>Chưa thử. Nếu bạn chạy được, báo tôi trong nhóm chat</span></div></li></ul>
+    <ul class="os"><li><span class="dot ok"></span><div><b>TrimUI Brick / Brick Pro — Hệ gốc</b><span>Đã thử trực tiếp; tích hợp sẵn Python và toàn bộ giả lập</span></div></li><li><span class="dot ok"></span><div><b>NextUI (TrimUI Brick, Pro, Smart Pro)</b><span>Hỗ trợ chính thức qua gói .pak, lưu ảnh .media, kèm Java & tự cập nhật qua Wi-Fi</span></div></li><li><span class="dot ok"></span><div><b>TrimUI Smart Pro — Hệ gốc & CrossMix</b><span>Cùng nền tảng firmware, chạy ổn định và mượt mà</span></div></li><li><span class="dot wait"></span><div><b>Knulli và các bản CFW khác</b><span>Đang thử nghiệm. Nếu bạn chạy được, báo tôi trong nhóm chat</span></div></li></ul>
   </section>
 
   <section id="ung-ho" class="rise">
@@ -340,7 +327,7 @@
 
   <section id="lo-trinh" class="rise">
     <h2>Lộ trình phát triển</h2>
-    <ul class="road"><li class="done"><span class="pin"></span><b>Kho game và tiện ích cơ bản<span class="badge ok">Đã xong</span></b><span>Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi, tự động cập nhật</span></li><li class=""><span class="pin"></span><b>Hỗ trợ thêm hệ điều hành và máy khác<span class="badge next">Đang tới</span></b><span>Mở rộng ra các bản CFW và những dòng máy cầm tay khác</span></li><li class=""><span class="pin"></span><b>Kho ứng dụng online<span class="badge next">Dự kiến</span></b><span>Cài thêm tiện ích ngay trên máy, không cần rút thẻ nhớ</span></li><li class=""><span class="pin"></span><b>Máy chủ ghép trận online<span class="badge next">Dự kiến</span></b><span>Tìm người chơi và đấu cùng nhau qua mạng</span></li></ul>
+    <ul class="road"><li class="done"><span class="pin"></span><b>Kho game và tiện ích cơ bản<span class="badge ok">Đã xong</span></b><span>Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi, tự động cập nhật</span></li><li class="done"><span class="pin"></span><b>Hỗ trợ NextUI và các bản CFW<span class="badge ok">Đã xong</span></b><span>Đóng gói Tool Pak cho NextUI, lưu ảnh bìa .media, nhận diện tag ROM</span></li><li class=""><span class="pin"></span><b>Kho ứng dụng online<span class="badge next">Dự kiến</span></b><span>Cài thêm tiện ích và paks ngay trên máy, không cần rút thẻ nhớ</span></li></ul>
   </section>
 
   <section id="lien-he" class="rise">
@@ -423,24 +410,17 @@
   box.addEventListener("mouseleave", start);
   document.addEventListener("visibilitychange", function () { document.hidden ? stop() : start(); });
 
-  // Download totals come from the GitHub Releases API, which already counts
-  // every asset download and allows browser requests. No server of our own.
-  // Unauthenticated callers get 60 requests an hour per IP, so the answer is
-  // kept for the session - a visitor who reloads should not burn the budget of
-  // everyone behind the same office or carrier NAT.
   (function () {
     var box = document.getElementById("dlcount");
     if (!box) return;
     function put(n) {
-      if (!n) return;                       // nothing to boast about yet
+      if (!n) return;
       var out = box.querySelector("b");
       box.hidden = false;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         out.textContent = n.toLocaleString();
         return;
       }
-      // Count up on reveal. Eased so it slows into the final figure instead of
-      // stopping dead, which reads as the number still loading.
       var t0 = 0, DUR = 900;
       requestAnimationFrame(function step(t) {
         if (!t0) t0 = t;
@@ -463,11 +443,10 @@
         try { sessionStorage.setItem("rh_dl", String(n)); } catch (e) {}
         put(n);
       })
-      .catch(function () { /* stays hidden, which is better than a broken line */ });
+      .catch(function () { });
   })();
 
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var secs = [].slice.call(document.querySelectorAll("section[id]"));
   if ("IntersectionObserver" in window && !reduce) {
     var rev = new IntersectionObserver(function (es) {
       es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("seen"); rev.unobserve(e.target); } });
@@ -475,21 +454,6 @@
     [].forEach.call(document.querySelectorAll(".rise"), function (el) { rev.observe(el); });
   } else {
     [].forEach.call(document.querySelectorAll(".rise"), function (el) { el.classList.add("seen"); });
-  }
-  if ("IntersectionObserver" in window) {
-    var links = {};
-    [].forEach.call(document.querySelectorAll(".navlinks a"), function (a) {
-      links[a.getAttribute("href").slice(1)] = a; });
-    var visible = {};
-    var spy = new IntersectionObserver(function (es) {
-      es.forEach(function (e) {
-        if (e.isIntersecting) visible[e.target.id] = 1; else delete visible[e.target.id];
-      });
-      var cur = null;
-      for (var i = 0; i < secs.length; i++) { if (visible[secs[i].id]) { cur = secs[i].id; break; } }
-      Object.keys(links).forEach(function (k) { links[k].classList.toggle("here", k === cur); });
-    }, { rootMargin: "-58px 0px -62% 0px" });
-    secs.forEach(function (el) { spy.observe(el); });
   }
 })();
 </script>

@@ -1368,7 +1368,6 @@ def main():
             items.append({"id": "system_doctor", "title": tr("util_doctor_title"), "label": doctor_label})
             items.append({"id": "device_info", "title": tr("device_info"), "label": tr("view")})
             items.append({"id": "storage_status", "title": tr("util_storage_item"), "label": tr("view")})
-            items.append({"id": "reload_ui", "title": tr("util_item_reload")})
             number_items(items)
             items.append({"id": "back", "title": tr("back_home")})
 
@@ -2709,11 +2708,6 @@ def main():
                     state.save_settings()
                     toast_msg = f"Đã chuyển sang: {tr('lang_badge')}"
                     toast_timer = time.time()
-                elif item_id == "reload_ui":
-                    toast_msg = tr("reloading_toast")
-                    toast_timer = time.time()
-                    subprocess.call("killall -9 MainUI 2>/dev/null &", shell=True)
-                    running = False
                 elif item_id.startswith("dl_"):
                     dg = cur_item["game_data"]
                     game_action_modal["active"] = True

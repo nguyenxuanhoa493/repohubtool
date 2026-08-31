@@ -10,7 +10,7 @@ import threading
 import urllib.request
 import concurrent.futures
 
-from .paths import SDCARD_PATH, TEMP_DOWNLOAD_DIR
+from .paths import SDCARD_PATH, TEMP_DOWNLOAD_DIR, resolve_rom_dir
 from . import state
 from . import neterrors
 from . import archive as archive_tool
@@ -203,7 +203,7 @@ def start_download_thread(sys_code, game_info, background=False):
             str(game_info.get("filename", "")).replace("\\", "/")).strip() or "game.zip"
 
         sys_data = state.catalogs.get(target_sys, {})
-        rom_dir = sys_data.get("rom_dir", f"{SDCARD_PATH}/Roms/{target_sys}")
+        rom_dir = resolve_rom_dir(target_sys)
         # J2ME titles are each built for one handset resolution, and the launcher
         # reads that from the folder name - so a jar has to land in the right one.
         if target_sys in ("JAVA", "J2ME"):
@@ -702,7 +702,15 @@ def start_download_thread(sys_code, game_info, background=False):
                     target_img = os.path.join(img_dir, f"{rom_base}.png")
                     img_req = urllib.request.Request(img_url, headers={"User-Agent": "Mozilla/5.0"})
                     with urllib.request.urlopen(img_req, context=ctx, timeout=15) as img_resp:
-                        save_boxart_png(img_resp.read(), target_img)
+                        raw_img = img_resp.read()
+                        save_boxart_png(raw_img, target_img)
+                        # Save copy for NextUI (.media subfolder inside ROM directory)
+                        try:
+                            nextui_media_dir = os.path.join(rom_dir, ".media")
+                            os.makedirs(nextui_media_dir, exist_ok=True)
+                            save_boxart_png(raw_img, os.path.join(nextui_media_dir, f"{rom_base}.png"))
+                        except Exception:
+                            pass
                 except Exception as ie:
                     print(f"Boxart download exception: {ie}")
 

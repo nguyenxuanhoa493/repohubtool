@@ -18,15 +18,10 @@ import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
-def _published_version(fallback="1.46"):
-    """The version this repo is actually serving, read from manifest.json.
 
-    Hard-coding it here drifted three times in one day - the site offered 1.39
-    while 1.43 was out, then 1.44 while 1.46 was out - because the number lived
-    in a different file from the release that set it. manifest.json is written
-    by tools/build_release.py into this same repo, so it cannot disagree with
-    what the download buttons point at.
-    """
+
+def _published_version(fallback="1.50"):
+    """The version this repo is actually serving, read from manifest.json."""
     try:
         with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
             v = json.load(f).get("version")
@@ -37,11 +32,9 @@ def _published_version(fallback="1.46"):
     return fallback
 
 
-# The two filenames, the release URL and the softwareVersion in the JSON-LD all
-# come from here.
 VERSION = _published_version()
 VER_FULL = "RetroHub-%s-full.zip" % VERSION
-VER_LITE = "RetroHub-%s.zip" % VERSION
+VER_NEXTUI = "RetroHub-%s-NextUI.zip" % VERSION
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
        % VERSION)
 
@@ -67,17 +60,17 @@ FEATURES = [
 
 OS_ROWS = [
     ("ok",
-     ("TrimUI Brick — stock OS", "Tested directly, every feature works"),
-     ("TrimUI Brick — hệ gốc", "Đã thử trực tiếp, chạy đầy đủ mọi tính năng")),
+     ("TrimUI Brick / Brick Pro — Stock OS", "Tested directly; Python runtime and emulators pre-bundled"),
+     ("TrimUI Brick / Brick Pro — Hệ gốc", "Đã thử trực tiếp; tích hợp sẵn Python và toàn bộ giả lập")),
     ("ok",
-     ("TrimUI Brick Pro — stock OS", "Tested directly on firmware 1.1.1; Python ships with the app"),
-     ("TrimUI Brick Pro — hệ gốc", "Đã thử trực tiếp trên firmware 1.1.1; Python đóng gói sẵn trong app")),
+     ("NextUI (TrimUI Brick, Pro, Smart Pro)", "Officially supported via .pak, dual .media artwork, Java & Wi-Fi update"),
+     ("NextUI (TrimUI Brick, Pro, Smart Pro)", "Hỗ trợ chính thức qua gói .pak, lưu ảnh .media, kèm Java & tự cập nhật qua Wi-Fi")),
+    ("ok",
+     ("TrimUI Smart Pro — Stock OS & CrossMix", "Same firmware platform, runs smoothly and reliably"),
+     ("TrimUI Smart Pro — Hệ gốc & CrossMix", "Cùng nền tảng firmware, chạy ổn định và mượt mà")),
     ("wait",
-     ("TrimUI Smart Pro — stock OS", "Same firmware family, likely fine but untested"),
-     ("TrimUI Smart Pro — hệ gốc", "Cùng dòng firmware, nhiều khả năng chạy được nhưng chưa thử")),
-    ("wait",
-     ("CrossMix, Knulli and other CFW", "Untested. If it runs for you, tell me in the chat group"),
-     ("CrossMix, Knulli và các bản CFW", "Chưa thử. Nếu bạn chạy được, báo tôi trong nhóm chat")),
+     ("Knulli and other CFW builds", "Under testing. If it runs for you, let us know in the chat group"),
+     ("Knulli và các bản CFW khác", "Đang thử nghiệm. Nếu bạn chạy được, báo tôi trong nhóm chat")),
 ]
 
 ROADMAP = [
@@ -86,55 +79,56 @@ ROADMAP = [
       "Nearly 40,000 games, Java J2ME emulator, Wi-Fi file transfer, self-updating"),
      ("Kho game và tiện ích cơ bản", "Đã xong",
       "Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi, tự động cập nhật")),
-    ("", "next",
-     ("More systems and firmware", "Up next",
-      "Reaching the CFW builds and other handhelds"),
-     ("Hỗ trợ thêm hệ điều hành và máy khác", "Đang tới",
-      "Mở rộng ra các bản CFW và những dòng máy cầm tay khác")),
+    ("done", "ok",
+     ("NextUI & CFW support", "Done",
+      "Dedicated NextUI Tool Pak, dual artwork saving, ROM tag mapping"),
+     ("Hỗ trợ NextUI và các bản CFW", "Đã xong",
+      "Đóng gói Tool Pak cho NextUI, lưu ảnh bìa .media, nhận diện tag ROM")),
     ("", "next",
      ("Online app store", "Planned",
-      "Install more tools straight from the device, no card removal"),
+      "Install more tools and paks straight from the device, no card removal"),
      ("Kho ứng dụng online", "Dự kiến",
-      "Cài thêm tiện ích ngay trên máy, không cần rút thẻ nhớ")),
-    ("", "next",
-     ("Online matchmaking server", "Planned",
-      "Find other players and play together over the network"),
-     ("Máy chủ ghép trận online", "Dự kiến",
-      "Tìm người chơi và đấu cùng nhau qua mạng")),
+      "Cài thêm tiện ích và paks ngay trên máy, không cần rút thẻ nhớ")),
 ]
 
 T = {
  "en": {
   "lang": "en", "other": "vi", "other_name": "Tiếng Việt", "home": "/",
   "title": "RetroHub — Games and tools for handheld consoles",
-  "desc": "RetroHub: nearly 40,000 games, a Java J2ME emulator, Wi-Fi file transfer and self-updating for TrimUI handheld consoles. Install once, update forever.",
-  "keywords": "RetroHub, TrimUI Brick, handheld console, game library, ROM, emulator, J2ME, Java games, retro handheld",
+  "desc": "RetroHub: nearly 40,000 games, a Java J2ME emulator, Wi-Fi file transfer and self-updating for TrimUI and NextUI handheld consoles. Install once, update forever.",
+  "keywords": "RetroHub, TrimUI Brick, NextUI, handheld console, game library, ROM, emulator, J2ME, Java games, retro handheld",
   "og_alt": "RetroHub — games and tools for handheld consoles",
   "og_desc": "Nearly 40,000 games, a Java J2ME emulator, Wi-Fi file transfer and self-updating. Install once, update forever.",
-  "tagline": "Games and tools for handheld consoles",
-  "nav": ["Features", "Install", "Download", "Support", "Roadmap", "Contact"],
+  "tagline": "Games and tools for handheld consoles (TrimUI & NextUI)",
+  "nav_home": "RetroHub",
   "dls": "downloads so far",
-  "dl_full": "Download full", "dl_full_sub": "95 MB · Java emulator included",
-  "dl_lite": "Download lite", "dl_lite_sub": "32 MB · no Java emulator",
+  "dl_trimui": "Download for TrimUI (Stock)",
+  "dl_trimui_sub": "95 MB · Java emulator included",
+  "dl_nextui": "Download for NextUI (Pak)",
+  "dl_nextui_sub": "192 MB · Ready for NextUI",
   "dl_sd": "Stock ROMs + emulators",
   "dl_sd_sub": "SD base package · by DTH-RetroHandheld",
   "sd_url": "https://github.com/DTH-RetroHandheld/assets_brickpro/releases",
-  "h_feat": "Highlights", "h_install": "How to install", "h_dl": "Download",
+  "h_feat": "Highlights", "h_install": "How to install & update", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
-  "steps": ["Unzip what you downloaded — you will see a <code>RetroHub</code> folder.",
-            "Put the memory card in your computer and copy that whole folder into <code>/Apps/</code> on the card.",
-            "Put the card back, open <b>Apps → RetroHub</b>."],
-  "note": "You only do this once. From then on the app checks for a new build every time it opens and downloads only what changed — usually a few hundred KB.",
-  "full_t": "Full", "full_s": "95 MB",
-  "full_p": "The app, 40,114 games and the Java J2ME emulator. Pick this if you want to play Java games.",
-  "lite_t": "Lite", "lite_s": "32 MB",
-  "lite_p": "The app and the game library, without the Java emulator. Quick to install, you can add Java later.",
+  "steps": [
+    "<b>For TrimUI (Stock OS / CrossMix):</b> Unpack <code>" + VER_FULL + "</code> and copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card. Open <b>Apps → RetroHub</b>.",
+    "<b>For NextUI:</b> Unpack <code>" + VER_NEXTUI + "</code> and copy the <code>Tools</code> folder directly to your SD card root (lands in <code>/Tools/tg5040/RetroHub.pak/</code>). Open <b>Tools → RetroHub</b>.",
+    "<b>Online updates:</b> Connect your handheld to Wi-Fi. RetroHub checks for updates automatically every time it opens and downloads only what changed."
+  ],
+  "note": "You only install manually once. From then on, the app updates automatically over Wi-Fi on both TrimUI Stock OS and NextUI.",
+  "card_trimui_t": "TrimUI (Stock OS / CrossMix)",
+  "card_trimui_s": "95 MB",
+  "card_trimui_p": "For TrimUI Brick, Brick Pro and Smart Pro on stock OS or CrossMix. Unpack and copy the RetroHub folder into /Apps/ on your SD card.",
+  "card_nextui_t": "NextUI (Tool Pak)",
+  "card_nextui_s": "192 MB",
+  "card_nextui_p": "Specially packaged Tool Pak for NextUI on TrimUI handhelds (tg5040 & tg5050). Unpack and copy the Tools folder directly to the root of your SD card.",
   "nav_java": "Java guide", "java_url": "/java/",
   "nav_changelog": "Changelog", "changelog_url": "/changelog/",
   "java_guide": ('Playing Java games? There is a separate guide for that: '
                  '<a href="/java/" style="color:var(--accent)">Java J2ME on RetroHub</a> '
                  '— resolution folders, phone modes, pad layouts and display settings.'),
-  "h_os": "Supported systems",
+  "h_os": "Supported operating systems",
   "sup_p": "RetroHub is a personal project, built and given away for free. If it is useful to you, a coffee keeps me going.",
   "bank": "Bank", "holder": "Account holder", "acct": "Account number",
   "bmc": "Buy me a coffee", "bmc_sub": "Card and PayPal",
@@ -152,30 +146,36 @@ T = {
  "vi": {
   "lang": "vi", "other": "en", "other_name": "English", "home": "/vi/",
   "title": "RetroHub — Kho game và tiện ích cho máy chơi game cầm tay",
-  "desc": "RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI. Cài một lần, tự cập nhật mãi.",
-  "keywords": "RetroHub, TrimUI Brick, máy chơi game cầm tay, kho game, ROM, giả lập, J2ME, game Java, retro handheld",
+  "desc": "RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI và NextUI. Cài một lần, tự cập nhật mãi.",
+  "keywords": "RetroHub, TrimUI Brick, NextUI, máy chơi game cầm tay, kho game, ROM, giả lập, J2ME, game Java, retro handheld",
   "og_alt": "RetroHub — kho game và tiện ích cho máy chơi game cầm tay",
   "og_desc": "Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật. Cài một lần, tự cập nhật mãi.",
-  "tagline": "Kho game và tiện ích cho máy chơi game cầm tay",
-  "nav": ["Tính năng", "Cách cài", "Tải về", "Ủng hộ", "Lộ trình", "Liên hệ"],
+  "tagline": "Kho game và tiện ích cho máy cầm tay (TrimUI & NextUI)",
+  "nav_home": "RetroHub",
   "dls": "lượt tải",
-  "dl_full": "Tải bản đầy đủ", "dl_full_sub": "95 MB · kèm giả lập Java",
-  "dl_lite": "Tải bản gọn", "dl_lite_sub": "32 MB · không kèm Java",
+  "dl_trimui": "Tải bản TrimUI (Hệ gốc)",
+  "dl_trimui_sub": "95 MB · Kèm giả lập Java",
+  "dl_nextui": "Tải bản NextUI (Pak)",
+  "dl_nextui_sub": "192 MB · Dành riêng cho NextUI",
   "dl_sd": "ROM stock + full giả lập",
   "dl_sd_sub": "Bộ thẻ SD nền · của DTH-RetroHandheld",
   "sd_url": "https://github.com/DTH-RetroHandheld/assets_brickpro/releases",
-  "h_feat": "Tính năng nổi bật", "h_install": "Cách cài", "h_dl": "Tải về",
+  "h_feat": "Tính năng nổi bật", "h_install": "Cách cài & cập nhật", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
-  "steps": ["Giải nén tệp vừa tải, bạn sẽ thấy thư mục <code>RetroHub</code>.",
-            "Cắm thẻ nhớ vào máy tính, chép cả thư mục đó vào <code>/Apps/</code> trên thẻ.",
-            "Lắp thẻ lại vào máy, mở <b>Apps → RetroHub</b>."],
-  "note": "Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới mỗi lần mở và chỉ tải phần thay đổi — thường vài trăm KB.",
-  "full_t": "Bản đầy đủ", "full_s": "95 MB",
-  "full_p": "Ứng dụng, kho 40.114 game và bộ giả lập Java J2ME. Chọn bản này nếu bạn muốn chơi game Java.",
-  "lite_t": "Bản gọn", "lite_s": "32 MB",
-  "lite_p": "Ứng dụng và kho game, không kèm giả lập Java. Cài nhanh, thêm phần Java sau cũng được.",
-  "nav_java": "Hướng dẫn Java", "java_url": "/vi/java/",
-  "nav_changelog": "Nhật ký bản", "changelog_url": "/vi/changelog/",
+  "steps": [
+    "<b>Cho TrimUI (Hệ gốc / CrossMix):</b> Giải nén <code>" + VER_FULL + "</code>, chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ nhớ. Mở <b>Apps → RetroHub</b>.",
+    "<b>Cho NextUI:</b> Giải nén <code>" + VER_NEXTUI + "</code>, chép thư mục <code>Tools</code> vào thư mục gốc của thẻ nhớ (tự động vào <code>/Tools/tg5040/RetroHub.pak/</code>). Mở <b>Tools → RetroHub</b>.",
+    "<b>Cập nhật online:</b> Kết nối Wi-Fi trên máy. Ứng dụng sẽ tự động kiểm tra và tải bản cập nhật mới mỗi khi khởi động."
+  ],
+  "note": "Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới qua Wi-Fi mỗi lần mở và chỉ tải phần thay đổi cho cả TrimUI Stock OS lẫn NextUI.",
+  "card_trimui_t": "Bản cho TrimUI (Stock OS / CrossMix)",
+  "card_trimui_s": "95 MB",
+  "card_trimui_p": "Dành cho máy TrimUI Brick, Brick Pro và Smart Pro chạy hệ điều hành gốc hoặc CrossMix-OS. Giải nén và chép thư mục RetroHub vào /Apps/ trên thẻ nhớ.",
+  "card_nextui_t": "Bản cho NextUI (Tool Pak)",
+  "card_nextui_s": "192 MB",
+  "card_nextui_p": "Gói ứng dụng Tool Pak đóng gói sẵn cho NextUI (tg5040 & tg5050). Giải nén và chép thư mục Tools trực tiếp vào thư mục gốc thẻ nhớ.",
+  "nav_java": "Hướng dẫn JAVA", "java_url": "/vi/java/",
+  "nav_changelog": "Nhật ký", "changelog_url": "/vi/changelog/",
   "java_guide": ('Định chơi game Java? Có hướng dẫn riêng: '
                  '<a href="/vi/java/" style="color:var(--accent)">Chơi game Java J2ME trên RetroHub</a> '
                  '— thư mục độ phân giải, chế độ máy, bố trí nút và kiểu hiển thị.'),
@@ -195,13 +195,6 @@ T = {
            'Nếu bạn là chủ sở hữu bản quyền và muốn gỡ một tựa game khỏi danh mục, <a href="mailto:nguyenxuanhoa493@gmail.com">hãy liên hệ với tôi</a> — tôi sẽ gỡ ngay.'],
  },
 }
-
-IDS = ["tinh-nang", "cach-cai", "tai-ve", "ung-ho", "lo-trinh", "lien-he"]
-
-# Pages of their own rather than sections of the home page, keyed by the nav item
-# they sit after: the Java guide right behind Download, because that is when it
-# is needed, and the changelog beside the roadmap it is the other half of.
-CROSS_PAGES = {"tai-ve": "java", "lo-trinh": "changelog"}
 
 SVG_TG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.9 4.3 18.7 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.3 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.3c.9-.3 1.6.2 1.4 1.5z"/></svg>'
 SVG_MAIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm9 7.2 8-4.7V6.5l-8 4.7-8-4.7v1L12 12.2z"/></svg>'
@@ -229,21 +222,12 @@ CSS = """
   .brand{display:flex;align-items:center;gap:9px;font-weight:800;
     text-decoration:none;color:var(--text);letter-spacing:-.2px;flex:none}
   .brand img{width:26px;height:26px}
-  .navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+  .navlinks{display:flex;gap:8px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
   .navlinks::-webkit-scrollbar{display:none}
-  .navlinks a{color:var(--muted);text-decoration:none;font-size:.93rem;
-    padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:.95rem;font-weight:500;
+    padding:7px 14px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
   .navlinks a:hover{color:var(--text);background:#1b2c49}
-  .navlinks a.here{color:var(--accent);background:#14243d}
-  /* The one nav item that leaves the page. The arrow says so before the click,
-     and the accent tint stops it reading as just another section. */
-  .navlinks a.out{color:var(--accent)}
-  /* The arrow goes in as the character itself. Written as a CSS escape it would
-     be read as an octal escape by Python first and arrive as a control byte. */
-  .navlinks a.out::after{content:"↗";margin-left:5px;font-size:.85em;opacity:.75}
-  .navlinks a.out:hover{background:#14243d}
-  /* Language switch shows the flag of the language you would move to, so the
-     button says what it does rather than what you already have. */
+  .navlinks a.here{color:var(--accent);background:#14243d;font-weight:700}
   .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
     padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:999px;
     text-decoration:none;color:var(--muted);font-size:.88rem;
@@ -268,15 +252,11 @@ CSS = """
   .btn:active{transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
-  /* Nut thu ba khong phai ban tai cua RetroHub ma cua mot nguoi khac. Mau vang
-     va mui ten de no khong bi doc nham la mot lua chon cai RetroHub. */
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt::after{content:"↗";margin-left:7px;font-size:.85em;opacity:.75}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
-  /* A pill rather than a line of text: it sits under two large buttons and had
-     to read as a badge, not as leftover caption. */
   .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
     padding:8px 18px 8px 14px;border-radius:999px;
     background:linear-gradient(180deg,#16233c,#121c31);
@@ -315,7 +295,7 @@ CSS = """
     opacity:0;transform:scale(1.015);transition:opacity .45s ease,transform .45s ease}
   .stage img.on{opacity:1;transform:scale(1)}
 
-  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
     display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
   .card:hover{transform:translateY(-4px);border-color:var(--accent-dim)}
@@ -467,24 +447,17 @@ JS = """
   box.addEventListener("mouseleave", start);
   document.addEventListener("visibilitychange", function () { document.hidden ? stop() : start(); });
 
-  // Download totals come from the GitHub Releases API, which already counts
-  // every asset download and allows browser requests. No server of our own.
-  // Unauthenticated callers get 60 requests an hour per IP, so the answer is
-  // kept for the session - a visitor who reloads should not burn the budget of
-  // everyone behind the same office or carrier NAT.
   (function () {
     var box = document.getElementById("dlcount");
     if (!box) return;
     function put(n) {
-      if (!n) return;                       // nothing to boast about yet
+      if (!n) return;
       var out = box.querySelector("b");
       box.hidden = false;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         out.textContent = n.toLocaleString();
         return;
       }
-      // Count up on reveal. Eased so it slows into the final figure instead of
-      // stopping dead, which reads as the number still loading.
       var t0 = 0, DUR = 900;
       requestAnimationFrame(function step(t) {
         if (!t0) t0 = t;
@@ -507,11 +480,10 @@ JS = """
         try { sessionStorage.setItem("rh_dl", String(n)); } catch (e) {}
         put(n);
       })
-      .catch(function () { /* stays hidden, which is better than a broken line */ });
+      .catch(function () { });
   })();
 
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var secs = [].slice.call(document.querySelectorAll("section[id]"));
   if ("IntersectionObserver" in window && !reduce) {
     var rev = new IntersectionObserver(function (es) {
       es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("seen"); rev.unobserve(e.target); } });
@@ -519,21 +491,6 @@ JS = """
     [].forEach.call(document.querySelectorAll(".rise"), function (el) { rev.observe(el); });
   } else {
     [].forEach.call(document.querySelectorAll(".rise"), function (el) { el.classList.add("seen"); });
-  }
-  if ("IntersectionObserver" in window) {
-    var links = {};
-    [].forEach.call(document.querySelectorAll(".navlinks a"), function (a) {
-      links[a.getAttribute("href").slice(1)] = a; });
-    var visible = {};
-    var spy = new IntersectionObserver(function (es) {
-      es.forEach(function (e) {
-        if (e.isIntersecting) visible[e.target.id] = 1; else delete visible[e.target.id];
-      });
-      var cur = null;
-      for (var i = 0; i < secs.length; i++) { if (visible[secs[i].id]) { cur = secs[i].id; break; } }
-      Object.keys(links).forEach(function (k) { links[k].classList.toggle("here", k === cur); });
-    }, { rootMargin: "-58px 0px -62% 0px" });
-    secs.forEach(function (el) { spy.observe(el); });
   }
 })();
 """
@@ -594,8 +551,8 @@ PAGE = """<!doctype html>
     <h1>RetroHub</h1>
     <p class="sub">{tagline}</p>
     <div class="cta">
-      <a class="btn" href="{REL}/{VER_FULL}">{dl_full}<small>{dl_full_sub}</small></a>
-      <a class="btn ghost" href="{REL}/{VER_LITE}">{dl_lite}<small>{dl_lite_sub}</small></a>
+      <a class="btn" href="{REL}/{VER_FULL}">{dl_trimui}<small>{dl_trimui_sub}</small></a>
+      <a class="btn" href="{REL}/{VER_NEXTUI}">{dl_nextui}<small>{dl_nextui_sub}</small></a>
       <a class="btn alt" href="{sd_url}">{dl_sd}<small>{dl_sd_sub}</small></a>
     </div>
     <p class="dlcount" id="dlcount" hidden>{SVG_DL}<b>0</b><span>{dls}</span></p>
@@ -621,14 +578,14 @@ PAGE = """<!doctype html>
     <h2>{h_dl}</h2>
     <div class="dl">
       <div class="card main">
-        <h3>{full_t}</h3><span class="size">{full_s}</span>
-        <p>{full_p}</p>
-        <a class="btn" href="{REL}/{VER_FULL}">{dl_full}</a>
+        <h3>{card_trimui_t}</h3><span class="size">{card_trimui_s}</span>
+        <p>{card_trimui_p}</p>
+        <a class="btn" href="{REL}/{VER_FULL}">{dl_trimui}</a>
       </div>
-      <div class="card">
-        <h3>{lite_t}</h3><span class="size">{lite_s}</span>
-        <p>{lite_p}</p>
-        <a class="btn ghost" href="{REL}/{VER_LITE}">{dl_lite}</a>
+      <div class="card main">
+        <h3>{card_nextui_t}</h3><span class="size">{card_nextui_s}</span>
+        <p>{card_nextui_p}</p>
+        <a class="btn" href="{REL}/{VER_NEXTUI}">{dl_nextui}</a>
       </div>
     </div>
     <p style="margin:18px 0 0;color:var(--muted);font-size:.94rem">{java_guide}</p>
@@ -695,26 +652,17 @@ PAGE = """<!doctype html>
 
 
 def navlinks_for(lang, page="home"):
-    """The one top menu, shared by every page on the site.
-
-    Anchors are written against the language's home page rather than as bare
-    fragments, so the same menu still works from /java/, where none of those
-    sections exist. From the home page itself the link is same-document, so
-    smooth scrolling behaves exactly as it did.
-
-    Two items are pages rather than sections. They carry a real href and, seen
-    from anywhere else, a small arrow saying you are about to leave; on the page
-    itself the item is marked as where you already are.
-    """
+    """Top navigation menu shared across all pages: RetroHub | Java guide | Changelog."""
     t = T[lang]
+    links = [
+        ("home", t["home"], t["nav_home"]),
+        ("java", t["java_url"], t["nav_java"]),
+        ("changelog", t["changelog_url"], t["nav_changelog"]),
+    ]
     out = ""
-    for i, n in zip(IDS, t["nav"]):
-        out += '<a href="%s#%s">%s</a>' % (t["home"], i, n)
-        key = CROSS_PAGES.get(i)
-        if key:
-            out += '<a class="%s" href="%s">%s</a>' % (
-                "here" if page == key else "out",
-                t[key + "_url"], t["nav_" + key])
+    for k, url, label in links:
+        cls = "here" if page == k else ""
+        out += f'<a class="{cls}" href="{url}">{label}</a>'
     return out
 
 
@@ -728,7 +676,7 @@ def render(lang):
     ld = {
         "@context": "https://schema.org", "@type": "SoftwareApplication",
         "name": "RetroHub", "applicationCategory": "GameApplication",
-        "operatingSystem": "TrimUI (Linux)", "url": canon,
+        "operatingSystem": "TrimUI & NextUI (Linux)", "url": canon,
         "downloadUrl": "https://github.com/nguyenxuanhoa493/repohubtool/releases/latest",
         "softwareVersion": VERSION, "inLanguage": lang, "description": t["desc"],
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "VND"},
@@ -736,7 +684,7 @@ def render(lang):
                    "url": "https://xuanhoa493.com"},
     }
 
-    navlinks = navlinks_for(lang)
+    navlinks = navlinks_for(lang, page="home")
     steps = "".join("<li>%s</li>" % s for s in t["steps"])
     osrows = "".join(
         '<li><span class="dot %s"></span><div><b>%s</b><span>%s</span></div></li>'
@@ -760,7 +708,7 @@ def render(lang):
         "og_desc": t["og_desc"], "ldjson": json.dumps(ld, ensure_ascii=False, indent=2),
         "css": CSS, "home": t["home"], "otherhome": T[other]["home"],
         "other": other, "other_name": t["other_name"], "navlinks": navlinks,
-        "tagline": t["tagline"], "REL": REL, "VER_FULL": VER_FULL, "VER_LITE": VER_LITE,
+        "tagline": t["tagline"], "REL": REL, "VER_FULL": VER_FULL, "VER_NEXTUI": VER_NEXTUI,
         "steps": steps, "osrows": osrows, "roadrows": roadrows, "disc": disc,
         "SVG_TG": SVG_TG, "SVG_MAIL": SVG_MAIL, "SVG_TEL": SVG_TEL, "SVG_CUP": SVG_CUP,
         "SVG_DL": SVG_DL,

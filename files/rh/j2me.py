@@ -615,6 +615,26 @@ def install_j2me_emulator(force=False):
         # old flat paths and never find games in the resolution folders.
         drop_rom_cache()
 
+        # Setup NextUI Emulator Pak for tg5040 and tg5050
+        for plat in ("tg5040", "tg5050"):
+            pak_dir = f"{SDCARD_PATH}/Emus/{plat}/JAVA.pak"
+            try:
+                os.makedirs(pak_dir, exist_ok=True)
+                pak_launch = os.path.join(pak_dir, "launch.sh")
+                with open(pak_launch, "w") as f:
+                    f.write("#!/bin/sh\n"
+                            "ROM=\"$1\"\n"
+                            "EMU_ROOT=\"/mnt/SDCARD/Emus/JAVA\"\n"
+                            "if [ -f \"$EMU_ROOT/launch.sh\" ]; then\n"
+                            "    exec \"$EMU_ROOT/launch.sh\" \"$ROM\"\n"
+                            "else\n"
+                            "    cd \"$EMU_ROOT/zulu17/bin\"\n"
+                            "    exec ./java -Djava.awt.headless=true -jar ./freej2me-sdl.jar \"$ROM\"\n"
+                            "fi\n")
+                os.chmod(pak_launch, 0o755)
+            except Exception as e:
+                print(f"NextUI JAVA.pak setup failed: {e}")
+
         missing = j2me_missing_parts()
         if missing:
             return False, ("Cài chưa đủ, còn thiếu: " if vi else "Incomplete, missing: ") + ", ".join(missing)
