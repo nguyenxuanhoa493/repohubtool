@@ -1,11 +1,11 @@
 {
-  "version": "1.52",
+  "version": "1.53",
   "python": "any",
-  "built": "2026-09-01T04:04:34+0700",
+  "built": "2026-09-01T04:27:39+0700",
   "base_url": "",
   "note": {
-    "vi": "Game NAOMI/Atomiswave (Metal Slug 6, Marvel vs Capcom 2) ve dung he DC; them muc doi gia lap trong Tien ich",
-    "en": "NAOMI/Atomiswave games now route to the DC system; new emulator switcher in Utilities"
+    "vi": "Sua nhan tran ra ngoai nut o menu doi gia lap",
+    "en": "Fixes the overflowing badge in the emulator switcher"
   },
   "remove": [
     "app.pyc",
@@ -165,8 +165,8 @@
     },
     {
       "path": "app.py",
-      "size": 220190,
-      "sha256": "b10eea9855e543c76305b2cc38f6f09ea58057dd0c6f80e5e4453aef23efe165"
+      "size": 220435,
+      "sha256": "aaf24d9dd9ea54d9f987c427143bb6ffa13660244af19c1da33a237fb044aa23"
     },
     {
       "path": "assets/fallback.ttf",
@@ -265,8 +265,8 @@
     },
     {
       "path": "rh/corepicker.py",
-      "size": 6700,
-      "sha256": "e2c657e394f38566422b8067f64d19dae7ffc3a756aa860598f53fde86db4392"
+      "size": 7372,
+      "sha256": "904290908c857f96caa1acf4f502661bb894a629e32c2cf2ee57fae5f35f2b34"
     },
     {
       "path": "rh/downloader.py",
@@ -346,7 +346,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "b55f1b7d0d2c16c93f2156c017060972d441bb6669855f8cf21fe5b7ce9cbb5b"
+      "sha256": "b8d809f3901f09e659548a909a21234b6a0a4f24e1f1d9c3d6d976fc9e6a1255"
     },
     {
       "path": "streamer.py",
