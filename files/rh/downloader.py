@@ -696,6 +696,20 @@ def start_download_thread(sys_code, game_info, background=False):
                 except Exception as e:
                     print(f"J2ME jar cleanup failed: {e}")
 
+            # He MAME chay core mamearcade, va core do doi ROM dung chung cua chip
+            # am thanh phai nam thanh set thiet bi rieng ben canh game. Bo ROM tai
+            # ve goi san ROM do trong zip theo quy uoc FBNeo, nen dat lai cho cho
+            # dung la xong - khong tai them gi. Chi he MAME can: CPS1/CPS2/NEOGEO
+            # chay core FBNeo, doc thang ROM nam trong zip.
+            if target_sys == "MAME" and extracted_rom_path:
+                try:
+                    from .arcade_device_roms import ensure_device_roms
+                    made = ensure_device_roms(extracted_rom_path, rom_dir)
+                    if made:
+                        print(f"Created MAME device ROM set: {', '.join(made)}")
+                except Exception as e:
+                    print(f"MAME device ROM check failed: {e}")
+
             if is_real_boxart_url(img_url):
                 try:
                     rom_base = os.path.splitext(os.path.basename(extracted_rom_path))[0]

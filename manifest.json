@@ -1,16 +1,17 @@
 {
-  "version": "1.50",
+  "version": "1.51",
   "python": "any",
-  "built": "2026-08-31T09:25:59+0700",
+  "built": "2026-08-31T14:48:07+0700",
   "base_url": "",
   "note": {
-    "vi": "Hỗ trợ chính thức hệ điều hành NextUI và lưu ảnh bìa kép",
-    "en": "Official support for NextUI and dual artwork saving"
+    "vi": "Sua game CPS2 he MAME (Marvel vs Capcom, Street Fighter Alpha...) khong mo duoc",
+    "en": "Fixes CPS2 arcade games in the MAME system failing to launch"
   },
   "remove": [
     "app.pyc",
     "db.pyc",
     "rh/__init__.pyc",
+    "rh/arcade_device_roms.pyc",
     "rh/archive.pyc",
     "rh/boxart.pyc",
     "rh/catalog.pyc",
@@ -236,6 +237,11 @@
       "sha256": "9c4745906c2f854ea1f12b6444a5fa35309d8b534cf4c958f5e54684ecfab82e"
     },
     {
+      "path": "rh/arcade_device_roms.py",
+      "size": 2431,
+      "sha256": "81ad0b17991d349f04c3cb4abd48cf3b26e833f0ed89a98f12fc35160df3f5b0"
+    },
+    {
       "path": "rh/archive.py",
       "size": 11843,
       "sha256": "ec758260ce493499babaa5257527dfc8f710c16cbe4293c4e3bb1bf21b5ba774"
@@ -252,8 +258,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 39485,
-      "sha256": "6ae51397e49d9e9a48b191464a144942edc076c1e48d87f65b4144d41f2ccd6d"
+      "size": 40316,
+      "sha256": "07d779f9e64c328f8fbd475f385009ce8a7aa8f6dd858310427d4d46ddd6edde"
     },
     {
       "path": "rh/emulators.py",
@@ -328,7 +334,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "8978657014751c7baebf561a4471d1e4e4b26b74baabd01527a7b38a90f62050"
+      "sha256": "3b9ba6a4de2491a99f364892a08985c9ca610fadabb4a83993756365a2c6a766"
     },
     {
       "path": "streamer.py",
