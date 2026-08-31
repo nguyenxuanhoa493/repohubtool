@@ -17,9 +17,9 @@ try:
 except Exception:
     db = None
 
-# pysdl2 is pure Python - the actual SDL libraries come from /usr/trimui/lib -
-# so it ships inside the app. Before this, RetroHub only ran on a device that
-# already had PortMaster installed, and failed with a blank screen otherwise.
+# pysdl2 is pure Python - the actual SDL libraries come from the firmware - so it
+# ships inside the app. Before this, RetroHub only ran on a device that already
+# had PortMaster installed, and failed with a blank screen otherwise.
 # PortMaster's copy stays as a fallback, searched after the bundled one so
 # everybody exercises the same code.
 EXLIBS_PATH = "/mnt/SDCARD/Apps/PortMaster/PortMaster/exlibs"
@@ -29,7 +29,14 @@ VENDOR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vendor")
 if os.path.isdir(VENDOR_PATH):
     sys.path.insert(0, VENDOR_PATH)
 
-os.environ["PYSDL2_DLL_PATH"] = "/usr/trimui/lib"
+# Where libSDL2 lives depends on the firmware: the Brick keeps it in
+# /usr/trimui/lib, the Smart Pro S only in /usr/lib, so both are named. pysdl2
+# accepts several directories separated by os.pathsep and its own fallback
+# cannot rescue a miss here - ctypes.util.find_library shells out to ldconfig,
+# gcc or objdump, and a BusyBox userland has none of them. A device with SDL in
+# an unlisted directory can still say so through the environment.
+os.environ["PYSDL2_DLL_PATH"] = (
+    os.environ.get("PYSDL2_DLL_PATH") or "/usr/lib:/usr/trimui/lib")
 
 try:
     import sdl2

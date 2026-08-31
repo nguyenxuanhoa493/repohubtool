@@ -26,7 +26,8 @@ APP="$(pwd)"
 export SDCARD_PATH="/mnt/SDCARD"
 export PATH="$SDCARD_PATH/System/bin:$PATH"
 export LD_LIBRARY_PATH="$SDCARD_PATH/System/lib:/usr/trimui/lib:/usr/lib:$LD_LIBRARY_PATH"
-export PYSDL2_DLL_PATH="/usr/trimui/lib"
+# Brick keeps libSDL2 in /usr/trimui/lib, Smart Pro S only in /usr/lib.
+export PYSDL2_DLL_PATH="/usr/lib:/usr/trimui/lib"
 
 # Kept outside the app folder so reinstalling or updating RetroHub does not
 # throw away a runtime that took a download to get.
