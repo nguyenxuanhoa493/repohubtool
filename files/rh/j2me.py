@@ -34,7 +34,12 @@ PAYLOAD = os.path.join(APP_DIR, "payload", "j2me_sdl.tar.gz")
 # with the branches in the package's launch.sh: a folder with no branch there
 # falls through to its `echo "none"` and the game simply never starts.
 RESOLUTIONS = ["240320", "320240", "128128", "176208", "640360"]
-DEFAULT_RESOLUTION = "240320"   # 644 of the 957 titles that state a size
+# Doi tu 240320 sang 320240: chi khoang mot phan tu so muc Java khai kich thuoc
+# trong ten file, phan con lai roi vao mac dinh nay. Man may la 4:3 nam ngang,
+# nen 320x240 lap day duoc con 240x320 de lai hai vien den hai ben. Game nao ten
+# co ghi ro kich thuoc thi van ve dung thu muc cua no - resolution_from_filename
+# doc truoc, mac dinh chi la duong lui.
+DEFAULT_RESOLUTION = "320240"
 
 # Display presets, straight out of the emulator's own guide. The renderer is the
 # one thing about this build worth setting from the app: the three modes differ by
@@ -46,7 +51,7 @@ DEFAULT_RESOLUTION = "240320"   # 644 of the 957 titles that state a size
 # picks the pad layout from control_profile.cfg/control_cycle.cfg instead, which
 # the player cycles on the device with START+SELECT.
 RENDER_MODES = ["pixel", "smooth", "hq"]
-DEFAULT_RENDER_MODE = "pixel"
+DEFAULT_RENDER_MODE = "hq"
 RENDER_PRESETS = {
     "pixel":  {"render_mode": "pixel",  "integer_scaling": "true",  "keep_aspect": "true",
                "text_aa": "false", "shape_aa": "false", "m3g_filter": "nearest"},

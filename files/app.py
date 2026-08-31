@@ -54,8 +54,9 @@ except ImportError as _e:
 # INTERNALS (split out of this file - see rh/)
 # ==============================================================================
 from rh import state
-from rh.paths import (FLAG_FILES, QR_BMC_FILE, QR_DONATE_FILE,
+from rh.paths import (FLAG_FILES, is_nextui, QR_BMC_FILE, QR_DONATE_FILE,
     QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW)
+from rh import corepicker
 from rh.i18n import tr, wrap_title_2lines
 from rh.sysinfo import (detect_device_platform,
     get_battery_info,
@@ -274,69 +275,6 @@ def auto_check_and_supplement_environment():
         pass
 
     return repaired_items
-
-def get_system_doctor_report():
-    """Generates a complete diagnostic health check of the handheld system and dependencies."""
-    repaired = auto_check_and_supplement_environment()
-    rows = []
-    plat = detect_device_platform()
-    try:
-        kernel = subprocess.check_output("uname -r 2>/dev/null || uname -s", shell=True).decode().strip()
-        arch = subprocess.check_output("uname -m 2>/dev/null", shell=True).decode().strip()
-    except Exception:
-        kernel, arch = "Linux", "aarch64"
-    rows.append(("1. Phần cứng & Nhân Linux" if state.current_lang == "VI" else "1. Platform & Kernel", f"{plat} • {arch} ({kernel})"))
-    
-    # 2. Graphics & GUI Engine
-    rows.append(("2. Giao diện đồ họa (GUI)" if state.current_lang == "VI" else "2. Graphics Engine", f"SDL2 + SDL2_ttf ({state.SCREEN_W}x{state.SCREEN_H} 60 FPS)"))
-    
-    # 3. Database Engine
-    db_status = "C-API libsqlite3.so.0"
-    try:
-        import sqlite3
-        db_status = f"sqlite3 ({sqlite3.sqlite_version})"
-    except Exception:
-        pass
-    rows.append(("3. Động cơ CSDL (Database)" if state.current_lang == "VI" else "3. Database Engine", f"[OK] {db_status} (Tự động nạp C-API)"))
-    
-    # 4. Catalog Database File
-    if os.path.exists(db.DB_PATH):
-        sz_mb = os.path.getsize(db.DB_PATH) / (1024 * 1024)
-        rows.append(("4. Kho dữ liệu ROMs Store" if state.current_lang == "VI" else "4. ROMs Catalog Database", f"[OK] 40,000+ Game ({sz_mb:.1f} MB SQLite)"))
-    else:
-        rows.append(("4. Kho dữ liệu ROMs Store" if state.current_lang == "VI" else "4. ROMs Catalog Database", "[X] Chưa tìm thấy CSDL!"))
-        
-    # 5. Java Emulator Core
-    j2me_core = is_j2me_runtime_ready()
-    if j2me_core:
-        rows.append(("5. Giả lập Java J2ME" if state.current_lang == "VI" else "5. Java J2ME Core", "[OK] ĐÃ BỔ SUNG & SẴN SÀNG"))
-    else:
-        rows.append(("5. Giả lập Java J2ME" if state.current_lang == "VI" else "5. Java J2ME Core", "[!] Đang chuẩn bị bổ sung"))
-        
-    # 6. Physical Emulators in Emus/
-    emus_count = len([d for d in os.listdir(f"{SDCARD_PATH}/Emus") if os.path.isdir(os.path.join(f"{SDCARD_PATH}/Emus", d)) and not d.startswith(".")]) if os.path.exists(f"{SDCARD_PATH}/Emus") else 0
-    rows.append(("6. Hệ máy giả lập trên máy" if state.current_lang == "VI" else "6. Installed Emus Systems", f"[OK] {emus_count} Hệ máy trong Emus/"))
-    
-    # 7. Auto-repair & Doctor Status
-    if repaired:
-        rows.append(("7. Tự động bổ sung thư viện" if state.current_lang == "VI" else "7. Auto-Supplement Engine", f"[OK] {', '.join(repaired)}"))
-    else:
-        rows.append(("7. Tự động bổ sung thư viện" if state.current_lang == "VI" else "7. Auto-Supplement Engine", "[OK] Tất cả thư viện & Core đầy đủ"))
-        
-    # 8. Memory & Storage
-    mem_str = get_ram_info()
-    rows.append(("8. Bộ nhớ RAM" if state.current_lang == "VI" else "8. RAM Memory", mem_str))
-    
-    # 9. SDCARD Storage
-    try:
-        st = os.statvfs(SDCARD_PATH)
-        free_gb = (st.f_bavail * st.f_frsize) / (1024**3)
-        total_gb = (st.f_blocks * st.f_frsize) / (1024**3)
-        rows.append(("9. Thẻ nhớ SDCARD" if state.current_lang == "VI" else "9. SD Card Storage", f"Trống {free_gb:.1f} GB / Tổng {total_gb:.1f} GB"))
-    except Exception:
-        pass
-        
-    return rows
 
 # ==============================================================================
 # BATTERY & POWER SUPPLY STATUS
@@ -619,6 +557,8 @@ def main():
     # the static catalogs.json: the DB carries 29 systems where the JSON listed only
     # 13, so PS, PSP, DC, SS, N64 and friends were missing from the filter entirely.
     j2me_render_mode = None     # filled when the display screen is opened
+    core_sys_rows = []          # cac he doi core duoc, doc khi mo man hinh do
+    core_sys_pick = None        # he dang chon, cho man hinh chon giai lap
     _sys_rows = get_source_systems_list("ALL")
     _sys_counts = dict(_sys_rows)
     sys_keys_list = ["ALL"] + [c for c, _ in _sys_rows if c != "ALL"]
@@ -1360,12 +1300,13 @@ def main():
                               "label": tr("view") if can_render else tr("j2me_render_old"),
                               "sub": True, "render_ok": can_render})
             
-            doctor_label = "TỐT" if is_j2me_installed else "VÁ"
-            if state.current_lang != "VI":
-                doctor_label = "GOOD" if is_j2me_installed else "FIX"
-            # The three read-only views sit together: they were split across two
-            # menus even though they answer the same kind of question.
-            items.append({"id": "system_doctor", "title": tr("util_doctor_title"), "label": doctor_label})
+            # NextUI khong dung Emus/<he>/config.json de mo game, nen menu doi
+            # giai lap o do khong co tac dung gi.
+            if not is_nextui():
+                items.append({"id": "nav_core_sys", "title": tr("util_core_title"),
+                              "label": tr("view")})
+
+            # Hai muc chi-doc nam canh nhau: chung tra loi cung mot loai cau hoi.
             items.append({"id": "device_info", "title": tr("device_info"), "label": tr("view")})
             items.append({"id": "storage_status", "title": tr("util_storage_item"), "label": tr("view")})
             number_items(items)
@@ -1380,6 +1321,28 @@ def main():
                               "title": tr(f"j2me_render_{m}"),
                               "label": tr("j2me_render_cur") if m == j2me_render_mode else ""})
             items.append({"id": "j2me_render_note", "title": tr("j2me_render_note"), "sub": True})
+            items.append({"id": "back", "title": tr("back_home")})
+
+        # DOI GIAI LAP: mot dong moi he, hien ten giai lap dang chay. Danh sach
+        # duoc doc luc mo man hinh chu khong phai moi khung hinh - no cham vao the.
+        elif current_screen == "core_sys":
+            header_title = tr("core_sys_title")
+            for row in core_sys_rows:
+                items.append({"id": f"coresys_{row['code']}", "core_row": row,
+                              "title": row["label"], "label": row["current"]})
+            if not core_sys_rows:
+                items.append({"id": "core_none", "title": tr("core_none"), "sub": True})
+            items.append({"id": "core_note", "title": tr("core_note"), "sub": True})
+            items.append({"id": "back", "title": tr("back_home")})
+
+        # CHON GIAI LAP: mot dong moi lua chon trong launchlist cua he da chon.
+        elif current_screen == "core_pick":
+            header_title = tr("core_pick_title")
+            row = core_sys_pick or {"options": [], "current_launch": ""}
+            for opt in row["options"]:
+                items.append({"id": f"corepick_{opt['launch']}", "core_opt": opt,
+                              "title": opt.get("name") or opt["launch"],
+                              "label": tr("core_cur") if opt["launch"] == row["current_launch"] else ""})
             items.append({"id": "back", "title": tr("back_home")})
 
         # SETTINGS: things that shape the app itself, kept out of Utilities which is
@@ -2546,6 +2509,30 @@ def main():
                         j2me_render_mode = m
                         toast_msg = tr("j2me_render_saved")
                         toast_timer = time.time()
+                elif item_id == "nav_core_sys":
+                    core_sys_rows = corepicker.list_systems()
+                    selected_indices["core_sys"] = 0
+                    screen_stack.append("core_sys")
+                elif item_id.startswith("coresys_"):
+                    core_sys_pick = cur_item.get("core_row")
+                    selected_indices["core_pick"] = 0
+                    screen_stack.append("core_pick")
+                elif item_id.startswith("corepick_"):
+                    opt = cur_item.get("core_opt") or {}
+                    code = (core_sys_pick or {}).get("code")
+                    if code and corepicker.set_core(code, opt.get("launch")):
+                        # Doc lai tu the chu khong tu suy: neu ghi hong ma van ve
+                        # dau "dang dung" thi nguoi dung tin nham.
+                        core_sys_rows = corepicker.list_systems()
+                        core_sys_pick = next((r for r in core_sys_rows
+                                              if r["code"] == code), core_sys_pick)
+                        toast_msg = tr("core_saved")
+                    else:
+                        toast_msg = tr("core_failed")
+                    toast_timer = time.time()
+                elif item_id in ("core_note", "core_none"):
+                    toast_msg = tr("core_note") if item_id == "core_note" else tr("core_none")
+                    toast_timer = time.time()
                 elif item_id == "j2me_render_note":
                     toast_msg = tr("j2me_render_note")
                     toast_timer = time.time()
@@ -2807,9 +2794,6 @@ def main():
                 elif item_id == "storage_status":
                     modal_title = "TRẠNG THÁI DUNG LƯỢNG LƯU TRỮ" if state.current_lang == "VI" else "STORAGE & DISK STATUS"
                     modal_rows = get_storage_info_rows()
-                elif item_id == "system_doctor":
-                    modal_title = "BÁC SĨ HỆ THỐNG & KIỂM TRA THƯ VIỆN" if state.current_lang == "VI" else "SYSTEM DOCTOR & DIAGNOSTIC"
-                    modal_rows = get_system_doctor_report()
                 elif item_id == "install_j2me_emu":
                     # Just open the panel. Installing on open was surprising, and it
                     # reported success unconditionally even when pieces were missing.
@@ -3383,6 +3367,9 @@ def main():
                 b_label = "Quay lại"
             elif current_screen == "download_manager":
                 a_label = "Chi tiết / Mở"
+                b_label = "Quay lại"
+            elif current_screen in ("core_sys", "core_pick"):
+                a_label = "Chọn"
                 b_label = "Quay lại"
             elif current_screen in ("network", "utilities"):
                 a_label = "Bật / Tắt"

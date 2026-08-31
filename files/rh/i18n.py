@@ -37,12 +37,13 @@ TEXTS = {
         "off": "TẮT",
         
         "util_title": "TIỆN ÍCH HỆ THỐNG",
-        "util_sub": "Truyền màn hình, Đổi ảnh boot, Cài giả lập & Bác sĩ hệ thống",
+        "util_sub": "Truyền màn hình, Đổi ảnh boot, Cài giả lập & Đổi giả lập",
         "stream_item": "Stream màn hình (Web / OBS / Quay video)",
         "stream_guide": "   - Hướng dẫn Stream 30/60 FPS & Quay video",
         "util_item_splash": "Đổi ảnh khởi động (Boot Splash)",
         "util_j2me_title": "Cài đặt Giả lập Java (J2ME / .jar)",
         "util_j2me_render": "Kiểu hiển thị game Java",
+        "util_core_title": "Đổi giả lập cho hệ máy",
         "act_res_title": "ĐỘ PHÂN GIẢI",
         "act_res_sub": "Bấm để đổi cỡ màn hình",
         "res_changed": "Độ phân giải:",
@@ -135,6 +136,13 @@ TEXTS = {
         "j2me_render_hq": "HQ - thử nghiệm, thường giống SMOOTH",
         "j2me_render_cur": "ĐANG DÙNG",
         "j2me_render_saved": "Đã lưu kiểu hiển thị",
+        "core_sys_title": "ĐỔI GIẢ LẬP CHO HỆ MÁY",
+        "core_pick_title": "CHỌN GIẢ LẬP",
+        "core_cur": "ĐANG DÙNG",
+        "core_saved": "Đã đổi giả lập",
+        "core_failed": "Không ghi được cấu hình hệ máy",
+        "core_none": "Không hệ nào có giả lập thay thế",
+        "core_note": "Đổi giả lập không đụng tới game hay ảnh bìa. Bộ ROM của mỗi giả lập một khác, game nào không chạy thì chọn lại giả lập cũ.",
         "j2me_render_note": "Trong game: giữ START rồi bấm R3 để đổi nhanh",
         "upd_rt_downloading": "Đang tải giả lập Java",
         "upd_rt_installing": "Đang cài giả lập Java...",
@@ -145,7 +153,6 @@ TEXTS = {
         "j2me_st_stale": "Giả lập trên thẻ cũ hơn gói trong app - bấm cài để nâng cấp",
         "j2me_render_old": "BẢN CŨ",
         "j2me_render_old_hint": "Giả lập Java trên máy là bản cũ - cần cài lại bản đầy đủ",
-        "util_doctor_title": "Bác sĩ hệ thống & Kiểm tra thư viện",
         "util_storage_item": "Trạng thái dung lượng thẻ nhớ & ổ cứng",
         "util_item_reload": "Làm mới giao diện & ROMs",
         "splash_title": "ĐỔI ẢNH KHỞI ĐỘNG (BOOT SPLASH)",
@@ -319,12 +326,13 @@ TEXTS = {
         "off": "OFF",
         
         "util_title": "SYSTEM UTILITIES",
-        "util_sub": "Screen Stream, Boot Splash, Emulator Setup & System Doctor",
+        "util_sub": "Screen Stream, Boot Splash, Emulator Setup & Core Switch",
         "stream_item": "Live Screen Stream (Web / OBS / Record)",
         "stream_guide": "   - Stream 30/60 FPS & Recording Guide",
         "util_item_splash": "Change Boot Splash Logo",
         "util_j2me_title": "Install Java (J2ME / .jar) Emulator",
         "util_j2me_render": "Java display mode",
+        "util_core_title": "Switch emulator core",
         "act_res_title": "RESOLUTION",
         "act_res_sub": "Press to change screen size",
         "res_changed": "Resolution:",
@@ -415,6 +423,13 @@ TEXTS = {
         "j2me_render_hq": "HQ - experimental, often same as SMOOTH",
         "j2me_render_cur": "IN USE",
         "j2me_render_saved": "Display mode saved",
+        "core_sys_title": "SWITCH EMULATOR CORE",
+        "core_pick_title": "PICK AN EMULATOR",
+        "core_cur": "IN USE",
+        "core_saved": "Emulator switched",
+        "core_failed": "Could not write the system config",
+        "core_none": "No system has an alternative emulator",
+        "core_note": "Switching does not touch your games or artwork. Each emulator expects its own romset, so if a game stops working, switch back.",
         "j2me_render_note": "In game: hold START then press R3 to switch",
         "upd_rt_downloading": "Downloading Java emulator",
         "upd_rt_installing": "Installing Java emulator...",
@@ -425,7 +440,6 @@ TEXTS = {
         "j2me_st_stale": "The emulator on the card is older than the app's package - install to upgrade",
         "j2me_render_old": "OLD",
         "j2me_render_old_hint": "The Java emulator on this device is the old build - reinstall the full package",
-        "util_doctor_title": "System Doctor & Library Diagnostic",
         "util_storage_item": "Storage & SD Card Status",
         "util_item_reload": "Reload UI & ROMs",
         "splash_title": "BOOT SPLASH MANAGER",
@@ -569,7 +583,7 @@ TEXTS = {
 }
 
 def tr(key):
-    return TEXTS.get(state.current_lang, TEXTS["VI"]).get(key, key)
+    return TEXTS.get(state.current_lang, TEXTS["EN"]).get(key, key)
 _wrapped_title_cache = {}
 
 def wrap_title_2lines(title, max_chars_per_line=16):
