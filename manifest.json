@@ -1,11 +1,11 @@
 {
   "version": "1.50",
   "python": "any",
-  "built": "2026-08-31T01:57:17+0700",
-  "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
+  "built": "2026-08-31T09:25:59+0700",
+  "base_url": "",
   "note": {
-    "vi": "Sửa game Java không mở được vì tệp chứa một mục rỗng bị đánh dấu khoá",
-    "en": "Fixed Java games refusing to open because the jar carries an empty entry flagged as encrypted"
+    "vi": "Hỗ trợ chính thức hệ điều hành NextUI và lưu ảnh bìa kép",
+    "en": "Official support for NextUI and dual artwork saving"
   },
   "remove": [
     "app.pyc",
@@ -162,8 +162,8 @@
     },
     {
       "path": "app.py",
-      "size": 221179,
-      "sha256": "145b3010f5c6b4071eb2bd0ee6e5485ce7a07d09ebbf6bcbec6701b906424074"
+      "size": 220836,
+      "sha256": "f68d33c8f46b81d2f2b283d9477dce4a8b0d593476a83cc6f7fe04216d611191"
     },
     {
       "path": "assets/fallback.ttf",
@@ -247,18 +247,18 @@
     },
     {
       "path": "rh/catalog.py",
-      "size": 9119,
-      "sha256": "c8e135a98cd4e9cd744df4d41b1fc025c9dbf76f6654e97fc1bef53e0199340a"
+      "size": 9732,
+      "sha256": "9ec500c0c9832b9106b3054c9774f923fe26703d60242a68f3d19c6388408461"
     },
     {
       "path": "rh/downloader.py",
-      "size": 39011,
-      "sha256": "deeb4e0725226c3d501b46948f48c519d99c1d5481a6ee63af721a75b19e79e2"
+      "size": 39485,
+      "sha256": "6ae51397e49d9e9a48b191464a144942edc076c1e48d87f65b4144d41f2ccd6d"
     },
     {
       "path": "rh/emulators.py",
-      "size": 2819,
-      "sha256": "ccfe0d2c99127e85292647eb70c033e0ff11eba4887405692595666443ffa853"
+      "size": 3176,
+      "sha256": "b8ced5f9f15a2549bad61170a7b7760fa599282fcc2bbe30ff60185368f807df"
     },
     {
       "path": "rh/fonts.py",
@@ -272,8 +272,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 25795,
-      "sha256": "19e069f2b2a126494bcb804a2bd10a2ef2095e7bddf450c4a280ed07ff746e3a"
+      "size": 26818,
+      "sha256": "d246e66a3e59737043f803e88f8534a70d10a33fa3b1fd7f68d377269ab77482"
     },
     {
       "path": "rh/media.py",
@@ -287,8 +287,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 1328,
-      "sha256": "bd09e5b0c875ff51840665ae096358b3d3c7c89d23dd2606f916c594006249f6"
+      "size": 2449,
+      "sha256": "109b6eb55572b1ae1325b9507e04fa57fc3ad460b0e577078dd4b3ad2b81d5f5"
     },
     {
       "path": "rh/romfiles.py",

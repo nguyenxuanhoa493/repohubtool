@@ -26,6 +26,45 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.50", "2026-08-31",
+     ("Official NextUI support, dual artwork saving, and cleaner utilities menu",
+      "Hỗ trợ chính thức hệ điều hành NextUI, lưu ảnh bìa kép và tinh gọn menu tiện ích"),
+     [("Packaged as a native Tool Pak (<code>Tools/tg5040/RetroHub.pak</code> & <code>Tools/tg5050/</code>) with full in-app Wi-Fi auto-updates.",
+       "Đóng gói dưới dạng Tool Pak (<code>Tools/tg5040/RetroHub.pak</code> & <code>Tools/tg5050/</code>) với đầy đủ tính năng tự cập nhật qua Wi-Fi."),
+      ("ROM directories with NextUI tags like <code>Game Boy Advance (GBA)</code> are resolved automatically, and artwork is saved into <code>.media/</code> beside stock <code>Imgs/</code>.",
+       "Tự động nhận diện thư mục ROM theo tag của NextUI như <code>Game Boy Advance (GBA)</code>, lưu ảnh bìa vào <code>.media/</code> song song với <code>Imgs/</code> của Stock OS."),
+      ("Java J2ME installation now sets up <code>JAVA.pak</code> for NextUI as well as <code>Emus/JAVA</code> for Stock OS.",
+       "Cài đặt giả lập Java J2ME tự động tạo <code>JAVA.pak</code> cho NextUI song song với <code>Emus/JAVA</code> cho Stock OS."),
+      ("Fixed encrypted zip entry edge-case in Java jars refusing to launch.",
+       "Sửa lỗi game Java chứa mục rỗng bị đánh dấu mã khoá làm không mở được."),
+      ("Removed the redundant 'Reload ROMs' button from Utilities since NextUI scans games automatically.",
+       "Loại bỏ nút 'Làm mới ROMs' trong Tiện ích vì NextUI tự động quét game khi về màn hình chính.")]),
+
+    ("1.49", "2026-08-30",
+     ("Java games at 320x240 no longer land in the 240320 folder",
+      "Game Java 320x240 không còn rơi vào thư mục 240320"),
+     []),
+
+    ("1.48", "2026-08-30",
+     ("Two pinned Java shelves and 130 more Gameloft titles",
+      "Hai kệ game Java ghim đầu và thêm 130 game Gameloft"),
+     []),
+
+    ("1.47", "2026-08-30",
+     ("Added giaitri321.vip Java source, prioritizing 320x240 versions",
+      "Thêm nguồn game Java giaitri321.vip, ưu tiên bản 320x240"),
+     []),
+
+    ("1.46", "2026-08-30",
+     ("Java emulator updates seamlessly via the in-app updater",
+      "Bộ giả lập Java đi theo đường cập nhật trong app"),
+     []),
+
+    ("1.45", "2026-08-30",
+     ("Text input in Java games is now supported",
+      "Game Java hỏi nhập chữ giờ chơi được"),
+     []),
+
     ("1.44", "2026-08-30",
      ("Java games with a space in the filename now open",
       "Game Java có dấu cách trong tên tệp giờ mở được"),
@@ -98,46 +137,50 @@ RELEASES = [
      []),
 
     ("1.35", "2026-08-29",
-     ("Games launch with the emulator and mode the device has selected",
-      "Mở game bằng đúng giả lập và đúng chế độ máy đang chọn"),
+     ("Language switch updates immediately, with no restart",
+      "Đổi ngôn ngữ có tác dụng ngay, không cần khởi động lại"),
      []),
 
     ("1.34", "2026-08-29",
-     ("Extracted games keep their proper name; the file is named on screen",
-      "Game giải nén xong giữ đúng tên, màn hình báo rõ file nào"),
+     ("Vietnamese text on downloaded games no longer wraps mid-accent",
+      "Chữ tiếng Việt ở danh sách game tải về không còn ngắt dòng giữa dấu"),
      []),
 
     ("1.33", "2026-08-29",
-     ("Downloads in .rar/.7z now extract to a real ROM",
-      "Tải game .rar/.7z giờ tự giải nén ra ROM thật"),
+     ("A failed update cleans up after itself, leaving the running install intact",
+      "Bản cập nhật hỏng tự dọn dẹp, bản đang chạy còn nguyên"),
      []),
 
     ("1.32", "2026-08-29",
-     ("Owned games open play/delete, not the download prompt",
-      "Game đã tải mở bảng chơi/xoá/tải lại thay vì hỏi tải"),
+     ("Update screen tells you what changed in the new version",
+      "Màn hình cập nhật báo bản mới có gì khác"),
      []),
 ]
 
 EXTRA_CSS = """
-  .guide p{color:var(--muted)}
+  main.guide{max-width:820px}
   .log{list-style:none;padding:0;margin:0;position:relative}
-  .log::before{content:"";position:absolute;left:11px;top:12px;bottom:12px;
+  .log::before{content:"";position:absolute;left:13px;top:14px;bottom:14px;
     width:2px;background:var(--line)}
-  .log > li{position:relative;padding:0 0 26px 42px}
-  .log > li:last-child{padding-bottom:0}
-  .log .pin{position:absolute;left:2px;top:5px;width:20px;height:20px;
-    border-radius:50%;background:var(--bg);border:2px solid var(--line)}
-  .log > li.newest .pin{border-color:var(--accent);background:var(--accent);
-    box-shadow:0 0 12px rgba(0,246,246,.5)}
-  .vtag{display:inline-flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-  .vtag b{font-size:1.06rem;font-variant-numeric:tabular-nums}
-  .vtag time{color:var(--muted);font-size:.84rem}
-  .vtag .badge{margin-left:0}
-  .log h3{margin:4px 0 0;font-size:1rem;font-weight:600;color:var(--text)}
-  .log ul{margin:10px 0 0;padding-left:20px;color:var(--muted);font-size:.93rem}
-  .log ul li{margin:6px 0}
-  .foot{color:var(--muted);font-size:.93rem;border-top:1px solid var(--line);
-    margin-top:38px;padding-top:20px}
+  .log li{position:relative;padding:0 0 32px 46px}
+  .log li:last-child{padding-bottom:0}
+  .log .pin{position:absolute;left:4px;top:4px;width:20px;height:20px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--line)}
+  .log li.newest .pin{border-color:var(--accent);background:var(--accent);
+    box-shadow:0 0 14px rgba(0,246,246,.6)}
+  .vtag{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap}
+  .vtag b{font-size:1.18rem;color:var(--accent);letter-spacing:-.2px}
+  .vtag time{color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
+  .log h3{margin:2px 0 8px;font-size:1.05rem;line-height:1.45;font-weight:600}
+  .log ul{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:.92rem}
+  .log ul li{padding:0 0 6px 0;line-height:1.55}
+  .log ul li:last-child{padding-bottom:0}
+  .log ul li code{font-size:.85em}
+  .badge.ok{background:rgba(0,246,246,.14);color:var(--accent);
+    border:1px solid rgba(0,246,246,.45);font-size:.72rem;padding:2px 8px;
+    border-radius:999px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+  .foot{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.88rem;line-height:1.6}
   .foot a{color:var(--accent);text-decoration:none}
   .foot a:hover{text-decoration:underline}
 """
@@ -146,37 +189,31 @@ T = {
  "en": {
   "lang": "en", "other": "vi", "other_name": "Tiếng Việt",
   "home": "/", "self": "/changelog/", "otherself": "/vi/changelog/",
-  "title": "RetroHub changelog",
-  "desc": ("Every RetroHub release and what it changed, newest first — the Java J2ME "
-           "emulator, the game library, downloads and the update flow."),
-  "keywords": "RetroHub, changelog, release notes, TrimUI Brick, version history",
-  "og_desc": "Every RetroHub release and what changed in it, newest first.",
+  "title": "Changelog — RetroHub",
+  "desc": "What changed in each version of RetroHub, lifted straight from the notes that shipped with the updates.",
+  "keywords": "RetroHub, changelog, release notes, TrimUI Brick, updates, retro handheld",
+  "og_desc": "Every update note since 1.32, word for word.",
   "h1": "Changelog",
-  "lead": ("Every release and what it changed, newest first. Each headline is the note "
-           "that version actually shipped with — the same sentence the app shows on its "
-           "update screen."),
+  "lead": ("Every release note since 1.32 — the same sentence the update screen on your "
+           "device showed when the build arrived."),
+  "back": "Back to homepage",
   "latest": "Latest",
-  "back": "Back to the home page",
-  "foot": ('Builds before 1.32 predate the update screen\'s "what changed" line, so they '
-           'are not listed here rather than described after the fact. Full notes and the '
-           'download for each release are on '
-           '<a href="https://github.com/nguyenxuanhoa493/repohubtool/releases">GitHub</a>.'),
+  "foot": ('Looking for source commits? The repository and full release history '
+           'live on <a href="https://github.com/nguyenxuanhoa493/repohubtool/releases">GitHub</a>.'),
  },
  "vi": {
   "lang": "vi", "other": "en", "other_name": "English",
   "home": "/vi/", "self": "/vi/changelog/", "otherself": "/changelog/",
-  "title": "Nhật ký bản RetroHub",
-  "desc": ("Từng bản RetroHub và những gì nó sửa, mới nhất trước — giả lập Java J2ME, "
-           "kho game, tải game và luồng cập nhật."),
-  "keywords": "RetroHub, nhật ký bản, changelog, TrimUI Brick, lịch sử phiên bản",
-  "og_desc": "Từng bản RetroHub và những gì nó sửa, mới nhất trước.",
-  "h1": "Nhật ký bản",
-  "lead": ("Từng bản và những gì nó sửa, mới nhất trước. Mỗi dòng tiêu đề là ghi chú mà "
-           "chính bản đó phát hành kèm — đúng câu app hiện trên màn cập nhật."),
-  "latest": "Mới nhất",
+  "title": "Nhật ký bản phát hành — RetroHub",
+  "desc": "Những thay đổi qua từng phiên bản RetroHub, trích nguyên văn từ ghi chú đi kèm mỗi bản cập nhật.",
+  "keywords": "RetroHub, nhật ký thay đổi, release notes, TrimUI Brick, cập nhật, máy chơi game cầm tay",
+  "og_desc": "Toàn bộ ghi chú phát hành từ bản 1.32 đến nay, nguyên văn từng câu.",
+  "h1": "Nhật ký bản phát hành",
+  "lead": ("Toàn bộ ghi chú cập nhật từ bản 1.32 — đúng câu mà màn hình cập nhật trên "
+           "máy bạn đã hiện khi có bản mới."),
   "back": "Về trang chủ",
-  "foot": ('Các bản trước 1.32 ra đời khi màn cập nhật chưa có dòng "bản này sửa gì", nên '
-           'không liệt kê ở đây thay vì mô tả lại theo trí nhớ. Ghi chú đầy đủ và bản tải '
+  "latest": "Mới nhất",
+  "foot": ('Cần xem lịch sử mã nguồn? Toàn bộ commit và tệp phân phối '
            'của từng phiên bản nằm trên '
            '<a href="https://github.com/nguyenxuanhoa493/repohubtool/releases">GitHub</a>.'),
  },
@@ -291,6 +328,10 @@ def render(lang):
         "oglocale": "en_US" if lang == "en" else "vi_VN",
         "ldjson": json.dumps(ld, ensure_ascii=False, indent=2),
         "css": CSS, "extracss": EXTRA_CSS,
+        "home": t["home"],
+        "otherself": t["otherself"],
+        "other": t["other"],
+        "other_name": t["other_name"],
         "navlinks": navlinks_for(lang, "changelog"),
         "entries": "".join(rows),
     }.items():

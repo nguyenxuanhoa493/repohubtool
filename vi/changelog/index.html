@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nhật ký bản RetroHub</title>
-<meta name="description" content="Từng bản RetroHub và những gì nó sửa, mới nhất trước — giả lập Java J2ME, kho game, tải game và luồng cập nhật.">
-<meta name="keywords" content="RetroHub, nhật ký bản, changelog, TrimUI Brick, lịch sử phiên bản">
+<title>Nhật ký bản phát hành — RetroHub</title>
+<meta name="description" content="Những thay đổi qua từng phiên bản RetroHub, trích nguyên văn từ ghi chú đi kèm mỗi bản cập nhật.">
+<meta name="keywords" content="RetroHub, nhật ký thay đổi, release notes, TrimUI Brick, cập nhật, máy chơi game cầm tay">
 <meta name="author" content="Nguyễn Xuân Hòa">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#0d1220">
@@ -19,19 +19,19 @@
 <meta property="og:locale" content="vi_VN">
 <meta property="og:site_name" content="RetroHub">
 <meta property="og:url" content="https://retrohub.xuanhoa493.com/vi/changelog/">
-<meta property="og:title" content="Nhật ký bản RetroHub">
-<meta property="og:description" content="Từng bản RetroHub và những gì nó sửa, mới nhất trước.">
+<meta property="og:title" content="Nhật ký bản phát hành — RetroHub">
+<meta property="og:description" content="Toàn bộ ghi chú phát hành từ bản 1.32 đến nay, nguyên văn từng câu.">
 <meta property="og:image" content="https://retrohub.xuanhoa493.com/og-vi.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Nhật ký bản RetroHub">
-<meta name="twitter:description" content="Từng bản RetroHub và những gì nó sửa, mới nhất trước.">
+<meta name="twitter:title" content="Nhật ký bản phát hành — RetroHub">
+<meta name="twitter:description" content="Toàn bộ ghi chú phát hành từ bản 1.32 đến nay, nguyên văn từng câu.">
 <meta name="twitter:image" content="https://retrohub.xuanhoa493.com/og-vi.png">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  "name": "Nhật ký bản RetroHub",
-  "description": "Từng bản RetroHub và những gì nó sửa, mới nhất trước — giả lập Java J2ME, kho game, tải game và luồng cập nhật.",
+  "name": "Nhật ký bản phát hành — RetroHub",
+  "description": "Những thay đổi qua từng phiên bản RetroHub, trích nguyên văn từ ghi chú đi kèm mỗi bản cập nhật.",
   "inLanguage": "vi",
   "url": "https://retrohub.xuanhoa493.com/vi/changelog/",
   "isPartOf": {
@@ -60,21 +60,12 @@
   .brand{display:flex;align-items:center;gap:9px;font-weight:800;
     text-decoration:none;color:var(--text);letter-spacing:-.2px;flex:none}
   .brand img{width:26px;height:26px}
-  .navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+  .navlinks{display:flex;gap:8px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
   .navlinks::-webkit-scrollbar{display:none}
-  .navlinks a{color:var(--muted);text-decoration:none;font-size:.93rem;
-    padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:.95rem;font-weight:500;
+    padding:7px 14px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
   .navlinks a:hover{color:var(--text);background:#1b2c49}
-  .navlinks a.here{color:var(--accent);background:#14243d}
-  /* The one nav item that leaves the page. The arrow says so before the click,
-     and the accent tint stops it reading as just another section. */
-  .navlinks a.out{color:var(--accent)}
-  /* The arrow goes in as the character itself. Written as a CSS escape it would
-     be read as an octal escape by Python first and arrive as a control byte. */
-  .navlinks a.out::after{content:"↗";margin-left:5px;font-size:.85em;opacity:.75}
-  .navlinks a.out:hover{background:#14243d}
-  /* Language switch shows the flag of the language you would move to, so the
-     button says what it does rather than what you already have. */
+  .navlinks a.here{color:var(--accent);background:#14243d;font-weight:700}
   .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
     padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:999px;
     text-decoration:none;color:var(--muted);font-size:.88rem;
@@ -99,15 +90,11 @@
   .btn:active{transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
-  /* Nut thu ba khong phai ban tai cua RetroHub ma cua mot nguoi khac. Mau vang
-     va mui ten de no khong bi doc nham la mot lua chon cai RetroHub. */
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt::after{content:"↗";margin-left:7px;font-size:.85em;opacity:.75}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
-  /* A pill rather than a line of text: it sits under two large buttons and had
-     to read as a badge, not as leftover caption. */
   .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
     padding:8px 18px 8px 14px;border-radius:999px;
     background:linear-gradient(180deg,#16233c,#121c31);
@@ -146,7 +133,7 @@
     opacity:0;transform:scale(1.015);transition:opacity .45s ease,transform .45s ease}
   .stage img.on{opacity:1;transform:scale(1)}
 
-  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
     display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
   .card:hover{transform:translateY(-4px);border-color:var(--accent-dim)}
@@ -245,25 +232,29 @@
     .btn:hover,.card:hover,.tab:hover,.chips a:hover{transform:none}
   }
 
-  .guide p{color:var(--muted)}
+  main.guide{max-width:820px}
   .log{list-style:none;padding:0;margin:0;position:relative}
-  .log::before{content:"";position:absolute;left:11px;top:12px;bottom:12px;
+  .log::before{content:"";position:absolute;left:13px;top:14px;bottom:14px;
     width:2px;background:var(--line)}
-  .log > li{position:relative;padding:0 0 26px 42px}
-  .log > li:last-child{padding-bottom:0}
-  .log .pin{position:absolute;left:2px;top:5px;width:20px;height:20px;
-    border-radius:50%;background:var(--bg);border:2px solid var(--line)}
-  .log > li.newest .pin{border-color:var(--accent);background:var(--accent);
-    box-shadow:0 0 12px rgba(0,246,246,.5)}
-  .vtag{display:inline-flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-  .vtag b{font-size:1.06rem;font-variant-numeric:tabular-nums}
-  .vtag time{color:var(--muted);font-size:.84rem}
-  .vtag .badge{margin-left:0}
-  .log h3{margin:4px 0 0;font-size:1rem;font-weight:600;color:var(--text)}
-  .log ul{margin:10px 0 0;padding-left:20px;color:var(--muted);font-size:.93rem}
-  .log ul li{margin:6px 0}
-  .foot{color:var(--muted);font-size:.93rem;border-top:1px solid var(--line);
-    margin-top:38px;padding-top:20px}
+  .log li{position:relative;padding:0 0 32px 46px}
+  .log li:last-child{padding-bottom:0}
+  .log .pin{position:absolute;left:4px;top:4px;width:20px;height:20px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--line)}
+  .log li.newest .pin{border-color:var(--accent);background:var(--accent);
+    box-shadow:0 0 14px rgba(0,246,246,.6)}
+  .vtag{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap}
+  .vtag b{font-size:1.18rem;color:var(--accent);letter-spacing:-.2px}
+  .vtag time{color:var(--muted);font-size:.86rem;font-variant-numeric:tabular-nums}
+  .log h3{margin:2px 0 8px;font-size:1.05rem;line-height:1.45;font-weight:600}
+  .log ul{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:.92rem}
+  .log ul li{padding:0 0 6px 0;line-height:1.55}
+  .log ul li:last-child{padding-bottom:0}
+  .log ul li code{font-size:.85em}
+  .badge.ok{background:rgba(0,246,246,.14);color:var(--accent);
+    border:1px solid rgba(0,246,246,.45);font-size:.72rem;padding:2px 8px;
+    border-radius:999px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+  .foot{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.88rem;line-height:1.6}
   .foot a{color:var(--accent);text-decoration:none}
   .foot a:hover{text-decoration:underline}
 </style>
@@ -273,7 +264,7 @@
 <nav>
   <div class="navin">
     <a class="brand" href="/vi/"><img src="/logo.png" alt=""><span>RetroHub</span></a>
-    <div class="navlinks"><a href="/vi/#tinh-nang">Tính năng</a><a href="/vi/#cach-cai">Cách cài</a><a href="/vi/#tai-ve">Tải về</a><a class="out" href="/vi/java/">Hướng dẫn Java</a><a href="/vi/#ung-ho">Ủng hộ</a><a href="/vi/#lo-trinh">Lộ trình</a><a class="here" href="/vi/changelog/">Nhật ký bản</a><a href="/vi/#lien-he">Liên hệ</a></div>
+    <div class="navlinks"><a class="" href="/vi/">RetroHub</a><a class="" href="/vi/java/">Hướng dẫn JAVA</a><a class="here" href="/vi/changelog/">Nhật ký</a></div>
     <a class="lang" href="/changelog/" hreflang="en" title="English">
       <img src="/files/assets/flag_en.png" alt=""><span>English</span></a>
   </div>
@@ -281,15 +272,15 @@
 
 <header style="padding:56px 0 34px">
   <div class="wrap">
-    <h1 style="margin-top:0">Nhật ký bản</h1>
-    <p class="sub" style="max-width:720px;margin:0 auto">Từng bản và những gì nó sửa, mới nhất trước. Mỗi dòng tiêu đề là ghi chú mà chính bản đó phát hành kèm — đúng câu app hiện trên màn cập nhật.</p>
+    <h1 style="margin-top:0">Nhật ký bản phát hành</h1>
+    <p class="sub" style="max-width:720px;margin:0 auto">Toàn bộ ghi chú cập nhật từ bản 1.32 — đúng câu mà màn hình cập nhật trên máy bạn đã hiện khi có bản mới.</p>
   </div>
 </header>
 
 <main class="wrap guide" style="padding-bottom:64px">
   <section class="rise" style="padding-top:14px">
-    <ul class="log"><li class="newest"><span class="pin"></span><span class="vtag"><b>1.44</b><time datetime="2026-08-30">2026-08-30</time><span class="badge ok">Mới nhất</span></span><h3>Game Java có dấu cách trong tên tệp giờ mở được</h3><ul><li>Giả lập mở tệp jar bằng một URI "jar:file:" mà không mã hoá gì cả, nên chỉ một dấu cách là không đọc nổi manifest — game chết trước khi vẽ được khung hình nào. 758 trên 3.357 nguồn game Java trong kho có tên như vậy.</li><li>Tệp đã nằm sẵn trên thẻ được đổi tên khi mở app; save game, cấu hình riêng từng game và ảnh bìa đổi theo cùng.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.43</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Máy còn giả lập Java cũ được tự nâng cấp</h3><ul><li>Bản cập nhật trong app chỉ mang mã ứng dụng, không mang 66 MB giả lập, nên máy có thể ở lại bản cũ mãi mà không ai báo. Giờ app tự nhận ra và nâng cấp lúc khởi động, giữ nguyên save.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.42</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Cài lại giả lập Java không còn xoá save game</h3><ul><li>Save J2ME và cấu hình từng game nằm bên trong thư mục giả lập, mà cài lại thì thay trọn thư mục đó. Giờ chúng được cất ra rồi đặt lại — kể cả khi bản cài hỏng giữa chừng.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.41</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Giả lập Java đổi sang bản FreeJ2ME mới cho Brick Pro</h3><ul><li>Ba kiểu hiển thị PIXEL, SMOOTH, HQ — đổi trong app hoặc bấm START + R3 ngay trong game.</li><li>Ba bố trí nút H, K, X đổi ngay trên máy bằng START + SELECT, và thoát game giờ có hỏi lại.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.40</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Chữ tiếng Việt không còn thành ô vuông trên máy dùng theme thiếu font</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.39</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Kho game tự cập nhật trong máy, không cần cài lại</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.38</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Không còn ảnh 404 ở box art; game chưa có bìa hiện ô tên game và hệ máy</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.37</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Nhảy chữ cái rơi đúng game, không còn lệch cột</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.36</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Danh sách game không còn cắt ngang ở 1.000</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.35</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Mở game bằng đúng giả lập và đúng chế độ máy đang chọn</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.34</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Game giải nén xong giữ đúng tên, màn hình báo rõ file nào</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.33</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Tải game .rar/.7z giờ tự giải nén ra ROM thật</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.32</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Game đã tải mở bảng chơi/xoá/tải lại thay vì hỏi tải</h3></li></ul>
-    <p class="foot">Các bản trước 1.32 ra đời khi màn cập nhật chưa có dòng "bản này sửa gì", nên không liệt kê ở đây thay vì mô tả lại theo trí nhớ. Ghi chú đầy đủ và bản tải của từng phiên bản nằm trên <a href="https://github.com/nguyenxuanhoa493/repohubtool/releases">GitHub</a>.</p>
+    <ul class="log"><li class="newest"><span class="pin"></span><span class="vtag"><b>1.50</b><time datetime="2026-08-31">2026-08-31</time><span class="badge ok">Mới nhất</span></span><h3>Hỗ trợ chính thức hệ điều hành NextUI, lưu ảnh bìa kép và tinh gọn menu tiện ích</h3><ul><li>Đóng gói dưới dạng Tool Pak (<code>Tools/tg5040/RetroHub.pak</code> & <code>Tools/tg5050/</code>) với đầy đủ tính năng tự cập nhật qua Wi-Fi.</li><li>Tự động nhận diện thư mục ROM theo tag của NextUI như <code>Game Boy Advance (GBA)</code>, lưu ảnh bìa vào <code>.media/</code> song song với <code>Imgs/</code> của Stock OS.</li><li>Cài đặt giả lập Java J2ME tự động tạo <code>JAVA.pak</code> cho NextUI song song với <code>Emus/JAVA</code> cho Stock OS.</li><li>Sửa lỗi game Java chứa mục rỗng bị đánh dấu mã khoá làm không mở được.</li><li>Loại bỏ nút 'Làm mới ROMs' trong Tiện ích vì NextUI tự động quét game khi về màn hình chính.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.49</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Game Java 320x240 không còn rơi vào thư mục 240320</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.48</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Hai kệ game Java ghim đầu và thêm 130 game Gameloft</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.47</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Thêm nguồn game Java giaitri321.vip, ưu tiên bản 320x240</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.46</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Bộ giả lập Java đi theo đường cập nhật trong app</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.45</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Game Java hỏi nhập chữ giờ chơi được</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.44</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Game Java có dấu cách trong tên tệp giờ mở được</h3><ul><li>Giả lập mở tệp jar bằng một URI "jar:file:" mà không mã hoá gì cả, nên chỉ một dấu cách là không đọc nổi manifest — game chết trước khi vẽ được khung hình nào. 758 trên 3.357 nguồn game Java trong kho có tên như vậy.</li><li>Tệp đã nằm sẵn trên thẻ được đổi tên khi mở app; save game, cấu hình riêng từng game và ảnh bìa đổi theo cùng.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.43</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Máy còn giả lập Java cũ được tự nâng cấp</h3><ul><li>Bản cập nhật trong app chỉ mang mã ứng dụng, không mang 66 MB giả lập, nên máy có thể ở lại bản cũ mãi mà không ai báo. Giờ app tự nhận ra và nâng cấp lúc khởi động, giữ nguyên save.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.42</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Cài lại giả lập Java không còn xoá save game</h3><ul><li>Save J2ME và cấu hình từng game nằm bên trong thư mục giả lập, mà cài lại thì thay trọn thư mục đó. Giờ chúng được cất ra rồi đặt lại — kể cả khi bản cài hỏng giữa chừng.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.41</b><time datetime="2026-08-30">2026-08-30</time></span><h3>Giả lập Java đổi sang bản FreeJ2ME mới cho Brick Pro</h3><ul><li>Ba kiểu hiển thị PIXEL, SMOOTH, HQ — đổi trong app hoặc bấm START + R3 ngay trong game.</li><li>Ba bố trí nút H, K, X đổi ngay trên máy bằng START + SELECT, và thoát game giờ có hỏi lại.</li></ul></li><li class=""><span class="pin"></span><span class="vtag"><b>1.40</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Chữ tiếng Việt không còn thành ô vuông trên máy dùng theme thiếu font</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.39</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Kho game tự cập nhật trong máy, không cần cài lại</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.38</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Không còn ảnh 404 ở box art; game chưa có bìa hiện ô tên game và hệ máy</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.37</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Nhảy chữ cái rơi đúng game, không còn lệch cột</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.36</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Danh sách game không còn cắt ngang ở 1.000</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.35</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Đổi ngôn ngữ có tác dụng ngay, không cần khởi động lại</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.34</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Chữ tiếng Việt ở danh sách game tải về không còn ngắt dòng giữa dấu</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.33</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Bản cập nhật hỏng tự dọn dẹp, bản đang chạy còn nguyên</h3></li><li class=""><span class="pin"></span><span class="vtag"><b>1.32</b><time datetime="2026-08-29">2026-08-29</time></span><h3>Màn hình cập nhật báo bản mới có gì khác</h3></li></ul>
+    <p class="foot">Cần xem lịch sử mã nguồn? Toàn bộ commit và tệp phân phối của từng phiên bản nằm trên <a href="https://github.com/nguyenxuanhoa493/repohubtool/releases">GitHub</a>.</p>
     <p style="margin-top:26px"><a class="btn ghost" href="/vi/">Về trang chủ</a></p>
   </section>
 </main>

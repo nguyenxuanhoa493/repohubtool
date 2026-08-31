@@ -25,3 +25,36 @@ SPLASH_SYS_FILE = "/etc/splash.png"
 SPLASH_TEMP_PREVIEW = "/tmp/splash_preview.png"
 SPLASH_TEMP_BMP = "/tmp/splash_preview.bmp"
 BOOTLOGO_BACKUP_FILE = "/mnt/SDCARD/System/backup/bootlogo_original.bmp"
+
+
+def is_nextui():
+    """True if running under NextUI / MinUI environment."""
+    return bool(os.environ.get("PLATFORM")) or os.path.isdir(f"{SDCARD_PATH}/.system") or os.path.isdir(f"{SDCARD_PATH}/.userdata")
+
+
+def resolve_rom_dir(sys_tag):
+    """Find the best matching ROM directory on SDCARD for a given system tag.
+
+    On NextUI, systems often have folders named 'Nintendo (FC)', 'Game Boy Advance (GBA)',
+    etc. We check for existing folders matching the tag in parentheses first, then direct
+    subfolder name, and finally fallback to SDCARD_PATH/Roms/<sys_tag>.
+    """
+    roms_root = f"{SDCARD_PATH}/Roms"
+    if not os.path.exists(roms_root):
+        return f"{roms_root}/{sys_tag}"
+
+    tag_upper = str(sys_tag).upper()
+    tag_pattern = f"({tag_upper})"
+    try:
+        for entry in os.listdir(roms_root):
+            p = os.path.join(roms_root, entry)
+            if os.path.isdir(p) and entry.upper().endswith(tag_pattern):
+                return p
+    except OSError:
+        pass
+
+    direct = os.path.join(roms_root, sys_tag)
+    if os.path.isdir(direct):
+        return direct
+    return direct
+

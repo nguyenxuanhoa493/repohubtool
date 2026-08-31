@@ -75,4 +75,14 @@ def resolve(sys_code, emus_root=None):
             return (emu_dir, script)
         if fallback is None:
             fallback = (emu_dir, script)
-    return fallback or (None, None)
+    if fallback:
+        return fallback
+
+    # Check NextUI platform Paks: Emus/tg5040/<sys_code>.pak / Emus/tg5050/<sys_code>.pak
+    for plat in ("tg5040", "tg5050"):
+        pak_dir = os.path.join(root, plat, f"{sys_code}.pak")
+        pak_launch = os.path.join(pak_dir, "launch.sh")
+        if os.path.isfile(pak_launch):
+            return (pak_dir, pak_launch)
+
+    return (None, None)

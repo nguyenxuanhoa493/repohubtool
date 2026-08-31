@@ -33,8 +33,15 @@ def scan_all_downloaded_games():
     for sys_code in sorted(sys_dirs):
         if sys_code in ("HITS", "VIET", "TOPO", "FAV"):
             continue
+
+        actual_code = sys_code
+        if "(" in sys_code and sys_code.endswith(")"):
+            extracted = sys_code[sys_code.rfind("(") + 1:-1].strip().upper()
+            if extracted:
+                actual_code = extracted
+
         rom_dir = os.path.join(roms_root, sys_code)
-        img_dir = f"{SDCARD_PATH}/Imgs/{sys_code}"
+        img_dir = f"{SDCARD_PATH}/Imgs/{actual_code}"
         # ROM folders are commonly one level deep, and J2ME depends on it: the
         # launcher reads the screen size from a folder named like 240320. Scan the
         # system folder plus one level below it.
@@ -69,11 +76,16 @@ def scan_all_downloaded_games():
                         if not os.path.exists(img_p):
                             img_p = os.path.join(img_dir, f"{base_name}.jpg")
                         if not os.path.exists(img_p):
-                            img_p = None
+                            media_p = os.path.join(rom_dir, ".media", f"{base_name}.png")
+                            if os.path.exists(media_p):
+                                img_p = media_p
+                            else:
+                                sub_media = os.path.join(scan_dir, ".media", f"{base_name}.png")
+                                img_p = sub_media if os.path.exists(sub_media) else None
 
                         results.append({
-                            "sys_code": sys_code,
-                            "sys_name": get_system_display_name(sys_code),
+                            "sys_code": actual_code,
+                            "sys_name": get_system_display_name(actual_code),
                             "title": base_name,
                             "filename": name,
                             "rom_path": entry.path,

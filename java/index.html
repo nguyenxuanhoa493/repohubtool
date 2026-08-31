@@ -65,21 +65,12 @@
   .brand{display:flex;align-items:center;gap:9px;font-weight:800;
     text-decoration:none;color:var(--text);letter-spacing:-.2px;flex:none}
   .brand img{width:26px;height:26px}
-  .navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+  .navlinks{display:flex;gap:8px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
   .navlinks::-webkit-scrollbar{display:none}
-  .navlinks a{color:var(--muted);text-decoration:none;font-size:.93rem;
-    padding:7px 12px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
+  .navlinks a{color:var(--muted);text-decoration:none;font-size:.95rem;font-weight:500;
+    padding:7px 14px;border-radius:8px;white-space:nowrap;transition:color .15s,background .15s}
   .navlinks a:hover{color:var(--text);background:#1b2c49}
-  .navlinks a.here{color:var(--accent);background:#14243d}
-  /* The one nav item that leaves the page. The arrow says so before the click,
-     and the accent tint stops it reading as just another section. */
-  .navlinks a.out{color:var(--accent)}
-  /* The arrow goes in as the character itself. Written as a CSS escape it would
-     be read as an octal escape by Python first and arrive as a control byte. */
-  .navlinks a.out::after{content:"↗";margin-left:5px;font-size:.85em;opacity:.75}
-  .navlinks a.out:hover{background:#14243d}
-  /* Language switch shows the flag of the language you would move to, so the
-     button says what it does rather than what you already have. */
+  .navlinks a.here{color:var(--accent);background:#14243d;font-weight:700}
   .lang{display:flex;align-items:center;gap:8px;flex:none;margin-left:10px;
     padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:999px;
     text-decoration:none;color:var(--muted);font-size:.88rem;
@@ -104,15 +95,11 @@
   .btn:active{transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
-  /* Nut thu ba khong phai ban tai cua RetroHub ma cua mot nguoi khac. Mau vang
-     va mui ten de no khong bi doc nham la mot lua chon cai RetroHub. */
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt::after{content:"↗";margin-left:7px;font-size:.85em;opacity:.75}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
 
-  /* A pill rather than a line of text: it sits under two large buttons and had
-     to read as a badge, not as leftover caption. */
   .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
     padding:8px 18px 8px 14px;border-radius:999px;
     background:linear-gradient(180deg,#16233c,#121c31);
@@ -151,7 +138,7 @@
     opacity:0;transform:scale(1.015);transition:opacity .45s ease,transform .45s ease}
   .stage img.on{opacity:1;transform:scale(1)}
 
-  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .dl{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
     display:flex;flex-direction:column;transition:transform .18s,border-color .18s}
   .card:hover{transform:translateY(-4px);border-color:var(--accent-dim)}
@@ -295,7 +282,7 @@
 <nav>
   <div class="navin">
     <a class="brand" href="/"><img src="/logo.png" alt=""><span>RetroHub</span></a>
-    <div class="navlinks"><a href="/#tinh-nang">Features</a><a href="/#cach-cai">Install</a><a href="/#tai-ve">Download</a><a class="here" href="/java/">Java guide</a><a href="/#ung-ho">Support</a><a href="/#lo-trinh">Roadmap</a><a class="out" href="/changelog/">Changelog</a><a href="/#lien-he">Contact</a></div>
+    <div class="navlinks"><a class="" href="/">RetroHub</a><a class="here" href="/java/">Java guide</a><a class="" href="/changelog/">Changelog</a></div>
     <a class="lang" href="/vi/java/" hreflang="vi" title="Tiếng Việt">
       <img src="/files/assets/flag_vi.png" alt=""><span>Tiếng Việt</span></a>
   </div>
