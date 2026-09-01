@@ -23,9 +23,23 @@ case "$0" in
 esac
 APP="$(pwd)"
 
-export SDCARD_PATH="/mnt/SDCARD"
+# NextUI exports SDCARD_PATH itself; stock firmware does not, hence the
+# fallback. This one script is what both the Apps/ install and the NextUI .pak
+# ship - tools/build_pak.sh used to write a second launcher of its own, and the
+# two drifted until the .pak had no --led-daemon branch at all.
+export SDCARD_PATH="${SDCARD_PATH:-/mnt/SDCARD}"
 export PATH="$SDCARD_PATH/System/bin:$PATH"
-export LD_LIBRARY_PATH="$SDCARD_PATH/System/lib:/usr/trimui/lib:/usr/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$APP/libs:$SDCARD_PATH/System/lib:/usr/trimui/lib:/usr/lib:/lib:$LD_LIBRARY_PATH"
+
+# Chi de /usr/trimui/lib: day la SDL2 rieng cua thiet bi. pysdl2 (vendor/sdl2/
+# dll.py:_findlib) tim ten file libSDL2.so khop chinh xac o MOI thu muc trong
+# bien nay TRUOC khi xet ten co so phien ban, nen thu tu liet ke khong bao ve
+# duoc gi - neu them /usr/lib vao day va no co san mot libSDL2.so khong ghi
+# phien ban trong khi /usr/trimui/lib chi co ban ghi phien ban, ban /usr/lib
+# se thang du dung sau. Khong can them /usr/lib o day: _findlib van goi
+# ctypes.util.find_library() nhu buoc du phong sau khi quet xong bien nay, nen
+# thu vien he thong (bao gom /usr/lib) van tim duoc, chi la khong con xep
+# hang truoc ban rieng cua may.
 export PYSDL2_DLL_PATH="/usr/trimui/lib"
 
 # Kept outside the app folder so reinstalling or updating RetroHub does not
@@ -39,7 +53,13 @@ RUNTIME_MB=20
 # There is no console on a handheld: stdout vanishes and the menu redraws over
 # everything. A file at the root of the card is the only message the user can
 # actually find, so anything fatal goes there.
-ERRLOG="$SDCARD_PATH/RetroHub-loi.txt"
+# NextUI hands its tools a log directory; use it when it is there so the
+# message lands where that user already looks.
+if [ -n "$LOGS_PATH" ] && [ -d "$LOGS_PATH" ]; then
+    ERRLOG="$LOGS_PATH/RetroHub.txt"
+else
+    ERRLOG="$SDCARD_PATH/RetroHub-loi.txt"
+fi
 
 log() { echo "[RetroHub] $*"; }
 
@@ -166,6 +186,13 @@ fi
 
 # Got this far, so the previous failure - if any - is stale.
 rm -f "$ERRLOG" 2>/dev/null
+
+# Boot hook goi vao day thay vi goi thang python3: script nay la noi duy nhat
+# biet cach tim Python tren may nay. Brick Pro khong co Python trong firmware,
+# nen bon tang tim/tai o tren phai chay truoc khi daemon khoi dong duoc.
+if [ "$1" = "--led-daemon" ]; then
+    exec "$PY" led_daemon.py
+fi
 
 while true; do
     rm -f /tmp/launch_game.sh

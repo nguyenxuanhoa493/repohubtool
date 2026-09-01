@@ -88,6 +88,7 @@ from rh.j2me import (RENDER_MODES, RESOLUTIONS,
     repair_encrypted_jars, repair_unsafe_jar_names, rom_dir_for, runtime_is_stale,
     runtime_supports_renderer, safe_jar_name, save_render_mode)
 from rh.emulators import resolve as resolve_emulator
+from rh import led, ledconf, ledctl, ledthemes
 from rh.fonts import VIET_PROBE, font_candidates, pick_font
 from rh.updater import (apply_catalog, apply_runtime, apply_update,
     CATALOG_FAILED, catalog_entry, catalog_pending, CatalogError,
@@ -557,6 +558,14 @@ def main():
     j2me_render_mode = None     # filled when the display screen is opened
     core_sys_rows = []          # cac he doi core duoc, doc khi mo man hinh do
     core_sys_pick = None        # he dang chon, cho man hinh chon giai lap
+    # DEN LED: doc mot lan luc khoi dong, sau do man hinh cai dat la nguon su
+    # that. Ghi vao led.json la cach duy nhat noi chuyen voi daemon.
+    led_cfg = ledconf.load()
+    led_zones = led.detect_zones()
+    # Bo mau dang duoc xem thu tren man hinh chon bo mau. Rieng voi
+    # led_cfg["theme"], vi led_cfg giu lua chon da chot - ban de tra ve khi
+    # nguoi dung roi man hinh ma khong chon.
+    led_preview = None
     _sys_rows = get_source_systems_list("ALL")
     _sys_counts = dict(_sys_rows)
     sys_keys_list = ["ALL"] + [c for c, _ in _sys_rows if c != "ALL"]
@@ -1304,6 +1313,9 @@ def main():
                 items.append({"id": "nav_core_sys", "title": tr("util_core_title"),
                               "label": tr("view")})
 
+            items.append({"id": "nav_led", "title": tr("util_item_led"),
+                          "label": tr("view")})
+
             # Hai muc chi-doc nam canh nhau: chung tra loi cung mot loai cau hoi.
             items.append({"id": "device_info", "title": tr("device_info"), "label": tr("view")})
             items.append({"id": "storage_status", "title": tr("util_storage_item"), "label": tr("view")})
@@ -1346,6 +1358,46 @@ def main():
                               "title": opt.get("name") or opt["launch"],
                               "label": tr("core_cur") if opt["launch"] == row["current_launch"] else ""})
             items.append({"id": "back", "title": tr("back_home")})
+
+        # DEN LED: mot man hinh chinh, mot man hinh chon bo mau.
+        elif current_screen == "led":
+            header_title = tr("led_title")
+            items.append({"id": "led_toggle", "title": tr("led_enable"),
+                          "type": "toggle", "state": led_cfg.get("enabled", False)})
+            items.append({"id": "nav_led_theme", "title": tr("led_theme"),
+                          "label": ledthemes.name(led_cfg.get("theme"),
+                                                  state.current_lang)})
+            items.append({"id": "led_brightness", "title": tr("led_brightness"),
+                          "label": "%d%%" % led_cfg.get("brightness", 60)})
+            items.append({"id": "led_speed", "title": tr("led_speed"),
+                          "label": tr("led_speed_" +
+                                      ledconf.speed_name(led_cfg.get("speed", 1.0)))})
+            # Hook la co che cua NextUI. Firmware goc khong co no, va con
+            # lcservice tranh sysfs - noi ro thay vi de dong nay bam khong an.
+            if ledctl.hook_supported():
+                # Trang thai lay tu file hook co that su nam tren dia hay
+                # khong, chu khong tu led_cfg["boot"]: exfat-fuse tu choi
+                # chmod, nen ban cu cua install_hook() bao that bai trong khi
+                # hook da cai va van chay moi lan khoi dong - cong tac o lai
+                # TAT va lan bam sau lai goi install thay vi remove.
+                items.append({"id": "led_boot", "title": tr("led_boot"),
+                              "type": "toggle", "state": ledctl.hook_installed()})
+            else:
+                items.append({"id": "led_boot_off", "title": tr("led_boot"),
+                              "label": tr("led_boot_nextui_only"), "is_disabled": True})
+            if not led_zones:
+                items.append({"id": "led_none", "title": tr("led_no_zones"), "sub": True})
+            items.append({"id": "back", "title": tr("back_home")})
+
+        # CHON BO MAU: con tro chinh la nut xem thu - xem xu ly btn_up/btn_down.
+        elif current_screen == "led_theme":
+            header_title = tr("led_theme_title")
+            for th in ledthemes.THEMES:
+                items.append({"id": "ledtheme_" + th["id"], "theme_id": th["id"],
+                              "title": ledthemes.name(th["id"], state.current_lang),
+                              "label": tr("led_cur")
+                                       if th["id"] == led_cfg.get("theme") else ""})
+            items.append({"id": "back", "title": tr("back")})
 
         # SETTINGS: things that shape the app itself, kept out of Utilities which is
         # about acting on the device.
@@ -2450,12 +2502,39 @@ def main():
                 else:
                     selected_idx += 1
                 selected_indices[current_screen] = selected_idx
+            # DEN LED: trai/phai chinh ngay gia tri tren dong dang chon, thay
+            # vi nhay 10 dong nhu danh sach dai. Man hinh nay co sau dong, cu
+            # chi nhay 10 o day khong co nghia gi.
+            elif current_screen == "led" and (btn_left or btn_right):
+                row_id = items[selected_idx].get("id") if items else ""
+                if row_id == "led_brightness":
+                    step = 10 if btn_right else -10
+                    led_cfg["brightness"] = max(0, min(100,
+                        led_cfg.get("brightness", 60) + step))
+                    if not ledconf.save(led_cfg):
+                        toast_msg = tr("led_save_failed")
+                        toast_timer = time.time()
+                elif row_id == "led_speed":
+                    led_cfg["speed"] = ledconf.cycle_speed(
+                        led_cfg.get("speed", 1.0), 1 if btn_right else -1)
+                    if not ledconf.save(led_cfg):
+                        toast_msg = tr("led_save_failed")
+                        toast_timer = time.time()
             elif btn_left or btn_l1: # L1 or Left: Jump back 10
                 selected_idx = max(0, selected_idx - 10)
                 selected_indices[current_screen] = selected_idx
             elif btn_right or btn_r1: # R1 or Right: Jump forward 10
                 selected_idx = min(len(items) - 1, selected_idx + 10)
                 selected_indices[current_screen] = selected_idx
+            # Bo mau da xem thu nhung khong chon: ghi lai led_cfg de tra den
+            # ve nguyen trang. led_cfg chua bao gio bi preview dung toi, nen no
+            # van la bo mau nguoi dung chot lan cuoi - khong can bien nho rieng.
+            elif current_screen == "led_theme" and btn_b:
+                if not ledconf.save(led_cfg):
+                    toast_msg = tr("led_save_failed")
+                    toast_timer = time.time()
+                led_preview = None
+                screen_stack.pop()
             elif btn_b:
                 if modal_rows is not None:
                     modal_rows = None
@@ -2531,6 +2610,91 @@ def main():
                         toast_msg = tr("core_saved")
                     else:
                         toast_msg = tr("core_failed")
+                    toast_timer = time.time()
+                elif item_id == "nav_led":
+                    # Dong bo truoc khi ve: file co the dang noi doi. Tren
+                    # firmware goc khong he co tu chay khi khoi dong (co y nhu
+                    # vay), nen sau moi lan khoi dong lai may, led.json van noi
+                    # enabled=true trong khi khong co daemon nao - cong tac hien
+                    # BAT, den tat, bam mot cai thanh TAT va khong co gi xay ra.
+                    # reconcile() cung don not den con sang sot lai tu mot daemon
+                    # bi kill -9, dung nhu bang rui ro cua ban thiet ke hua.
+                    led_cfg = ledctl.reconcile(ledconf.load())
+                    led_zones = led.detect_zones()
+                    if ledctl.conflicting_daemon():
+                        toast_msg = tr("led_conflict")
+                        toast_timer = time.time()
+                    selected_indices["led"] = 0
+                    screen_stack.append("led")
+                elif item_id == "led_toggle":
+                    want = not led_cfg.get("enabled", False)
+                    if want:
+                        # Ghi file TRUOC khi tha daemon. Daemon doc cau hinh
+                        # ngay khi khoi dong va tu thoat neu no noi TAT (xem
+                        # rh/leddaemon.run), nen tha truoc roi ghi sau la mot
+                        # cuoc dua ma ben thua la den khong bao gio sang.
+                        new_cfg = dict(led_cfg, enabled=True)
+                        if not ledconf.save(new_cfg):
+                            toast_msg = tr("led_save_failed")
+                            toast_timer = time.time()
+                        elif ledctl.start():
+                            led_cfg = new_cfg
+                        else:
+                            # Khong tha duoc: tra file ve nguyen trang, neu
+                            # khong thi may se tin la dang bat.
+                            ledconf.save(led_cfg)
+                    elif ledctl.stop():
+                        # Chieu tat thi nguoc lai: daemon tu don den luc nhan
+                        # SIGTERM, va neu no khong con song thi stop() da tat
+                        # den ho. Ghi sau nen mot lan ghi hong khong de lai
+                        # den sang - lan mo man hinh sau reconcile() se don.
+                        led_cfg["enabled"] = False
+                        if not ledconf.save(led_cfg):
+                            toast_msg = tr("led_save_failed")
+                            toast_timer = time.time()
+                elif item_id == "led_boot":
+                    # Hoi dia chu khong hoi led_cfg, cung ly do voi dong ve
+                    # cong tac o tren: neu hai nguon lech nhau thi bam mot cai
+                    # se cai lai cai da cai, mai mai.
+                    want = not ledctl.hook_installed()
+                    ok = ledctl.install_hook() if want else ledctl.remove_hook()
+                    if ok:
+                        # led_cfg["boot"] chi duoc gan sau khi ghi file thanh
+                        # cong - neu khong the trang thai trong bo nho se noi
+                        # BAT trong khi hook da cai nhung file van ghi false.
+                        new_cfg = dict(led_cfg, boot=want)
+                        if ledconf.save(new_cfg):
+                            led_cfg = new_cfg
+                        else:
+                            toast_msg = tr("led_save_failed")
+                            toast_timer = time.time()
+                elif item_id == "nav_led_theme":
+                    # Mo ra dung o bo mau dang dung, khong phai dong dau: xem
+                    # thu bat dau tu cai nguoi ta dang nghe, khong phai tu dau
+                    # danh sach.
+                    selected_indices["led_theme"] = next(
+                        (i for i, th in enumerate(ledthemes.THEMES)
+                         if th["id"] == led_cfg.get("theme")), 0)
+                    # Con tro dang dung tren bo mau hien tai, tuc dang xem thu
+                    # chinh no: khong can ghi lai gi khi chua ai bam gi.
+                    led_preview = led_cfg.get("theme")
+                    screen_stack.append("led_theme")
+                elif item_id.startswith("ledtheme_"):
+                    led_cfg = ledconf.apply_theme(led_cfg, cur_item.get("theme_id"))
+                    if not ledconf.save(led_cfg):
+                        toast_msg = tr("led_save_failed")
+                        toast_timer = time.time()
+                    led_preview = None
+                    screen_stack.pop()
+                elif item_id == "led_none":
+                    toast_msg = tr("led_no_zones")
+                    toast_timer = time.time()
+                elif item_id == "led_boot_off":
+                    # "is_disabled" duoc dat o bon cho trong file nay nhung
+                    # khong cho nao doc: dong nay khong mo, van chon duoc, va
+                    # bam A truoc day khong roi vao nhanh nao - khong toast,
+                    # khong gi ca. Lam nhu led_none o tren: tu giai thich.
+                    toast_msg = tr("led_boot_stock")
                     toast_timer = time.time()
                 elif item_id in ("core_note", "core_none"):
                     toast_msg = tr("core_note") if item_id == "core_note" else tr("core_none")
@@ -2805,11 +2969,50 @@ def main():
                     j2me_modal["busy"] = False
                     j2me_modal["pending"] = False
                     j2me_modal["active"] = True
+                elif item_id == "back" and current_screen == "led_theme":
+                    # Dung duong cua nut B: bo mau dang xem thu chua duoc chon,
+                    # phai ghi lai led_cfg de tra den ve nguyen trang. Roi man
+                    # hinh bang dong nay ma khong lam vay se bien ban xem thu
+                    # thanh vinh vien tren dia trong khi led_cfg trong bo nho
+                    # van giu bo mau cu - va dong "Bo mau" o man hinh truoc se
+                    # ghi mot cai ten khac han voi cai dang sang.
+                    if not ledconf.save(led_cfg):
+                        toast_msg = tr("led_save_failed")
+                        toast_timer = time.time()
+                    led_preview = None
+                    if len(screen_stack) > 1:
+                        screen_stack.pop()
                 elif item_id == "back":
                     if len(screen_stack) > 1:
                         screen_stack.pop()
                 elif item_id == "exit":
                     running = False
+
+            # Con tro chinh la nut xem thu: di toi bo mau nao thi den doi ngay
+            # toi bo mau do. Ghi vao led.json - cung duong di voi luc chon that,
+            # nen khong co nhanh code rieng cho preview, va daemon nhan trong
+            # khoang mot phan muoi giay.
+            #
+            # Dat SAU toan bo chuoi if/elif dieu huong, khong phai chen vao
+            # giua no: chen vao giua se cat chuoi lam hai, va tu do btn_a /
+            # btn_b khong con loai tru lan nhau voi btn_up / btn_down - mot
+            # khung hinh co ca hai co se vua cuon vua mo nham muc.
+            if current_screen == "led_theme" and (btn_up or btn_down) and items:
+                new_theme = items[selected_idx].get("theme_id")
+                # So voi bo mau DA XEM THU lan truoc, khong phai voi
+                # led_cfg["theme"]. led_cfg co y khong bi preview dung toi (no
+                # la ban de tra ve khi bam B), nen so voi no se lam viec cuon
+                # con tro QUAY LAI dong "DANG DUNG" khong ghi gi ca: den van
+                # giu bo mau vua xem thu trong khi dong do noi no dang duoc
+                # dung. Dung nghia la "con tro chinh la nut xem thu".
+                if new_theme and new_theme != led_preview:
+                    led_preview = new_theme
+                    # Khong toast neu ghi hong: day la buoc xem thu, chay moi
+                    # lan con tro di chuyen. Neu the hong that, toast se lap
+                    # lai lien tuc trong luc luot qua 12 bo mau - ca A (chon
+                    # that) va B (tra ve nguyen trang) van kiem tra ket qua
+                    # ghi, nen loi that su van duoc bao, chi khong bao o day.
+                    ledconf.save(ledconf.apply_theme(led_cfg, new_theme))
 
         # A finished update swapped the bytecode underneath this process. Hand
         # control back to launch.sh, which restarts the app with the new build.

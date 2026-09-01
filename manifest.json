@@ -1,15 +1,16 @@
 {
-  "version": "1.53",
+  "version": "1.54",
   "python": "any",
-  "built": "2026-09-01T04:27:39+0700",
-  "base_url": "",
+  "built": "2026-09-01T09:16:47+0700",
+  "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sua nhan tran ra ngoai nut o menu doi gia lap",
-    "en": "Fixes the overflowing badge in the emulator switcher"
+    "vi": "Thêm tiện ích Đèn LED: 12 bộ màu, 10 hiệu ứng, xem thử ngay khi di con trỏ",
+    "en": "New LED Lights utility: 12 colour themes, 10 effects, live preview as you scroll"
   },
   "remove": [
     "app.pyc",
     "db.pyc",
+    "led_daemon.pyc",
     "rh/__init__.pyc",
     "rh/arcade_device_roms.pyc",
     "rh/arcade_routing.pyc",
@@ -22,6 +23,12 @@
     "rh/fonts.pyc",
     "rh/i18n.pyc",
     "rh/j2me.pyc",
+    "rh/led.pyc",
+    "rh/ledconf.pyc",
+    "rh/ledctl.pyc",
+    "rh/leddaemon.pyc",
+    "rh/ledfx.pyc",
+    "rh/ledthemes.pyc",
     "rh/media.pyc",
     "rh/neterrors.pyc",
     "rh/paths.pyc",
@@ -165,8 +172,8 @@
     },
     {
       "path": "app.py",
-      "size": 220435,
-      "sha256": "aaf24d9dd9ea54d9f987c427143bb6ffa13660244af19c1da33a237fb044aa23"
+      "size": 232868,
+      "sha256": "eeed7faedf4db9fef001f516cc25ca3579f6f6fe5ef65f7ce8b890f8faa2cb8f"
     },
     {
       "path": "assets/fallback.ttf",
@@ -230,8 +237,13 @@
     },
     {
       "path": "launch.sh",
-      "size": 6355,
-      "sha256": "8f79a587632a5ba5b74fdb33faef450a423cf1ca4e5530021aeedfd6972d4dc3"
+      "size": 7846,
+      "sha256": "a21f94b6798a2257b722eabb161c67d3ee04bc75d045329cb57bf50038f2c39c"
+    },
+    {
+      "path": "led_daemon.py",
+      "size": 283,
+      "sha256": "71f222a7b17e8e8fbd7563829690deb44b1c14c2a33407786a7e598d4a8112b4"
     },
     {
       "path": "rh/__init__.py",
@@ -285,13 +297,43 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 31450,
-      "sha256": "d3a5964a18d63c8e9332e03d8c29ed95f5fa7370e181bdb1e749681f3b903aa0"
+      "size": 33133,
+      "sha256": "11672210f0188aeb06e23bffdb06f36c1719a396732252a68a277f1144fddbc2"
     },
     {
       "path": "rh/j2me.py",
       "size": 27132,
       "sha256": "5082662b836625e43bb1607759fc49cafb2a7df77a4a9c535f58c29f24242f1a"
+    },
+    {
+      "path": "rh/led.py",
+      "size": 6810,
+      "sha256": "44af5a0c52d1ea291bc5784fff59d184ccafb8d567e6397ea8cd446d4749b4ba"
+    },
+    {
+      "path": "rh/ledconf.py",
+      "size": 5703,
+      "sha256": "00930786c4bf9cb1e4162e80a12c209f282b3135676be9080a10e061537a2baa"
+    },
+    {
+      "path": "rh/ledctl.py",
+      "size": 7839,
+      "sha256": "cab5f2aa314100dccf23c9e68a98a0d4d1d65d282bd041d6338ffadb1dd5b3ab"
+    },
+    {
+      "path": "rh/leddaemon.py",
+      "size": 6112,
+      "sha256": "f7eb72a3e89725e5d1ec051b11ebed287e6eda86a53e3ba4d173b63c81b0c279"
+    },
+    {
+      "path": "rh/ledfx.py",
+      "size": 5414,
+      "sha256": "f2b2bf0eec9202d6258f7f9c7865b949312367ac1a8616c91f8a0cf13cf04609"
+    },
+    {
+      "path": "rh/ledthemes.py",
+      "size": 3257,
+      "sha256": "c44750196c2b41a3dcd48a9d2f298e47a203ea82da5dd28bc12395d239923626"
     },
     {
       "path": "rh/media.py",
@@ -346,7 +388,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "b8d809f3901f09e659548a909a21234b6a0a4f24e1f1d9c3d6d976fc9e6a1255"
+      "sha256": "9633cbf04c9d190d1ff347337b834f59308619fe5ec09743679cd09cf65908a9"
     },
     {
       "path": "streamer.py",
