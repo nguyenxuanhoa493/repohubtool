@@ -1372,8 +1372,9 @@ def main():
             items.append({"id": "led_speed", "title": tr("led_speed"),
                           "label": tr("led_speed_" +
                                       ledconf.speed_name(led_cfg.get("speed", 1.0)))})
-            # Hook la co che cua NextUI. Firmware goc khong co no, va con
-            # lcservice tranh sysfs - noi ro thay vi de dong nay bam khong an.
+            # Hook chay tren ca NextUI lan firmware goc (xem ledctl.hook_kind).
+            # Dong nay chi mo tren mot may khong co CA HAI co che - noi ro
+            # thay vi de dong nay bam khong an.
             if ledctl.hook_supported():
                 # Trang thai lay tu file hook co that su nam tren dia hay
                 # khong, chu khong tu led_cfg["boot"]: exfat-fuse tu choi
@@ -1384,7 +1385,7 @@ def main():
                               "type": "toggle", "state": ledctl.hook_installed()})
             else:
                 items.append({"id": "led_boot_off", "title": tr("led_boot"),
-                              "label": tr("led_boot_nextui_only"), "is_disabled": True})
+                              "label": tr("led_boot_unavailable"), "is_disabled": True})
             if not led_zones:
                 items.append({"id": "led_none", "title": tr("led_no_zones"), "sub": True})
             items.append({"id": "back", "title": tr("back_home")})
@@ -2694,7 +2695,7 @@ def main():
                     # khong cho nao doc: dong nay khong mo, van chon duoc, va
                     # bam A truoc day khong roi vao nhanh nao - khong toast,
                     # khong gi ca. Lam nhu led_none o tren: tu giai thich.
-                    toast_msg = tr("led_boot_stock")
+                    toast_msg = tr("led_boot_unavailable_detail")
                     toast_timer = time.time()
                 elif item_id in ("core_note", "core_none"):
                     toast_msg = tr("core_note") if item_id == "core_note" else tr("core_none")

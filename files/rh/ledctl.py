@@ -15,6 +15,11 @@ from .paths import APP_DIR, SDCARD_PATH
 HOOK_NAME = "retrohub-led.sh"
 PROC_ROOT = "/proc"
 
+# Firmware TrimUI goc chay moi *.sh trong thu muc nay luc khoi dong
+# (runtrimui-original.sh, vong `for f in $SDCARD_START_SCRIPTS_DIR/*.sh`).
+# Khong can dung toi NAND.
+STOCK_STARTS_DIR = os.path.join(SDCARD_PATH, "System", "starts")
+
 # Bao lau sau start() thi moi duoc ket luan "bat ma khong chay". Daemon phai
 # qua launch.sh - tim Python, doi khi tai ve - roi moi ghi pidfile, nen ngay
 # sau start() thi is_running() con la False mot cach hoan toan binh thuong.
@@ -36,7 +41,31 @@ def userdata_dir():
     return base
 
 
+def hook_kind():
+    """Co che hook may nay dung, hoac None neu khong co cai nao.
+
+    NextUI duoc uu tien: neu may co ca hai thi no dang chay NextUI, va
+    .hooks/boot.d la duong chinh chu.
+
+    Ca hai co che chi quyet dinh GHI FILE HOOK VAO DAU, khong lien quan gi
+    toi ai dang tranh sysfs voi daemon. Boot script cua NextUI tu tat
+    lcservice (`/etc/init.d/lcservice disable`) va xoa `/etc/LedControl`,
+    nen tren may NextUI khong con tien trinh nao dung sysfs ngoai daemon
+    cua ta. Tren firmware goc thi khac: `lcservice` - dich vu LED goc cua
+    firmware - van con song va se tranh (ghi de) sysfs voi daemon, dung
+    nhu firmware tu gianh lai max_scale luc man hinh tat (xem
+    rh/leddaemon.py). Day la ly do daemon phai LUI thay vi gianh khi thay
+    mot gia tri la, thay vi gia dinh minh la nguoi ghi duy nhat."""
+    if os.path.isdir(userdata_dir()):
+        return "nextui"
+    if os.path.isdir(STOCK_STARTS_DIR):
+        return "stock"
+    return None
+
+
 def hook_dir():
+    if hook_kind() == "stock":
+        return STOCK_STARTS_DIR
     return os.path.join(userdata_dir(), ".hooks", "boot.d")
 
 
@@ -45,24 +74,24 @@ def hook_path():
 
 
 def hook_supported():
-    """Co che hook la cua NextUI. Firmware TrimUI goc khong co no, va con
-    lcservice tranh sysfs.
-
-    Kiem tra .userdata/<platform> chu khong phai .hooks: tren mot may NextUI
-    ma chua ai cai hook nao thi .hooks chua ton tai, va tu choi vi the la tu
-    choi nham dung nhung may lam duoc."""
-    return os.path.isdir(userdata_dir())
+    return hook_kind() is not None
 
 
 def hook_body(app_dir):
-    # Dong kiem tra file la de go RetroHub di thi hook im lang khong lam gi,
-    # chu khong bao loi moi lan khoi dong.
+    """Than script dung chung cho ca hai co che.
+
+    Firmware goc chay cac script nay DONG BO - khong co `&` trong vong lap
+    cua no - nen script phai tu day xuong nen va tra quyen ngay. Mot script
+    chay lau o day se chan boot, va nguoi dung chi thay may dung o man hinh
+    khoi dong. NextUI thi chay nen san, nhung `&` o day cung khong hai gi,
+    nen mot than script duy nhat phuc vu ca hai."""
     return (
         "#!/bin/sh\n"
         "# RetroHub - tu chay den LED sau khi khoi dong. Xoa file nay de tat.\n"
         'APP="%s"\n'
         '[ -f "$APP/led_daemon.py" ] || exit 0\n'
-        '"$APP/launch.sh" --led-daemon &\n'
+        '"$APP/launch.sh" --led-daemon </dev/null >/dev/null 2>&1 &\n'
+        "exit 0\n"
     ) % app_dir
 
 
@@ -95,14 +124,31 @@ def install_hook():
     return True
 
 
+def _both_hook_paths():
+    # hook_path() dua vao hook_dir(), noi install_hook() thuc su ghi file -
+    # ke ca khi mot cai goi da tu thay hook_dir() (test, hay mot co che khac
+    # trong tuong lai). Neu remove_hook chi tinh thang tu userdata_dir()/
+    # STOCK_STARTS_DIR ma bo qua duong nay thi no co the khong xoa duoc dung
+    # cho ma install_hook() vua ghi. Loai trung de khong thu xoa mot duong
+    # dan hai lan mot cach vo ich.
+    paths = [os.path.join(userdata_dir(), ".hooks", "boot.d", HOOK_NAME),
+             os.path.join(STOCK_STARTS_DIR, HOOK_NAME),
+             hook_path()]
+    return list(dict.fromkeys(paths))
+
+
 def remove_hook():
-    try:
-        os.remove(hook_path())
-    except FileNotFoundError:
-        pass
-    except OSError:
-        return False
-    return True
+    """Xoa o CA HAI cho. Doi firmware khong duoc de lai mot hook mo coi van
+    chay moi lan khoi dong ma giao dien khong con nhin thay de tat."""
+    ok = True
+    for p in _both_hook_paths():
+        try:
+            os.remove(p)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            ok = False
+    return ok
 
 
 def _pid_is_ours(pid):
