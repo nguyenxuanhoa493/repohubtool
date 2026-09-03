@@ -1,11 +1,11 @@
 {
-  "version": "1.54",
+  "version": "1.55",
   "python": "any",
-  "built": "2026-09-01T09:16:47+0700",
+  "built": "2026-09-03T08:57:41+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Thêm tiện ích Đèn LED: 12 bộ màu, 10 hiệu ứng, xem thử ngay khi di con trỏ",
-    "en": "New LED Lights utility: 12 colour themes, 10 effects, live preview as you scroll"
+    "vi": "Đèn LED tự bật lại sau khi khởi động máy, dùng được trên cả firmware gốc",
+    "en": "LED lights now come back on their own after a reboot, on stock firmware too"
   },
   "remove": [
     "app.pyc",
@@ -172,8 +172,8 @@
     },
     {
       "path": "app.py",
-      "size": 232868,
-      "sha256": "eeed7faedf4db9fef001f516cc25ca3579f6f6fe5ef65f7ce8b890f8faa2cb8f"
+      "size": 232931,
+      "sha256": "2860fe6c2f202a581d24495b384f59dd214ba6712a97a4d7c33e5f0ae137ff8c"
     },
     {
       "path": "assets/fallback.ttf",
@@ -297,8 +297,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 33133,
-      "sha256": "11672210f0188aeb06e23bffdb06f36c1719a396732252a68a277f1144fddbc2"
+      "size": 33215,
+      "sha256": "2cc730a92a074944b244a9b21b4d3f5f0b591aaa110b958dd576d74a4c8b32d5"
     },
     {
       "path": "rh/j2me.py",
@@ -317,8 +317,8 @@
     },
     {
       "path": "rh/ledctl.py",
-      "size": 7839,
-      "sha256": "cab5f2aa314100dccf23c9e68a98a0d4d1d65d282bd041d6338ffadb1dd5b3ab"
+      "size": 9980,
+      "sha256": "af9e0436e60ed432ea22115a5f814ff6f1b10f88f43d96167c8b9b12796d5992"
     },
     {
       "path": "rh/leddaemon.py",
@@ -388,7 +388,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "9633cbf04c9d190d1ff347337b834f59308619fe5ec09743679cd09cf65908a9"
+      "sha256": "1645af09a80ab3b2e06b0da340da39fc32ac7d513e6dbcd7d86e8e45e0ee818b"
     },
     {
       "path": "streamer.py",
