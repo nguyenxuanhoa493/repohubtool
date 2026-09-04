@@ -707,11 +707,63 @@ def main():
                     yt_search_results_list = data
                 _prefetch_yt_thumbs(data)
                 yt_loading_state["active"] = False
+                trigger_yt_adjacent_preload()
             else:
                 if not is_trending and data:
                     yt_query_cache[query_str] = data
 
         threading.Thread(target=_worker, daemon=True).start()
+
+    yt_preload_thread = None
+
+    def trigger_yt_adjacent_preload():
+        nonlocal yt_preload_thread
+        if not yt_recent_queries or len(yt_recent_queries) < 2:
+            return
+
+        cur_idx = yt_query_idx
+        next_idx = (cur_idx + 1) % len(yt_recent_queries)
+        prev_idx = (cur_idx - 1) % len(yt_recent_queries)
+
+        candidates = []
+        for idx in (next_idx, prev_idx):
+            if 0 <= idx < len(yt_recent_queries):
+                q = yt_recent_queries[idx]
+                if q == "Nhạc trẻ" or idx == 0:
+                    if not yt_trending_list:
+                        candidates.append((q, True))
+                else:
+                    if q not in yt_query_cache or not yt_query_cache[q]:
+                        candidates.append((q, False))
+
+        if not candidates:
+            return
+
+        def _preload_worker():
+            for target_q, is_tr in candidates:
+                if yt_loading_state.get("active", False):
+                    break
+                try:
+                    if is_tr:
+                        if not yt_trending_list:
+                            data = yt.get_trending(limit=30) or []
+                            if data and not yt_trending_list:
+                                yt_trending_list.extend(data)
+                                _prefetch_yt_thumbs(data)
+                    else:
+                        if target_q not in yt_query_cache or not yt_query_cache[target_q]:
+                            eff = yt.get_effective_query(target_q)
+                            data = yt.search_youtube(eff, limit=30) or []
+                            if data:
+                                yt_query_cache[target_q] = data
+                                _prefetch_yt_thumbs(data)
+                except Exception as e:
+                    print(f"[RetroHub] YouTube preload error for {target_q}: {e}")
+                time.sleep(0.4)
+
+        if yt_preload_thread is None or not yt_preload_thread.is_alive():
+            yt_preload_thread = threading.Thread(target=_preload_worker, daemon=True)
+            yt_preload_thread.start()
 
     # Downloaded Games Cache & Proportional Image Loading
     downloaded_games_list = []
@@ -2768,6 +2820,7 @@ def main():
                     else:
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_trending_list)
+                        trigger_yt_adjacent_preload()
                     toast_msg = "Chủ đề: Nhạc trẻ (Thịnh hành)" if state.current_lang == "VI" else "Topic: Trending"
                     toast_timer = time.time()
                 else:
@@ -2777,6 +2830,7 @@ def main():
                         yt_search_results_list = yt_query_cache[new_q]
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_search_results_list)
+                        trigger_yt_adjacent_preload()
                     else:
                         yt_search_results_list = []
                         start_yt_load(new_q, is_trending=False)
@@ -2805,6 +2859,7 @@ def main():
                     else:
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_trending_list)
+                        trigger_yt_adjacent_preload()
                     toast_msg = "Đã chuyển về Nhạc trẻ Thịnh hành" if state.current_lang == "VI" else "Switched to Trending"
                     toast_timer = time.time()
                     items = yt_trending_list or []
@@ -3162,6 +3217,7 @@ def main():
                     else:
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_trending_list)
+                        trigger_yt_adjacent_preload()
                     screen_stack.append("yt_grid")
 
 
