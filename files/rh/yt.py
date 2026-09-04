@@ -15,7 +15,18 @@ from rh.paths import YT_HISTORY_FILE
 INNERTUBE_URL = "https://www.youtube.com/youtubei/v1"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-DEFAULT_QUERIES = ["MV", "Nhạc trẻ", "Game", "Remix"]
+DEFAULT_QUERIES = ["Nhạc trẻ", "Nhạc tiktok", "Kpop", "Nhảy tiktok"]
+DEFAULT_PRESET_QUERIES = ("Nhạc trẻ", "Nhạc tiktok", "Kpop", "Nhảy tiktok")
+
+
+def get_effective_query(query: str) -> str:
+    """Return search query with current month/year appended for default preset keywords."""
+    q = (query or "").strip()
+    for preset in DEFAULT_PRESET_QUERIES:
+        if q.lower() == preset.lower():
+            lt = time.localtime()
+            return f"{preset} tháng {lt.tm_mon} năm {lt.tm_year}"
+    return q
 
 
 def load_search_history() -> list:
@@ -25,14 +36,16 @@ def load_search_history() -> list:
             with open(YT_HISTORY_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list) and data:
-                    cleaned = []
+                    user_history = []
+                    preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES}
                     for q in data:
                         q_str = str(q).strip()
-                        if q_str and q_str not in cleaned:
-                            cleaned.append(q_str)
-                    if "MV" not in cleaned:
-                        cleaned.insert(0, "MV")
-                    return cleaned[:10]
+                        if not q_str or q_str == "MV" or q_str.lower() in preset_lowers:
+                            continue
+                        if q_str not in user_history:
+                            user_history.append(q_str)
+                    combined = list(DEFAULT_QUERIES) + user_history
+                    return combined[:10]
     except Exception as e:
         print(f"[rh.yt] Error loading search history: {e}")
     return list(DEFAULT_QUERIES)
@@ -41,16 +54,18 @@ def load_search_history() -> list:
 def save_search_history(queries: list):
     """Save list of recent search queries to disk."""
     try:
-        cleaned = []
+        user_history = []
+        preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES}
         for q in queries:
             q_str = str(q).strip()
-            if q_str and q_str not in cleaned:
-                cleaned.append(q_str)
-        if "MV" not in cleaned:
-            cleaned.insert(0, "MV")
+            if not q_str or q_str == "MV" or q_str.lower() in preset_lowers:
+                continue
+            if q_str not in user_history:
+                user_history.append(q_str)
+        combined = list(DEFAULT_QUERIES) + user_history
         os.makedirs(os.path.dirname(YT_HISTORY_FILE), exist_ok=True)
         with open(YT_HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(cleaned[:10], f, ensure_ascii=False, indent=2)
+            json.dump(combined[:10], f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"[rh.yt] Error saving search history: {e}")
 
@@ -172,10 +187,11 @@ def search_youtube(query: str, limit: int = 30) -> list:
 
 
 def get_trending(limit: int = 30) -> list:
-    """Get trending music videos on YouTube using query 'MV'."""
-    items = search_youtube("MV", limit=limit)
+    """Get trending music videos on YouTube using default query."""
+    q = get_effective_query("Nhạc trẻ")
+    items = search_youtube(q, limit=limit)
     if not items:
-        items = search_youtube("nhạc trẻ hot tiktok", limit=limit)
+        items = search_youtube("nhạc trẻ", limit=limit)
     return items
 
 

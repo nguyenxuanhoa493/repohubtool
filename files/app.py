@@ -2543,7 +2543,8 @@ def main():
                 if q_clean:
                     toast_msg = tr("yt_loading")
                     toast_timer = time.time()
-                    res = yt.search_youtube(q_clean, limit=30)
+                    eff_q = yt.get_effective_query(q_clean)
+                    res = yt.search_youtube(eff_q, limit=30)
                     if res:
                         yt_search_results_list = res
                         yt_mode = "search"
@@ -2554,13 +2555,25 @@ def main():
                         _prefetch_yt_thumbs(yt_search_results_list)
 
                         # Update recent search queries list
-                        yt_recent_queries = [q for q in yt_recent_queries if q.lower() != q_clean.lower()]
-                        yt_recent_queries.insert(1, q_clean)
-                        if len(yt_recent_queries) > 10:
-                            yt_recent_queries = yt_recent_queries[:10]
-                        yt.save_search_history(yt_recent_queries)
-                        yt_query_idx = 1
-                        yt_query_cache[q_clean] = res
+                        matched_preset_idx = -1
+                        for idx, p in enumerate(yt.DEFAULT_PRESET_QUERIES):
+                            if q_clean.lower() == p.lower():
+                                matched_preset_idx = idx
+                                break
+
+                        if matched_preset_idx >= 0:
+                            yt_query_idx = matched_preset_idx
+                            if matched_preset_idx < len(yt_recent_queries):
+                                yt_query_cache[yt_recent_queries[matched_preset_idx]] = res
+                        else:
+                            yt_recent_queries = [q for q in yt_recent_queries if q.lower() != q_clean.lower()]
+                            insert_pos = min(len(yt.DEFAULT_PRESET_QUERIES), len(yt_recent_queries))
+                            yt_recent_queries.insert(insert_pos, q_clean)
+                            if len(yt_recent_queries) > 10:
+                                yt_recent_queries = yt_recent_queries[:10]
+                            yt.save_search_history(yt_recent_queries)
+                            yt_query_idx = insert_pos
+                            yt_query_cache[q_clean] = res
 
                         items = yt_search_results_list
                         cur_videos = items
@@ -2723,7 +2736,7 @@ def main():
                 selected_indices["yt_grid"] = 0
                 scroll_offsets["yt_grid"] = 0
 
-                if new_q == "MV":
+                if new_q == "Nhạc trẻ" or yt_query_idx == 0:
                     yt_mode = "trending"
                     if not yt_trending_list:
                         toast_msg = tr("yt_loading")
@@ -2733,7 +2746,7 @@ def main():
                         except Exception:
                             yt_trending_list = []
                     _prefetch_yt_thumbs(yt_trending_list)
-                    toast_msg = "Chủ đề: MV (Thịnh hành)" if state.current_lang == "VI" else "Topic: MV (Trending)"
+                    toast_msg = "Chủ đề: Nhạc trẻ (Thịnh hành)" if state.current_lang == "VI" else "Topic: Trending"
                     toast_timer = time.time()
                 else:
                     yt_mode = "search"
@@ -2743,8 +2756,9 @@ def main():
                     else:
                         toast_msg = f"{tr('yt_loading')} ({new_q})"
                         toast_timer = time.time()
+                        eff_q = yt.get_effective_query(new_q)
                         try:
-                            res = yt.search_youtube(new_q, limit=30) or []
+                            res = yt.search_youtube(eff_q, limit=30) or []
                         except Exception:
                             res = []
                         yt_search_results_list = res
@@ -2763,7 +2777,7 @@ def main():
                 kb_cursor = [0, 0]
                 screen_stack.append("yt_search_input")
 
-            elif btn_y: # Press Y to return to trending MV
+            elif btn_y: # Press Y to return to trending Nhạc trẻ
                 if yt_mode == "search" or yt_query_idx != 0:
                     yt_query_idx = 0
                     yt_mode = "trending"
@@ -2778,7 +2792,7 @@ def main():
                         except Exception:
                             yt_trending_list = []
                     _prefetch_yt_thumbs(yt_trending_list)
-                    toast_msg = "Đã chuyển về MV Thịnh hành" if state.current_lang == "VI" else "Switched to MV Trending"
+                    toast_msg = "Đã chuyển về Nhạc trẻ Thịnh hành" if state.current_lang == "VI" else "Switched to Trending"
                     toast_timer = time.time()
                     items = yt_trending_list or []
                     cur_videos = items
@@ -4301,7 +4315,7 @@ def main():
                 fx = draw_footer_btn(fx, "A", "Xem", (0, 230, 140))
                 fx = draw_footer_btn(fx, "X", "Tìm kiếm", (0, 190, 255))
                 if yt_mode == "search" or yt_query_idx != 0:
-                    fx = draw_footer_btn(fx, "Y", "Về MV", (255, 180, 0))
+                    fx = draw_footer_btn(fx, "Y", "Mặc định", (255, 180, 0))
                 draw_footer_btn(state.SCREEN_W - 220, "L1/R1", "Từ khóa", (70, 95, 140), is_dark_btn=False)
 
             elif current_screen == "yt_search_input":
