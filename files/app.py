@@ -729,7 +729,7 @@ def main():
         for idx in (next_idx, prev_idx):
             if 0 <= idx < len(yt_recent_queries):
                 q = yt_recent_queries[idx]
-                if q == "Nhạc trẻ" or idx == 0:
+                if q == "MV Vpop" or idx == 0:
                     if not yt_trending_list:
                         candidates.append((q, True))
                 else:
@@ -2813,15 +2813,15 @@ def main():
                 selected_indices["yt_grid"] = 0
                 scroll_offsets["yt_grid"] = 0
 
-                if new_q == "Nhạc trẻ" or yt_query_idx == 0:
+                if new_q == "MV Vpop" or yt_query_idx == 0:
                     yt_mode = "trending"
                     if not yt_trending_list:
-                        start_yt_load("Nhạc trẻ", is_trending=True)
+                        start_yt_load("MV Vpop", is_trending=True)
                     else:
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_trending_list)
                         trigger_yt_adjacent_preload()
-                    toast_msg = "Chủ đề: Nhạc trẻ (Thịnh hành)" if state.current_lang == "VI" else "Topic: Trending"
+                    toast_msg = "Chủ đề: MV Vpop (Mới nhất)" if state.current_lang == "VI" else "Topic: MV Vpop (Latest)"
                     toast_timer = time.time()
                 else:
                     yt_mode = "search"
@@ -2847,7 +2847,7 @@ def main():
                 kb_cursor = [0, 0]
                 screen_stack.append("yt_search_input")
 
-            elif btn_y: # Press Y to return to trending Nhạc trẻ
+            elif btn_y: # Press Y to return to trending MV Vpop
                 if yt_mode == "search" or yt_query_idx != 0:
                     yt_query_idx = 0
                     yt_mode = "trending"
@@ -2855,12 +2855,12 @@ def main():
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
                     if not yt_trending_list:
-                        start_yt_load("Nhạc trẻ", is_trending=True)
+                        start_yt_load("MV Vpop", is_trending=True)
                     else:
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_trending_list)
                         trigger_yt_adjacent_preload()
-                    toast_msg = "Đã chuyển về Nhạc trẻ Thịnh hành" if state.current_lang == "VI" else "Switched to Trending"
+                    toast_msg = "Đã chuyển về MV Vpop" if state.current_lang == "VI" else "Switched to MV Vpop"
                     toast_timer = time.time()
                     items = yt_trending_list or []
                     cur_videos = items
@@ -3213,7 +3213,7 @@ def main():
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
                     if not yt_trending_list:
-                        start_yt_load("Nhạc trẻ", is_trending=True)
+                        start_yt_load("MV Vpop", is_trending=True)
                     else:
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_trending_list)
@@ -4460,10 +4460,9 @@ def main():
 
             # Loading label
             q_name = yt_loading_state.get("query", "")
-            eff_hint = yt.get_effective_query(q_name)
             num_dots = int(now * 3.5) % 4
             dots = "." * num_dots
-            hud_txt = f"⏳ ĐANG TẢI DỮ LIỆU: \"{q_name}\"{dots}  ({eff_hint})" if state.current_lang == "VI" else f"⏳ LOADING: \"{q_name}\"{dots}  ({eff_hint})"
+            hud_txt = f"⏳ ĐANG TẢI DỮ LIỆU: \"{q_name}\"{dots}  (Mới nhất)" if state.current_lang == "VI" else f"⏳ LOADING: \"{q_name}\"{dots}  (Latest)"
             draw_text(hud_txt, font_badge, hud_x + 20, hud_y + hud_h // 2 - 1, 0, 246, 246, center_y=True)
 
             wait_txt = "Đang kết nối..." if state.current_lang == "VI" else "Connecting..."

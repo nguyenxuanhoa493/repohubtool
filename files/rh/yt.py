@@ -15,18 +15,16 @@ from rh.paths import YT_HISTORY_FILE
 INNERTUBE_URL = "https://www.youtube.com/youtubei/v1"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-DEFAULT_QUERIES = ["Nhạc trẻ", "Nhạc tiktok", "Kpop", "Nhảy tiktok"]
-DEFAULT_PRESET_QUERIES = ("Nhạc trẻ", "Nhạc tiktok", "Kpop", "Nhảy tiktok")
+DEFAULT_QUERIES = ["MV Vpop", "Nhạc hot tiktok", "Hot girl tiktok", "MV Kpop"]
+DEFAULT_PRESET_QUERIES = ("MV Vpop", "Nhạc hot tiktok", "Hot girl tiktok", "MV Kpop")
+LEGACY_PRESETS = {
+    "mv", "nhạc trẻ", "nhạc tiktok", "kpop", "nhảy tiktok", "game", "remix"
+}
 
 
 def get_effective_query(query: str) -> str:
-    """Return search query with current month/year appended for default preset keywords."""
-    q = (query or "").strip()
-    for preset in DEFAULT_PRESET_QUERIES:
-        if q.lower() == preset.lower():
-            lt = time.localtime()
-            return f"{preset} tháng {lt.tm_mon} năm {lt.tm_year}"
-    return q
+    """Return cleaned query keyword."""
+    return (query or "").strip()
 
 
 def load_search_history() -> list:
@@ -37,10 +35,10 @@ def load_search_history() -> list:
                 data = json.load(f)
                 if isinstance(data, list) and data:
                     user_history = []
-                    preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES}
+                    preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES} | LEGACY_PRESETS
                     for q in data:
                         q_str = str(q).strip()
-                        if not q_str or q_str == "MV" or q_str.lower() in preset_lowers:
+                        if not q_str or q_str.lower() in preset_lowers:
                             continue
                         if q_str not in user_history:
                             user_history.append(q_str)
@@ -55,10 +53,10 @@ def save_search_history(queries: list):
     """Save list of recent search queries to disk."""
     try:
         user_history = []
-        preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES}
+        preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES} | LEGACY_PRESETS
         for q in queries:
             q_str = str(q).strip()
-            if not q_str or q_str == "MV" or q_str.lower() in preset_lowers:
+            if not q_str or q_str.lower() in preset_lowers:
                 continue
             if q_str not in user_history:
                 user_history.append(q_str)
@@ -157,8 +155,8 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                 break
 
 
-def search_youtube(query: str, limit: int = 30) -> list:
-    """Search videos on YouTube by keyword.
+def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> list:
+    """Search videos on YouTube by keyword, sorting by newest upload date by default.
 
     Returns a list of dicts:
         [{'id': str, 'title': str, 'channel': str, 'duration': str, 'thumb': str}]
@@ -170,6 +168,9 @@ def search_youtube(query: str, limit: int = 30) -> list:
         "context": WEB_CONTEXT,
         "query": query.strip(),
     }
+    if sort_by_date:
+        # CAISAhAB = Protobuf for: sort_by=UPLOAD_DATE (2), type=VIDEO (1)
+        payload["params"] = "CAISAhAB"
 
     try:
         data = _make_request("search", payload)
@@ -183,15 +184,23 @@ def search_youtube(query: str, limit: int = 30) -> list:
     except Exception as e:
         print(f"[rh.yt] Extract videos error: {e}")
 
+    # Fallback to standard relevance search if sort_by_date returned 0 items
+    if not results and sort_by_date:
+        payload.pop("params", None)
+        try:
+            data = _make_request("search", payload)
+            _extract_videos_from_json(data, results, limit=limit)
+        except Exception:
+            pass
+
     return results
 
 
 def get_trending(limit: int = 30) -> list:
-    """Get trending music videos on YouTube using default query."""
-    q = get_effective_query("Nhạc trẻ")
-    items = search_youtube(q, limit=limit)
+    """Get latest music videos on YouTube using default query 'MV Vpop'."""
+    items = search_youtube("MV Vpop", limit=limit, sort_by_date=True)
     if not items:
-        items = search_youtube("nhạc trẻ", limit=limit)
+        items = search_youtube("MV Vpop", limit=limit, sort_by_date=False)
     return items
 
 
