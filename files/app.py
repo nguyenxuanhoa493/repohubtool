@@ -551,12 +551,35 @@ def main():
     # Same reason: the systems list for a source is a DB aggregate over 40k rows.
     src_sys_cache = []
     src_sys_cache_key = None
-    # The rom_games screen rebuilds its list on every frame, and that query costs
-    # up to 380ms on the handheld - about 3 FPS. Memoise it and refetch only when
-    # the source, system or sort order actually changes.
+    # The rom_games screen previously rebuilt its list on every frame, which caused
+    # thousands of filesystem calls and dropped framerate to 1-2 FPS.
+    # We now memoise the raw games and cache the built items, resolving boxarts on demand.
     rom_games_cache = []
     rom_games_cache_key = None
+    rom_games_items_cache = None
+    rom_games_items_key = None
+    search_results_items_cache = None
+    search_results_items_key = None
+    downloaded_items_cache = None
+    downloaded_items_key = None
+    cached_lib_games_list = []
+    cached_lib_games_key = None
     state.rom_sort_mode = "downloads"  # "downloads" (Default) or "alpha"
+
+    def resolve_game_img_path(sys_code, filename):
+        """Find local boxart path (.png or .jpg) on-demand when opening modal."""
+        if not filename:
+            return None
+        fn = os.path.basename(str(filename).replace("\\", "/"))
+        base_name = os.path.splitext(fn)[0]
+        img_dir = state.catalogs.get(sys_code, {}).get("img_dir", f"{SDCARD_PATH}/Imgs/{sys_code}")
+        p1 = os.path.join(img_dir, f"{base_name}.png")
+        if os.path.exists(p1):
+            return p1
+        p2 = os.path.join(img_dir, f"{base_name}.jpg")
+        if os.path.exists(p2):
+            return p2
+        return None
 
     # Search Systems Filter Options. These come from the catalogue DB rather than
     # the static catalogs.json: the DB carries 29 systems where the JSON listed only
@@ -784,6 +807,8 @@ def main():
         pre_download_modal["game_info"] = g_info
         pre_download_modal["sys_code"] = sys_c
         pre_download_modal["selected_opt"] = 0
+        if not local_img_path and g_info:
+            local_img_path = resolve_game_img_path(sys_c, g_info.get("filename"))
         pre_download_modal["img_path"] = local_img_path
         pre_download_modal["preview_cached_path"] = None
 
@@ -1329,6 +1354,10 @@ def main():
             toast_msg = f"{_n_lbl}: {_n_title}"
             toast_timer = time.time()
             downloaded_games_list = scan_all_downloaded_games()
+            rom_games_items_cache = None
+            search_results_items_cache = None
+            downloaded_items_cache = None
+            cached_lib_games_key = None
 
         sftp_on = service_states["sftp"]
         ssh_on = service_states["ssh"]
@@ -1339,9 +1368,14 @@ def main():
 
         # The library screen draws from this rather than the raw scan, so the
         # system filter reaches the item list, both view modes and the shuffle.
-        lib_games_list = (downloaded_games_list if current_lib_sys == "ALL" else
-                          [g for g in downloaded_games_list
-                           if g.get("sys_code") == current_lib_sys])
+        _lkey = (current_lib_sys, len(downloaded_games_list))
+        if cached_lib_games_key != _lkey:
+            cached_lib_games_key = _lkey
+            cached_lib_games_list = (downloaded_games_list if current_lib_sys == "ALL" else
+                                     [g for g in downloaded_games_list
+                                      if g.get("sys_code") == current_lib_sys])
+            downloaded_items_cache = None
+        lib_games_list = cached_lib_games_list
 
         # Build items for current screen
         items = []
@@ -1638,18 +1672,24 @@ def main():
         elif current_screen == "downloaded_games":
             _lib_tag = "" if current_lib_sys == "ALL" else f" - {current_lib_sys}"
             header_title = f"{tr('dl_view_title')}{_lib_tag} [{len(lib_games_list)}]"
-            for idx, dg in enumerate(lib_games_list):
-                sz_str = dg.get("size_str", "")
-                sz_disp = f" [{sz_str}]" if sz_str and sz_str not in ("TOPO SHOP", "TOPO") else ""
-                items.append({
-                    "id": f"dl_{idx}",
-                    "game_idx": idx,
-                    "title": f"{idx+1}. [{dg['sys_code']}] {dg['title']}{sz_disp}",
-                    "game_data": dg
-                })
-            if not items:
-                items.append({"id": "empty", "title": tr("empty_dl")})
-            items.append({"id": "back", "title": tr("back_store_menu")})
+            _dl_key = (current_lib_sys, len(lib_games_list), state.current_lang)
+            if downloaded_items_cache is None or downloaded_items_key != _dl_key:
+                downloaded_items_key = _dl_key
+                built_items = []
+                for idx, dg in enumerate(lib_games_list):
+                    sz_str = dg.get("size_str", "")
+                    sz_disp = f" [{sz_str}]" if sz_str and sz_str not in ("TOPO SHOP", "TOPO") else ""
+                    built_items.append({
+                        "id": f"dl_{idx}",
+                        "game_idx": idx,
+                        "title": f"{idx+1}. [{dg['sys_code']}] {dg['title']}{sz_disp}",
+                        "game_data": dg
+                    })
+                if not built_items:
+                    built_items.append({"id": "empty", "title": tr("empty_dl")})
+                built_items.append({"id": "back", "title": tr("back_store_menu")})
+                downloaded_items_cache = built_items
+            items = downloaded_items_cache
 
         # NETWORK SERVICES: Only Toggles and View Guide / Info [XEM] show badges
         elif current_screen == "network":
@@ -1690,11 +1730,11 @@ def main():
                     current_source, current_rom_system,
                     category=current_java_cat if current_source == "JAVA" else None)
                 rom_games_cache_key = _gkey
+                rom_games_items_cache = None
             games_list = rom_games_cache
             total_g = len(games_list)
             cur_pos = selected_idx + 1 if total_g > 0 else 0
-            
-            
+
             src_titles = {
                 "VIET": "Game Việt Hóa" if state.current_lang == "VI" else "Vietnamese Games",
                 "HACK": "ROM Hacks & Mods" if state.current_lang == "VI" else "ROM Hacks",
@@ -1704,10 +1744,10 @@ def main():
                 "ARCHIVE": "Internet Archive" if state.current_lang == "VI" else "Internet Archive",
                 "ALL": "Kho Game Online" if state.current_lang == "VI" else "Online Games"
             }
-            
+
             sys_disp = get_system_display_name(current_rom_system) if current_rom_system != "ALL" else ("Tất cả hệ máy" if state.current_lang == "VI" else "All Systems")
             s_name = src_titles.get(current_source, "Game")
-            
+
             if current_source == "HITS":
                 header_title = f"Top 100 Game {sys_disp} [{cur_pos}/{total_g}]"
             elif current_source == "HACK":
@@ -1723,135 +1763,142 @@ def main():
                 else:
                     header_title = f"{sys_disp} [{cur_pos}/{total_g}]"
 
-            for idx, g in enumerate(games_list):
-                # Catalogue rows may store a category path here, but only
-                # the last component is the name the file has on disk.
-                fn = os.path.basename(str(g.get("filename", "")).replace("\\", "/"))
-                base_name = os.path.splitext(fn)[0]
-                g_sys = g.get("sys_code") or (current_rom_system if current_rom_system != "ALL" else "ROM")
-                if g_sys in ("VIET", "HITS", "TOPO", "ARCHIVE", "ALL"):
-                    g_sys = g.get("sys_code") or "ROM"
+            _items_key = (_gkey, state.current_lang, len(games_list))
+            if rom_games_items_cache is None or rom_games_items_key != _items_key:
+                rom_games_items_key = _items_key
+                sys_local_map = {}
+                def _get_sys_local(sc):
+                    if sc not in sys_local_map:
+                        lf = get_local_cache(sc)
+                        lb = {os.path.splitext(f)[0]: p for f, p in lf.items()}
+                        sys_local_map[sc] = (lf, lb)
+                    return sys_local_map[sc]
 
-                rom_dir = state.catalogs.get(g_sys, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{g_sys}")
-                img_dir = state.catalogs.get(g_sys, {}).get("img_dir", f"{SDCARD_PATH}/Imgs/{g_sys}")
-                local_files = get_local_cache(g_sys)
-                fn = resolve_local_name(fn, g_sys, local_files)
-                base_name = os.path.splitext(fn)[0]
+                built_items = []
+                for idx, g in enumerate(games_list):
+                    fn = os.path.basename(str(g.get("filename", "")).replace("\\", "/"))
+                    g_sys = g.get("sys_code") or (current_rom_system if current_rom_system != "ALL" else "ROM")
+                    if g_sys in ("VIET", "HITS", "TOPO", "ARCHIVE", "ALL"):
+                        g_sys = g.get("sys_code") or "ROM"
 
-                is_downloaded = (fn in local_files)
-                found_rom_path = local_files.get(fn) if is_downloaded else None
+                    rom_dir = state.catalogs.get(g_sys, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{g_sys}")
+                    local_files, local_basenames = _get_sys_local(g_sys)
+                    fn = resolve_local_name(fn, g_sys, local_files)
+                    base_name = os.path.splitext(fn)[0]
 
-                if not is_downloaded:
-                    for ext in VALID_EXTS:
-                        cand = base_name + ext
-                        if cand in local_files:
-                            is_downloaded = True
-                            found_rom_path = local_files.get(cand)
-                            break
+                    if fn in local_files:
+                        is_downloaded = True
+                        found_rom_path = local_files[fn]
+                    elif base_name in local_basenames:
+                        is_downloaded = True
+                        found_rom_path = local_basenames[base_name]
+                    else:
+                        is_downloaded = False
+                        found_rom_path = None
 
-                img_p = os.path.join(img_dir, f"{base_name}.png")
-                if not os.path.exists(img_p):
-                    img_p = os.path.join(img_dir, f"{base_name}.jpg")
-                if not os.path.exists(img_p):
-                    img_p = None
+                    if is_downloaded:
+                        badge_lbl = tr("have_badge")
+                    else:
+                        _dst = download_state_for(g)
+                        badge_lbl = (tr("dling_badge") if _dst == "downloading"
+                                     else tr("dl_queue_badge") if _dst == "queued"
+                                     else tr("download_badge"))
 
-                # Owned > downloading > queued > available, so a game already in
-                # flight cannot be started again from the list.
-                if is_downloaded:
-                    badge_lbl = tr("have_badge")
+                    g_title = g.get("title", "Game")
+                    disp_title = f"{idx+1}. [{g_sys}] {g_title}"
+
+                    dl_count = g.get("download_count", 0)
+                    if dl_count and dl_count > 0:
+                        dl_str = f"{dl_count/1000:.1f}k" if dl_count >= 1000 else str(dl_count)
+                        disp_title += f" [{dl_str} dl]"
+                    elif g.get("file_size_str"):
+                        disp_title += f" [{g.get('file_size_str')}]"
+
+                    built_items.append({
+                        "id": f"game_{idx}",
+                        "game_idx": idx,
+                        "game_info": g,
+                        "sys_code": g_sys,
+                        "title": disp_title,
+                        "label": badge_lbl,
+                        "downloaded": is_downloaded,
+                        "rom_path": found_rom_path if found_rom_path else os.path.join(rom_dir, fn),
+                        "img_path": None
+                    })
+
+                if current_source == "VIET":
+                    built_items.append({"id": "back", "title": tr("back_store_menu")})
                 else:
-                    _dst = download_state_for(g)
-                    badge_lbl = (tr("dling_badge") if _dst == "downloading"
-                                 else tr("dl_queue_badge") if _dst == "queued"
-                                 else tr("download_badge"))
+                    built_items.append({"id": "back", "title": tr("back_systems")})
 
-                g_title = g.get("title", "Game")
-                disp_title = f"{idx+1}. [{g_sys}] {g_title}"
-                
-                dl_count = g.get("download_count", 0)
-                if dl_count and dl_count > 0:
-                    dl_str = f"{dl_count/1000:.1f}k" if dl_count >= 1000 else str(dl_count)
-                    disp_title += f" [{dl_str} dl]"
-                elif g.get("file_size_str"):
-                    disp_title += f" [{g.get('file_size_str')}]"
+                rom_games_items_cache = built_items
 
-                items.append({
-                    "id": f"game_{idx}",
-                    "game_idx": idx,
-                    "game_info": g,
-                    "sys_code": g_sys,
-                    "title": disp_title,
-                    "label": badge_lbl,
-                    "downloaded": is_downloaded,
-                    "rom_path": found_rom_path if found_rom_path else os.path.join(rom_dir, fn),
-                    "img_path": img_p
-                })
-            if current_source == "VIET":
-                items.append({"id": "back", "title": tr("back_store_menu")})
-            else:
-                items.append({"id": "back", "title": tr("back_systems")})
+            items = rom_games_items_cache
 
         # SEARCH RESULTS: Show status badge [ĐÃ CÓ] / [TẢI]
         elif current_screen == "search_results":
             cur_filter_sys = sys_keys_list[search_sys_idx]
             header_title = f"{tr('search_res_title')}: '{search_query}' [{len(search_results_list)}]"
+            _sr_key = (search_query, search_sys_idx, len(search_results_list), state.current_lang)
+            if search_results_items_cache is None or search_results_items_key != _sr_key:
+                search_results_items_key = _sr_key
+                sys_local_map = {}
+                def _get_sys_local(sc):
+                    if sc not in sys_local_map:
+                        lf = get_local_cache(sc)
+                        lb = {os.path.splitext(f)[0]: p for f, p in lf.items()}
+                        sys_local_map[sc] = (lf, lb)
+                    return sys_local_map[sc]
 
-            for idx, r in enumerate(search_results_list):
-                g = r["game_info"]
-                s_code = r["sys_code"]
-                rom_dir = state.catalogs.get(s_code, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{s_code}")
-                img_dir = state.catalogs.get(s_code, {}).get("img_dir", f"{SDCARD_PATH}/Imgs/{s_code}")
-                local_files = get_local_cache(s_code)
-                # Catalogue rows may store a category path here, but only
-                # the last component is the name the file has on disk.
-                fn = os.path.basename(str(g.get("filename", "")).replace("\\", "/"))
-                fn = resolve_local_name(fn, s_code, local_files)
-                base_name = os.path.splitext(fn)[0]
+                built_items = []
+                for idx, r in enumerate(search_results_list):
+                    g = r["game_info"]
+                    s_code = r["sys_code"]
+                    rom_dir = state.catalogs.get(s_code, {}).get("rom_dir", f"{SDCARD_PATH}/Roms/{s_code}")
+                    local_files, local_basenames = _get_sys_local(s_code)
+                    fn = os.path.basename(str(g.get("filename", "")).replace("\\", "/"))
+                    fn = resolve_local_name(fn, s_code, local_files)
+                    base_name = os.path.splitext(fn)[0]
 
-                is_downloaded = (fn in local_files)
-                found_rom_path = local_files.get(fn) if is_downloaded else None
-                if not is_downloaded:
-                    for ext in VALID_EXTS:
-                        cand = base_name + ext
-                        if cand in local_files:
-                            is_downloaded = True
-                            found_rom_path = local_files.get(cand)
-                            break
+                    if fn in local_files:
+                        is_downloaded = True
+                        found_rom_path = local_files[fn]
+                    elif base_name in local_basenames:
+                        is_downloaded = True
+                        found_rom_path = local_basenames[base_name]
+                    else:
+                        is_downloaded = False
+                        found_rom_path = None
 
-                img_p = os.path.join(img_dir, f"{base_name}.png")
-                if not os.path.exists(img_p):
-                    img_p = os.path.join(img_dir, f"{base_name}.jpg")
-                if not os.path.exists(img_p):
-                    img_p = None
+                    if is_downloaded:
+                        badge_lbl = tr("have_badge")
+                    else:
+                        _dst = download_state_for(g)
+                        badge_lbl = (tr("dling_badge") if _dst == "downloading"
+                                     else tr("dl_queue_badge") if _dst == "queued"
+                                     else tr("download_badge"))
+                    g_title = g.get("title", "Game")
+                    disp_title = f"{idx+1}. [{s_code}] {g_title}"
+                    sz = (g.get("file_size_str") or g.get("size") or "").strip()
+                    if sz and sz not in ("TOPO SHOP", "TOPO"):
+                        disp_title += f" [{sz}]"
 
-                # Owned > downloading > queued > available, so a game already in
-                # flight cannot be started again from the list.
-                if is_downloaded:
-                    badge_lbl = tr("have_badge")
-                else:
-                    _dst = download_state_for(g)
-                    badge_lbl = (tr("dling_badge") if _dst == "downloading"
-                                 else tr("dl_queue_badge") if _dst == "queued"
-                                 else tr("download_badge"))
-                g_title = g.get("title", "Game")
-                disp_title = f"{idx+1}. [{s_code}] {g_title}"
-                sz = (g.get("file_size_str") or g.get("size") or "").strip()
-                if sz and sz not in ("TOPO SHOP", "TOPO"):
-                    disp_title += f" [{sz}]"
+                    built_items.append({
+                        "id": f"res_{idx}",
+                        "game_info": g,
+                        "sys_code": s_code,
+                        "title": disp_title,
+                        "label": badge_lbl,
+                        "downloaded": is_downloaded,
+                        "rom_path": found_rom_path if found_rom_path else os.path.join(rom_dir, fn),
+                        "img_path": None
+                    })
+                if not built_items:
+                    built_items.append({"id": "empty", "title": tr("no_res")})
+                built_items.append({"id": "back", "title": tr("back_search")})
+                search_results_items_cache = built_items
 
-                items.append({
-                    "id": f"res_{idx}",
-                    "game_info": g,
-                    "sys_code": s_code,
-                    "title": disp_title,
-                    "label": badge_lbl,
-                    "downloaded": is_downloaded,
-                    "rom_path": found_rom_path if found_rom_path else os.path.join(rom_dir, fn),
-                    "img_path": img_p
-                })
-            if not items:
-                items.append({"id": "empty", "title": tr("no_res")})
-            items.append({"id": "back", "title": tr("back_search")})
+            items = search_results_items_cache
 
         # Bounds check
         if current_screen not in ("yt_search_input", "search_input"):
@@ -2266,6 +2313,7 @@ def main():
                     switched = alphabet_modal.get("needs_alpha_sort", False)
                     if switched:
                         state.rom_sort_mode = "alpha"
+                        rom_games_items_cache = None
                     selected_idx = target_idx
                     selected_indices["rom_games"] = target_idx
                     scroll_offsets["rom_games"] = target_idx
@@ -2419,6 +2467,7 @@ def main():
                                     if dedup_key not in seen_keys:
                                         seen_keys.add(dedup_key)
                                         search_results_list.append({"sys_code": g.get("sys_code", sc), "game_info": g})
+                    search_results_items_cache = None
                     selected_indices["search_results"] = 0
                     screen_stack.append("search_results")
                 else:
@@ -2454,6 +2503,7 @@ def main():
                                         if dedup_key not in seen_keys:
                                             seen_keys.add(dedup_key)
                                             search_results_list.append({"sys_code": g.get("sys_code", sc), "game_info": g})
+                        search_results_items_cache = None
                         selected_indices["search_results"] = 0
                         screen_stack.append("search_results")
                     else:
@@ -2792,6 +2842,7 @@ def main():
                     state.rom_sort_mode = "alpha" if state.rom_sort_mode == "downloads" else "downloads"
                     selected_indices["rom_games"] = 0
                     scroll_offsets["rom_games"] = 0
+                    rom_games_items_cache = None
                     toast_msg = "Sắp xếp theo Bảng chữ cái (A-Z)" if state.rom_sort_mode == "alpha" else "Sắp xếp theo Lượt tải nhiều nhất"
                     toast_timer = time.time()
 
@@ -3222,11 +3273,13 @@ def main():
                         # tren the. Game da co thi mo dung bang hanh dong nhu ben
                         # thu vien - choi, xoa, tai lai.
                         g_info = cur_item["game_info"]
+                        cur_img = cur_item.get("img_path") or resolve_game_img_path(cur_item["sys_code"], g_info.get("filename"))
+                        cur_item["img_path"] = cur_img
                         game_action_modal["active"] = True
                         game_action_modal["game_info"] = g_info
                         game_action_modal["rom_path"] = cur_item.get("rom_path", "")
                         game_action_modal["sys_code"] = cur_item["sys_code"]
-                        game_action_modal["img_path"] = cur_item.get("img_path")
+                        game_action_modal["img_path"] = cur_img
                         # Dung luong that cua file tren the, dung cach thu vien
                         # do; con so trong catalogue chi la uoc luong cua nguon.
                         _rp = cur_item.get("rom_path", "")
@@ -3243,9 +3296,11 @@ def main():
                         game_action_modal["selected_opt"] = 0
                         game_action_modal["from_downloaded_view"] = False
                     else:
+                        cur_img = cur_item.get("img_path") or resolve_game_img_path(cur_item["sys_code"], cur_item["game_info"].get("filename"))
+                        cur_item["img_path"] = cur_img
                         open_pre_download_modal(cur_item["sys_code"],
                                                 cur_item["game_info"],
-                                                cur_item.get("img_path"))
+                                                cur_img)
                 elif item_id == "toggle_lang":
                     state.current_lang = "EN" if state.current_lang == "VI" else "VI"
                     state.save_settings()
@@ -4076,6 +4131,14 @@ def main():
                 is_sel = (actual_idx == selected_idx)
                 is_sub = item.get("sub", False)
                 is_lang = item.get("is_lang", False)
+                if not item.get("downloaded") and item.get("game_info"):
+                    _dst = download_state_for(item["game_info"])
+                    if _dst == "downloading":
+                        item["label"] = tr("dling_badge")
+                    elif _dst == "queued":
+                        item["label"] = tr("dl_queue_badge")
+                    else:
+                        item["label"] = tr("download_badge")
                 has_label = bool(item.get("label"))
 
                 if is_sel:

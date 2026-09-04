@@ -176,14 +176,38 @@ class CTypesSQLiteConnection:
         except Exception:
             pass
 
+_db_optimized = False
+
+def _ensure_db_optimization(conn):
+    global _db_optimized
+    try:
+        cur = conn.cursor()
+        cur.execute("PRAGMA cache_size = -8000") # 8MB RAM page cache
+        cur.execute("PRAGMA temp_store = MEMORY")
+        cur.execute("PRAGMA mmap_size = 33554432") # 32MB mmap for fast zero-copy reads
+        if not _db_optimized:
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_games_sys_code ON games(sys_code)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_games_viet ON games(is_viet)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_games_hack ON games(is_hack)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_games_dl ON games(download_count DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_games_clean_title ON games(clean_title)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_lookup ON game_sources(game_id, is_alive, priority, id)")
+            if hasattr(conn, "commit"):
+                conn.commit()
+            _db_optimized = True
+        cur.close()
+    except Exception:
+        pass
+
 def get_db_connection():
     try:
         import sqlite3
         conn = sqlite3.connect(DB_PATH, timeout=10)
         conn.row_factory = sqlite3.Row
-        return conn
     except Exception:
-        return CTypesSQLiteConnection(DB_PATH)
+        conn = CTypesSQLiteConnection(DB_PATH)
+    _ensure_db_optimization(conn)
+    return conn
 
 # ==============================================================================
 # DATA ACCESS METHODS
@@ -290,7 +314,7 @@ def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offse
     nen mot tran cung o day se lam bien mat phan duoi danh sach."""
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str, (SELECT COUNT(*) FROM game_sources WHERE game_id = g.id AND is_alive = 1) as mirror_count FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE 1=1"
+    query = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE 1=1"
     params = []
     
     if source_type == "VIET":
@@ -368,7 +392,7 @@ def search_games_fts(query_str, sys_code="ALL", limit=100, source_type="ALL"):
     clean_q = query_str.strip().replace("'", "").replace('"', '').strip()
     like_term = f"%{clean_q}%"
     
-    base_sql = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str, (SELECT COUNT(*) FROM game_sources WHERE game_id = g.id AND is_alive = 1) as mirror_count FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE (g.clean_title LIKE ? OR g.title LIKE ?)"
+    base_sql = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE (g.clean_title LIKE ? OR g.title LIKE ?)"
     params = [like_term, like_term]
     if sys_code != "ALL":
         base_sql += " AND g.sys_code = ?"
