@@ -601,6 +601,13 @@ def main():
     yt_query_idx = 0
     yt_query_cache = {}
     yt_input_text = ""
+    yt_last_hover_id = None
+    yt_hover_start_time = 0
+    yt_prefetch_thread = None
+
+    # Khởi chạy giải nén và nạp trước yt-dlp vào bộ nhớ RAM ngầm
+    import rh.yt_player as yt_player
+    threading.Thread(target=yt_player.ensure_ytdlp_ready, daemon=True).start()
 
     # Restore session state when returning from video playback
     _resume_file = "/tmp/retrohub_resume.json"
@@ -2563,6 +2570,23 @@ def main():
                 scroll_offsets["yt_grid"] = scroll_row
                 selected_indices["yt_grid"] = selected_idx
 
+                # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 0.5s
+                cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < total_v) else None
+                sel_id = cur_v_sel.get("id") if cur_v_sel else None
+                if sel_id:
+                    if sel_id != yt_last_hover_id:
+                        yt_last_hover_id = sel_id
+                        yt_hover_start_time = time.time()
+                    elif (time.time() - yt_hover_start_time > 0.5) and (sel_id not in yt_player._STREAM_CACHE):
+                        if yt_prefetch_thread is None or not yt_prefetch_thread.is_alive():
+                            def _bg_prefetch(vid_fetch):
+                                try:
+                                    yt_player.extract_stream_fast(vid_fetch)
+                                except Exception:
+                                    pass
+                            yt_prefetch_thread = threading.Thread(target=_bg_prefetch, args=(sel_id,), daemon=True)
+                            yt_prefetch_thread.start()
+
                 if btn_a and 0 <= selected_idx < total_v:
                     cur_v = cur_videos[selected_idx]
                     v_id = cur_v.get("id")
@@ -2573,26 +2597,27 @@ def main():
                             toast_msg = tr("yt_no_player")
                             toast_timer = time.time()
                         else:
-                            # 1. Hien thi ngay hop thoai loading de nguoi dung biet he thong dang xu ly
-                            v_title = cur_v.get("title", v_id)
-                            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
-                            mw = 720
-                            mh = 200
-                            mx = (state.SCREEN_W - mw) // 2
-                            my = (state.SCREEN_H - mh) // 2
-                            fill_rect(mx, my, mw, mh, 20, 26, 38, 245)
-                            draw_rect(mx, my, mw, mh, 59, 130, 246, 255, thickness=2)
-                            draw_text("YouTube Stream", font_badge, mx + 30, my + 25, 239, 68, 68)
-                            t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
-                            ty = my + 65
-                            for tl in t_lines:
-                                draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
-                                ty += 32
-                            load_text = "Đang kết nối luồng phát tốc độ cao..." if state.current_lang == "VI" else "Connecting high-speed stream..."
-                            draw_text(load_text, font_modal_val, mx + 30, my + mh - 42, 56, 189, 248)
-                            sdl2.SDL_RenderPresent(renderer)
+                            # 1. Nếu chưa có trong cache, hiển thị hộp thoại loading để người dùng thấy phản hồi
+                            if v_id not in yt_player._STREAM_CACHE:
+                                v_title = cur_v.get("title", v_id)
+                                fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
+                                mw = 720
+                                mh = 200
+                                mx = (state.SCREEN_W - mw) // 2
+                                my = (state.SCREEN_H - mh) // 2
+                                fill_rect(mx, my, mw, mh, 20, 26, 38, 245)
+                                draw_rect(mx, my, mw, mh, 59, 130, 246, 255, thickness=2)
+                                draw_text("YouTube Stream", font_badge, mx + 30, my + 25, 239, 68, 68)
+                                t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
+                                ty = my + 65
+                                for tl in t_lines:
+                                    draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
+                                    ty += 32
+                                load_text = "Đang kết nối luồng phát tốc độ cao..." if state.current_lang == "VI" else "Connecting high-speed stream..."
+                                draw_text(load_text, font_modal_val, mx + 30, my + mh - 42, 56, 189, 248)
+                                sdl2.SDL_RenderPresent(renderer)
 
-                            # 2. Trich xuat nhanh luong phat (Piped < 1s hoac yt-dlp toi uu)
+                            # 2. Lấy link phát từ cache tức thì (0s) hoặc hoàn tất tải
                             from rh.yt_player import extract_stream_fast
                             s_url, s_title = extract_stream_fast(v_id)
 
