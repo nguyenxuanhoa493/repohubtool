@@ -106,14 +106,53 @@ def find_free_port() -> int:
 
 
 _STREAM_CACHE = {}
+_YTDLP_READY = False
+_YTDLP_LOCK = threading.Lock()
+
+
+def ensure_ytdlp_ready():
+    """Giai nen bin/yt-dlp vao bo nho RAM (/tmp/ytdlp_cache) de import tuc thi."""
+    global _YTDLP_READY
+    if _YTDLP_READY:
+        return True
+    with _YTDLP_LOCK:
+        if _YTDLP_READY:
+            return True
+        try:
+            unzip_dir = "/tmp/ytdlp_cache"
+            ytdlp_zip = os.path.join(APP_DIR, "bin", "yt-dlp")
+            if not os.path.exists(ytdlp_zip):
+                for c in [
+                    os.path.join(SDCARD_PATH, "Apps", "RetroHub", "bin", "yt-dlp"),
+                    os.path.join(SDCARD_PATH, ".retrohub", "bin", "yt-dlp"),
+                ]:
+                    if os.path.exists(c):
+                        ytdlp_zip = c
+                        break
+
+            if os.path.exists(ytdlp_zip):
+                if not os.path.exists(os.path.join(unzip_dir, "yt_dlp")):
+                    import zipfile
+                    os.makedirs(unzip_dir, exist_ok=True)
+                    with zipfile.ZipFile(ytdlp_zip, "r") as z:
+                        z.extractall(unzip_dir)
+                if unzip_dir not in sys.path:
+                    sys.path.insert(0, unzip_dir)
+            else:
+                if ytdlp_zip not in sys.path:
+                    sys.path.insert(0, ytdlp_zip)
+
+            import yt_dlp
+            _YTDLP_READY = True
+            log("yt-dlp da san sang trong bo nho RAM.")
+            return True
+        except Exception as e:
+            log(f"Loi chuan bi yt-dlp: {e}")
+            return False
 
 
 def extract_stream_fast(video_id: str) -> tuple:
-    """Fast-path streaming URL extractor with fallback to yt-dlp.
-    1. Check in-memory cache (valid for 3 hours).
-    2. Query Piped API streams endpoint (returns 360p mp4 in ~0.8s).
-    3. Fallback to optimized yt-dlp android client (takes ~1.5s).
-    """
+    """Lay truc tiep link stream tu cache neu co, neu chua co thi goi yt-dlp toi uu."""
     now = time.time()
     if video_id in _STREAM_CACHE:
         cached_url, cached_title, cached_exp = _STREAM_CACHE[video_id]
@@ -121,60 +160,23 @@ def extract_stream_fast(video_id: str) -> tuple:
             log(f"Lay link tu cache hop le cho video: {video_id}")
             return cached_url, cached_title
 
-    # 1. Thu nhanh cac cong Piped API (tra ve link mp4 truc tiep trong < 1 giay)
-    piped_hosts = [
-        "https://api.piped.private.coffee",
-        "https://pipedapi.leptons.xyz",
-        "https://piped-api.lunar.icu",
-    ]
-    ctx = ssl._create_unverified_context()
-    for host in piped_hosts:
-        endpoint = f"{host}/streams/{video_id}"
-        try:
-            log(f"Thu lay stream tu Piped API ({host})...")
-            req = urllib.request.Request(
-                endpoint,
-                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            )
-            with urllib.request.urlopen(req, context=ctx, timeout=2.2) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-            for v in data.get("videoStreams", []):
-                if not v.get("videoOnly") and v.get("url"):
-                    s_url = v["url"]
-                    s_title = data.get("title", video_id)
-                    log(f"Piped API thanh cong ({v.get('quality', '360p')}): '{s_title[:40]}'")
-                    _STREAM_CACHE[video_id] = (s_url, s_title, now + 10800)
-                    return s_url, s_title
-        except Exception as e:
-            log(f"Piped {host} that bai: {e}")
-
-    # 2. Fallback sang yt-dlp toi uu voi duy nhat android client de tang toc do
     return extract_stream_url(video_id)
 
 
 def extract_stream_url(video_id: str) -> tuple:
-    """Uses yt-dlp to resolve direct streaming URL (format 18 / 360p-720p progressive)."""
-    # 1. Add bin/yt-dlp to sys.path
-    ytdlp_candidates = [
-        os.path.join(APP_DIR, "bin", "yt-dlp"),
-        os.path.join(SDCARD_PATH, "Apps", "RetroHub", "bin", "yt-dlp"),
-        os.path.join(SDCARD_PATH, ".retrohub", "bin", "yt-dlp"),
-    ]
-    for c in ytdlp_candidates:
-        if os.path.exists(c) and c not in sys.path:
-            sys.path.insert(0, c)
-
+    """Trích xuất stream URL định dạng MP4 360p progressive (format 18) bằng yt-dlp tối ưu."""
+    ensure_ytdlp_ready()
     try:
         import yt_dlp
     except ImportError:
-        record_error(f"Khong tim thay module yt-dlp tai {ytdlp_candidates}")
+        record_error("Khong tim thay module yt-dlp!")
         return None, None
 
     yt_url = f"https://www.youtube.com/watch?v={video_id}"
     log(f"Dang phan tich video qua yt-dlp: {yt_url}")
 
     ydl_opts = {
-        "format": "18/best[height<=720][ext=mp4]/best[ext=mp4]/b/best",
+        "format": "18/b[ext=mp4]/best",
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
@@ -182,7 +184,8 @@ def extract_stream_url(video_id: str) -> tuple:
         "skip_download": True,
         "extractor_args": {
             "youtube": {
-                "player_client": ["android"]
+                "player_client": ["android"],
+                "skip": ["dash", "hls", "translated_subs", "comments"]
             }
         },
     }
