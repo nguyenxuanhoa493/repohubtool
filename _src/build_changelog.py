@@ -26,6 +26,49 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.56", "2026-09-04",
+     ("New YouTube app: watch videos, search with on-screen keyboard, playback via RetroArch FFMPEG",
+      "Thêm ứng dụng YouTube: xem video, tìm kiếm tiếng Việt, phát qua RetroArch FFMPEG"),
+     [("Dedicated YouTube app on TrimUI handhelds with trending feed and fast switching between recent keywords using L1 / R1.",
+       "Tích hợp ứng dụng YouTube xem video trực tiếp trên máy TrimUI, hỗ trợ duyệt video thịnh hành và chuyển nhanh từ khóa bằng nút L1 / R1."),
+      ("On-screen keyboard with full Vietnamese accent input (TVTelex) and recent search history.",
+       "Bàn phím ảo hỗ trợ gõ tiếng Việt có dấu (kiểu gõ TVTelex) cùng danh sách lưu lịch sử các từ khóa tìm kiếm gần đây."),
+      ("Stream playback powered by RetroArch FFMPEG core with fast-forward, rewind, and volume controls.",
+       "Phát video mượt mà qua core FFMPEG của RetroArch, điều khiển tua tiến, lùi và tăng giảm âm lượng dễ dàng."),
+      ("Clear warning toast if RetroArch or FFMPEG core is not installed on the device.",
+       "Thông báo trực quan khi máy chưa có sẵn RetroArch hoặc core FFMPEG thay vì thoát đột ngột.")]),
+
+    ("1.55", "2026-09-03",
+     ("LED lights now come back on their own after a reboot, on stock firmware too",
+      "Đèn LED tự bật lại sau khi khởi động máy, dùng được trên cả firmware gốc"),
+     [("Stock TrimUI firmware runs scripts from <code>/mnt/SDCARD/System/starts</code> without touching NAND flash.",
+       "Firmware TrimUI gốc tự chạy các script từ <code>/mnt/SDCARD/System/starts</code> mà không cần can thiệp bộ nhớ NAND."),
+      ("NextUI continues using <code>.hooks/boot.d</code>; 'Run at startup' now works on both systems.",
+       "Hệ điều hành NextUI tiếp tục dùng <code>.hooks/boot.d</code>; tính năng 'Tự chạy khi khởi động' giờ hoạt động chuẩn trên cả hai hệ máy.")]),
+
+    ("1.54", "2026-09-01",
+     ("New LED Lights utility: 12 colour themes, 10 effects, live preview as you scroll",
+      "Thêm tiện ích Đèn LED: 12 bộ màu, 10 hiệu ứng, xem thử ngay khi di con trỏ"),
+     [("Custom software engine renders frame-by-frame into <code>/sys/class/led_anim</code>, enabling out-of-phase effects (wave, sweep) impossible with stock effects.",
+       "Engine phần mềm tự vẽ từng khung hình vào <code>/sys/class/led_anim</code>, tạo được các hiệu ứng lệch pha (sóng chạy, quét) mà hiệu ứng gốc không làm được."),
+      ("Background daemon preserves lighting effects even after exiting RetroHub.",
+       "Daemon chạy nền giữ hiệu ứng đèn LED hoạt động ngay cả khi đã thoát RetroHub.")]),
+
+    ("1.53", "2026-09-01",
+     ("Fixes the overflowing badge in the emulator switcher",
+      "Sửa nhãn tràn ra ngoài nút ở menu đổi giả lập"),
+     []),
+
+    ("1.52", "2026-09-01",
+     ("NAOMI/Atomiswave games now route to the DC system; new emulator switcher in Utilities",
+      "Game NAOMI/Atomiswave (Metal Slug 6, Marvel vs Capcom 2) về đúng hệ DC; thêm mục đổi giả lập trong Tiện ích"),
+     []),
+
+    ("1.51", "2026-08-31",
+     ("Fixes CPS2 arcade games in the MAME system failing to launch",
+      "Sửa game CPS2 hệ MAME (Marvel vs Capcom, Street Fighter Alpha...) không mở được"),
+     []),
+
     ("1.50", "2026-08-31",
      ("Official NextUI support, dual artwork saving, and cleaner utilities menu",
       "Hỗ trợ chính thức hệ điều hành NextUI, lưu ảnh bìa kép và tinh gọn menu tiện ích"),
