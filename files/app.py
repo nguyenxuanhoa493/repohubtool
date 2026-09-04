@@ -12,6 +12,7 @@ import subprocess
 import threading
 import hashlib
 import ctypes
+import json
 try:
     import db
 except Exception:
@@ -55,8 +56,9 @@ except ImportError as _e:
 # ==============================================================================
 from rh import state
 from rh.paths import (FLAG_FILES, is_nextui, QR_BMC_FILE, QR_DONATE_FILE,
-    QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW)
-from rh import corepicker
+    QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW,
+    YT_CACHE_DIR)
+from rh import corepicker, yt
 from rh.i18n import tr, wrap_title_2lines
 from rh.sysinfo import (get_battery_info,
     get_device_info_rows,
@@ -519,7 +521,9 @@ def main():
         "search_input": 0,
         "search_results": 0,
         "rom_systems": 0,
-        "rom_games": 0
+        "rom_games": 0,
+        "yt_grid": 0,
+        "yt_search_input": 0
     }
     scroll_offsets = {
         "home": 0,
@@ -533,7 +537,9 @@ def main():
         "rom_systems": 0,
         "rom_games": 0,
         "file_browser": 0,
-        "splash_manager": 0
+        "splash_manager": 0,
+        "yt_grid": 0,
+        "yt_search_input": 0
     }
     current_source = "VIET"
     current_rom_system = "ALL"
@@ -585,6 +591,57 @@ def main():
     kb_cursor = [1, 0]
     search_query = ""
     search_results_list = []
+
+    # YouTube InnerTube state
+    yt_trending_list = []
+    yt_search_query = ""
+    yt_search_results_list = []
+    yt_mode = "trending" # "trending" or "search"
+    yt_recent_queries = yt.load_search_history()
+    yt_query_idx = 0
+    yt_query_cache = {}
+    yt_input_text = ""
+
+    # Restore session state when returning from video playback
+    _resume_file = "/tmp/retrohub_resume.json"
+    if os.path.exists(_resume_file):
+        try:
+            with open(_resume_file, "r", encoding="utf-8") as _rf:
+                _r_data = json.load(_rf)
+            os.remove(_resume_file)
+            if isinstance(_r_data, dict):
+                if "screen_stack" in _r_data and isinstance(_r_data["screen_stack"], list) and _r_data["screen_stack"]:
+                    screen_stack = _r_data["screen_stack"]
+                if "selected_indices" in _r_data and isinstance(_r_data["selected_indices"], dict):
+                    selected_indices.update(_r_data["selected_indices"])
+                if "scroll_offsets" in _r_data and isinstance(_r_data["scroll_offsets"], dict):
+                    scroll_offsets.update(_r_data["scroll_offsets"])
+                yt_mode = _r_data.get("yt_mode", yt_mode)
+                yt_search_query = _r_data.get("yt_search_query", yt_search_query) or ""
+                yt_trending_list = _r_data.get("yt_trending_list", yt_trending_list) or []
+                yt_search_results_list = _r_data.get("yt_search_results_list", yt_search_results_list) or []
+                saved_queries = _r_data.get("yt_recent_queries")
+                if isinstance(saved_queries, list) and saved_queries:
+                    yt_recent_queries = saved_queries
+                if not yt_recent_queries:
+                    yt_recent_queries = list(yt.DEFAULT_QUERIES)
+                yt_query_idx = max(0, min(len(yt_recent_queries) - 1, int(_r_data.get("yt_query_idx", 0))))
+                saved_cache = _r_data.get("yt_query_cache")
+                if isinstance(saved_cache, dict):
+                    yt_query_cache = saved_cache
+        except Exception as _re:
+            print(f"[RetroHub] Error restoring resume state: {_re}")
+
+    def _prefetch_yt_thumbs(video_list):
+        if not video_list:
+            return
+        def _worker():
+            for v in video_list[:24]:
+                vid = v.get("id")
+                thumb_url = v.get("thumb")
+                if vid and thumb_url:
+                    yt.fetch_thumbnail(thumb_url, YT_CACHE_DIR, vid)
+        threading.Thread(target=_worker, daemon=True).start()
 
     # Downloaded Games Cache & Proportional Image Loading
     downloaded_games_list = []
@@ -877,6 +934,18 @@ def main():
     modal_style = None
     toast_msg = None
     toast_timer = 0
+
+    # Kiem tra neu co loi phat YouTube tu lan thoat truoc
+    if os.path.exists("/tmp/yt_last_error.txt"):
+        try:
+            with open("/tmp/yt_last_error.txt", "r", encoding="utf-8") as _f:
+                _yt_err = _f.read().strip()
+            if _yt_err:
+                toast_msg = f"Lỗi YouTube: {_yt_err[:45]}"
+                toast_timer = time.time()
+            os.remove("/tmp/yt_last_error.txt")
+        except Exception:
+            pass
 
     splash_images_list = []
     splash_preview_path = ""
@@ -1275,6 +1344,7 @@ def main():
             header_title = tr("app_title")
             items = [
                 {"id": "nav_rom_store_menu", "title": tr("home_item2")},
+                {"id": "nav_youtube", "title": tr("home_item_youtube")},
                 {"id": "nav_network", "title": tr("home_item1")},
                 {"id": "nav_utilities", "title": tr("home_item3")},
                 {"id": "nav_donate", "title": tr("home_item_donate")},
@@ -1399,6 +1469,16 @@ def main():
                               "label": tr("led_cur")
                                        if th["id"] == led_cfg.get("theme") else ""})
             items.append({"id": "back", "title": tr("back")})
+
+        # YOUTUBE 3x2 GRID VIEW
+        elif current_screen == "yt_grid":
+            if yt_mode == "trending":
+                header_title = tr("yt_trending_title")
+                items = yt_trending_list or []
+            else:
+                header_title = f"{tr('yt_search_title')}: \"{yt_search_query}\""
+                items = yt_search_results_list or []
+
 
         # SETTINGS: things that shape the app itself, kept out of Utilities which is
         # about acting on the device.
@@ -1767,11 +1847,12 @@ def main():
             items.append({"id": "back", "title": tr("back_search")})
 
         # Bounds check
-        if selected_idx >= len(items):
-            selected_idx = len(items) - 1
-        if selected_idx < 0:
-            selected_idx = 0
-        selected_indices[current_screen] = selected_idx
+        if current_screen not in ("yt_search_input", "search_input"):
+            if selected_idx >= len(items):
+                selected_idx = len(items) - 1
+            if selected_idx < 0:
+                selected_idx = 0
+            selected_indices[current_screen] = selected_idx
 
         # ----------------------------------------------------------------------
         # EVENT HANDLING - PRECISE PHYSICAL BUTTON MAPPING
@@ -1987,9 +2068,12 @@ def main():
                     btn_y = True
                 elif sym in [sdl2.SDLK_F1, sdl2.SDLK_m]:
                     btn_f1 = True
-                elif current_screen == "search_input":
+                elif current_screen in ("search_input", "yt_search_input"):
                     if sym == sdl2.SDLK_BACKSPACE:
-                        search_query = search_query[:-1]
+                        if current_screen == "yt_search_input":
+                            yt_input_text = yt_input_text[:-1]
+                        else:
+                            search_query = search_query[:-1]
                     elif sym == sdl2.SDLK_RETURN:
                         btn_start = True
 
@@ -2371,6 +2455,232 @@ def main():
                 else:
                     search_query += key_val.lower()
 
+        # YOUTUBE SEARCH INPUT: PHYSICAL X = SPACE, PHYSICAL Y = DEL, START/A = SEARCH
+        elif current_screen == "yt_search_input":
+            if btn_up:
+                r, c = kb_cursor
+                r = (r - 1) % len(kb_rows)
+                c = min(c, len(kb_rows[r]) - 1)
+                kb_cursor = [r, c]
+            elif btn_down:
+                r, c = kb_cursor
+                r = (r + 1) % len(kb_rows)
+                c = min(c, len(kb_rows[r]) - 1)
+                kb_cursor = [r, c]
+            elif btn_left:
+                r, c = kb_cursor
+                c = (c - 1) % len(kb_rows[r])
+                kb_cursor = [r, c]
+            elif btn_right:
+                r, c = kb_cursor
+                c = (c + 1) % len(kb_rows[r])
+                kb_cursor = [r, c]
+            elif btn_x: # Physical X = Space
+                yt_input_text += " "
+            elif btn_y: # Physical Y = Delete
+                yt_input_text = yt_input_text[:-1]
+            elif btn_b:
+                screen_stack.pop()
+            elif (btn_start or (btn_a and kb_rows[kb_cursor[0]][kb_cursor[1]] == "SEARCH")):
+                q_clean = yt_input_text.strip()
+                if q_clean:
+                    toast_msg = tr("yt_loading")
+                    toast_timer = time.time()
+                    res = yt.search_youtube(q_clean, limit=30)
+                    if res:
+                        yt_search_results_list = res
+                        yt_mode = "search"
+                        yt_search_query = q_clean
+                        selected_idx = 0
+                        selected_indices["yt_grid"] = 0
+                        scroll_offsets["yt_grid"] = 0
+                        _prefetch_yt_thumbs(yt_search_results_list)
+
+                        # Update recent search queries list
+                        yt_recent_queries = [q for q in yt_recent_queries if q.lower() != q_clean.lower()]
+                        yt_recent_queries.insert(1, q_clean)
+                        if len(yt_recent_queries) > 10:
+                            yt_recent_queries = yt_recent_queries[:10]
+                        yt.save_search_history(yt_recent_queries)
+                        yt_query_idx = 1
+                        yt_query_cache[q_clean] = res
+
+                        items = yt_search_results_list
+                        cur_videos = items
+                        total_v = len(cur_videos)
+
+                        screen_stack.pop()
+                    else:
+                        toast_msg = "Không tìm thấy video nào!" if state.current_lang == "VI" else "No videos found!"
+                        toast_timer = time.time()
+                else:
+                    toast_msg = "Vui lòng nhập từ khóa!" if state.current_lang == "VI" else "Please enter search keyword!"
+                    toast_timer = time.time()
+            elif btn_a:
+                r, c = kb_cursor
+                key_val = kb_rows[r][c]
+                if key_val == "SPACE":
+                    yt_input_text += " "
+                elif key_val == "DEL":
+                    yt_input_text = yt_input_text[:-1]
+                elif key_val == "CLEAR":
+                    yt_input_text = ""
+                elif key_val == "SEARCH":
+                    pass
+                else:
+                    yt_input_text += key_val.lower()
+
+        # YOUTUBE 3x2 GRID NAVIGATION: A=PLAY, B=BACK, X=SEARCH, Y=TRENDING, LR=PAGE 6
+        elif current_screen == "yt_grid":
+            cur_videos = yt_trending_list if yt_mode == "trending" else yt_search_results_list
+            total_v = len(cur_videos)
+
+            if total_v > 0:
+                cols = 3
+                rows = 2
+                per_page = 6
+                scroll_row = scroll_offsets.get("yt_grid", 0)
+
+                if btn_left:
+                    if selected_idx > 0:
+                        selected_idx -= 1
+                elif btn_right:
+                    if selected_idx < total_v - 1:
+                        selected_idx += 1
+                elif btn_up:
+                    if selected_idx - cols >= 0:
+                        selected_idx -= cols
+                elif btn_down:
+                    if selected_idx + cols < total_v:
+                        selected_idx += cols
+                # Keep selected card visible in 2 rows
+                cur_row = selected_idx // cols
+                if cur_row < scroll_row:
+                    scroll_row = cur_row
+                elif cur_row >= scroll_row + rows:
+                    scroll_row = cur_row - rows + 1
+
+                scroll_offsets["yt_grid"] = scroll_row
+                selected_indices["yt_grid"] = selected_idx
+
+                if btn_a and 0 <= selected_idx < total_v:
+                    cur_v = cur_videos[selected_idx]
+                    v_id = cur_v.get("id")
+                    if v_id:
+                        ra_bin = "/mnt/SDCARD/RetroArch/ra64.trimui"
+                        ff_core = "/mnt/SDCARD/Emus/FFMPEG/ffmpeg_libretro.so"
+                        if not (os.path.exists(ra_bin) and os.path.exists(ff_core)):
+                            toast_msg = tr("yt_no_player")
+                            toast_timer = time.time()
+                        else:
+                            toast_msg = "Đang mở luồng phát..." if state.current_lang == "VI" else "Opening video stream..."
+                            toast_timer = time.time()
+                            play_cmd = yt.build_play_command(v_id)
+                            try:
+                                # Save resume state so returning from video playback resumes at exact YouTube screen & cursor
+                                _resume_state = {
+                                    "screen_stack": screen_stack if len(screen_stack) > 1 else ["home", "yt_grid"],
+                                    "selected_indices": selected_indices,
+                                    "scroll_offsets": scroll_offsets,
+                                    "yt_mode": yt_mode,
+                                    "yt_search_query": yt_search_query,
+                                    "yt_trending_list": yt_trending_list,
+                                    "yt_search_results_list": yt_search_results_list,
+                                    "yt_recent_queries": yt_recent_queries,
+                                    "yt_query_idx": yt_query_idx,
+                                    "yt_query_cache": yt_query_cache,
+                                }
+                                with open("/tmp/retrohub_resume.json", "w", encoding="utf-8") as _rf:
+                                    json.dump(_resume_state, _rf)
+
+                                with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
+                                    f.write(play_cmd)
+                                subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
+                                running = False
+                            except Exception as e:
+                                toast_msg = f"Error: {e}"
+                                toast_timer = time.time()
+
+            # L1 / R1: Switch recent search keywords
+            if (btn_l1 or btn_r1) and yt_recent_queries:
+                if btn_l1:
+                    yt_query_idx = (yt_query_idx - 1) % len(yt_recent_queries)
+                else:
+                    yt_query_idx = (yt_query_idx + 1) % len(yt_recent_queries)
+
+                new_q = yt_recent_queries[yt_query_idx]
+                selected_idx = 0
+                selected_indices["yt_grid"] = 0
+                scroll_offsets["yt_grid"] = 0
+
+                if new_q == "MV":
+                    yt_mode = "trending"
+                    if not yt_trending_list:
+                        toast_msg = tr("yt_loading")
+                        toast_timer = time.time()
+                        try:
+                            yt_trending_list = yt.get_trending(limit=30) or []
+                        except Exception:
+                            yt_trending_list = []
+                    _prefetch_yt_thumbs(yt_trending_list)
+                    toast_msg = "Chủ đề: MV (Thịnh hành)" if state.current_lang == "VI" else "Topic: MV (Trending)"
+                    toast_timer = time.time()
+                else:
+                    yt_mode = "search"
+                    yt_search_query = new_q
+                    if new_q in yt_query_cache and yt_query_cache[new_q]:
+                        yt_search_results_list = yt_query_cache[new_q]
+                    else:
+                        toast_msg = f"{tr('yt_loading')} ({new_q})"
+                        toast_timer = time.time()
+                        try:
+                            res = yt.search_youtube(new_q, limit=30) or []
+                        except Exception:
+                            res = []
+                        yt_search_results_list = res
+                        yt_query_cache[new_q] = res
+                    _prefetch_yt_thumbs(yt_search_results_list)
+                    toast_msg = f"Từ khóa: {new_q}" if state.current_lang == "VI" else f"Keyword: {new_q}"
+                    toast_timer = time.time()
+
+                items = yt_trending_list if yt_mode == "trending" else yt_search_results_list
+                cur_videos = items
+                total_v = len(cur_videos)
+
+            if btn_x: # Press X to open Search
+                selected_indices["yt_search_input"] = 0
+                yt_input_text = ""
+                kb_cursor = [0, 0]
+                screen_stack.append("yt_search_input")
+
+            elif btn_y: # Press Y to return to trending MV
+                if yt_mode == "search" or yt_query_idx != 0:
+                    yt_query_idx = 0
+                    yt_mode = "trending"
+                    selected_idx = 0
+                    selected_indices["yt_grid"] = 0
+                    scroll_offsets["yt_grid"] = 0
+                    if not yt_trending_list:
+                        toast_msg = tr("yt_loading")
+                        toast_timer = time.time()
+                        try:
+                            yt_trending_list = yt.get_trending(limit=30) or []
+                        except Exception:
+                            yt_trending_list = []
+                    _prefetch_yt_thumbs(yt_trending_list)
+                    toast_msg = "Đã chuyển về MV Thịnh hành" if state.current_lang == "VI" else "Switched to MV Trending"
+                    toast_timer = time.time()
+                    items = yt_trending_list or []
+                    cur_videos = items
+                    total_v = len(cur_videos)
+
+            elif btn_b:
+                if len(screen_stack) > 1:
+                    screen_stack.pop()
+                else:
+                    running = False
+
+
         elif modal_title:
             if btn_a or btn_b:
                 modal_title = None
@@ -2703,6 +3013,25 @@ def main():
                 elif item_id == "j2me_render_note":
                     toast_msg = tr("j2me_render_note")
                     toast_timer = time.time()
+                elif item_id == "nav_youtube":
+                    yt_recent_queries = yt.load_search_history()
+                    yt_query_idx = 0
+                    if not yt_trending_list:
+                        toast_msg = tr("yt_loading")
+                        toast_timer = time.time()
+                        try:
+                            yt_trending_list = yt.get_trending(limit=30) or []
+                        except Exception as e:
+                            yt_trending_list = []
+                            toast_msg = f"Lỗi: {e}"
+                            toast_timer = time.time()
+                    _prefetch_yt_thumbs(yt_trending_list)
+                    yt_mode = "trending"
+                    selected_indices["yt_grid"] = 0
+                    scroll_offsets["yt_grid"] = 0
+                    screen_stack.append("yt_grid")
+
+
                 elif item_id == "nav_settings":
                     selected_indices["settings"] = 0
                     screen_stack.append("settings")
@@ -3038,6 +3367,9 @@ def main():
         # ----------------------------------------------------------------------
         current_screen = screen_stack[-1]
         selected_idx = selected_indices.get(current_screen, 0)
+        panel_margin = 40
+        foot_h = 56
+        foot_y = state.SCREEN_H - foot_h
 
         fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 13, 17, 28, 255)
 
@@ -3046,7 +3378,7 @@ def main():
         fill_rect(0, 0, state.SCREEN_W, header_h, 20, 28, 46, 255)
         fill_rect(0, header_h - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
 
-        _head_txt = tr("search_title") if current_screen == "search_input" else header_title
+        _head_txt = tr("yt_search_title") if current_screen == "yt_search_input" else (tr("search_title") if current_screen == "search_input" else header_title)
         draw_text(_head_txt, font_title, 40, header_h // 2, 255, 255, 255, center_y=True)
         # Version sits beside the app name on the home screen only. Measured
         # rather than placed at a guessed offset, because the title is translated
@@ -3060,9 +3392,223 @@ def main():
         # Battery still shows in Device Info.
 
         # ----------------------------------------------------------------------
+        # SCREEN: YOUTUBE SEARCH INPUT & VIRTUAL KEYBOARD
+        # ----------------------------------------------------------------------
+        if current_screen == "yt_search_input":
+            box_x = 40
+            box_y = 108
+            box_w = state.SCREEN_W - 80
+            box_h = 58
+            fill_rect(box_x, box_y, box_w, box_h, 20, 28, 48, 255)
+            draw_rect(box_x, box_y, box_w, box_h, 0, 230, 255, 255, thickness=2)
+
+            cursor_str = "_" if int(time.time() * 2) % 2 == 0 else ""
+            disp_query = yt_input_text + cursor_str if yt_input_text else tr("search_prompt") + cursor_str
+            q_col = (255, 255, 255) if yt_input_text else (120, 140, 170)
+            draw_text(disp_query, font_item, box_x + 20, box_y + box_h // 2, q_col[0], q_col[1], q_col[2], center_y=True)
+
+            kb_start_y = box_y + box_h + 16
+            k_row_gap = 12
+            k_col_gap = 10
+            k_h = 56
+
+            for r_idx, row in enumerate(kb_rows):
+                num_k = len(row)
+                total_w = state.SCREEN_W - 80
+                k_w = (total_w - (num_k - 1) * k_col_gap) // num_k
+                ky = kb_start_y + r_idx * (k_h + k_row_gap)
+
+                for c_idx, key_str in enumerate(row):
+                    kx = 40 + c_idx * (k_w + k_col_gap)
+                    is_k_sel = (kb_cursor[0] == r_idx and kb_cursor[1] == c_idx)
+
+                    if is_k_sel:
+                        fill_rect(kx, ky, k_w, k_h, 0, 230, 255, 255)
+                        draw_rect(kx, ky, k_w, k_h, 255, 255, 255, 255, thickness=2)
+                        draw_text(key_str, font_kb, kx + k_w // 2, ky + k_h // 2, 0, 20, 40, center_x=True, center_y=True)
+                    else:
+                        fill_rect(kx, ky, k_w, k_h, 24, 34, 56, 255)
+                        draw_rect(kx, ky, k_w, k_h, 45, 65, 100, 255, thickness=1)
+                        draw_text(key_str, font_kb, kx + k_w // 2, ky + k_h // 2, 220, 230, 245, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # SCREEN: YOUTUBE 3x2 GRID VIEW
+        # ----------------------------------------------------------------------
+        elif current_screen == "yt_grid":
+            cur_videos = yt_trending_list if yt_mode == "trending" else yt_search_results_list
+            total_v = len(cur_videos)
+            scroll_row = scroll_offsets.get("yt_grid", 0)
+
+            # Draw counter badge in top right of header
+            if total_v > 0:
+                cnt_str = f"{selected_idx + 1} / {total_v}"
+                cw = measure_text(cnt_str, font_sub)
+                draw_text(cnt_str, font_sub, state.SCREEN_W - 40 - cw, header_h // 2, 0, 246, 246, center_y=True)
+
+            # ------------------------------------------------------------------
+            # TOP BAR: RECENT SEARCH KEYWORDS (L1 / R1 TO SWITCH)
+            # ------------------------------------------------------------------
+            bar_y = 66
+            bar_h = 38
+            fill_rect(0, bar_y, state.SCREEN_W, bar_h, 17, 24, 40, 245)
+            fill_rect(0, bar_y + bar_h - 1, state.SCREEN_W, 1, 35, 48, 72, 255)
+
+            # Navigation hints (safe ASCII to avoid font missing glyph issues)
+            draw_text("< L1", font_footer, 20, bar_y + bar_h // 2, 0, 220, 245, center_y=True)
+            r1_txt = "R1 >"
+            r1_w = measure_text(r1_txt, font_footer)
+            draw_text(r1_txt, font_footer, state.SCREEN_W - 20 - r1_w, bar_y + bar_h // 2, 0, 220, 245, center_y=True)
+
+            # Calculate pills dimensions
+            pill_area_x = 90
+            pill_area_w = state.SCREEN_W - 180
+            pill_gap = 10
+            pill_h = 26
+            pill_y = bar_y + (bar_h - pill_h) // 2
+
+            pills_w = []
+            for q_item in yt_recent_queries:
+                pw = measure_text(q_item, font_badge) + 24
+                pills_w.append(pw)
+
+            total_pills_w = sum(pills_w) + (len(pills_w) - 1) * pill_gap if pills_w else 0
+
+            # Determine scroll offset for pills
+            pill_x_pos = []
+            cur_px = 0
+            for pw in pills_w:
+                pill_x_pos.append(cur_px)
+                cur_px += pw + pill_gap
+
+            safe_q_idx = max(0, min(len(pills_w) - 1, yt_query_idx)) if pills_w else 0
+
+            if not pills_w or total_pills_w <= pill_area_w:
+                base_x = pill_area_x + max(0, (pill_area_w - total_pills_w) // 2)
+            else:
+                # Center active pill in pill_area safely
+                active_center = pill_x_pos[safe_q_idx] + pills_w[safe_q_idx] // 2
+                desired_offset = (pill_area_w // 2) - active_center
+                max_scroll = 0
+                min_scroll = pill_area_w - total_pills_w
+                scroll_offset_x = max(min_scroll, min(max_scroll, desired_offset))
+                base_x = pill_area_x + scroll_offset_x
+
+            # Draw keyword pills safely
+            num_pills = min(len(yt_recent_queries), len(pills_w), len(pill_x_pos))
+            for q_i in range(num_pills):
+                q_txt = yt_recent_queries[q_i]
+                px = base_x + pill_x_pos[q_i]
+                pw = pills_w[q_i]
+                if px + pw < pill_area_x - 10 or px > pill_area_x + pill_area_w + 10:
+                    continue # outside view
+
+                is_active_q = (q_i == safe_q_idx)
+                if is_active_q:
+                    fill_rect(px, pill_y, pw, pill_h, 0, 185, 235, 255)
+                    draw_rect(px, pill_y, pw, pill_h, 255, 255, 255, 255, thickness=2)
+                    draw_text(q_txt, font_badge, px + pw // 2, pill_y + pill_h // 2, 10, 24, 45, center_x=True, center_y=True)
+                else:
+                    fill_rect(px, pill_y, pw, pill_h, 25, 35, 54, 230)
+                    draw_rect(px, pill_y, pw, pill_h, 48, 66, 94, 255, thickness=1)
+                    draw_text(q_txt, font_badge, px + pw // 2, pill_y + pill_h // 2, 180, 205, 235, center_x=True, center_y=True)
+
+            if total_v == 0:
+                empty_lbl = tr("yt_loading") if not yt_search_query and not yt_trending_list else tr("yt_no_results")
+                draw_text(empty_lbl, font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 + 20, 160, 180, 210, center_x=True, center_y=True)
+            else:
+                cols = 3
+                rows = 2
+                gap_x = 26
+                gap_y = 14
+                card_w = 348
+                card_h = 250
+                start_x = (state.SCREEN_W - (cols * card_w + (cols - 1) * gap_x)) // 2
+                start_y = 112
+
+                for r_off in range(rows):
+                    cur_r = scroll_row + r_off
+                    for c_off in range(cols):
+                        idx = cur_r * cols + c_off
+                        if idx >= total_v:
+                            continue
+
+                        cx = start_x + c_off * (card_w + gap_x)
+                        cy = start_y + r_off * (card_h + gap_y)
+                        is_sel = (idx == selected_idx)
+                        v_data = cur_videos[idx]
+
+                        # Card Background & Border
+                        if is_sel:
+                            fill_rect(cx, cy, card_w, card_h, 24, 38, 64, 255)
+                            draw_rect(cx, cy, card_w, card_h, 0, 230, 255, 255, thickness=3)
+                        else:
+                            fill_rect(cx, cy, card_w, card_h, 18, 24, 40, 240)
+                            draw_rect(cx, cy, card_w, card_h, 36, 48, 76, 255, thickness=1)
+
+                        # Thumbnail Area (Standard 16:9 YouTube ratio: 320x180)
+                        tw = 320
+                        th = 180
+                        tx = cx + (card_w - tw) // 2
+                        ty = cy + 8
+
+                        v_id = v_data.get("id", "")
+                        t_path = os.path.join(YT_CACHE_DIR, f"{v_id}.jpg") if v_id else ""
+                        tex, orig_w, orig_h = (None, 0, 0)
+                        if os.path.exists(t_path):
+                            missing_img_cache.discard(t_path)
+                            tex, orig_w, orig_h = get_texture_and_size(t_path)
+
+                        if tex:
+                            # Proportional fit preserving standard 16:9 aspect ratio
+                            if orig_w > 0 and orig_h > 0:
+                                scale = min(tw / float(orig_w), th / float(orig_h))
+                                dw = int(orig_w * scale)
+                                dh = int(orig_h * scale)
+                                dx = tx + (tw - dw) // 2
+                                dy = ty + (th - dh) // 2
+                                dest_r = sdl2.SDL_Rect(dx, dy, dw, dh)
+                            else:
+                                dest_r = sdl2.SDL_Rect(tx, ty, tw, th)
+                            sdl2.SDL_RenderCopy(renderer, tex, None, dest_r)
+                        else:
+                            fill_rect(tx, ty, tw, th, 12, 16, 26, 255)
+                            draw_rect(tx, ty, tw, th, 30, 42, 65, 255, thickness=1)
+                            pw, ph = 50, 34
+                            px = tx + (tw - pw) // 2
+                            py = ty + (th - ph) // 2
+                            fill_rect(px, py, pw, ph, 230, 33, 23, 255)
+                            draw_text("▶", font_badge, px + pw // 2, py + ph // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                        # Duration badge in bottom-right of thumbnail
+                        dur_str = v_data.get("duration", "")
+                        if dur_str:
+                            dw = measure_text(dur_str, font_badge) + 12
+                            dh = 22
+                            dx = tx + tw - dw - 6
+                            dy = ty + th - dh - 6
+                            fill_rect(dx, dy, dw, dh, 0, 0, 0, 220)
+                            draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
+                            draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                        # Title below thumbnail
+                        text_y = ty + th + 6
+                        disp_title = v_data.get("title", "Video")
+                        if len(disp_title) > 30:
+                            disp_title = disp_title[:28] + "..."
+                        title_col = (255, 255, 255) if is_sel else (205, 215, 230)
+                        draw_text(disp_title, font_sub, cx + 14, text_y, title_col[0], title_col[1], title_col[2])
+
+                        # Channel name
+                        chan_name = v_data.get("channel", "")
+                        if len(chan_name) > 32:
+                            chan_name = chan_name[:30] + "..."
+                        chan_col = (0, 220, 240) if is_sel else (120, 145, 175)
+                        draw_text(chan_name, font_badge, cx + 14, text_y + 24, chan_col[0], chan_col[1], chan_col[2])
+
+        # ----------------------------------------------------------------------
         # SCREEN: SEARCH INPUT & VIRTUAL KEYBOARD WITH SYSTEM FILTER BAR
         # ----------------------------------------------------------------------
-        if current_screen == "search_input":
+        elif current_screen == "search_input":
             cur_filter_sys = sys_keys_list[search_sys_idx]
             sys_disp_name = (tr("search_scope_all") if cur_filter_sys == "ALL"
                              else get_system_display_name(cur_filter_sys))
@@ -3487,11 +4033,20 @@ def main():
                         draw_rect(panel_x, cy, panel_w, card_h, 40, 54, 85, 255, thickness=1)
                         text_r, text_g, text_b = 200, 210, 225
 
-                disp_title = item["title"]
-                max_chars = 46 if (has_label or item.get("type") == "toggle") else 58
-                if len(disp_title) > max_chars:
-                    disp_title = disp_title[:max_chars - 3] + "..."
-                draw_text(disp_title, font_item, panel_x + 28, cy + (card_h // 2), text_r, text_g, text_b, center_y=True)
+                if item.get("sub_title"):
+                    disp_title = item["title"]
+                    max_chars = 42 if has_label else 54
+                    if len(disp_title) > max_chars:
+                        disp_title = disp_title[:max_chars - 3] + "..."
+                    draw_text(disp_title, font_item, panel_x + 28, cy + 22, text_r, text_g, text_b, center_y=True)
+                    st_col = (0, 220, 240) if is_sel else (140, 160, 190)
+                    draw_text(item["sub_title"], font_sub, panel_x + 28, cy + card_h - 22, st_col[0], st_col[1], st_col[2], center_y=True)
+                else:
+                    disp_title = item["title"]
+                    max_chars = 46 if (has_label or item.get("type") == "toggle") else 58
+                    if len(disp_title) > max_chars:
+                        disp_title = disp_title[:max_chars - 3] + "..."
+                    draw_text(disp_title, font_item, panel_x + 28, cy + (card_h // 2), text_r, text_g, text_b, center_y=True)
 
                 if item.get("type") == "toggle":
                     sw_x = panel_x + panel_w - 110 - 24
@@ -3619,6 +4174,18 @@ def main():
             elif current_screen == "search_results":
                 draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
 
+            elif current_screen == "yt_grid":
+                fx = draw_footer_btn(fx, "A", "Xem", (0, 230, 140))
+                fx = draw_footer_btn(fx, "X", "Tìm kiếm", (0, 190, 255))
+                if yt_mode == "search" or yt_query_idx != 0:
+                    fx = draw_footer_btn(fx, "Y", "Về MV", (255, 180, 0))
+                draw_footer_btn(state.SCREEN_W - 220, "L1/R1", "Từ khóa", (70, 95, 140), is_dark_btn=False)
+
+            elif current_screen == "yt_search_input":
+                fx = draw_footer_btn(fx, "X", "Cách", (0, 190, 255))
+                fx = draw_footer_btn(fx, "Y", "Xóa", (255, 200, 0))
+                fx = draw_footer_btn(fx, "ST", "Tìm", (255, 140, 0))
+
             elif current_screen == "search_input":
                 fx = draw_footer_btn(fx, "X", "Cách", (0, 190, 255))
                 fx = draw_footer_btn(fx, "Y", "Xóa", (255, 200, 0))
@@ -3630,10 +4197,11 @@ def main():
 
         # 4. Toast Notification
         if toast_msg and (now - toast_timer < 2.5):
-            tw = state.SCREEN_W - (panel_margin * 2)
+            toast_margin = 40
+            tw = state.SCREEN_W - (toast_margin * 2)
             th = 44
-            tx = panel_margin
-            ty = foot_y - 52
+            tx = toast_margin
+            ty = (state.SCREEN_H - 56) - 52
             fill_rect(tx, ty, tw, th, 16, 32, 56, 245)
             draw_rect(tx, ty, tw, th, 0, 246, 246, 255, thickness=1)
             draw_text(toast_msg, font_toast, tx + tw // 2, ty + th // 2, 0, 246, 246, center_x=True, center_y=True)
@@ -3659,6 +4227,7 @@ def main():
                 g_title = g_title[:42] + "..."
             hud_txt = f"[{dl_state['sys_code']}] {g_title} • {dl_state['progress_pct']}% ({dl_state['downloaded_str']})"
             draw_text(hud_txt, font_sub, hud_x + 18, hud_y + hud_h // 2 - 1, 0, 246, 246, center_y=True)
+
 
         # 5. Live Progress Bar Download Modal
         if dl_state["active"] and not dl_state.get("is_background", False):
@@ -4525,4 +5094,15 @@ def main():
     sdl2.SDL_Quit()
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        import traceback
+        err_msg = traceback.format_exc()
+        sys.stderr.write(f"\n[RetroHub Crash]\n{err_msg}\n")
+        try:
+            with open("/mnt/SDCARD/RetroHub-loi.txt", "a", encoding="utf-8") as _ef:
+                _ef.write(f"\n[RetroHub Crash at {time.strftime('%Y-%m-%d %H:%M:%S')}]\n{err_msg}\n")
+        except Exception:
+            pass
+        raise

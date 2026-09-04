@@ -196,7 +196,7 @@ fi
 
 while true; do
     rm -f /tmp/launch_game.sh
-    "$PY" app.py
+    "$PY" app.py 2>> "$ERRLOG"
 
     if [ -f /tmp/launch_game.sh ]; then
         sh /tmp/launch_game.sh
