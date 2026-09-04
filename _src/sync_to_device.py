@@ -12,6 +12,8 @@ TARGET_FILES = [
     ("rh/i18n.py", "rh/i18n.py"),
     ("rh/paths.py", "rh/paths.py"),
     ("rh/version.py", "rh/version.py"),
+    ("rh/catalog.py", "rh/catalog.py"),
+    ("db.py", "db.py"),
     ("app.py", "app.py"),
     ("launch.sh", "launch.sh"),
     ("bin/yt-dlp", "bin/yt-dlp"),

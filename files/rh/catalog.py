@@ -209,45 +209,75 @@ def alpha_index(games):
     return avail, counts
 
 
+_catalog_view_cache = {}
+
+def clear_catalog_cache():
+    global _catalog_view_cache
+    _catalog_view_cache.clear()
+
 def get_games_for_view(src_code, sys_code, sort_by=None, category=None):
-    """Returns list of game dicts for the specified source and system filter using SQLite DAO."""
+    """Returns list of game dicts for the specified source and system filter using SQLite DAO.
+    Caches raw rows in memory so switching sort mode or opening alphabet jump is instantaneous."""
     active_sort = sort_by or state.rom_sort_mode
-    if db and os.path.exists(db.DB_PATH):
-        try:
-            return db.get_games_page(src_code, sys_code, sort_by=active_sort,
-                                     category=category)
-        except Exception as e:
-            print(f"DB get_games_page error: {e}")
+    base_key = (src_code, sys_code, category)
 
-    # Fallback to in-memory catalogs dict
-    if src_code == "VIET":
-        games = state.catalogs.get("VIET", {}).get("games", [])
-    elif src_code == "HITS":
-        games = state.catalogs.get("HITS", {}).get("games", [])
-    elif src_code == "ARCHIVE":
-        if sys_code != "ALL":
-            return state.catalogs.get(sys_code, {}).get("games", [])
-        archive_keys = ["GBA", "SFC", "FC", "MD", "GB", "GBC", "GG", "MS", "NDS", "PICO8", "ARCADE"]
-        games = []
-        for k in archive_keys:
-            games.extend(state.catalogs.get(k, {}).get("games", []))
-        return games
-    elif src_code == "ALL":
-        if sys_code != "ALL":
-            res = []
-            for k, v in state.catalogs.items():
-                for g in v.get("games", []):
-                    if (g.get("sys_code") or k) == sys_code:
-                        res.append(g)
-            return res
-        games = []
-        for k, v in state.catalogs.items():
-            games.extend(v.get("games", []))
-        return games
+    if base_key in _catalog_view_cache:
+        raw_games = _catalog_view_cache[base_key]
     else:
-        games = state.catalogs.get(src_code, {}).get("games", [])
+        raw_games = None
+        if db and os.path.exists(db.DB_PATH):
+            try:
+                raw_games = db.get_games_page(src_code, sys_code, sort_by="downloads",
+                                              category=category)
+            except Exception as e:
+                print(f"DB get_games_page error: {e}")
 
-    if sys_code == "ALL":
-        return games
-    else:
-        return [g for g in games if (g.get("sys_code") or src_code) == sys_code]
+        if raw_games is None:
+            # Fallback to in-memory catalogs dict
+            if src_code == "VIET":
+                games = state.catalogs.get("VIET", {}).get("games", [])
+            elif src_code == "HITS":
+                games = state.catalogs.get("HITS", {}).get("games", [])
+            elif src_code == "ARCHIVE":
+                if sys_code != "ALL":
+                    games = state.catalogs.get(sys_code, {}).get("games", [])
+                else:
+                    archive_keys = ["GBA", "SFC", "FC", "MD", "GB", "GBC", "GG", "MS", "NDS", "PICO8", "ARCADE"]
+                    games = []
+                    for k in archive_keys:
+                        games.extend(state.catalogs.get(k, {}).get("games", []))
+                raw_games = games
+            elif src_code == "ALL":
+                if sys_code != "ALL":
+                    res = []
+                    for k, v in state.catalogs.items():
+                        for g in v.get("games", []):
+                            if (g.get("sys_code") or k) == sys_code:
+                                res.append(g)
+                    raw_games = res
+                else:
+                    games = []
+                    for k, v in state.catalogs.items():
+                        games.extend(v.get("games", []))
+                    raw_games = games
+            else:
+                games = state.catalogs.get(src_code, {}).get("games", [])
+                if sys_code == "ALL":
+                    raw_games = games
+                else:
+                    raw_games = [g for g in games if (g.get("sys_code") or src_code) == sys_code]
+
+        if len(_catalog_view_cache) > 8:
+            _catalog_view_cache.pop(next(iter(_catalog_view_cache)))
+        _catalog_view_cache[base_key] = raw_games
+
+    # Instant C-level Timsort in Python memory
+    res = list(raw_games)
+    if active_sort == "downloads":
+        res.sort(key=lambda g: (-int(g.get("download_count") or 0), (g.get("title") or "").strip().lower()))
+    elif active_sort == "rating":
+        res.sort(key=lambda g: (-float(g.get("rating") or 0), -int(g.get("download_count") or 0)))
+    else: # title / alpha / A-Z
+        res.sort(key=lambda g: ((g.get("title") or "").strip().lower(), -int(g.get("download_count") or 0)))
+
+    return res

@@ -1,11 +1,11 @@
 {
-  "version": "1.57",
+  "version": "1.58",
   "python": "any",
-  "built": "2026-09-04T23:20:00+0700",
+  "built": "2026-09-05T06:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tối ưu đột phá tốc độ phát YouTube: RAM tmpfs, nạp trước thông minh (Pre-fetch) và hộp thoại tải",
-    "en": "Major YouTube playback speedup: RAM tmpfs, speculative pre-fetch, and instant loading dialog"
+    "vi": "Tối ưu siêu tốc kho game: cuộn 60 FPS mượt mà, tải ảnh bìa thông minh và sắp xếp tức thì trong RAM",
+    "en": "Blazing fast game library: 60 FPS scrolling, lazy boxarts, and instant sorting in RAM"
   },
   "remove": [
     "app.pyc",
@@ -174,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 265574,
-      "sha256": "1c36ac678431720674bc76ee337d4a045360c2af107c2330939d75f908016747"
+      "size": 268793,
+      "sha256": "f8e12799d9b90475dae9ff007b1213184431a25e7516bf3847d4e342683870c8"
     },
     {
       "path": "assets/fallback.ttf",
@@ -234,8 +234,8 @@
     },
     {
       "path": "db.py",
-      "size": 18953,
-      "sha256": "4d63585e4bbad4ab9b2ed520f13a4693f971fc63ea860914d16abc5826375557"
+      "size": 19901,
+      "sha256": "d376d03fd895c70985a0df90a3340e5e0ebc77f12947578aa0247935f6336f37"
     },
     {
       "path": "icon.png",
@@ -279,8 +279,8 @@
     },
     {
       "path": "rh/catalog.py",
-      "size": 9732,
-      "sha256": "9ec500c0c9832b9106b3054c9774f923fe26703d60242a68f3d19c6388408461"
+      "size": 11215,
+      "sha256": "7a8d8e761abe4ccd4e42a0635078cc966a3dfcf39e0dc180928e3cc3e5ede740"
     },
     {
       "path": "rh/corepicker.py",
@@ -395,7 +395,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "0a3aae3bd8d2ad85cc207ef8e887b15485502f6a60e9921415384321f9fbadb7"
+      "sha256": "e10be96aa65b96d87aca8bcf4bb208cd347e09deb149879be1207261ecd90dea"
     },
     {
       "path": "rh/yt.py",

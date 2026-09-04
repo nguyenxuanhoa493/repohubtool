@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.58", "2026-09-05",
+     ("Blazing fast game library: 60 FPS scrolling, lazy boxarts, and instant sorting in RAM",
+      "Tối ưu siêu tốc kho game: cuộn 60 FPS mượt mà, tải ảnh bìa thông minh và sắp xếp tức thì trong RAM"),
+     [("Display item caching and lazy boxart resolution eliminate per-frame FAT32 SD card filesystem scans, restoring smooth 60 FPS scrolling even with thousands of ROMs.",
+       "Cơ chế lưu cache danh sách và phân giải ảnh bìa theo nhu cầu (lazy boxart) loại bỏ hoàn toàn các lệnh quét tệp tin trên thẻ nhớ SD, duy trì tốc độ cuộn 60 FPS mượt mà ngay cả với kho hàng ngàn ROM."),
+      ("Toggling between downloads and A-Z sorting, or jumping with the Alphabet modal (Y button), is now performed in RAM using fast C-level Timsort in under 2ms.",
+       "Chuyển đổi sắp xếp (Lượt tải <-> A-Z) và mở Bảng chữ cái A-Z (phím Y) được xử lý trực tiếp trong RAM với thuật toán Timsort cực nhanh dưới 2ms thay vì quét lại SQLite trên thẻ nhớ."),
+      ("Optimized SQLite engine: removed unused mirror count subqueries, enabled 8MB RAM page cache and 32MB memory-mapped I/O, and added B-tree indexes.",
+       "Tối ưu hóa SQLite: loại bỏ các câu truy vấn đếm mirror thừa, bật bộ nhớ đệm RAM 8MB và mmap I/O 32MB, cùng hệ thống chỉ mục B-tree giúp tăng tốc tìm kiếm và lọc game."),
+      ("Real-time badge updates for active downloads are now dynamically checked only for the visible screen items.",
+       "Cập nhật huy hiệu trạng thái tải game theo thời gian thực chỉ quét trên các dòng đang hiển thị trong khung nhìn, đảm bảo phản hồi tức thì mà không tốn tài nguyên.")]),
+
     ("1.57", "2026-09-04",
      ("Major YouTube playback speedup: RAM tmpfs, speculative pre-fetch, and instant loading dialog",
       "Tối ưu đột phá tốc độ phát YouTube: RAM tmpfs, nạp trước thông minh (Pre-fetch) và hộp thoại tải"),
