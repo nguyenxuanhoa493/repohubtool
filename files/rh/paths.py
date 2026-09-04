@@ -25,6 +25,8 @@ SPLASH_SYS_FILE = "/etc/splash.png"
 SPLASH_TEMP_PREVIEW = "/tmp/splash_preview.png"
 SPLASH_TEMP_BMP = "/tmp/splash_preview.bmp"
 BOOTLOGO_BACKUP_FILE = "/mnt/SDCARD/System/backup/bootlogo_original.bmp"
+YT_CACHE_DIR = "/tmp/yt_thumbs"
+YT_HISTORY_FILE = os.path.join(APP_DIR, "yt_history.json")
 
 
 def is_nextui():

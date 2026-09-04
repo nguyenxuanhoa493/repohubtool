@@ -1,11 +1,11 @@
 {
-  "version": "1.55",
+  "version": "1.56",
   "python": "any",
-  "built": "2026-09-03T08:57:41+0700",
+  "built": "2026-09-04T13:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Đèn LED tự bật lại sau khi khởi động máy, dùng được trên cả firmware gốc",
-    "en": "LED lights now come back on their own after a reboot, on stock firmware too"
+    "vi": "Thêm ứng dụng YouTube: xem video, tìm kiếm tiếng Việt, phát qua RetroArch FFMPEG",
+    "en": "New YouTube app: watch videos, search with on-screen keyboard, playback via RetroArch FFMPEG"
   },
   "remove": [
     "app.pyc",
@@ -40,6 +40,8 @@
     "rh/sysinfo.pyc",
     "rh/updater.pyc",
     "rh/version.pyc",
+    "rh/yt.pyc",
+    "rh/yt_player.pyc",
     "streamer.pyc",
     "vendor/sdl2/__init__.pyc",
     "vendor/sdl2/_internal.pyc",
@@ -172,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 232931,
-      "sha256": "2860fe6c2f202a581d24495b384f59dd214ba6712a97a4d7c33e5f0ae137ff8c"
+      "size": 261535,
+      "sha256": "9d5eba100641d169ef6f8a53777f13742eb80ca605e0ac0b86a6b2995ffd9f8a"
     },
     {
       "path": "assets/fallback.ttf",
@@ -221,6 +223,11 @@
       "sha256": "17595ca8613132898c870558c018c4ab4b89f1bda5e23d227ee7925062d5728e"
     },
     {
+      "path": "bin/yt-dlp",
+      "size": 3072469,
+      "sha256": "1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6"
+    },
+    {
       "path": "config.json",
       "size": 106,
       "sha256": "874769dade4841588a45bdca44e11e60294cf13a74e52a46f64d2fe8a40fb884"
@@ -237,8 +244,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 7846,
-      "sha256": "a21f94b6798a2257b722eabb161c67d3ee04bc75d045329cb57bf50038f2c39c"
+      "size": 7860,
+      "sha256": "a81a9f89ca646e0001cb0df6b71c7625cf81c9db6cad386ec130dac4721f7755"
     },
     {
       "path": "led_daemon.py",
@@ -297,8 +304,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 33215,
-      "sha256": "2cc730a92a074944b244a9b21b4d3f5f0b591aaa110b958dd576d74a4c8b32d5"
+      "size": 34419,
+      "sha256": "adaaa28ba700956c235e4d15e7f88c51b4ab2161f1a92a31192ca96abe78294d"
     },
     {
       "path": "rh/j2me.py",
@@ -347,8 +354,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 2449,
-      "sha256": "109b6eb55572b1ae1325b9507e04fa57fc3ad460b0e577078dd4b3ad2b81d5f5"
+      "size": 2540,
+      "sha256": "c8878acfa242349118a43d072ce68b5412b8081f3a60c6c8ea4d716b62ec12d0"
     },
     {
       "path": "rh/romfiles.py",
@@ -388,7 +395,17 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "1645af09a80ab3b2e06b0da340da39fc32ac7d513e6dbcd7d86e8e45e0ee818b"
+      "sha256": "f2b84e85ae364b352dfbda5da58f50b5b1aff14f94cee3d8856a7ca243390170"
+    },
+    {
+      "path": "rh/yt.py",
+      "size": 14053,
+      "sha256": "963d710d01bc2c1c3ed0e4d80492b17aa47b2c5b4e172586478d8260ff764391"
+    },
+    {
+      "path": "rh/yt_player.py",
+      "size": 11199,
+      "sha256": "77b911de411c62edad58832e821fb5549f246cd4e622fdaf315ca027146eb577"
     },
     {
       "path": "streamer.py",
