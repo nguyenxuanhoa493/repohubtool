@@ -627,6 +627,12 @@ def main():
     yt_last_hover_id = None
     yt_hover_start_time = 0
     yt_prefetch_thread = None
+    yt_loading_state = {
+        "active": False,
+        "query": "",
+        "id": 0,
+        "start_time": 0.0,
+    }
 
     # Khởi chạy giải nén và nạp trước yt-dlp vào bộ nhớ RAM ngầm
     import rh.yt_player as yt_player
@@ -671,6 +677,40 @@ def main():
                 thumb_url = v.get("thumb")
                 if vid and thumb_url:
                     yt.fetch_thumbnail(thumb_url, YT_CACHE_DIR, vid)
+        threading.Thread(target=_worker, daemon=True).start()
+
+    def start_yt_load(query_str, is_trending=False):
+        nonlocal yt_search_results_list, yt_trending_list
+        yt_loading_state["active"] = True
+        yt_loading_state["query"] = query_str
+        yt_loading_state["id"] += 1
+        req_id = yt_loading_state["id"]
+        yt_loading_state["start_time"] = time.time()
+
+        def _worker():
+            nonlocal yt_search_results_list, yt_trending_list
+            try:
+                if is_trending:
+                    data = yt.get_trending(limit=30) or []
+                else:
+                    eff = yt.get_effective_query(query_str)
+                    data = yt.search_youtube(eff, limit=30) or []
+            except Exception as e:
+                print(f"[RetroHub] YouTube bg fetch error: {e}")
+                data = []
+
+            if req_id == yt_loading_state["id"]:
+                if is_trending:
+                    yt_trending_list = data
+                else:
+                    yt_query_cache[query_str] = data
+                    yt_search_results_list = data
+                _prefetch_yt_thumbs(data)
+                yt_loading_state["active"] = False
+            else:
+                if not is_trending and data:
+                    yt_query_cache[query_str] = data
+
         threading.Thread(target=_worker, daemon=True).start()
 
     # Downloaded Games Cache & Proportional Image Loading
@@ -2541,48 +2581,33 @@ def main():
             elif (btn_start or (btn_a and kb_rows[kb_cursor[0]][kb_cursor[1]] == "SEARCH")):
                 q_clean = yt_input_text.strip()
                 if q_clean:
-                    toast_msg = tr("yt_loading")
-                    toast_timer = time.time()
-                    eff_q = yt.get_effective_query(q_clean)
-                    res = yt.search_youtube(eff_q, limit=30)
-                    if res:
-                        yt_search_results_list = res
-                        yt_mode = "search"
-                        yt_search_query = q_clean
-                        selected_idx = 0
-                        selected_indices["yt_grid"] = 0
-                        scroll_offsets["yt_grid"] = 0
-                        _prefetch_yt_thumbs(yt_search_results_list)
+                    yt_mode = "search"
+                    yt_search_query = q_clean
+                    selected_idx = 0
+                    selected_indices["yt_grid"] = 0
+                    scroll_offsets["yt_grid"] = 0
+                    yt_search_results_list = []
 
-                        # Update recent search queries list
-                        matched_preset_idx = -1
-                        for idx, p in enumerate(yt.DEFAULT_PRESET_QUERIES):
-                            if q_clean.lower() == p.lower():
-                                matched_preset_idx = idx
-                                break
+                    # Update recent search queries list
+                    matched_preset_idx = -1
+                    for idx, p in enumerate(yt.DEFAULT_PRESET_QUERIES):
+                        if q_clean.lower() == p.lower():
+                            matched_preset_idx = idx
+                            break
 
-                        if matched_preset_idx >= 0:
-                            yt_query_idx = matched_preset_idx
-                            if matched_preset_idx < len(yt_recent_queries):
-                                yt_query_cache[yt_recent_queries[matched_preset_idx]] = res
-                        else:
-                            yt_recent_queries = [q for q in yt_recent_queries if q.lower() != q_clean.lower()]
-                            insert_pos = min(len(yt.DEFAULT_PRESET_QUERIES), len(yt_recent_queries))
-                            yt_recent_queries.insert(insert_pos, q_clean)
-                            if len(yt_recent_queries) > 10:
-                                yt_recent_queries = yt_recent_queries[:10]
-                            yt.save_search_history(yt_recent_queries)
-                            yt_query_idx = insert_pos
-                            yt_query_cache[q_clean] = res
-
-                        items = yt_search_results_list
-                        cur_videos = items
-                        total_v = len(cur_videos)
-
-                        screen_stack.pop()
+                    if matched_preset_idx >= 0:
+                        yt_query_idx = matched_preset_idx
                     else:
-                        toast_msg = "Không tìm thấy video nào!" if state.current_lang == "VI" else "No videos found!"
-                        toast_timer = time.time()
+                        yt_recent_queries = [q for q in yt_recent_queries if q.lower() != q_clean.lower()]
+                        insert_pos = min(len(yt.DEFAULT_PRESET_QUERIES), len(yt_recent_queries))
+                        yt_recent_queries.insert(insert_pos, q_clean)
+                        if len(yt_recent_queries) > 10:
+                            yt_recent_queries = yt_recent_queries[:10]
+                        yt.save_search_history(yt_recent_queries)
+                        yt_query_idx = insert_pos
+
+                    screen_stack.pop()
+                    start_yt_load(q_clean, is_trending=False)
                 else:
                     toast_msg = "Vui lòng nhập từ khóa!" if state.current_lang == "VI" else "Please enter search keyword!"
                     toast_timer = time.time()
@@ -2739,13 +2764,10 @@ def main():
                 if new_q == "Nhạc trẻ" or yt_query_idx == 0:
                     yt_mode = "trending"
                     if not yt_trending_list:
-                        toast_msg = tr("yt_loading")
-                        toast_timer = time.time()
-                        try:
-                            yt_trending_list = yt.get_trending(limit=30) or []
-                        except Exception:
-                            yt_trending_list = []
-                    _prefetch_yt_thumbs(yt_trending_list)
+                        start_yt_load("Nhạc trẻ", is_trending=True)
+                    else:
+                        yt_loading_state["active"] = False
+                        _prefetch_yt_thumbs(yt_trending_list)
                     toast_msg = "Chủ đề: Nhạc trẻ (Thịnh hành)" if state.current_lang == "VI" else "Topic: Trending"
                     toast_timer = time.time()
                 else:
@@ -2753,17 +2775,11 @@ def main():
                     yt_search_query = new_q
                     if new_q in yt_query_cache and yt_query_cache[new_q]:
                         yt_search_results_list = yt_query_cache[new_q]
+                        yt_loading_state["active"] = False
+                        _prefetch_yt_thumbs(yt_search_results_list)
                     else:
-                        toast_msg = f"{tr('yt_loading')} ({new_q})"
-                        toast_timer = time.time()
-                        eff_q = yt.get_effective_query(new_q)
-                        try:
-                            res = yt.search_youtube(eff_q, limit=30) or []
-                        except Exception:
-                            res = []
-                        yt_search_results_list = res
-                        yt_query_cache[new_q] = res
-                    _prefetch_yt_thumbs(yt_search_results_list)
+                        yt_search_results_list = []
+                        start_yt_load(new_q, is_trending=False)
                     toast_msg = f"Từ khóa: {new_q}" if state.current_lang == "VI" else f"Keyword: {new_q}"
                     toast_timer = time.time()
 
@@ -2785,13 +2801,10 @@ def main():
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
                     if not yt_trending_list:
-                        toast_msg = tr("yt_loading")
-                        toast_timer = time.time()
-                        try:
-                            yt_trending_list = yt.get_trending(limit=30) or []
-                        except Exception:
-                            yt_trending_list = []
-                    _prefetch_yt_thumbs(yt_trending_list)
+                        start_yt_load("Nhạc trẻ", is_trending=True)
+                    else:
+                        yt_loading_state["active"] = False
+                        _prefetch_yt_thumbs(yt_trending_list)
                     toast_msg = "Đã chuyển về Nhạc trẻ Thịnh hành" if state.current_lang == "VI" else "Switched to Trending"
                     toast_timer = time.time()
                     items = yt_trending_list or []
@@ -3141,19 +3154,14 @@ def main():
                 elif item_id == "nav_youtube":
                     yt_recent_queries = yt.load_search_history()
                     yt_query_idx = 0
-                    if not yt_trending_list:
-                        toast_msg = tr("yt_loading")
-                        toast_timer = time.time()
-                        try:
-                            yt_trending_list = yt.get_trending(limit=30) or []
-                        except Exception as e:
-                            yt_trending_list = []
-                            toast_msg = f"Lỗi: {e}"
-                            toast_timer = time.time()
-                    _prefetch_yt_thumbs(yt_trending_list)
                     yt_mode = "trending"
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
+                    if not yt_trending_list:
+                        start_yt_load("Nhạc trẻ", is_trending=True)
+                    else:
+                        yt_loading_state["active"] = False
+                        _prefetch_yt_thumbs(yt_trending_list)
                     screen_stack.append("yt_grid")
 
 
@@ -3642,8 +3650,16 @@ def main():
                     draw_text(q_txt, font_badge, px + pw // 2, pill_y + pill_h // 2, 180, 205, 235, center_x=True, center_y=True)
 
             if total_v == 0:
-                empty_lbl = tr("yt_loading") if not yt_search_query and not yt_trending_list else tr("yt_no_results")
-                draw_text(empty_lbl, font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 + 20, 160, 180, 210, center_x=True, center_y=True)
+                if yt_loading_state.get("active"):
+                    q_disp = yt_loading_state.get("query", "")
+                    num_dots = int(now * 3.5) % 4
+                    dots = "." * num_dots
+                    msg_main = f"Đang tải video \"{q_disp}\"{dots}" if state.current_lang == "VI" else f"Loading \"{q_disp}\"{dots}"
+                    draw_text(msg_main, font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 - 12, 0, 246, 246, center_x=True, center_y=True)
+                    sub_hint = "Đang kết nối YouTube InnerTube API..." if state.current_lang == "VI" else "Connecting to YouTube InnerTube API..."
+                    draw_text(sub_hint, font_sub, state.SCREEN_W // 2, state.SCREEN_H // 2 + 26, 140, 175, 210, center_x=True, center_y=True)
+                else:
+                    draw_text(tr("yt_no_results"), font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 + 20, 160, 180, 210, center_x=True, center_y=True)
             else:
                 cols = 3
                 rows = 2
@@ -4333,7 +4349,7 @@ def main():
                 draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
 
         # 4. Toast Notification
-        if toast_msg and (now - toast_timer < 2.5):
+        if toast_msg and (now - toast_timer < 2.5) and not (current_screen == "yt_grid" and yt_loading_state.get("active")):
             toast_margin = 40
             tw = state.SCREEN_W - (toast_margin * 2)
             th = 44
@@ -4364,6 +4380,39 @@ def main():
                 g_title = g_title[:42] + "..."
             hud_txt = f"[{dl_state['sys_code']}] {g_title} • {dl_state['progress_pct']}% ({dl_state['downloaded_str']})"
             draw_text(hud_txt, font_sub, hud_x + 18, hud_y + hud_h // 2 - 1, 0, 246, 246, center_y=True)
+
+        # 4.6. Mini Floating YouTube Loading HUD (when fetching in background)
+        if current_screen == "yt_grid" and yt_loading_state.get("active"):
+            hud_w = state.SCREEN_W - 60
+            hud_h = 44
+            hud_x = 30
+            hud_y = foot_y - hud_h - 10
+            if dl_state.get("active") and dl_state.get("is_background", False):
+                hud_y -= (hud_h + 8)
+
+            fill_rect(hud_x, hud_y, hud_w, hud_h, 15, 24, 40, 248)
+            draw_rect(hud_x, hud_y, hud_w, hud_h, 0, 220, 255, 255, thickness=2)
+
+            # Animated glowing pulse scanning bar along bottom of HUD
+            anim_offset = int((now * 420) % hud_w)
+            pulse_w = 220
+            p1 = min(pulse_w, hud_w - anim_offset)
+            fill_rect(hud_x + anim_offset, hud_y + hud_h - 4, p1, 3, 0, 246, 246, 255)
+            if anim_offset + pulse_w > hud_w:
+                p2 = (anim_offset + pulse_w) - hud_w
+                fill_rect(hud_x, hud_y + hud_h - 4, p2, 3, 0, 246, 246, 255)
+
+            # Loading label
+            q_name = yt_loading_state.get("query", "")
+            eff_hint = yt.get_effective_query(q_name)
+            num_dots = int(now * 3.5) % 4
+            dots = "." * num_dots
+            hud_txt = f"⏳ ĐANG TẢI DỮ LIỆU: \"{q_name}\"{dots}  ({eff_hint})" if state.current_lang == "VI" else f"⏳ LOADING: \"{q_name}\"{dots}  ({eff_hint})"
+            draw_text(hud_txt, font_badge, hud_x + 20, hud_y + hud_h // 2 - 1, 0, 246, 246, center_y=True)
+
+            wait_txt = "Đang kết nối..." if state.current_lang == "VI" else "Connecting..."
+            ww = measure_text(wait_txt, font_badge)
+            draw_text(wait_txt, font_badge, hud_x + hud_w - 20 - ww, hud_y + hud_h // 2 - 1, 255, 215, 0, center_y=True)
 
 
         # 5. Live Progress Bar Download Modal
@@ -5192,7 +5241,7 @@ def main():
         sdl2.SDL_RenderPresent(renderer)
 
         # Adaptive Dynamic Eco Power Saving (60 FPS when active, ~28 FPS when idle to save battery)
-        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None)
+        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False)
         if is_active:
             time.sleep(0.016)
         else:
