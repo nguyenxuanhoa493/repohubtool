@@ -379,12 +379,13 @@ def download_video_stream(video_id: str, progress_cb=None, cancel_fn=None) -> tu
         return None, title, f"Lỗi tải: {e}"
 
 
-def build_play_command(video_id: str) -> str:
+def build_play_command(video_id: str, info_file: str = "/tmp/yt_stream_info.json") -> str:
     """Build the shell command string to execute in handoff script /tmp/launch_game.sh.
 
-    Streams YouTube video immediately using rh.yt_player with RetroArch FFMPEG core,
-    complete with full gamepad controls and OSD.
+    Streams YouTube video immediately using rh.yt_player with RetroArch FFMPEG core.
+    If info_file exists, passes pre-extracted stream URL to bypass yt-dlp extraction entirely.
     """
+    info_arg = f'--info-file "{info_file}"' if info_file else ""
     cmd = f"""#!/bin/sh
 SDCARD_PATH="${{SDCARD_PATH:-/mnt/SDCARD}}"
 APP_DIR="$SDCARD_PATH/Apps/RetroHub"
@@ -407,7 +408,7 @@ elif which python3 >/dev/null 2>&1; then
 fi
 
 cd "$APP_DIR"
-"$PY3" -m rh.yt_player "{video_id}" >> "$LOG_FILE" 2>&1
+"$PY3" -m rh.yt_player "{video_id}" {info_arg} >> "$LOG_FILE" 2>&1
 EXIT_CODE=$?
 
 echo "Streaming Exit Code: $EXIT_CODE" >> "$LOG_FILE"

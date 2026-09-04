@@ -174,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 261535,
-      "sha256": "9d5eba100641d169ef6f8a53777f13742eb80ca605e0ac0b86a6b2995ffd9f8a"
+      "size": 263980,
+      "sha256": "2fda27510c22bf9ab598830b30460497c7fce5ac3fd6813c76110d4b9ea4ef15"
     },
     {
       "path": "assets/fallback.ttf",
@@ -399,13 +399,13 @@
     },
     {
       "path": "rh/yt.py",
-      "size": 14053,
-      "sha256": "963d710d01bc2c1c3ed0e4d80492b17aa47b2c5b4e172586478d8260ff764391"
+      "size": 14220,
+      "sha256": "8f1c7e890f21182e849698363f3731556e5ddfcfbbf30969f21938036849984c"
     },
     {
       "path": "rh/yt_player.py",
-      "size": 11199,
-      "sha256": "77b911de411c62edad58832e821fb5549f246cd4e622fdaf315ca027146eb577"
+      "size": 14341,
+      "sha256": "dbee2c40b981049d312bfa81354252d531b31acfb03092796ff2ea960b1e3520"
     },
     {
       "path": "streamer.py",

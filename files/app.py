@@ -2573,33 +2573,68 @@ def main():
                             toast_msg = tr("yt_no_player")
                             toast_timer = time.time()
                         else:
-                            toast_msg = "Đang mở luồng phát..." if state.current_lang == "VI" else "Opening video stream..."
-                            toast_timer = time.time()
-                            play_cmd = yt.build_play_command(v_id)
-                            try:
-                                # Save resume state so returning from video playback resumes at exact YouTube screen & cursor
-                                _resume_state = {
-                                    "screen_stack": screen_stack if len(screen_stack) > 1 else ["home", "yt_grid"],
-                                    "selected_indices": selected_indices,
-                                    "scroll_offsets": scroll_offsets,
-                                    "yt_mode": yt_mode,
-                                    "yt_search_query": yt_search_query,
-                                    "yt_trending_list": yt_trending_list,
-                                    "yt_search_results_list": yt_search_results_list,
-                                    "yt_recent_queries": yt_recent_queries,
-                                    "yt_query_idx": yt_query_idx,
-                                    "yt_query_cache": yt_query_cache,
-                                }
-                                with open("/tmp/retrohub_resume.json", "w", encoding="utf-8") as _rf:
-                                    json.dump(_resume_state, _rf)
+                            # 1. Hien thi ngay hop thoai loading de nguoi dung biet he thong dang xu ly
+                            v_title = cur_v.get("title", v_id)
+                            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
+                            mw = 720
+                            mh = 200
+                            mx = (state.SCREEN_W - mw) // 2
+                            my = (state.SCREEN_H - mh) // 2
+                            fill_rect(mx, my, mw, mh, 20, 26, 38, 245)
+                            draw_rect(mx, my, mw, mh, 59, 130, 246, 255, thickness=2)
+                            draw_text("YouTube Stream", font_badge, mx + 30, my + 25, 239, 68, 68)
+                            t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
+                            ty = my + 65
+                            for tl in t_lines:
+                                draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
+                                ty += 32
+                            load_text = "Đang kết nối luồng phát tốc độ cao..." if state.current_lang == "VI" else "Connecting high-speed stream..."
+                            draw_text(load_text, font_modal_val, mx + 30, my + mh - 42, 56, 189, 248)
+                            sdl2.SDL_RenderPresent(renderer)
 
-                                with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
-                                    f.write(play_cmd)
-                                subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
-                                running = False
-                            except Exception as e:
-                                toast_msg = f"Error: {e}"
+                            # 2. Trich xuat nhanh luong phat (Piped < 1s hoac yt-dlp toi uu)
+                            from rh.yt_player import extract_stream_fast
+                            s_url, s_title = extract_stream_fast(v_id)
+
+                            if not s_url:
+                                toast_msg = "Không lấy được luồng phát video!" if state.current_lang == "VI" else "Failed to extract stream URL!"
                                 toast_timer = time.time()
+                            else:
+                                try:
+                                    # Luu thong tin stream vao /tmp/yt_stream_info.json de yt_player khong phai chay lai yt-dlp
+                                    info_file = "/tmp/yt_stream_info.json"
+                                    stream_info = {
+                                        "video_id": v_id,
+                                        "stream_url": s_url,
+                                        "title": s_title or v_title
+                                    }
+                                    with open(info_file, "w", encoding="utf-8") as _sf:
+                                        json.dump(stream_info, _sf)
+
+                                    # Save resume state so returning from video playback resumes at exact YouTube screen & cursor
+                                    _resume_state = {
+                                        "screen_stack": screen_stack if len(screen_stack) > 1 else ["home", "yt_grid"],
+                                        "selected_indices": selected_indices,
+                                        "scroll_offsets": scroll_offsets,
+                                        "yt_mode": yt_mode,
+                                        "yt_search_query": yt_search_query,
+                                        "yt_trending_list": yt_trending_list,
+                                        "yt_search_results_list": yt_search_results_list,
+                                        "yt_recent_queries": yt_recent_queries,
+                                        "yt_query_idx": yt_query_idx,
+                                        "yt_query_cache": yt_query_cache,
+                                    }
+                                    with open("/tmp/retrohub_resume.json", "w", encoding="utf-8") as _rf:
+                                        json.dump(_resume_state, _rf)
+
+                                    play_cmd = yt.build_play_command(v_id, info_file=info_file)
+                                    with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
+                                        f.write(play_cmd)
+                                    subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
+                                    running = False
+                                except Exception as e:
+                                    toast_msg = f"Error: {e}"
+                                    toast_timer = time.time()
 
             # L1 / R1: Switch recent search keywords
             if (btn_l1 or btn_r1) and yt_recent_queries:
