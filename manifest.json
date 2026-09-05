@@ -1,12 +1,12 @@
 {
-  "version": "1.63",
+  "version": "1.64",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T16:38:00+0700",
+  "built": "2026-09-05T17:42:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Hỗ trợ máy mới TrimUI Smart Pro S (TSPS), tối ưu tìm nạp thư viện SDL2 đa hệ máy",
-    "en": "Support TrimUI Smart Pro S (TSPS) and optimize SDL2 library paths across handhelds"
+    "vi": "Bổ sung 5 hiệu ứng LED sôi động (chớp giật strobe, bão sấm sét, bass drop...) và 7 theme LED mới",
+    "en": "Add 5 high-energy LED effects (rave strobe, thunderstorm, bass drop) and 7 vibrant themes"
   },
   "remove": [
     "app.pyc",
@@ -335,13 +335,13 @@
     },
     {
       "path": "rh/ledfx.py",
-      "size": 5414,
-      "sha256": "f2b2bf0eec9202d6258f7f9c7865b949312367ac1a8616c91f8a0cf13cf04609"
+      "size": 8829,
+      "sha256": "7bc294dc03c18d1b259ad52b1135640b6a6b0f4041e9489ef0d2569f4f8cf634"
     },
     {
       "path": "rh/ledthemes.py",
-      "size": 3257,
-      "sha256": "c44750196c2b41a3dcd48a9d2f298e47a203ea82da5dd28bc12395d239923626"
+      "size": 4602,
+      "sha256": "dc12665aeaf8a26f69f472fcb43fcb0cd841a9a3e4e0f6bb78dee0d18e84d239"
     },
     {
       "path": "rh/media.py",
@@ -396,7 +396,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "95c6cd62174f4b75f0c210aa947a4c52b43a381758cd23f6f6a4e354a49d3bfb"
+      "sha256": "3aab85bd9b78506d7a2858bf5cb197bdc066135a4873fa8183d3f8eb01ef3730"
     },
     {
       "path": "rh/yt.py",

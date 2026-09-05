@@ -17,6 +17,8 @@ TARGET_FILES = [
     ("app.py", "app.py"),
     ("launch.sh", "launch.sh"),
     ("bin/yt-dlp", "bin/yt-dlp"),
+    ("rh/ledfx.py", "rh/ledfx.py"),
+    ("rh/ledthemes.py", "rh/ledthemes.py"),
 ]
 
 
