@@ -26,6 +26,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.59", "2026-09-05",
+     ("Comprehensive YouTube upgrade: chronological sorting, speculative preloading, and non-blocking HUD",
+      "Nâng cấp toàn diện YouTube: sắp xếp video mới nhất, tải trước thông minh và thanh tải HUD không chặn"),
+     [("Real-time chronological sorting: extracts publication timestamps and sorts candidates by age in hours, guaranteeing the newest videos (hours/days ago) always appear at the top.",
+       "Sắp xếp video theo thời gian thực: bóc tách thời gian tải lên và tính toán độ tuổi video theo giờ, đảm bảo các video mới nhất (vài giờ/vài ngày trước) luôn nằm trên đầu danh sách."),
+      ("Updated trending preset categories to MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop, with automatic background current year query targeting.",
+       "Cập nhật 4 bộ từ khóa thịnh hành chuẩn xu hướng: MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop (tự động gắn năm 2026 khi truy vấn ngầm)."),
+      ("Speculative tab preloading: background prefetching of adjacent keywords and thumbnails eliminates switching delays between tabs.",
+       "Tải trước từ khóa lân cận: tự động nạp trước kết quả tìm kiếm và ảnh bìa của 2 tab xung quanh dưới nền, giúp chuyển từ khóa tức thì không độ trễ."),
+      ("Non-blocking async search: background thread fetching with a smooth glowing bottom HUD banner replaces the UI freeze.",
+       "Tìm kiếm bất đồng bộ không chặn: tiến trình nạp dữ liệu chạy ngầm kèm thanh trạng thái HUD phát sáng ở đáy màn hình thay vì làm đơ giao diện."),
+      ("Publication age badge: video cards now display relative upload times (e.g. Channel • 2 days ago) alongside the channel name.",
+       "Hiển thị thời gian đăng video: thông tin thẻ video hiển thị chi tiết 'Tên Kênh • X ngày trước' giúp nhận biết trực quan độ mới của clip.")]),
+
     ("1.58", "2026-09-05",
      ("Blazing fast game library: 60 FPS scrolling, lazy boxarts, and instant sorting in RAM",
       "Tối ưu siêu tốc kho game: cuộn 60 FPS mượt mà, tải ảnh bìa thông minh và sắp xếp tức thì trong RAM"),
