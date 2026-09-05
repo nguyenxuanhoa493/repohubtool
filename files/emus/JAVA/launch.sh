@@ -28,16 +28,6 @@ export TIMIDITY_CFG
 
 JAVA_TOOL_OPTIONS='-Xverify:none -Djava.util.prefs.systemRoot=./.java -Djava.util.prefs.userRoot=./.java/.userPrefs -Djava.awt.headless=true -Dsun.jnu.encoding=UTF-8 -Dfile.encoding=UTF-8 -Djava.library.path=/mnt/SDCARD/Emus/JAVA/zulu17/lib'
 export JAVA_TOOL_OPTIONS
-
-# Prepare compatibility files required by JM 1.0.5
-mkdir -p /mnt/SDCARD/Emus/JAVA/zulu17/launcher 2>/dev/null
-cat << 'EOF' > /mnt/SDCARD/Emus/JAVA/zulu17/launcher/main.lua
--- by nvcuong1312 Youtube: @YeuRetroHandheld
-EOF
-echo "1.0.5" > /tmp/jm_version 2>/dev/null
-[ ! -p /tmp/jm_pipe ] && mkfifo /tmp/jm_pipe 2>/dev/null
-chmod 666 /tmp/jm_version /tmp/jm_pipe 2>/dev/null
-
 ROM_PATH="$*"
 if [ -z "$ROM_PATH" ]; then
     echo "Error: No ROM path specified."

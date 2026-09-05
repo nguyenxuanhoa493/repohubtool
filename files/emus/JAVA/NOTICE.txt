@@ -17,21 +17,15 @@ and where to get its source is listed below.
 Giay phep / Licence : GNU General Public License v3  (xem LICENSES/GPL-3.0.txt)
 Thuong nguon / Upstream : https://github.com/hex007/freej2me
 
-Day KHONG phai ban goc cua thuong nguon. Day la ban phan nhanh FreeJ2ME JM (JM 1.0.5)
-phat trien boi nvcuong1312 (https://github.com/nvcuong1312/jm) danh cho TrimUI
-(Brick, Smart Pro, NextUI, Stock OS), bo sung cac tinh nang:
-- Ban phim ao nhap chu (on-screen text input) dung font.ttf
-- Chuyen che du render qua graphics.cfg (Select: linear va nearest)
-- D-pad ho tro huong cheo va to hop Menu + Dpad Trai chuyen thanh cac phim 1, 3, 7, 9
-- Dinh huong layout phim qua keymap.cfg va hop thoai thoat game.
+Day KHONG phai ban goc cua thuong nguon. Day la mot ban phan nhanh co sua doi
+danh cho TrimUI Brick Pro, bien dich ngay 2025-08-21, them cac tinh nang:
+renderer.conf (ba kieu hien thi pixel/smooth/hq), vong bo tri nut H/K/X luu
+trong control_profile.cfg va control_cycle.cfg, va hop xac nhan thoat game.
 
-This is NOT the upstream build. It is the FreeJ2ME JM fork (JM 1.0.5) developed by
-nvcuong1312 (https://github.com/nvcuong1312/jm) for TrimUI devices (Brick, Smart Pro,
-NextUI, Stock OS), adding:
-- On-screen text input keyboard powered by font.ttf
-- Dynamic render mode switching via graphics.cfg (Select in-game: linear and nearest)
-- D-pad diagonal support and Menu + D-pad Left hotkeys to 1, 3, 7, 9
-- Custom pad layout via keymap.cfg and game exit confirmation dialog.
+This is NOT the upstream build. It is a modified fork for the TrimUI Brick Pro,
+compiled 2025-08-21, adding: renderer.conf (three display modes pixel/smooth/hq),
+the H/K/X pad-layout cycle stored in control_profile.cfg and control_cycle.cfg,
+and an exit confirmation dialog.
 
 RetroHub CON SUA THEM vao ban .jar nay, o muc bytecode, bon cho:
 

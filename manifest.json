@@ -1,12 +1,12 @@
 {
-  "version": "1.74",
+  "version": "1.75",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T23:15:00+0700",
+  "built": "2026-09-05T23:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Java J2ME: Gỡ bỏ khoá kiểm tra launcher, sửa dứt điểm lỗi crash, tự tạo main.lua và jm_version",
-    "en": "Java J2ME: Remove launcher verification lock, fix launch crash, auto-generate main.lua and jm_version"
+    "vi": "Java J2ME: Khôi phục bản FreeJ2ME gốc sạch sẽ, gỡ bỏ hoàn toàn watermark, khôi phục đầy đủ phím tắt (START+SELECT, START+R3, START+B) và sửa lỗi mở game",
+    "en": "Java J2ME: Restore clean FreeJ2ME, remove watermark, restore all shortcuts (START+SELECT, START+R3, START+B) and fix game launching"
   },
   "remove": [
     "app.pyc",
@@ -133,8 +133,8 @@
       {
         "path": "NOTICE.txt",
         "url": "files/emus/JAVA/NOTICE.txt",
-        "size": 7056,
-        "sha256": "a101a664404291ae52ce08f1b8f7edeb5441c5dc5af78453039b9b24d66ef7b6"
+        "size": 6657,
+        "sha256": "faf54b3361b33822fbcdd44f4de2073441feee1ffb5255cb0012d5a8acc23219"
       },
       {
         "path": "config.json",
@@ -145,8 +145,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 3186,
-        "sha256": "db1ad5eb48d196569ac36216831f4db9b1138f249b2d41e857a9e2f62ee531a5"
+        "size": 2812,
+        "sha256": "bc9b0c7ed06b48af66d47e977c2841d5154bae7efd194f8cb4f4d337d97f6aad"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -157,8 +157,8 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1457621,
-        "sha256": "3e93fbd2a663e34ee28d55f2beefe334280dfde134295857b26ae04d9be1b949"
+        "size": 1479020,
+        "sha256": "0e61ff4620198bb65769a09eb629863cd8aae5116c7ea88e95c59ffb6bda9c48"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
@@ -169,14 +169,8 @@
       {
         "path": "zulu17/bin/sdl_interface",
         "url": "files/emus/JAVA/zulu17/bin/sdl_interface",
-        "size": 94816,
-        "sha256": "88c68b1ce7f7148a5f2f520c33a041a35ccc80c12c56afffcbed651bed7df2ee"
-      },
-      {
-        "path": "zulu17/launcher/main.lua",
-        "url": "files/emus/JAVA/zulu17/launcher/main.lua",
-        "size": 45,
-        "sha256": "4a102e275c6bfcdfba6959446318eb2b4f4e4efef8aa3d624f341da2a778d111"
+        "size": 450072,
+        "sha256": "ea0282c5eaa0bc1d4c8325526c378a9863a91001c033f929cd35d37c8c05bf72"
       }
     ]
   },
@@ -328,8 +322,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 28634,
-      "sha256": "69df71a1ec69e831f8140a3b97a06726358fccd07fd88911ab99ae0132bc3af9"
+      "size": 28635,
+      "sha256": "ce44bdb4e081a95908a8fb52ec65210926d2b30c23562600f111491ed3556b4d"
     },
     {
       "path": "rh/led.py",
@@ -414,7 +408,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "e52bb4fbe35187c418f8774978924f0b480e8f02cef41ff2acf0692eeccd6356"
+      "sha256": "04466f9499f4c1016ce69bcef91ae44a2ed251303590db5d7ebd9f1223ea2f3d"
     },
     {
       "path": "rh/yt.py",
