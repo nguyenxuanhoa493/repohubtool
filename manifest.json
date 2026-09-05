@@ -1,12 +1,12 @@
 {
-  "version": "1.71",
+  "version": "1.72",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T22:05:00+0700",
+  "built": "2026-09-05T22:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "YouTube: Cho phép xóa cả từ khóa mặc định, hiển thị tiêu đề video 2 dòng rõ ràng trọn vẹn",
-    "en": "YouTube: Allow deleting default keyword tabs, 2-line video title wrapping for improved readability"
+    "vi": "YouTube & UI: Khắc phục nháy modal chờ, tối ưu tải video dài siêu tốc, hiển thị đang đóng app và tăng khoảng cách 2 dòng tiêu đề",
+    "en": "YouTube & UI: Seamless modal transitions, instant long video caching & buffering, exit splash, and 2-line title spacing"
   },
   "remove": [
     "app.pyc",
@@ -187,8 +187,8 @@
     },
     {
       "path": "app.py",
-      "size": 299905,
-      "sha256": "f69987d14271a0ca7a10b8f89b105e21776c69b96314dc6f51a9ce65b5df9411"
+      "size": 301829,
+      "sha256": "d5238837f36178c357afd410198785d4f1fdb6c76e45522f443985d73a68e27e"
     },
     {
       "path": "assets/fallback.ttf",
@@ -408,17 +408,17 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "5f6e852f2bf464a6a9b75453eb78bbd552986bac05238fe02bc89c8d6c1f535b"
+      "sha256": "20a2ffae0b4e8e82cf1a59a82be1f001c7a565cd518af6f5e369be8eb3781b8a"
     },
     {
       "path": "rh/yt.py",
-      "size": 22945,
-      "sha256": "1f327d626c8b4e908c491d9c20415e267694624b6b64860bc2619d3f2bf47305"
+      "size": 22947,
+      "sha256": "b2188176413270075b2aa9599350ece6e9c678b9032374e3e2417e20bea640ca"
     },
     {
       "path": "rh/yt_player.py",
-      "size": 14116,
-      "sha256": "af0884ea24829adc3651783de6e59bf6e531ad5e5a0ee54c5cc17cbd404db43e"
+      "size": 15293,
+      "sha256": "9e93b8a4c9e940aa3d9f815b2a77ee022ec5ef277c2184a2c8d6255a0c594ed1"
     },
     {
       "path": "streamer.py",

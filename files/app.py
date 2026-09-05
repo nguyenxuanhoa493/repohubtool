@@ -682,18 +682,15 @@ def main():
     }
 
     def _show_yt_handoff_splash(v_title):
+        # Draw seamless dim overlay & modal on top of existing screen contents without wiping background
+        mw = min(760, state.SCREEN_W - 60)
+        mh = 210
+        mx = (state.SCREEN_W - mw) // 2
+        my = (state.SCREEN_H - mh) // 2
         for _ in range(2):
-            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 13, 17, 28, 255)
-            fill_rect(0, 0, state.SCREEN_W, HEADER_H, 20, 28, 46, 255)
-            fill_rect(0, HEADER_H - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
-            draw_text("YouTube", font_title, 40, HEADER_H // 2, 255, 255, 255, center_y=True)
-
-            mw = 760
-            mh = 210
-            mx = (state.SCREEN_W - mw) // 2
-            my = (state.SCREEN_H - mh) // 2
-            fill_rect(mx, my, mw, mh, 20, 26, 42, 255)
-            draw_rect(mx, my, mw, mh, 0, 220, 255, 255, thickness=2)
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
+            fill_rect(mx, my, mw, mh, 20, 26, 42, 250)
+            draw_rect(mx, my, mw, mh, 0, 230, 255, 255, thickness=2)
 
             fill_rect(mx + 28, my + 22, 140, 26, 230, 33, 23, 255)
             draw_text("▶ YouTube Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
@@ -705,6 +702,34 @@ def main():
                 ty += 32
             start_txt = "Đang mở trình phát RetroArch..." if state.current_lang == "VI" else "Starting RetroArch player..."
             draw_text(start_txt, font_modal_val, mx + 30, my + mh - 38, 0, 255, 160)
+            sdl2.SDL_RenderPresent(renderer)
+
+    def _show_exit_splash():
+        # Display smooth "Đang đóng ứng dụng..." on screen before exiting
+        mw = min(720, state.SCREEN_W - 60)
+        mh = 240
+        mx = (state.SCREEN_W - mw) // 2
+        my = (state.SCREEN_H - mh) // 2
+        for _ in range(2):
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 225)
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            fill_rect(mx + 3, my + 3, mw - 6, 60, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 61, mw - 6, 2, 0, 246, 246, 255)
+            draw_text(tr("exit_confirm_title"), font_title, mx + mw // 2, my + 32, 0, 246, 246, center_x=True, center_y=True)
+
+            close_txt = "Đang đóng ứng dụng..." if state.current_lang == "VI" else "Closing application..."
+            draw_text(close_txt, font_item, mx + mw // 2, my + 115, 0, 230, 255, center_x=True, center_y=True)
+            sub_txt = "Vui lòng đợi trong giây lát..." if state.current_lang == "VI" else "Please wait a moment..."
+            draw_text(sub_txt, font_sub, mx + mw // 2, my + 160, 160, 185, 215, center_x=True, center_y=True)
+
+            badge_w, badge_h = 240, 32
+            bx = mx + (mw - badge_w) // 2
+            by = my + mh - badge_h - 18
+            fill_rect(bx, by, badge_w, badge_h, 24, 38, 64, 255)
+            draw_rect(bx, by, badge_w, badge_h, 0, 200, 240, 255, thickness=1)
+            draw_text("RetroHub", font_badge, bx + badge_w // 2, by + badge_h // 2, 200, 230, 255, center_x=True, center_y=True)
             sdl2.SDL_RenderPresent(renderer)
 
     def launch_yt_video_handoff(v_id, s_url, s_title):
@@ -2583,7 +2608,9 @@ def main():
         elif exit_modal["active"]:
             if btn_b:
                 exit_modal["active"] = False
+                _show_exit_splash()
                 running = False
+                break
             elif btn_a:
                 exit_modal["active"] = False
         elif alphabet_modal["active"]:
@@ -2953,14 +2980,14 @@ def main():
                     scroll_offsets["yt_grid"] = scroll_row
                     selected_indices["yt_grid"] = selected_idx
 
-                    # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 2.5s (tránh lag CPU do yt-dlp khi đang lướt)
+                    # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 1.2s (tránh lag CPU do yt-dlp khi đang lướt)
                     cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < total_v) else None
                     sel_id = cur_v_sel.get("id") if cur_v_sel else None
                     if sel_id and sel_id != "__LOAD_MORE__":
                         if sel_id != yt_last_hover_id:
                             yt_last_hover_id = sel_id
                             yt_hover_start_time = time.time()
-                        elif (time.time() - yt_hover_start_time > 2.5) and (sel_id not in yt_player._STREAM_CACHE) and not yt_loading_state.get("active"):
+                        elif (time.time() - yt_hover_start_time > 1.2) and (sel_id not in yt_player._STREAM_CACHE) and not yt_loading_state.get("active"):
                             if yt_prefetch_thread is None or not yt_prefetch_thread.is_alive():
                                 def _bg_prefetch(vid_fetch):
                                     try:
@@ -4059,14 +4086,14 @@ def main():
                 is_small_screen = (state.SCREEN_W < 1200)
                 if is_small_screen:
                     card_w = 316
-                    card_h = 226
+                    card_h = 230
                     gap_x = 14
                     gap_y = 10
                     tw = 296
                     th = 166
                 else:
                     card_w = 390
-                    card_h = 264
+                    card_h = 268
                     gap_x = 18
                     gap_y = 10
                     tw = 368
@@ -4170,17 +4197,17 @@ def main():
                                 draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
                                 draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                            # Title below thumbnail (wrapped to max 2 lines)
-                            disp_title = v_data.get("disp_title") or v_data.get("title", "Video")
+                            # Title below thumbnail (wrapped to max 2 lines, generous line spacing)
+                            raw_title = v_data.get("title") or v_data.get("disp_title") or "Video"
                             max_text_w = tw - 8
                             t_lines = v_data.get("_wrapped_title")
                             if t_lines is None:
-                                t_lines = wrap_text_to_width(disp_title, font_sub, max_text_w, max_lines=2)
+                                t_lines = wrap_text_to_width(raw_title, font_sub, max_text_w, max_lines=2)
                                 v_data["_wrapped_title"] = t_lines
 
-                            line_y = ty + th + 5
+                            line_y = ty + th + 6
                             title_col = (255, 255, 255) if is_sel else (205, 215, 230)
-                            line_spacing = 20 if is_small_screen else 22
+                            line_spacing = 23 if is_small_screen else 25
                             for line_str in t_lines:
                                 draw_text(line_str, font_sub, tx + 4, line_y, title_col[0], title_col[1], title_col[2])
                                 line_y += line_spacing
@@ -5749,12 +5776,16 @@ def main():
             for tl in t_lines:
                 draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
                 ty += 32
-            dots = "." * (int(now * 3) % 4)
-            load_text = ("Đang kết nối luồng phát tốc độ cao" + dots) if state.current_lang == "VI" else ("Connecting high-speed stream" + dots)
-            draw_text(load_text, font_modal_val, mx + 30, my + mh - 38, 56, 189, 248)
-            cancel_str = "[B] Hủy" if state.current_lang == "VI" else "[B] Cancel"
-            cw = measure_text(cancel_str, font_badge)
-            draw_text(cancel_str, font_badge, mx + mw - 30 - cw, my + mh - 38, 140, 165, 195)
+            if yt_launch_state.get("status") in ("ready", "launching"):
+                start_txt = "Đang mở trình phát RetroArch..." if state.current_lang == "VI" else "Starting RetroArch player..."
+                draw_text(start_txt, font_modal_val, mx + 30, my + mh - 38, 0, 255, 160)
+            else:
+                dots = "." * (int(now * 3) % 4)
+                load_text = ("Đang kết nối luồng phát tốc độ cao" + dots) if state.current_lang == "VI" else ("Connecting high-speed stream" + dots)
+                draw_text(load_text, font_modal_val, mx + 30, my + mh - 38, 56, 189, 248)
+                cancel_str = "[B] Hủy" if state.current_lang == "VI" else "[B] Cancel"
+                cw = measure_text(cancel_str, font_badge)
+                draw_text(cancel_str, font_badge, mx + mw - 30 - cw, my + mh - 38, 140, 165, 195)
 
         sdl2.SDL_RenderPresent(renderer)
 

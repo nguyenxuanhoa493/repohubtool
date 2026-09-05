@@ -277,7 +277,7 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                 age = parse_age_hours(pub)
 
                 # Pre-format truncated titles and channel info for zero-overhead UI rendering
-                disp_title = title if len(title) <= 30 else title[:28] + "..."
+                disp_title = title if len(title) <= 120 else title[:117] + "..."
                 if pub:
                     info_str = f"{channel} • {pub}" if channel else pub
                 else:

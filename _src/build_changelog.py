@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.72", "2026-09-05",
+     ("YouTube & UI: Seamless modal transitions, instant long video caching & buffering, exit splash, and 2-line title spacing",
+      "YouTube & UI: Khắc phục nháy modal chờ, tối ưu tải video dài siêu tốc, hiển thị đang đóng app và tăng khoảng cách 2 dòng tiêu đề"),
+     [("Flicker-free modal transitions: eliminated background screen wipes during YouTube video handoff, ensuring a continuous and seamless modal transition into RetroArch.",
+       "Chuyển cảnh modal mượt mà, chống nháy: loại bỏ hoàn toàn hiện tượng xóa trắng màn hình nền khi chuẩn bị mở RetroArch, giữ nguyên giao diện và chuyển trạng thái tức thì không chớp nháy."),
+      ("High-speed long video loading: added persistent disk stream cache (/tmp/yt_stream_cache.json), reduced speculative hover prefetch delay to 1.2s, and doubled proxy buffer chunks to 128KB with TCP_NODELAY.",
+       "Tối ưu tải video dài siêu tốc: lưu đệm luồng phát trực tiếp xuống bộ nhớ tạm, rút ngắn thời gian nạp trước khi rê chuột còn 1.2s và tăng gấp đôi bộ đệm truyền phát lên 128KB giúp xem video dài tức thì."),
+      ("Clear exit feedback splash: immediately displays 'Closing application...' and 'Please wait a moment...' when confirming exit, preventing the app from appearing frozen during cleanup.",
+       "Phản hồi rõ ràng khi thoát ứng dụng: hiển thị ngay lập tức thông báo 'Đang đóng ứng dụng... Vui lòng đợi trong giây lát' khi bấm xác nhận thoát, không còn cảm giác bị đơ khi đang dọn dẹp bộ nhớ."),
+      ("Enhanced 2-line title layout: increased line spacing and expanded character limits across 2 lines so full titles are readable without premature truncation.",
+       "Cải thiện bố cục tiêu đề 2 dòng: tăng khoảng cách giữa 2 dòng và mở rộng độ dài ký tự hiển thị giúp đọc trọn vẹn tên video và bài hát.")]),
+
     ("1.71", "2026-09-05",
      ("YouTube: Allow deleting default keyword tabs, 2-line video title wrapping for improved readability",
       "YouTube: Cho phép xóa cả từ khóa mặc định, hiển thị tiêu đề video 2 dòng rõ ràng trọn vẹn"),
