@@ -1,12 +1,12 @@
 {
-  "version": "1.73",
+  "version": "1.74",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T23:05:00+0700",
+  "built": "2026-09-05T23:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Java J2ME: Khắc phục lỗi không mở được game, tự động nhận diện độ phân giải, fallback 240x320 và sửa lỗi tên file có khoảng trắng",
-    "en": "Java J2ME: Fix launch crash, auto resolution detection, fallback to 240x320 and URI safety for spaces"
+    "vi": "Java J2ME: Gỡ bỏ khoá kiểm tra launcher, sửa dứt điểm lỗi crash, tự tạo main.lua và jm_version",
+    "en": "Java J2ME: Remove launcher verification lock, fix launch crash, auto-generate main.lua and jm_version"
   },
   "remove": [
     "app.pyc",
@@ -145,8 +145,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 2772,
-        "sha256": "a21219baea13b29ac91b6d481834dd81a0e2105cabd60797ee1fc369162af8a2"
+        "size": 3186,
+        "sha256": "db1ad5eb48d196569ac36216831f4db9b1138f249b2d41e857a9e2f62ee531a5"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -157,8 +157,8 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1457649,
-        "sha256": "0fe3ca99173ab4cff5d93f47fe863ad5bec9fc7d2ca17ac7822663589762f85c"
+        "size": 1457621,
+        "sha256": "3e93fbd2a663e34ee28d55f2beefe334280dfde134295857b26ae04d9be1b949"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
@@ -171,6 +171,12 @@
         "url": "files/emus/JAVA/zulu17/bin/sdl_interface",
         "size": 94816,
         "sha256": "88c68b1ce7f7148a5f2f520c33a041a35ccc80c12c56afffcbed651bed7df2ee"
+      },
+      {
+        "path": "zulu17/launcher/main.lua",
+        "url": "files/emus/JAVA/zulu17/launcher/main.lua",
+        "size": 45,
+        "sha256": "4a102e275c6bfcdfba6959446318eb2b4f4e4efef8aa3d624f341da2a778d111"
       }
     ]
   },
@@ -323,7 +329,7 @@
     {
       "path": "rh/j2me.py",
       "size": 28634,
-      "sha256": "8a0669e22ae1374abf559c3a35d538aa3c9efa0c700cef247758e5f1201d2aba"
+      "sha256": "69df71a1ec69e831f8140a3b97a06726358fccd07fd88911ab99ae0132bc3af9"
     },
     {
       "path": "rh/led.py",
@@ -408,7 +414,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "3022d6fd3b2379dca72a12eda09fe4a668ef36e9ff8db7e7def71a0e546660d6"
+      "sha256": "e52bb4fbe35187c418f8774978924f0b480e8f02cef41ff2acf0692eeccd6356"
     },
     {
       "path": "rh/yt.py",

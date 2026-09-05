@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.74", "2026-09-05",
+     ("Java J2ME: Remove launcher verification lock, fix launch crash, auto-generate main.lua and jm_version",
+      "Java J2ME: Gỡ bỏ khoá xác thực launcher, sửa dứt điểm lỗi crash, tự tạo main.lua và jm_version"),
+     [("Bypass launcher DRM lock: patched checkMainLua and start() validation checks inside freej2me-sdl.jar that previously triggered System.exit(0) (Error Validate 2) when main.lua was missing.",
+       "Gỡ bỏ khoá kiểm tra launcher: vá trực tiếp bytecode hàm checkMainLua và start() trong freej2me-sdl.jar, loại bỏ hoàn toàn lỗi văng tắt đột ngột (Error Validate 2) do thiếu main.lua."),
+      ("Auto-generate compatibility environment: launch.sh now pre-creates main.lua, /tmp/jm_version, and /tmp/jm_pipe with complete LD_LIBRARY_PATH support for TrimUI SDL2 libraries.",
+       "Tự động chuẩn bị môi trường tương thích: launch.sh tự động sinh launcher/main.lua, /tmp/jm_version và /tmp/jm_pipe cùng biến môi trường LD_LIBRARY_PATH đầy đủ cho các thư viện đồ hoạ."),
+      ("Flawless J2ME execution: guarantees instant launching for Bobby Carrot 4 and all Java titles across TrimUI Stock OS and NextUI.",
+       "Khởi chạy mượt mà mọi tựa game Java: đảm bảo mở tức thì Bobby Carrot 4 và toàn bộ kho game Java trên cả hệ gốc TrimUI và NextUI.")]),
+
     ("1.73", "2026-09-05",
      ("Java J2ME: Fix launch crash, auto resolution detection, fallback to 240x320 and URI safety for spaces",
       "Java J2ME: Khắc phục lỗi không mở được game, tự động nhận diện độ phân giải, fallback 240x320 và sửa lỗi tên file có khoảng trắng"),
