@@ -1,12 +1,12 @@
 {
-  "version": "1.64",
+  "version": "1.65",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T17:42:00+0700",
+  "built": "2026-09-05T19:22:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Bổ sung 5 hiệu ứng LED sôi động (chớp giật strobe, bão sấm sét, bass drop...) và 7 theme LED mới",
-    "en": "Add 5 high-energy LED effects (rave strobe, thunderstorm, bass drop) and 7 vibrant themes"
+    "vi": "Cập nhật giả lập Java J2ME (JM 1.0.5): bàn phím ảo gõ chữ, D-pad chéo, phím tắt 1/3/7/9, đổi chế độ hiển thị",
+    "en": "Update Java J2ME emulator (JM 1.0.5): on-screen text input, diagonal D-pad, hotkeys, display mode toggle"
   },
   "remove": [
     "app.pyc",
@@ -133,8 +133,8 @@
       {
         "path": "NOTICE.txt",
         "url": "files/emus/JAVA/NOTICE.txt",
-        "size": 6657,
-        "sha256": "faf54b3361b33822fbcdd44f4de2073441feee1ffb5255cb0012d5a8acc23219"
+        "size": 7056,
+        "sha256": "a101a664404291ae52ce08f1b8f7edeb5441c5dc5af78453039b9b24d66ef7b6"
       },
       {
         "path": "config.json",
@@ -145,20 +145,38 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 1608,
-        "sha256": "c5d059cfa552b3c1402a625f6e5303f6beeef5a68d7b555f272f440e87dff92c"
+        "size": 1813,
+        "sha256": "e0736506e25b11ad24aa80c418a1dbac7525ce5c4f907029a5e1f36aa4183804"
+      },
+      {
+        "path": "zulu17/bin/font.ttf",
+        "url": "files/emus/JAVA/zulu17/bin/font.ttf",
+        "size": 556216,
+        "sha256": "2ec33f84606cbaa0a1a944488e14f97faf2f6a25ecdd8354f5358f06da13c7d9"
       },
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1479020,
-        "sha256": "0e61ff4620198bb65769a09eb629863cd8aae5116c7ea88e95c59ffb6bda9c48"
+        "size": 1457649,
+        "sha256": "0fe3ca99173ab4cff5d93f47fe863ad5bec9fc7d2ca17ac7822663589762f85c"
+      },
+      {
+        "path": "zulu17/bin/graphics.cfg",
+        "url": "files/emus/JAVA/zulu17/bin/graphics.cfg",
+        "size": 1,
+        "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+      },
+      {
+        "path": "zulu17/bin/keymap.cfg",
+        "url": "files/emus/JAVA/zulu17/bin/keymap.cfg",
+        "size": 133,
+        "sha256": "7efbfea3f99d72d3e34f53a45e0275b2ddded7bc5518eaeb336246bd86171db0"
       },
       {
         "path": "zulu17/bin/sdl_interface",
         "url": "files/emus/JAVA/zulu17/bin/sdl_interface",
-        "size": 450072,
-        "sha256": "ea0282c5eaa0bc1d4c8325526c378a9863a91001c033f929cd35d37c8c05bf72"
+        "size": 94816,
+        "sha256": "88c68b1ce7f7148a5f2f520c33a041a35ccc80c12c56afffcbed651bed7df2ee"
       }
     ]
   },
@@ -310,8 +328,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 27132,
-      "sha256": "5082662b836625e43bb1607759fc49cafb2a7df77a4a9c535f58c29f24242f1a"
+      "size": 27944,
+      "sha256": "3ce693ed877f2ddd24bcb45e634003b15a5ec3040695f2192d3607a2d612f1b4"
     },
     {
       "path": "rh/led.py",
@@ -396,7 +414,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "3aab85bd9b78506d7a2858bf5cb197bdc066135a4873fa8183d3f8eb01ef3730"
+      "sha256": "76109160902586dc7c29877c47db3f597cb4450e87e8563d2db6935102bf7383"
     },
     {
       "path": "rh/yt.py",

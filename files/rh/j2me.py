@@ -116,17 +116,18 @@ def _cached_probe(path, key, probe):
 
 
 def runtime_supports_renderer():
-    """True when the installed sdl_interface is a build that reads renderer.conf.
+    """True when the installed sdl_interface is a build that reads renderer.conf or graphics.cfg.
 
     An in-app update carries only the app's .py files - the 66MB runtime ships
     with the full package, not on every update - so a device can end up running
     this version of the app against the older emulator. That build has no
-    renderer.conf at all, and a display screen wired to a binary that ignores it
-    is a screen that does nothing.
+    renderer.conf/graphics.cfg, and a display screen wired to a binary that
+    ignores it is a screen that does nothing.
     """
     def probe(path):
         with open(path, "rb") as f:
-            return b"renderer.conf" in f.read()
+            data = f.read()
+            return (b"renderer.conf" in data) or (b"graphics.cfg" in data)
     return _cached_probe(j2me_runtime_paths()["sdl"], "runtime", probe)
 
 
@@ -194,12 +195,25 @@ def renderer_conf_path():
     return f"{RUNTIME_DIR}/bin/renderer.conf"
 
 
-def load_render_mode():
-    """Which of the three presets is in force, from renderer.conf.
+def graphics_cfg_path():
+    return f"{RUNTIME_DIR}/bin/graphics.cfg"
 
-    The player can also change this on the device with START+R3, which rewrites
-    the same file, so this is read fresh every time rather than cached.
+
+def load_render_mode():
+    """Which of the three presets is in force, from graphics.cfg or renderer.conf.
+
+    In JM (nvcuong1312), Select in-game toggles graphics.cfg (0=pixel/nearest, 1=smooth/linear).
+    On older builds, START+R3 rewrites renderer.conf.
     """
+    try:
+        with open(graphics_cfg_path(), "r", encoding="utf-8") as f:
+            val = f.read().strip()
+            if val == "0":
+                return "pixel"
+            elif val == "1":
+                return "smooth"
+    except Exception:
+        pass
     try:
         with open(renderer_conf_path(), "r", encoding="utf-8") as f:
             for line in f:
@@ -216,9 +230,18 @@ def load_render_mode():
 
 
 def save_render_mode(mode):
-    """Write a whole preset out. Returns True when the file was replaced."""
+    """Write preset out to both graphics.cfg and renderer.conf. Returns True when saved."""
     if mode not in RENDER_MODES:
         return False
+    # graphics.cfg: 0 = nearest/pixel, 1 = linear/smooth
+    g_val = "0" if mode == "pixel" else "1"
+    try:
+        os.makedirs(os.path.dirname(graphics_cfg_path()), exist_ok=True)
+        with open(graphics_cfg_path(), "w", encoding="utf-8") as f:
+            f.write(g_val + "\n")
+    except Exception as e:
+        print(f"Error saving J2ME graphics.cfg: {e}")
+
     preset = RENDER_PRESETS[mode]
     lines = ["# FreeJ2ME Brick Pro renderer",
              "# pixel = nearest-neighbor; smooth = linear; hq = SDL best-quality fallback"]
