@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.60", "2026-09-05",
+     ("Smooth YouTube playback: zero screen flicker when connecting, real-time video sorting, and speculative preload",
+      "Trải nghiệm YouTube mượt mà: kết nối nguồn phát không nháy màn hình, sắp xếp video mới nhất và tải trước thông minh"),
+     [("Zero screen flicker: completely silenced yt-dlp console tty output and implemented smooth double-buffered splash handoff to RetroArch.",
+       "Chấm dứt hoàn toàn hiện tượng nháy màn hình: tắt luồng in tty console của yt-dlp và chuyển giao màn hình sạch sang RetroArch trên cả hai bộ đệm (Double-Buffer VSync)."),
+      ("Non-blocking 60 FPS stream connecting modal: asynchronous background stream extraction with a breathing pulse dialog, supporting instant cancellation with button B.",
+       "Hộp thoại kết nối luồng phát chạy ngầm 60 FPS: trích xuất luồng trên luồng riêng với giao diện phát sáng nhịp thở mượt mà, hỗ trợ bấm phím B để hủy kết nối."),
+      ("Real-time chronological sorting: extracts publication timestamps and sorts candidates by age in hours, guaranteeing the newest videos (hours/days ago) always appear at the top.",
+       "Sắp xếp video theo thời gian thực: bóc tách thời gian tải lên và tính toán độ tuổi video theo giờ, đảm bảo các video mới nhất (vài giờ/vài ngày trước) luôn nằm trên đầu danh sách."),
+      ("Trending categories and speculative preload: MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop, with automatic background prefetching of adjacent keywords and thumbnails.",
+       "Bộ từ khóa thịnh hành mới và tải trước lân cận: MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop; tự động nạp trước kết quả và thumbnail của 2 tab xung quanh dưới nền.")]),
+
     ("1.59", "2026-09-05",
      ("Comprehensive YouTube upgrade: chronological sorting, speculative preloading, and non-blocking HUD",
       "Nâng cấp toàn diện YouTube: sắp xếp video mới nhất, tải trước thông minh và thanh tải HUD không chặn"),
