@@ -1,12 +1,12 @@
 {
-  "version": "1.67",
+  "version": "1.68",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T20:55:00+0700",
+  "built": "2026-09-05T21:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Khắc phục triệt để lỗi theme LED mới: tối ưu nháy sáng liên tục, tự khởi động lại daemon nạp hiệu ứng mới",
-    "en": "Fix new LED themes: continuous vibrant strobe & pulse, auto-restart daemon to load new effects"
+    "vi": "Tối ưu menu YouTube: mở tức thì qua feed cache, tải song song thumbnail và duy trì 60 FPS mượt mà",
+    "en": "Optimize YouTube menu: instant load via feed cache, parallel thumbnail prefetch, and rock-solid 60 FPS"
   },
   "remove": [
     "app.pyc",
@@ -187,8 +187,8 @@
     },
     {
       "path": "app.py",
-      "size": 282568,
-      "sha256": "da235dec509d1284497b7f33b10ac030e68166c03072267b4d40cd00280a4949"
+      "size": 287870,
+      "sha256": "cf4c58210579b0f1a8ba9b241b006c36edd96c6935d7e3809f6e3ec57eba7aa4"
     },
     {
       "path": "assets/fallback.ttf",
@@ -367,8 +367,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 2540,
-      "sha256": "c8878acfa242349118a43d072ce68b5412b8081f3a60c6c8ea4d716b62ec12d0"
+      "size": 3069,
+      "sha256": "9ecbd6abac02ccf2faba3facadcc384fba44bb1c78a0b827f9c4f2462f8b4d1b"
     },
     {
       "path": "rh/romfiles.py",
@@ -408,12 +408,12 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "c827b5539aa09a24767b81c570942b2fa848c6918c63c7a22d3b2c22d3c470dc"
+      "sha256": "402a7d3246575da3b110c0b9bbb03ec69abcfcfb5a5d61bbf7fac1aa6738459a"
     },
     {
       "path": "rh/yt.py",
-      "size": 18051,
-      "sha256": "a0c4b6bce99ab7794f382c981dd5c2c35bc9cfca74bf6cf5d5ed09c7f22544df"
+      "size": 20369,
+      "sha256": "08ea0df4fb9de04b1ca6855e42122bb1435f3bafcc42c615a6d5346f63e071ee"
     },
     {
       "path": "rh/yt_player.py",

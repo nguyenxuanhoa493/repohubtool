@@ -652,6 +652,20 @@ def main():
         "err_msg": "",
         "start_time": 0.0,
     }
+    yt_cached_thumb_ids = set()
+    try:
+        if os.path.exists(YT_CACHE_DIR):
+            for _f in os.listdir(YT_CACHE_DIR):
+                if _f.endswith(".jpg"):
+                    yt_cached_thumb_ids.add(_f[:-4])
+    except Exception:
+        pass
+    yt_pills_cache = {
+        "queries": None,
+        "pills_w": [],
+        "pill_x_pos": [],
+        "total_w": 0,
+    }
 
     def _show_yt_handoff_splash(v_title):
         for _ in range(2):
@@ -748,20 +762,46 @@ def main():
         except Exception as _re:
             print(f"[RetroHub] Error restoring resume state: {_re}")
 
-    def _prefetch_yt_thumbs(video_list):
+    def _prefetch_yt_thumbs(video_list, priority_count=6):
         if not video_list:
             return
+
         def _worker():
-            for v in video_list[:24]:
+            # 1. Parallel pre-fetch for visible cards (top priority) using thread pool
+            high_pri = video_list[:priority_count]
+            low_pri = video_list[priority_count:24]
+
+            def _fetch_one(v):
                 vid = v.get("id")
                 thumb_url = v.get("thumb")
-                if vid and thumb_url:
-                    yt.fetch_thumbnail(thumb_url, YT_CACHE_DIR, vid)
+                if vid and thumb_url and (vid not in yt_cached_thumb_ids):
+                    p = yt.fetch_thumbnail(thumb_url, YT_CACHE_DIR, vid)
+                    if p:
+                        yt_cached_thumb_ids.add(vid)
+
+            from concurrent.futures import ThreadPoolExecutor
+            try:
+                with ThreadPoolExecutor(max_workers=3) as executor:
+                    list(executor.map(_fetch_one, high_pri))
+            except Exception:
+                for v in high_pri:
+                    _fetch_one(v)
+
+            # 2. Remaining thumbnails fetched gently in background
+            if low_pri:
+                try:
+                    with ThreadPoolExecutor(max_workers=2) as executor:
+                        list(executor.map(_fetch_one, low_pri))
+                except Exception:
+                    for v in low_pri:
+                        _fetch_one(v)
+
         threading.Thread(target=_worker, daemon=True).start()
 
-    def start_yt_load(query_str, is_trending=False):
+    def start_yt_load(query_str, is_trending=False, is_bg_refresh=False):
         nonlocal yt_search_results_list, yt_trending_list
-        yt_loading_state["active"] = True
+        if not is_bg_refresh:
+            yt_loading_state["active"] = True
         yt_loading_state["query"] = query_str
         yt_loading_state["id"] += 1
         req_id = yt_loading_state["id"]
@@ -780,14 +820,18 @@ def main():
                 data = []
 
             if req_id == yt_loading_state["id"]:
-                if is_trending:
-                    yt_trending_list = data
-                else:
-                    yt_query_cache[query_str] = data
-                    yt_search_results_list = data
-                _prefetch_yt_thumbs(data)
+                if data:
+                    if is_trending:
+                        yt_trending_list = data
+                        yt.save_feed_cache("trending", data)
+                    else:
+                        yt_query_cache[query_str] = data
+                        yt_search_results_list = data
+                        yt.save_feed_cache(query_str, data)
+                    _prefetch_yt_thumbs(data)
                 yt_loading_state["active"] = False
-                trigger_yt_adjacent_preload()
+                if not is_bg_refresh and data:
+                    trigger_yt_adjacent_preload()
             else:
                 if not is_trending and data:
                     yt_query_cache[query_str] = data
@@ -820,26 +864,37 @@ def main():
             return
 
         def _preload_worker():
+            time.sleep(1.5)
             for target_q, is_tr in candidates:
                 if yt_loading_state.get("active", False):
                     break
                 try:
                     if is_tr:
                         if not yt_trending_list:
-                            data = yt.get_trending(limit=30) or []
-                            if data and not yt_trending_list:
-                                yt_trending_list.extend(data)
-                                _prefetch_yt_thumbs(data)
+                            cached_tr, _ = yt.load_feed_cache("trending")
+                            if cached_tr:
+                                yt_trending_list.extend(cached_tr)
+                                _prefetch_yt_thumbs(cached_tr)
+                            else:
+                                data = yt.get_trending(limit=30) or []
+                                if data and not yt_trending_list:
+                                    yt_trending_list.extend(data)
+                                    _prefetch_yt_thumbs(data)
                     else:
                         if target_q not in yt_query_cache or not yt_query_cache[target_q]:
-                            eff = yt.get_effective_query(target_q)
-                            data = yt.search_youtube(eff, limit=30) or []
-                            if data:
-                                yt_query_cache[target_q] = data
-                                _prefetch_yt_thumbs(data)
+                            cached_q, _ = yt.load_feed_cache(target_q)
+                            if cached_q:
+                                yt_query_cache[target_q] = cached_q
+                                _prefetch_yt_thumbs(cached_q)
+                            else:
+                                eff = yt.get_effective_query(target_q)
+                                data = yt.search_youtube(eff, limit=30) or []
+                                if data:
+                                    yt_query_cache[target_q] = data
+                                    _prefetch_yt_thumbs(data)
                 except Exception as e:
                     print(f"[RetroHub] YouTube preload error for {target_q}: {e}")
-                time.sleep(0.4)
+                time.sleep(0.8)
 
         if yt_preload_thread is None or not yt_preload_thread.is_alive():
             yt_preload_thread = threading.Thread(target=_preload_worker, daemon=True)
@@ -856,7 +911,7 @@ def main():
                   "target": "", "current": ""}
     img_texture_cache = {}
     missing_img_cache = set()
-    MAX_IMG_CACHE = 60
+    MAX_IMG_CACHE = 80
 
     def get_texture_and_size(path, force_reload=False):
         if not path:
@@ -1496,6 +1551,7 @@ def main():
 
     while running:
         now = time.time()
+        yt_new_textures_loaded_this_frame = 0
 
         current_screen = screen_stack[-1]
         selected_idx = selected_indices.get(current_screen, 0)
@@ -2823,14 +2879,14 @@ def main():
                     scroll_offsets["yt_grid"] = scroll_row
                     selected_indices["yt_grid"] = selected_idx
 
-                    # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 0.5s
+                    # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 2.5s (tránh lag CPU do yt-dlp khi đang lướt)
                     cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < total_v) else None
                     sel_id = cur_v_sel.get("id") if cur_v_sel else None
                     if sel_id:
                         if sel_id != yt_last_hover_id:
                             yt_last_hover_id = sel_id
                             yt_hover_start_time = time.time()
-                        elif (time.time() - yt_hover_start_time > 0.5) and (sel_id not in yt_player._STREAM_CACHE):
+                        elif (time.time() - yt_hover_start_time > 2.5) and (sel_id not in yt_player._STREAM_CACHE) and not yt_loading_state.get("active"):
                             if yt_prefetch_thread is None or not yt_prefetch_thread.is_alive():
                                 def _bg_prefetch(vid_fetch):
                                     try:
@@ -2901,7 +2957,14 @@ def main():
                     if new_q == "MV Vpop" or yt_query_idx == 0:
                         yt_mode = "trending"
                         if not yt_trending_list:
-                            start_yt_load("MV Vpop", is_trending=True)
+                            cached_tr, _ = yt.load_feed_cache("trending")
+                            if cached_tr:
+                                yt_trending_list = cached_tr
+                                yt_loading_state["active"] = False
+                                _prefetch_yt_thumbs(yt_trending_list)
+                                trigger_yt_adjacent_preload()
+                            else:
+                                start_yt_load("MV Vpop", is_trending=True)
                         else:
                             yt_loading_state["active"] = False
                             _prefetch_yt_thumbs(yt_trending_list)
@@ -2917,8 +2980,16 @@ def main():
                             _prefetch_yt_thumbs(yt_search_results_list)
                             trigger_yt_adjacent_preload()
                         else:
-                            yt_search_results_list = []
-                            start_yt_load(new_q, is_trending=False)
+                            cached_q, _ = yt.load_feed_cache(new_q)
+                            if cached_q:
+                                yt_query_cache[new_q] = cached_q
+                                yt_search_results_list = cached_q
+                                yt_loading_state["active"] = False
+                                _prefetch_yt_thumbs(cached_q)
+                                trigger_yt_adjacent_preload()
+                            else:
+                                yt_search_results_list = []
+                                start_yt_load(new_q, is_trending=False)
                         toast_msg = f"Từ khóa: {new_q}" if state.current_lang == "VI" else f"Keyword: {new_q}"
                         toast_timer = time.time()
 
@@ -2940,7 +3011,14 @@ def main():
                         selected_indices["yt_grid"] = 0
                         scroll_offsets["yt_grid"] = 0
                         if not yt_trending_list:
-                            start_yt_load("MV Vpop", is_trending=True)
+                            cached_tr, _ = yt.load_feed_cache("trending")
+                            if cached_tr:
+                                yt_trending_list = cached_tr
+                                yt_loading_state["active"] = False
+                                _prefetch_yt_thumbs(yt_trending_list)
+                                trigger_yt_adjacent_preload()
+                            else:
+                                start_yt_load("MV Vpop", is_trending=True)
                         else:
                             yt_loading_state["active"] = False
                             _prefetch_yt_thumbs(yt_trending_list)
@@ -3304,7 +3382,17 @@ def main():
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
                     if not yt_trending_list:
-                        start_yt_load("MV Vpop", is_trending=True)
+                        cached_items, cached_ts = yt.load_feed_cache("trending")
+                        if cached_items:
+                            yt_trending_list = cached_items
+                            yt_loading_state["active"] = False
+                            _prefetch_yt_thumbs(yt_trending_list)
+                            if time.time() - cached_ts > 7200:
+                                start_yt_load("MV Vpop", is_trending=True, is_bg_refresh=True)
+                            else:
+                                trigger_yt_adjacent_preload()
+                        else:
+                            start_yt_load("MV Vpop", is_trending=True)
                     else:
                         yt_loading_state["active"] = False
                         _prefetch_yt_thumbs(yt_trending_list)
@@ -3740,26 +3828,29 @@ def main():
             r1_w = measure_text(r1_txt, font_footer)
             draw_text(r1_txt, font_footer, state.SCREEN_W - 20 - r1_w, bar_y + bar_h // 2, 0, 220, 245, center_y=True)
 
-            # Calculate pills dimensions
+            # Calculate pills dimensions (cached to eliminate per-frame text measurement)
             pill_area_x = 90
             pill_area_w = state.SCREEN_W - 180
             pill_gap = 10
             pill_h = 26
             pill_y = bar_y + (bar_h - pill_h) // 2
 
-            pills_w = []
-            for q_item in yt_recent_queries:
-                pw = measure_text(q_item, font_badge) + 24
-                pills_w.append(pw)
-
-            total_pills_w = sum(pills_w) + (len(pills_w) - 1) * pill_gap if pills_w else 0
-
-            # Determine scroll offset for pills
-            pill_x_pos = []
-            cur_px = 0
-            for pw in pills_w:
-                pill_x_pos.append(cur_px)
-                cur_px += pw + pill_gap
+            if yt_pills_cache.get("queries") != yt_recent_queries:
+                pills_w = [measure_text(q_item, font_badge) + 24 for q_item in yt_recent_queries]
+                total_pills_w = sum(pills_w) + (len(pills_w) - 1) * pill_gap if pills_w else 0
+                pill_x_pos = []
+                cur_px = 0
+                for pw in pills_w:
+                    pill_x_pos.append(cur_px)
+                    cur_px += pw + pill_gap
+                yt_pills_cache["queries"] = list(yt_recent_queries)
+                yt_pills_cache["pills_w"] = pills_w
+                yt_pills_cache["pill_x_pos"] = pill_x_pos
+                yt_pills_cache["total_w"] = total_pills_w
+            else:
+                pills_w = yt_pills_cache["pills_w"]
+                pill_x_pos = yt_pills_cache["pill_x_pos"]
+                total_pills_w = yt_pills_cache["total_w"]
 
             safe_q_idx = max(0, min(len(pills_w) - 1, yt_query_idx)) if pills_w else 0
 
@@ -3841,11 +3932,16 @@ def main():
                         ty = cy + 8
 
                         v_id = v_data.get("id", "")
-                        t_path = os.path.join(YT_CACHE_DIR, f"{v_id}.jpg") if v_id else ""
                         tex, orig_w, orig_h = (None, 0, 0)
-                        if os.path.exists(t_path):
-                            missing_img_cache.discard(t_path)
-                            tex, orig_w, orig_h = get_texture_and_size(t_path)
+                        if v_id and (v_id in yt_cached_thumb_ids):
+                            t_path = os.path.join(YT_CACHE_DIR, f"{v_id}.jpg")
+                            if t_path in img_texture_cache:
+                                tex, orig_w, orig_h = get_texture_and_size(t_path)
+                            elif yt_new_textures_loaded_this_frame < 1:
+                                # Throttled texture decoding: max 1 new JPEG decode per frame to maintain smooth 60 FPS
+                                tex, orig_w, orig_h = get_texture_and_size(t_path)
+                                if tex:
+                                    yt_new_textures_loaded_this_frame += 1
 
                         if tex:
                             # Proportional fit preserving standard 16:9 aspect ratio
@@ -3879,21 +3975,20 @@ def main():
                             draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
                             draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                        # Title below thumbnail
+                        # Title below thumbnail (uses pre-formatted disp_title for zero-overhead)
                         text_y = ty + th + 6
-                        disp_title = v_data.get("title", "Video")
+                        disp_title = v_data.get("disp_title") or v_data.get("title", "Video")
                         if len(disp_title) > 30:
                             disp_title = disp_title[:28] + "..."
                         title_col = (255, 255, 255) if is_sel else (205, 215, 230)
                         draw_text(disp_title, font_sub, cx + 14, text_y, title_col[0], title_col[1], title_col[2])
 
-                        # Channel name & upload time
-                        chan_name = v_data.get("channel", "")
-                        pub_time = v_data.get("pub", "")
-                        if pub_time:
-                            info_str = f"{chan_name} • {pub_time}" if chan_name else pub_time
-                        else:
-                            info_str = chan_name
+                        # Channel name & upload time (uses pre-formatted disp_info)
+                        info_str = v_data.get("disp_info") or v_data.get("channel", "")
+                        if not info_str:
+                            pub_time = v_data.get("pub", "")
+                            chan_name = v_data.get("channel", "")
+                            info_str = f"{chan_name} • {pub_time}" if (chan_name and pub_time) else (chan_name or pub_time)
                         if len(info_str) > 34:
                             info_str = info_str[:32] + "..."
                         chan_col = (0, 220, 240) if is_sel else (120, 145, 175)

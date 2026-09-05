@@ -25,7 +25,21 @@ SPLASH_SYS_FILE = "/etc/splash.png"
 SPLASH_TEMP_PREVIEW = "/tmp/splash_preview.png"
 SPLASH_TEMP_BMP = "/tmp/splash_preview.bmp"
 BOOTLOGO_BACKUP_FILE = "/mnt/SDCARD/System/backup/bootlogo_original.bmp"
-YT_CACHE_DIR = "/tmp/yt_thumbs"
+def get_yt_cache_dir():
+    """Persistent thumbnail directory on SDCARD with fallback to RAM tmpfs."""
+    sd_cache = os.path.join(SDCARD_PATH, ".retrohub", "cache", "yt_thumbs")
+    try:
+        os.makedirs(sd_cache, exist_ok=True)
+        return sd_cache
+    except Exception:
+        fallback = "/tmp/yt_thumbs"
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
+
+
+YT_CACHE_DIR = get_yt_cache_dir()
+YT_FEED_CACHE_FILE = os.path.join(SDCARD_PATH, ".retrohub", "cache", "yt_feed_cache.json")
+YT_FEED_FALLBACK_FILE = "/tmp/yt_feed_cache.json"
 YT_HISTORY_FILE = os.path.join(APP_DIR, "yt_history.json")
 
 
