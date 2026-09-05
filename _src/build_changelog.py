@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.61", "2026-09-05",
+     ("Exit confirmation modal on home screen to prevent accidental quitting",
+      "Thêm hộp thoại xác nhận thoát ứng dụng ở menu chính để tránh bấm nhầm"),
+     [("Exit confirmation modal: pressing button X (or button B, or selecting 'Exit' from the main menu) now opens an interactive confirmation dialog instead of quitting abruptly.",
+       "Hộp thoại xác nhận thoát ứng dụng: khi bấm phím X (hoặc phím B, hoặc chọn mục 'Thoát' ở menu chính), ứng dụng sẽ mở hộp thoại xác nhận thay vì đóng đột ngột."),
+      ("Dual action buttons: provides '[B] Stay' (highlighted by default to prevent accidental exits) and '[A] Exit', with D-pad navigation and one-tap cancellation.",
+       "Hai nút điều hướng tiện lợi: hỗ trợ nút '[B] Ở lại' (được chọn mặc định tránh bấm nhầm) và '[A] Thoát', điều hướng linh hoạt bằng phím điều hướng D-pad."),
+      ("Home footer navigation hint: displays explicit '[A] Select / Open' and '[X] Exit' shortcuts on the home screen footer bar.",
+       "Chỉ dẫn chân trang trực quan: hiển thị rõ ràng hai phím tắt '[A] Chọn / Mở' và '[X] Thoát' ngay tại thanh điều hướng chân trang menu chính.")]),
+
     ("1.60", "2026-09-05",
      ("Smooth YouTube playback: zero screen flicker when connecting, real-time video sorting, and speculative preload",
       "Trải nghiệm YouTube mượt mà: kết nối nguồn phát không nháy màn hình, sắp xếp video mới nhất và tải trước thông minh"),
