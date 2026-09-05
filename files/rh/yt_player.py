@@ -88,12 +88,13 @@ def make_proxy_class(target_cdn_url: str):
                         if k.lower() in ("content-type", "content-length", "content-range", "accept-ranges"):
                             self.send_header(k, v)
                     self.end_headers()
+                    # Increase buffer chunk to 128KB for fast high-throughput streaming
                     while True:
-                        chunk = resp.read(65536)
+                        chunk = resp.read(131072)
                         if not chunk:
                             break
                         self.wfile.write(chunk)
-            except Exception as e:
+            except Exception:
                 # Client closed socket or seeked
                 pass
 
@@ -106,9 +107,35 @@ def find_free_port() -> int:
         return s.getsockname()[1]
 
 
+_STREAM_CACHE_FILE = "/tmp/yt_stream_cache.json"
 _STREAM_CACHE = {}
 _YTDLP_READY = False
 _YTDLP_LOCK = threading.Lock()
+
+
+def _load_stream_cache():
+    global _STREAM_CACHE
+    if os.path.exists(_STREAM_CACHE_FILE):
+        try:
+            with open(_STREAM_CACHE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    now = time.time()
+                    for k, v in data.items():
+                        if isinstance(v, list) and len(v) >= 3 and v[2] > now:
+                            _STREAM_CACHE[k] = (v[0], v[1], v[2])
+        except Exception:
+            pass
+
+
+def _save_stream_cache():
+    try:
+        now = time.time()
+        to_save = {k: list(v) for k, v in _STREAM_CACHE.items() if len(v) >= 3 and v[2] > now}
+        with open(_STREAM_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(to_save, f)
+    except Exception:
+        pass
 
 
 def ensure_ytdlp_ready():
@@ -116,6 +143,7 @@ def ensure_ytdlp_ready():
     global _YTDLP_READY
     if _YTDLP_READY:
         return True
+    _load_stream_cache()
     with _YTDLP_LOCK:
         if _YTDLP_READY:
             return True
@@ -155,6 +183,8 @@ def ensure_ytdlp_ready():
 def extract_stream_fast(video_id: str) -> tuple:
     """Lay truc tiep link stream tu cache neu co, neu chua co thi goi yt-dlp toi uu."""
     now = time.time()
+    if not _STREAM_CACHE:
+        _load_stream_cache()
     if video_id in _STREAM_CACHE:
         cached_url, cached_title, cached_exp = _STREAM_CACHE[video_id]
         if now < cached_exp:
@@ -183,10 +213,13 @@ def extract_stream_url(video_id: str) -> tuple:
         "noplaylist": True,
         "nocheckcertificate": True,
         "skip_download": True,
+        "check_formats": False,
+        "lazy_playlist": True,
+        "no_color": True,
         "extractor_args": {
             "youtube": {
                 "player_client": ["android"],
-                "skip": ["dash", "hls", "translated_subs", "comments"]
+                "skip": ["dash", "hls", "translated_subs", "comments", "subtitles"]
             }
         },
     }
@@ -199,6 +232,7 @@ def extract_stream_url(video_id: str) -> tuple:
             log(f"Phan tich thanh cong qua yt-dlp: '{title}', format: {info.get('format')}")
             if stream_url:
                 _STREAM_CACHE[video_id] = (stream_url, title, time.time() + 10800)
+                _save_stream_cache()
             return stream_url, title
     except Exception as e:
         record_error(f"Loi khi trich xuat link video tu YouTube: {e}")
