@@ -4054,22 +4054,22 @@ def main():
                 rows = 2
                 is_small_screen = (state.SCREEN_W < 1200)
                 if is_small_screen:
-                    card_w = 280
-                    card_h = 194
-                    gap_x = 18
+                    card_w = 316
+                    card_h = 206
+                    gap_x = 14
                     gap_y = 10
-                    tw = 256
-                    th = 144
-                else:
-                    card_w = 320
-                    card_h = 210
-                    gap_x = 24
-                    gap_y = 12
                     tw = 296
                     th = 166
+                else:
+                    card_w = 390
+                    card_h = 248
+                    gap_x = 18
+                    gap_y = 10
+                    tw = 368
+                    th = 207
 
                 start_x = (state.SCREEN_W - (cols * card_w + (cols - 1) * gap_x)) // 2
-                start_y = 112
+                start_y = 108
 
                 for r_off in range(rows):
                     cur_r = scroll_row + r_off
@@ -4169,7 +4169,7 @@ def main():
                             # Title below thumbnail (only title, channel and upload time removed for cleanliness)
                             text_y = ty + th + 6
                             disp_title = v_data.get("disp_title") or v_data.get("title", "Video")
-                            max_chars = 24 if is_small_screen else 28
+                            max_chars = 26 if is_small_screen else 34
                             if len(disp_title) > max_chars:
                                 disp_title = disp_title[:max_chars - 2] + "..."
                             title_col = (255, 255, 255) if is_sel else (205, 215, 230)
