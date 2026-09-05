@@ -1,12 +1,12 @@
 {
-  "version": "1.69",
+  "version": "1.70",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T21:45:00+0700",
+  "built": "2026-09-05T21:50:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "YouTube: Mặc định Music, KPOP, USUK, Tiktok; tab Yêu thích; xóa từ khóa; thumbnail vừa vặn không tràn viền và tải thêm video",
-    "en": "YouTube: Default Music, KPOP, USUK, Tiktok presets; Favorites tab; keyword deletion; clean responsive thumbnails & load more"
+    "vi": "YouTube: Tinh chỉnh kích thước thumbnail và thẻ lớn hơn, vừa vặn tuyệt đối với chiều rộng màn hình",
+    "en": "YouTube: Refine card and thumbnail dimensions to perfectly fit screen width with balanced padding"
   },
   "remove": [
     "app.pyc",
@@ -188,7 +188,7 @@
     {
       "path": "app.py",
       "size": 299503,
-      "sha256": "4a8c635b83709f1f2fc09afcbdac87c296901d2d290589e4ceeb9177caed8b9c"
+      "sha256": "c4583c79a1728589380761697e8cf227c1c64912e0f59540517bff26dda56a04"
     },
     {
       "path": "assets/fallback.ttf",
@@ -408,7 +408,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "a8da1a463e27b668c4eecf9129f2131c9a2cf6c1a13c0cf56b3d329b3fc85273"
+      "sha256": "634348308bb3bc600066f096fab4b898fdd05aaa1a80d1a9dd17b60e27599db2"
     },
     {
       "path": "rh/yt.py",

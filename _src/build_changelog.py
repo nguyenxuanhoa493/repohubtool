@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.70", "2026-09-05",
+     ("YouTube: Refine card and thumbnail dimensions to perfectly fit screen width with balanced padding",
+      "YouTube: Tinh chỉnh kích thước thumbnail và thẻ lớn hơn, vừa vặn tuyệt đối với chiều rộng màn hình"),
+     [("Larger immersive thumbnails: increased card width to 390px (Smart Pro) and 316px (Brick), providing larger 16:9 thumbnails while keeping clean 24-37px edge margins.",
+       "Thumbnail lớn hơn, hình ảnh sống động: tăng chiều rộng thẻ lên 390px (Smart Pro) và 316px (Brick) giúp ảnh bìa 16:9 to rõ nét, lề trái phải vừa vặn 24-37px không bị quá hẹp hay quá rộng."),
+      ("Extended title readability: expanded maximum visible title length up to 34 characters to display full video titles without premature truncation.",
+       "Hiển thị tiêu đề dài hơn: mở rộng độ dài tiêu đề hiển thị tối đa lên đến 34 ký tự giúp đọc trọn vẹn tên bài hát và video rõ ràng.")]),
+
     ("1.69", "2026-09-05",
      ("YouTube: Default Music/KPOP/USUK/Tiktok presets, Favorites tab, keyword deletion, clean responsive thumbnails & load more",
       "YouTube: Mặc định Music, KPOP, USUK, Tiktok; tab Yêu thích; xóa từ khóa; thumbnail vừa vặn không tràn viền và tải thêm video"),
