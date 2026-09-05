@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.66", "2026-09-05",
+     ("Fix infinite OTA update loop for Java runtime (JM 1.0.5) and optimize startup checks",
+      "Sửa triệt để lỗi lặp cập nhật OTA giả lập Java J2ME (JM 1.0.5) và tối ưu kiểm tra runtime"),
+     [("Prevent startup payload overwrite: fixed runtime_is_stale() incorrectly wiping JM 1.0.5 with legacy bundled payload on application startup.",
+       "Ngăn chặn ghi đè khi khởi động: khắc phục lỗi runtime_is_stale() ngộ nhận và tự động bung gói payload cũ đè lên bản mới JM 1.0.5 mỗi khi mở app."),
+      ("Dynamic user config exclusion: removed mutable graphics.cfg from static hash verification in manifest so in-game display mode changes do not trigger false-positive updates.",
+       "Tách biệt tệp cấu hình động: loại bỏ graphics.cfg khỏi danh sách kiểm tra hash tĩnh trong manifest để việc đổi chế độ hiển thị trong game không bị hiểu nhầm là có bản cập nhật mới.")]),
+
     ("1.65", "2026-09-05",
      ("Update Java J2ME emulator (JM 1.0.5): on-screen text input, diagonal D-pad, hotkeys, display mode toggle",
       "Cập nhật giả lập Java J2ME (JM 1.0.5): bàn phím ảo gõ chữ, D-pad chéo, phím tắt 1/3/7/9, đổi chế độ hiển thị"),
