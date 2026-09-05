@@ -549,6 +549,14 @@ def apply_update(manifest, files):
             pass
     _purge_pycache()
 
+    # Dung daemon cu de lan khoi dong ke tiep nap code va hieu ung moi
+    try:
+        from . import ledctl
+        if ledctl.is_running():
+            ledctl.stop()
+    except Exception:
+        pass
+
     shutil.rmtree(STAGING_DIR, ignore_errors=True)
     print("Update installed: %d file(s) -> %s" % (moved, manifest["version"]))
     return True

@@ -109,9 +109,9 @@ def run(config_path=ledconf.CONFIG_PATH, root=led.SYSFS, stop=None):
 
             p = ledconf.params(w.cfg)
             for z, rgb in frame(zones, now - t0, p).items():
+                led.set_color(z, rgb, root=root)
                 if WRITE_EFFECT_EVERY_FRAME:
                     led.set_effect(z, led.EFFECT_STATIC, root=root)
-                led.set_color(z, rgb, root=root)
 
             slack = period - (time.monotonic() - now)
             if slack > 0:

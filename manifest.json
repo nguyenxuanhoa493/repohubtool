@@ -1,12 +1,12 @@
 {
-  "version": "1.66",
+  "version": "1.67",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T20:12:00+0700",
+  "built": "2026-09-05T20:55:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa triệt để lỗi lặp cập nhật OTA giả lập Java J2ME (JM 1.0.5) và tối ưu kiểm tra runtime",
-    "en": "Fix infinite OTA update loop for Java runtime (JM 1.0.5) and optimize startup checks"
+    "vi": "Khắc phục triệt để lỗi theme LED mới: tối ưu nháy sáng liên tục, tự khởi động lại daemon nạp hiệu ứng mới",
+    "en": "Fix new LED themes: continuous vibrant strobe & pulse, auto-restart daemon to load new effects"
   },
   "remove": [
     "app.pyc",
@@ -187,8 +187,8 @@
     },
     {
       "path": "app.py",
-      "size": 282750,
-      "sha256": "78b3ae8762baaba74bfa0dc22e04cb20f9117ba513ee2eb4b0a8e5b26de73ad0"
+      "size": 282568,
+      "sha256": "da235dec509d1284497b7f33b10ac030e68166c03072267b4d40cd00280a4949"
     },
     {
       "path": "assets/fallback.ttf",
@@ -337,18 +337,18 @@
     },
     {
       "path": "rh/ledctl.py",
-      "size": 9980,
-      "sha256": "af9e0436e60ed432ea22115a5f814ff6f1b10f88f43d96167c8b9b12796d5992"
+      "size": 10123,
+      "sha256": "deecce47e998202a779d49aec080381613c12a2427a6d44979f809e6b318003f"
     },
     {
       "path": "rh/leddaemon.py",
       "size": 6112,
-      "sha256": "f7eb72a3e89725e5d1ec051b11ebed287e6eda86a53e3ba4d173b63c81b0c279"
+      "sha256": "b261ff2f4861ac5c183d9445e5de8d4ec517bc5d934b97bfbc38d499e029e307"
     },
     {
       "path": "rh/ledfx.py",
-      "size": 8829,
-      "sha256": "7bc294dc03c18d1b259ad52b1135640b6a6b0f4041e9489ef0d2569f4f8cf634"
+      "size": 9427,
+      "sha256": "72e3e3ff08c2d95cea07c6e17e0439d2b845bbcc0ab9d20840df40aaa1fb4ac7"
     },
     {
       "path": "rh/ledthemes.py",
@@ -402,13 +402,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 23049,
-      "sha256": "327ff2bc00b34105082076ecdec7553c5d4395a4e1d61869571f2f50ef5ea71b"
+      "size": 23252,
+      "sha256": "f73c92433beb8f74d3ba14a86c4490b04b383535cdece14e59ab6b37461587b8"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "07bd43c6b17210c1e5520c39151d6f5c3ad92d2de2d900c7599e24d6fbed1df5"
+      "sha256": "c827b5539aa09a24767b81c570942b2fa848c6918c63c7a22d3b2c22d3c470dc"
     },
     {
       "path": "rh/yt.py",

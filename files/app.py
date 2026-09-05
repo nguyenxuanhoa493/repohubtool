@@ -3230,7 +3230,7 @@ def main():
                         if not ledconf.save(new_cfg):
                             toast_msg = tr("led_save_failed")
                             toast_timer = time.time()
-                        elif ledctl.start():
+                        elif ledctl.restart():
                             led_cfg = new_cfg
                         else:
                             # Khong tha duoc: tra file ve nguyen trang, neu
@@ -3277,6 +3277,8 @@ def main():
                     if not ledconf.save(led_cfg):
                         toast_msg = tr("led_save_failed")
                         toast_timer = time.time()
+                    if led_cfg.get("enabled"):
+                        ledctl.restart()
                     led_preview = None
                     screen_stack.pop()
                 elif item_id == "led_none":
@@ -3619,11 +3621,8 @@ def main():
                 # dung. Dung nghia la "con tro chinh la nut xem thu".
                 if new_theme and new_theme != led_preview:
                     led_preview = new_theme
-                    # Khong toast neu ghi hong: day la buoc xem thu, chay moi
-                    # lan con tro di chuyen. Neu the hong that, toast se lap
-                    # lai lien tuc trong luc luot qua 12 bo mau - ca A (chon
-                    # that) va B (tra ve nguyen trang) van kiem tra ket qua
-                    # ghi, nen loi that su van duoc bao, chi khong bao o day.
+                    if led_cfg.get("enabled") and not ledctl.is_running():
+                        ledctl.start()
                     ledconf.save(ledconf.apply_theme(led_cfg, new_theme))
 
         # A finished update swapped the bytecode underneath this process. Hand

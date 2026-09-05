@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.67", "2026-09-05",
+     ("Fix new LED themes: continuous vibrant strobe & pulse, auto-restart daemon to load new effects",
+      "Khắc phục triệt để lỗi theme LED mới: tối ưu nháy sáng liên tục, tự khởi động lại daemon nạp hiệu ứng mới"),
+     [("Redesigned high-energy effects: eliminated pitch-black dead times and 30ms aliasing dropouts in strobe, lightning, pulse_bass, hyper_chase, and chaos. All effects now maintain a rich ambient energy floor with blazing bursts.",
+       "Thiết kế lại 5 hiệu ứng LED sôi động: loại bỏ hoàn toàn tình trạng đèn bị tối đen kéo dài và lỗi mất khung hình ở 30 FPS. Các hiệu ứng strobe, sấm sét, bass drop, drift và glitch giờ duy trì nền ánh sáng sống động liên tục cùng các luồng chớp/sóng xung kích bốc lửa."),
+      ("Hardware write order fix: corrected sysfs driver latch sequence in leddaemon to write color before triggering static effect, ensuring every single frame renders accurately on hardware.",
+       "Sửa thứ tự kích hoạt driver phần cứng: đảo lại thứ tự ghi màu trước rồi mới kích hoạt chốt effect STATIC trong sysfs, giúp phần cứng LED nhận diện và chuyển màu chính xác từng khung hình."),
+      ("Auto-restart stale background daemon: automatically stop and restart the LED background process upon update and theme selection so newly published effects load immediately into RAM without requiring a reboot.",
+       "Tự động khởi động lại tiến trình daemon: tự động tắt và khởi động lại tiến trình chạy ngầm LED khi cập nhật hoặc chọn theme, giúp bộ nhớ nạp ngay hiệu ứng mới nhất mà không bị giữ lại code cũ trong RAM.")]),
+
     ("1.66", "2026-09-05",
      ("Fix infinite OTA update loop for Java runtime (JM 1.0.5) and optimize startup checks",
       "Sửa triệt để lỗi lặp cập nhật OTA giả lập Java J2ME (JM 1.0.5) và tối ưu kiểm tra runtime"),
