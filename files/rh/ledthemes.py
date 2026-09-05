@@ -16,6 +16,35 @@ THEMES = [
      "effect": "breathe", "colors": [(0x88, 0x00, 0xCC)],
      "speed": 1.0, "brightness": 60},
 
+    {"id": "rave", "vi": "Vũ trường EDM", "en": "EDM Rave",
+     "effect": "strobe", "colors": [(0xFF, 0x00, 0x80), (0x00, 0xE5, 0xFF)],
+     "speed": 1.3, "brightness": 85},
+
+    {"id": "bass_drop", "vi": "Bass Drop", "en": "Bass Drop",
+     "effect": "pulse_bass", "colors": [(0x39, 0xFF, 0x14), (0x4B, 0x00, 0x82)],
+     "speed": 1.2, "brightness": 80},
+
+    {"id": "thunder", "vi": "Bão sấm sét", "en": "Thunderstorm",
+     "effect": "lightning", "colors": [(0xE0, 0xF0, 0xFF), (0x2A, 0x00, 0x60)],
+     "speed": 1.1, "brightness": 85},
+
+    {"id": "glitch", "vi": "Cyber Glitch", "en": "Cyber Glitch",
+     "effect": "chaos", "colors": [(0x00, 0xFF, 0xCC), (0xFF, 0x00, 0x7F),
+                                   (0xFF, 0xEE, 0x00)],
+     "speed": 1.2, "brightness": 85},
+
+    {"id": "drift", "vi": "Đua xe Drift", "en": "Night Drift",
+     "effect": "hyper_chase", "colors": [(0xFF, 0xD7, 0x00), (0xFF, 0x22, 0x00)],
+     "speed": 1.3, "brightness": 85},
+
+    {"id": "red_alert", "vi": "Báo động đỏ", "en": "Red Alert",
+     "effect": "strobe", "colors": [(0xFF, 0x00, 0x00), (0x40, 0x00, 0x00)],
+     "speed": 1.4, "brightness": 90},
+
+    {"id": "supernova", "vi": "Siêu tân tinh", "en": "Supernova",
+     "effect": "pulse_bass", "colors": [(0xFF, 0x55, 0x00), (0xFF, 0xFF, 0xE0)],
+     "speed": 1.3, "brightness": 90},
+
     {"id": "cyber", "vi": "Cyberpunk", "en": "Cyberpunk",
      "effect": "wave", "colors": [(0xFF, 0x00, 0x66), (0x00, 0xE5, 0xFF)],
      "speed": 1.0, "brightness": 70},

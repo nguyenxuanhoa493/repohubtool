@@ -137,6 +137,114 @@ def scanner(t, pos, colors, speed):
     return _scale(colors[0], 0.03 + 0.97 * k * k)
 
 
+def strobe(t, pos, colors, speed):
+    # Chop giat vu truong (Rave Strobe): xung chop cuc ngan, sang gat,
+    # luan phien giua trai va phai tao cam giac soi dong manh me.
+    period = 0.36 / speed
+    cycle = (t % period) / period
+    is_left = pos < 0.5
+
+    # Nua dau chu ky danh cho ben trai, nua sau danh cho ben phai
+    sub_phase = (cycle * 2.0) % 1.0
+    side_active = (cycle < 0.5) if is_left else (cycle >= 0.5)
+
+    # Hai nhip chop kep (double-flash) sac nhon moi luot
+    flash = (sub_phase < 0.22) or (0.35 <= sub_phase < 0.58)
+    on = side_active and flash
+
+    col = colors[0] if is_left else _second(colors, colors[0])
+    return _scale(col, 1.0 if on else 0.0)
+
+
+def lightning(t, pos, colors, speed):
+    # Sam set giong bao: nen toi sam, bat ngo no chum tia chop sang loa.
+    period = 1.6 / speed
+    cycle_idx = math.floor(t / period)
+    local_t = t - cycle_idx * period
+
+    # Thoi diem set danh ngau nhien trong chu ky
+    strike_at = 0.2 + 0.9 * _noise(cycle_idx, 17.0)
+
+    # Lech pha khong gian: set giat tu trai sang phai hoac nguoc lai
+    sweep_dir = _noise(cycle_idx, 5.0) > 0.5
+    p = pos if sweep_dir else (1.0 - pos)
+    dt = local_t - (strike_at + p * 0.04)
+
+    # Chum 3 tia chop gắt
+    flash = 0.0
+    if 0.0 <= dt < 0.26:
+        if dt < 0.05:
+            flash = 0.9
+        elif 0.08 <= dt < 0.13:
+            flash = 0.75
+        elif 0.16 <= dt < 0.25:
+            flash = 1.0
+
+    bg = _scale(_second(colors, (15, 0, 35)), 0.06)
+    col = colors[0]
+    if flash > 0.8:
+        col = _lerp(col, (255, 255, 255), 0.8)
+    return _lerp(bg, col, flash)
+
+
+def pulse_bass(t, pos, colors, speed):
+    # Dap Bass EDM: soc dien no tu tam lan ra hai mep voi luc dap manh.
+    bpm_period = 0.46 / speed  # ~130 BPM
+    phase = (t % bpm_period) / bpm_period
+
+    # Khoang cach tu tam may (pos = 0.5) ra hai mep (0.0 o tam, 1.0 o hai ria)
+    dist = abs(pos - 0.5) * 2.0
+
+    # Song kich dong lan toa ra ngoai
+    shock_pos = phase * 1.5
+    hit = max(0.0, 1.0 - abs(dist - shock_pos) / 0.3)
+
+    # Luc dap giam nhanh theo ham mu nhu tieng trong bass 808
+    punch = math.exp(-4.5 * phase)
+    k = min(1.0, punch * 0.85 + hit * 0.65)
+
+    bg = _scale(_second(colors, (0, 0, 0)), 0.04)
+    return _lerp(bg, colors[0], k)
+
+
+def hyper_chase(t, pos, colors, speed):
+    # Vet duoi sieu toc: diem sang quet xe gio qua than may, duoi lua ruc chay.
+    period = 0.38 / speed
+    head = (t % period) / period
+
+    dist = (head - pos) % 1.0
+    tail = max(0.0, 1.0 - dist / 0.6) ** 2.2
+    head_burst = 1.0 if dist < 0.07 else 0.0
+
+    col_tail = _second(colors, (255, 60, 0))
+    col_head = colors[0]
+    c = _lerp(col_tail, col_head, tail)
+    if head_burst:
+        c = _lerp(c, (255, 255, 255), 0.75)
+    return _scale(c, max(0.02, tail))
+
+
+def chaos(t, pos, colors, speed):
+    # Cyber Glitch: loan nhip dien tu toc do cao, moi vung chop giat doc lap.
+    fps = 13.0 * speed
+    slot = math.floor(t * fps)
+
+    n1 = _noise(slot, pos * 19.0 + 3.1)
+    n2 = _noise(slot + 57, pos * 11.0 + 7.3)
+
+    if n1 < 0.25:
+        return (0, 0, 0)
+
+    n_col = len(colors)
+    c = colors[int(n1 * n_col * 3.0) % n_col] if n_col > 1 else colors[0]
+
+    if n2 > 0.85:
+        return (255, 255, 255)
+
+    intensity = 0.35 + 0.65 * n2
+    return _scale(c, intensity)
+
+
 EFFECTS = {
     "solid": solid,
     "breathe": breathe,
@@ -148,6 +256,11 @@ EFFECTS = {
     "fire": fire,
     "police": police,
     "scanner": scanner,
+    "strobe": strobe,
+    "lightning": lightning,
+    "pulse_bass": pulse_bass,
+    "hyper_chase": hyper_chase,
+    "chaos": chaos,
 }
 
 # Suy ra chu khong chep tay: hai danh sach nhac lai cung mot thu, va chi can

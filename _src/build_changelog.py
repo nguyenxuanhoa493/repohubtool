@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.64", "2026-09-05",
+     ("Add 5 high-energy LED effects (rave strobe, thunderstorm, bass drop) and 7 vibrant themes",
+      "Bổ sung 5 hiệu ứng LED sôi động (chớp giật strobe, bão sấm sét, bass drop...) và 7 theme LED mới"),
+     [("5 new mathematical LED effects: strobe (fast double-flash rave party), lightning (intermittent violent thunderstorm flash), pulse_bass (130 BPM subwoofer shockwave), hyper_chase (speed racer comet trail), and chaos (cyber glitch).",
+       "5 hiệu ứng LED toán học tốc độ cao: strobe (vũ trường EDM chớp kép trái/phải liên tục), lightning (bão sấm sét chùm tia chớp gắt), pulse_bass (đập bass EDM 130 BPM lan toả từ tâm), hyper_chase (đua xe vệt lửa siêu tốc) và chaos (glitch loạn nhịp arcade)."),
+      ("7 dynamic LED themes: EDM Rave, Bass Drop, Thunderstorm, Cyber Glitch, Night Drift, Red Alert, and Supernova, available immediately in Settings > LED Lights.",
+       "7 bộ theme LED mới cực cháy: Vũ trường EDM, Bass Drop, Bão sấm sét, Cyber Glitch, Đua xe Drift, Báo động đỏ và Siêu tân tinh; chọn và xem thử trực quan trong Cài đặt > Đèn LED.")]),
+
     ("1.63", "2026-09-05",
      ("Support TrimUI Smart Pro S (TSPS) and multi-device SDL2 library search",
       "Hỗ trợ máy mới TrimUI Smart Pro S (TSPS), tối ưu tìm nạp thư viện SDL2 đa hệ máy"),
