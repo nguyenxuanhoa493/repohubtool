@@ -3799,12 +3799,17 @@ def main():
                         title_col = (255, 255, 255) if is_sel else (205, 215, 230)
                         draw_text(disp_title, font_sub, cx + 14, text_y, title_col[0], title_col[1], title_col[2])
 
-                        # Channel name
+                        # Channel name & upload time
                         chan_name = v_data.get("channel", "")
-                        if len(chan_name) > 32:
-                            chan_name = chan_name[:30] + "..."
+                        pub_time = v_data.get("pub", "")
+                        if pub_time:
+                            info_str = f"{chan_name} • {pub_time}" if chan_name else pub_time
+                        else:
+                            info_str = chan_name
+                        if len(info_str) > 34:
+                            info_str = info_str[:32] + "..."
                         chan_col = (0, 220, 240) if is_sel else (120, 145, 175)
-                        draw_text(chan_name, font_badge, cx + 14, text_y + 24, chan_col[0], chan_col[1], chan_col[2])
+                        draw_text(info_str, font_badge, cx + 14, text_y + 24, chan_col[0], chan_col[1], chan_col[2])
 
         # ----------------------------------------------------------------------
         # SCREEN: SEARCH INPUT & VIRTUAL KEYBOARD WITH SYSTEM FILTER BAR
