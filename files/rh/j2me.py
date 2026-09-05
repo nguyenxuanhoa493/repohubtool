@@ -142,7 +142,7 @@ _VERSIONED = {"jar": "zulu17/bin/freej2me-sdl.jar",
 # In-app OTA updates download these binaries directly without replacing
 # the 66MB payload archive, so a card with these sizes is up to date.
 CURRENT_RUNTIME_SIZES = {
-    "jar": 1457649,
+    "jar": 1457621,
     "sdl": 94816,
 }
 
