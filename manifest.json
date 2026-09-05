@@ -1,11 +1,11 @@
 {
-  "version": "1.62",
+  "version": "1.63",
   "python": "any",
-  "built": "2026-09-05T15:55:00+0700",
+  "built": "2026-09-05T16:38:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tối ưu thao tác hộp thoại xác nhận thoát: bấm [B] Thoát hẳn, [A] Ở lại trực tiếp",
-    "en": "Direct hotkey controls for exit modal: [B] Exit completely, [A] Stay"
+    "vi": "Hỗ trợ máy mới TrimUI Smart Pro S (TSPS), tối ưu tìm nạp thư viện SDL2 đa hệ máy",
+    "en": "Support TrimUI Smart Pro S (TSPS) and optimize SDL2 library paths across handhelds"
   },
   "remove": [
     "app.pyc",
@@ -395,7 +395,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "afac533531b6de901aebe51f8d0e1c3f2c5cced896e938bdc0b21195b0bf003b"
+      "sha256": "95c6cd62174f4b75f0c210aa947a4c52b43a381758cd23f6f6a4e354a49d3bfb"
     },
     {
       "path": "rh/yt.py",
