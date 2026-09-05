@@ -1,11 +1,11 @@
 {
-  "version": "1.59",
+  "version": "1.60",
   "python": "any",
-  "built": "2026-09-05T07:15:00+0700",
+  "built": "2026-09-05T08:25:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Nâng cấp toàn diện YouTube: sắp xếp video mới nhất, tải trước thông minh và thanh tải HUD không chặn",
-    "en": "Comprehensive YouTube upgrade: chronological sorting, speculative preloading, and non-blocking HUD"
+    "vi": "Trải nghiệm YouTube mượt mà: kết nối nguồn phát không nháy màn hình, sắp xếp video mới nhất và tải trước thông minh",
+    "en": "Smooth YouTube playback: zero screen flicker when connecting, real-time video sorting, and speculative preload"
   },
   "remove": [
     "app.pyc",
@@ -174,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 274549,
-      "sha256": "4bfbd69fe7f889ca7943313ff0508c44a73b3021a1d1be0a983227b839fc05ce"
+      "size": 278999,
+      "sha256": "7eb918b409eb4fecd1bb95496a877635140cb7cac1dbed78df641f8ddb82144a"
     },
     {
       "path": "assets/fallback.ttf",
@@ -395,7 +395,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "e4a4e88f51a600c3ba819b49383e886ac635a34a9b8f4c41cd056e920c19daa4"
+      "sha256": "dd7cdcb815de2b25195d79f30c5491264fe181002cbc1a34edcb8635043a75a4"
     },
     {
       "path": "rh/yt.py",
@@ -404,8 +404,8 @@
     },
     {
       "path": "rh/yt_player.py",
-      "size": 14081,
-      "sha256": "3a4687f1df2a58329f2d21111973f527bb927b06aa6a2992b9e6d6eaa195220f"
+      "size": 14116,
+      "sha256": "af0884ea24829adc3651783de6e59bf6e531ad5e5a0ee54c5cc17cbd404db43e"
     },
     {
       "path": "streamer.py",
