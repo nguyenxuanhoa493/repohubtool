@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.62", "2026-09-05",
+     ("Direct hotkey controls for exit modal: [B] Exit completely, [A] Stay",
+      "Tối ưu thao tác hộp thoại xác nhận thoát: bấm [B] Thoát hẳn, [A] Ở lại trực tiếp"),
+     [("Instant hotkey actions: eliminated multi-step D-pad selection; pressing button [B] immediately quits the application, while button [A] instantly returns to the app.",
+       "Thao tác phím trực tiếp: loại bỏ bước điều hướng D-pad qua lại rườm rà; bấm ngay phím [B] để thoát hẳn ứng dụng, hoặc phím [A] để ở lại ngay lập tức."),
+      ("Visual action buttons: distinct dedicated styling for each action ([A] Stay in green, [B] Exit completely in red) with clear instructional subtitles.",
+       "Giao diện nút trực quan: hiển thị rõ ràng 2 nút hành động với màu sắc đặc trưng ([A] Ở lại màu xanh lá, [B] Thoát hẳn màu đỏ) kèm phụ đề hướng dẫn thao tác dứt khoát.")]),
+
     ("1.61", "2026-09-05",
      ("Exit confirmation modal on home screen to prevent accidental quitting",
       "Thêm hộp thoại xác nhận thoát ứng dụng ở menu chính để tránh bấm nhầm"),
