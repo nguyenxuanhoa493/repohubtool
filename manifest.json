@@ -174,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 283238,
-      "sha256": "e0955198100d80c288e55ce631608b5d3acc3e4f76a5cca0edb7600e7d8119da"
+      "size": 283287,
+      "sha256": "046af1171fff935f60a865ce0a0face44416df3a1afb0e57e3e3b0da3d44fe5a"
     },
     {
       "path": "assets/fallback.ttf",
@@ -304,8 +304,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 34988,
-      "sha256": "25902255f67b1b5d7b2f71e364559c379d7fba6b56a754220023936cc7c8544d"
+      "size": 34991,
+      "sha256": "c22fa82369e4d48da768cee4ed0928ba7e5cf0cc0984d5ea6ced6a9a0d254078"
     },
     {
       "path": "rh/j2me.py",
