@@ -174,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 283287,
-      "sha256": "046af1171fff935f60a865ce0a0face44416df3a1afb0e57e3e3b0da3d44fe5a"
+      "size": 282031,
+      "sha256": "c6ac045eaa7e168d18072ac2afd72bed57b92c4b0e7970ddceaeec3229bfed67"
     },
     {
       "path": "assets/fallback.ttf",
