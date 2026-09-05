@@ -625,13 +625,23 @@ def main():
     search_query = ""
     search_results_list = []
 
-    # YouTube InnerTube state
+    # YouTube InnerTube & Favorites state
+    yt_favorites_list = yt.load_favorites()
     yt_trending_list = []
     yt_search_query = ""
     yt_search_results_list = []
-    yt_mode = "trending" # "trending" or "search"
-    yt_recent_queries = yt.load_search_history()
+
+    def build_yt_recent_queries():
+        base_queries = yt.load_search_history()
+        fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
+        if yt_favorites_list:
+            return [fav_label] + [q for q in base_queries if q != fav_label]
+        else:
+            return [q for q in base_queries if q != fav_label]
+
+    yt_recent_queries = build_yt_recent_queries()
     yt_query_idx = 0
+    yt_mode = "favorites" if yt_favorites_list else "trending"
     yt_query_cache = {}
     yt_input_text = ""
     yt_last_hover_id = None
@@ -642,6 +652,10 @@ def main():
         "query": "",
         "id": 0,
         "start_time": 0.0,
+    }
+    yt_load_more_state = {
+        "active": False,
+        "query": "",
     }
     yt_launch_state = {
         "active": False,
@@ -838,6 +852,42 @@ def main():
 
         threading.Thread(target=_worker, daemon=True).start()
 
+    def load_more_yt_videos(query_str):
+        nonlocal yt_search_results_list, yt_trending_list, toast_msg, toast_timer
+        if yt_load_more_state.get("active"):
+            return
+        yt_load_more_state["active"] = True
+        yt_load_more_state["query"] = query_str
+
+        def _more_worker():
+            nonlocal yt_search_results_list, yt_trending_list, toast_msg, toast_timer
+            try:
+                more_v, next_token = yt.fetch_more_youtube(query_str)
+                if more_v:
+                    if yt_mode == "trending":
+                        exist_ids = {v.get("id") for v in yt_trending_list}
+                        to_add = [v for v in more_v if v.get("id") not in exist_ids]
+                        yt_trending_list.extend(to_add)
+                        yt.save_feed_cache("trending", yt_trending_list)
+                        _prefetch_yt_thumbs(to_add, priority_count=len(to_add))
+                    else:
+                        exist_ids = {v.get("id") for v in yt_search_results_list}
+                        to_add = [v for v in more_v if v.get("id") not in exist_ids]
+                        yt_search_results_list.extend(to_add)
+                        yt_query_cache[query_str] = yt_search_results_list
+                        yt.save_feed_cache(query_str, yt_search_results_list)
+                        _prefetch_yt_thumbs(to_add, priority_count=len(to_add))
+                    toast_msg = f"Đã tải thêm {len(more_v)} video" if state.current_lang == "VI" else f"Loaded {len(more_v)} more videos"
+                else:
+                    toast_msg = "Không còn video nào nữa" if state.current_lang == "VI" else "No more videos"
+            except Exception as e:
+                toast_msg = f"Lỗi: {e}"
+            finally:
+                yt_load_more_state["active"] = False
+                toast_timer = time.time()
+
+        threading.Thread(target=_more_worker, daemon=True).start()
+
     yt_preload_thread = None
 
     def trigger_yt_adjacent_preload():
@@ -853,7 +903,9 @@ def main():
         for idx in (next_idx, prev_idx):
             if 0 <= idx < len(yt_recent_queries):
                 q = yt_recent_queries[idx]
-                if q == "MV Vpop" or idx == 0:
+                if q in ("Yêu thích", "Favorites"):
+                    continue
+                if q == "Music":
                     if not yt_trending_list:
                         candidates.append((q, True))
                 else:
@@ -1746,8 +1798,11 @@ def main():
 
         # YOUTUBE 3x2 GRID VIEW
         elif current_screen == "yt_grid":
-            if yt_mode == "trending":
-                header_title = tr("yt_trending_title")
+            if yt_mode == "favorites":
+                header_title = "Yêu thích" if state.current_lang == "VI" else "Favorites"
+                items = yt_favorites_list or []
+            elif yt_mode == "trending":
+                header_title = "Âm nhạc" if state.current_lang == "VI" else "Music"
                 items = yt_trending_list or []
             else:
                 header_title = f"{tr('yt_search_title')}: \"{yt_search_query}\""
@@ -2795,15 +2850,18 @@ def main():
                             break
 
                     if matched_preset_idx >= 0:
-                        yt_query_idx = matched_preset_idx
+                        yt_recent_queries = build_yt_recent_queries()
+                        try:
+                            yt_query_idx = yt_recent_queries.index(yt.DEFAULT_PRESET_QUERIES[matched_preset_idx])
+                        except ValueError:
+                            yt_query_idx = 0
                     else:
-                        yt_recent_queries = [q for q in yt_recent_queries if q.lower() != q_clean.lower()]
-                        insert_pos = min(len(yt.DEFAULT_PRESET_QUERIES), len(yt_recent_queries))
-                        yt_recent_queries.insert(insert_pos, q_clean)
-                        if len(yt_recent_queries) > 10:
-                            yt_recent_queries = yt_recent_queries[:10]
-                        yt.save_search_history(yt_recent_queries)
-                        yt_query_idx = insert_pos
+                        yt.save_search_history([q_clean] + [q for q in yt.load_search_history() if q.lower() != q_clean.lower()])
+                        yt_recent_queries = build_yt_recent_queries()
+                        try:
+                            yt_query_idx = yt_recent_queries.index(q_clean)
+                        except ValueError:
+                            yt_query_idx = 0
 
                     screen_stack.pop()
                     start_yt_load(q_clean, is_trending=False)
@@ -2824,9 +2882,29 @@ def main():
                 else:
                     yt_input_text += key_val.lower()
 
-        # YOUTUBE 3x2 GRID NAVIGATION: A=PLAY, B=BACK, X=SEARCH, Y=TRENDING, LR=PAGE 6
+        # YOUTUBE 3x2 GRID NAVIGATION: A=PLAY/MORE, B=BACK, X=SEARCH, Y=FAV, SL=DEL, LR=TABS
         elif current_screen == "yt_grid":
-            cur_videos = yt_trending_list if yt_mode == "trending" else yt_search_results_list
+            if yt_mode == "favorites":
+                base_list = yt_favorites_list or []
+            elif yt_mode == "trending":
+                base_list = yt_trending_list or []
+            else:
+                base_list = yt_search_results_list or []
+
+            has_more = False
+            if yt_mode in ("trending", "search") and base_list:
+                cq = "Music" if yt_mode == "trending" else yt_search_query
+                if yt.get_continuation_token(cq):
+                    has_more = True
+
+            cur_videos = list(base_list)
+            if has_more:
+                cur_videos.append({
+                    "id": "__LOAD_MORE__",
+                    "is_load_more": True,
+                    "title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
+                    "disp_title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
+                })
             total_v = len(cur_videos)
 
             if yt_launch_state.get("active"):
@@ -2882,7 +2960,7 @@ def main():
                     # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 2.5s (tránh lag CPU do yt-dlp khi đang lướt)
                     cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < total_v) else None
                     sel_id = cur_v_sel.get("id") if cur_v_sel else None
-                    if sel_id:
+                    if sel_id and sel_id != "__LOAD_MORE__":
                         if sel_id != yt_last_hover_id:
                             yt_last_hover_id = sel_id
                             yt_hover_start_time = time.time()
@@ -2898,49 +2976,57 @@ def main():
 
                     if btn_a and 0 <= selected_idx < total_v:
                         cur_v = cur_videos[selected_idx]
-                        v_id = cur_v.get("id")
-                        if v_id:
-                            ra_bin = "/mnt/SDCARD/RetroArch/ra64.trimui"
-                            ff_core = "/mnt/SDCARD/Emus/FFMPEG/ffmpeg_libretro.so"
-                            if not (os.path.exists(ra_bin) and os.path.exists(ff_core)):
-                                toast_msg = tr("yt_no_player")
-                                toast_timer = time.time()
+                        if cur_v.get("is_load_more"):
+                            if not yt_load_more_state.get("active"):
+                                cq = "Music" if yt_mode == "trending" else yt_search_query
+                                load_more_yt_videos(cq)
                             else:
-                                v_title = cur_v.get("title", v_id)
-                                now = time.time()
-                                cached = yt_player._STREAM_CACHE.get(v_id)
-                                if cached and now < cached[2]:
-                                    _show_yt_handoff_splash(cached[1] or v_title)
-                                    launch_yt_video_handoff(v_id, cached[0], cached[1] or v_title)
-                                    running = False
-                                    break
+                                toast_msg = "Đang tải thêm video..." if state.current_lang == "VI" else "Loading more videos..."
+                                toast_timer = time.time()
+                        else:
+                            v_id = cur_v.get("id")
+                            if v_id:
+                                ra_bin = "/mnt/SDCARD/RetroArch/ra64.trimui"
+                                ff_core = "/mnt/SDCARD/Emus/FFMPEG/ffmpeg_libretro.so"
+                                if not (os.path.exists(ra_bin) and os.path.exists(ff_core)):
+                                    toast_msg = tr("yt_no_player")
+                                    toast_timer = time.time()
                                 else:
-                                    yt_launch_state["active"] = True
-                                    yt_launch_state["v_id"] = v_id
-                                    yt_launch_state["title"] = v_title
-                                    yt_launch_state["status"] = "connecting"
-                                    yt_launch_state["stream_url"] = None
-                                    yt_launch_state["err_msg"] = ""
-                                    req_t = time.time()
-                                    yt_launch_state["start_time"] = req_t
+                                    v_title = cur_v.get("title", v_id)
+                                    now = time.time()
+                                    cached = yt_player._STREAM_CACHE.get(v_id)
+                                    if cached and now < cached[2]:
+                                        _show_yt_handoff_splash(cached[1] or v_title)
+                                        launch_yt_video_handoff(v_id, cached[0], cached[1] or v_title)
+                                        running = False
+                                        break
+                                    else:
+                                        yt_launch_state["active"] = True
+                                        yt_launch_state["v_id"] = v_id
+                                        yt_launch_state["title"] = v_title
+                                        yt_launch_state["status"] = "connecting"
+                                        yt_launch_state["stream_url"] = None
+                                        yt_launch_state["err_msg"] = ""
+                                        req_t = time.time()
+                                        yt_launch_state["start_time"] = req_t
 
-                                    def _extract_worker(vid, t_str, token):
-                                        try:
-                                            s_url, s_t = yt_player.extract_stream_fast(vid)
-                                            if yt_launch_state["active"] and yt_launch_state.get("start_time") == token:
-                                                if s_url:
-                                                    yt_launch_state["stream_url"] = s_url
-                                                    yt_launch_state["title"] = s_t or t_str
-                                                    yt_launch_state["status"] = "ready"
-                                                else:
+                                        def _extract_worker(vid, t_str, token):
+                                            try:
+                                                s_url, s_t = yt_player.extract_stream_fast(vid)
+                                                if yt_launch_state["active"] and yt_launch_state.get("start_time") == token:
+                                                    if s_url:
+                                                        yt_launch_state["stream_url"] = s_url
+                                                        yt_launch_state["title"] = s_t or t_str
+                                                        yt_launch_state["status"] = "ready"
+                                                    else:
+                                                        yt_launch_state["status"] = "error"
+                                                        yt_launch_state["err_msg"] = "Không lấy được luồng phát video!" if state.current_lang == "VI" else "Failed to extract stream URL!"
+                                            except Exception as ex:
+                                                if yt_launch_state["active"] and yt_launch_state.get("start_time") == token:
                                                     yt_launch_state["status"] = "error"
-                                                    yt_launch_state["err_msg"] = "Không lấy được luồng phát video!" if state.current_lang == "VI" else "Failed to extract stream URL!"
-                                        except Exception as ex:
-                                            if yt_launch_state["active"] and yt_launch_state.get("start_time") == token:
-                                                yt_launch_state["status"] = "error"
-                                                yt_launch_state["err_msg"] = str(ex)
+                                                    yt_launch_state["err_msg"] = str(ex)
 
-                                    threading.Thread(target=_extract_worker, args=(v_id, v_title, req_t), daemon=True).start()
+                                        threading.Thread(target=_extract_worker, args=(v_id, v_title, req_t), daemon=True).start()
 
                 # L1 / R1: Switch recent search keywords
                 if (btn_l1 or btn_r1) and yt_recent_queries:
@@ -2954,7 +3040,14 @@ def main():
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
 
-                    if new_q == "MV Vpop" or yt_query_idx == 0:
+                    fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
+                    if new_q == fav_label:
+                        yt_mode = "favorites"
+                        yt_loading_state["active"] = False
+                        _prefetch_yt_thumbs(yt_favorites_list)
+                        toast_msg = "Danh sách Yêu thích" if state.current_lang == "VI" else "Favorites List"
+                        toast_timer = time.time()
+                    elif new_q == "Music":
                         yt_mode = "trending"
                         if not yt_trending_list:
                             cached_tr, _ = yt.load_feed_cache("trending")
@@ -2964,12 +3057,12 @@ def main():
                                 _prefetch_yt_thumbs(yt_trending_list)
                                 trigger_yt_adjacent_preload()
                             else:
-                                start_yt_load("MV Vpop", is_trending=True)
+                                start_yt_load("Music", is_trending=True)
                         else:
                             yt_loading_state["active"] = False
                             _prefetch_yt_thumbs(yt_trending_list)
                             trigger_yt_adjacent_preload()
-                        toast_msg = "Chủ đề: MV Vpop (Mới nhất)" if state.current_lang == "VI" else "Topic: MV Vpop (Latest)"
+                        toast_msg = "Chủ đề: Âm nhạc" if state.current_lang == "VI" else "Topic: Music"
                         toast_timer = time.time()
                     else:
                         yt_mode = "search"
@@ -2993,41 +3086,68 @@ def main():
                         toast_msg = f"Từ khóa: {new_q}" if state.current_lang == "VI" else f"Keyword: {new_q}"
                         toast_timer = time.time()
 
-                    items = yt_trending_list if yt_mode == "trending" else yt_search_results_list
-                    cur_videos = items
-                    total_v = len(cur_videos)
-
                 if btn_x: # Press X to open Search
                     selected_indices["yt_search_input"] = 0
                     yt_input_text = ""
                     kb_cursor = [0, 0]
                     screen_stack.append("yt_search_input")
 
-                elif btn_y: # Press Y to return to trending MV Vpop
-                    if yt_mode == "search" or yt_query_idx != 0:
-                        yt_query_idx = 0
-                        yt_mode = "trending"
-                        selected_idx = 0
-                        selected_indices["yt_grid"] = 0
-                        scroll_offsets["yt_grid"] = 0
-                        if not yt_trending_list:
-                            cached_tr, _ = yt.load_feed_cache("trending")
-                            if cached_tr:
-                                yt_trending_list = cached_tr
-                                yt_loading_state["active"] = False
-                                _prefetch_yt_thumbs(yt_trending_list)
-                                trigger_yt_adjacent_preload()
+                elif btn_y: # Press Y to Toggle Favorite
+                    if 0 <= selected_idx < total_v:
+                        cur_v = cur_videos[selected_idx]
+                        if not cur_v.get("is_load_more"):
+                            new_favs, is_added = yt.toggle_favorite(cur_v, yt_favorites_list)
+                            yt_favorites_list = new_favs
+                            yt_recent_queries = build_yt_recent_queries()
+                            fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
+                            if yt_mode == "favorites":
+                                if not yt_favorites_list:
+                                    yt_mode = "trending"
+                                    yt_query_idx = 0
+                                    selected_idx = 0
+                                    selected_indices["yt_grid"] = 0
+                                    scroll_offsets["yt_grid"] = 0
+                                    if not yt_trending_list:
+                                        start_yt_load("Music", is_trending=True)
+                                else:
+                                    selected_idx = min(selected_idx, len(yt_favorites_list) - 1)
+                                    selected_indices["yt_grid"] = selected_idx
+                            toast_msg = ("Đã thêm vào Yêu thích ❤️" if is_added else "Đã xóa khỏi Yêu thích") if state.current_lang == "VI" else ("Added to Favorites ❤️" if is_added else "Removed from Favorites")
+                            toast_timer = time.time()
+
+                elif btn_f1: # Press SELECT to delete custom search keyword
+                    if yt_recent_queries and (0 <= yt_query_idx < len(yt_recent_queries)):
+                        cur_q = yt_recent_queries[yt_query_idx]
+                        fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
+                        protected_set = set(yt.DEFAULT_PRESET_QUERIES) | {fav_label}
+                        if cur_q not in protected_set:
+                            yt.remove_search_history_item(cur_q)
+                            yt_query_cache.pop(cur_q, None)
+                            yt_recent_queries = build_yt_recent_queries()
+                            yt_query_idx = max(0, min(yt_query_idx - 1, len(yt_recent_queries) - 1))
+                            selected_idx = 0
+                            selected_indices["yt_grid"] = 0
+                            scroll_offsets["yt_grid"] = 0
+
+                            new_q = yt_recent_queries[yt_query_idx] if yt_recent_queries else ""
+                            if new_q == fav_label:
+                                yt_mode = "favorites"
+                            elif new_q == "Music":
+                                yt_mode = "trending"
+                                if not yt_trending_list:
+                                    start_yt_load("Music", is_trending=True)
                             else:
-                                start_yt_load("MV Vpop", is_trending=True)
+                                yt_mode = "search"
+                                yt_search_query = new_q
+                                if new_q not in yt_query_cache:
+                                    start_yt_load(new_q, is_trending=False)
+                                else:
+                                    yt_search_results_list = yt_query_cache[new_q]
+                            toast_msg = f"Đã xóa từ khóa: {cur_q}" if state.current_lang == "VI" else f"Deleted keyword: {cur_q}"
+                            toast_timer = time.time()
                         else:
-                            yt_loading_state["active"] = False
-                            _prefetch_yt_thumbs(yt_trending_list)
-                            trigger_yt_adjacent_preload()
-                        toast_msg = "Đã chuyển về MV Vpop" if state.current_lang == "VI" else "Switched to MV Vpop"
-                        toast_timer = time.time()
-                        items = yt_trending_list or []
-                        cur_videos = items
-                        total_v = len(cur_videos)
+                            toast_msg = "Không thể xóa từ khóa mặc định" if state.current_lang == "VI" else "Cannot delete default keyword"
+                            toast_timer = time.time()
 
                 elif btn_b:
                     if len(screen_stack) > 1:
@@ -3376,27 +3496,36 @@ def main():
                     toast_msg = tr("j2me_render_note")
                     toast_timer = time.time()
                 elif item_id == "nav_youtube":
-                    yt_recent_queries = yt.load_search_history()
-                    yt_query_idx = 0
-                    yt_mode = "trending"
+                    yt_favorites_list = yt.load_favorites()
+                    yt_recent_queries = build_yt_recent_queries()
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
-                    if not yt_trending_list:
-                        cached_items, cached_ts = yt.load_feed_cache("trending")
-                        if cached_items:
-                            yt_trending_list = cached_items
+
+                    if yt_favorites_list:
+                        yt_mode = "favorites"
+                        yt_query_idx = 0
+                        yt_loading_state["active"] = False
+                        _prefetch_yt_thumbs(yt_favorites_list)
+                        trigger_yt_adjacent_preload()
+                    else:
+                        yt_mode = "trending"
+                        yt_query_idx = 0
+                        if not yt_trending_list:
+                            cached_items, cached_ts = yt.load_feed_cache("trending")
+                            if cached_items:
+                                yt_trending_list = cached_items
+                                yt_loading_state["active"] = False
+                                _prefetch_yt_thumbs(yt_trending_list)
+                                if time.time() - cached_ts > 7200:
+                                    start_yt_load("Music", is_trending=True, is_bg_refresh=True)
+                                else:
+                                    trigger_yt_adjacent_preload()
+                            else:
+                                start_yt_load("Music", is_trending=True)
+                        else:
                             yt_loading_state["active"] = False
                             _prefetch_yt_thumbs(yt_trending_list)
-                            if time.time() - cached_ts > 7200:
-                                start_yt_load("MV Vpop", is_trending=True, is_bg_refresh=True)
-                            else:
-                                trigger_yt_adjacent_preload()
-                        else:
-                            start_yt_load("MV Vpop", is_trending=True)
-                    else:
-                        yt_loading_state["active"] = False
-                        _prefetch_yt_thumbs(yt_trending_list)
-                        trigger_yt_adjacent_preload()
+                            trigger_yt_adjacent_preload()
                     screen_stack.append("yt_grid")
 
 
@@ -3804,7 +3933,27 @@ def main():
         # SCREEN: YOUTUBE 3x2 GRID VIEW
         # ----------------------------------------------------------------------
         elif current_screen == "yt_grid":
-            cur_videos = yt_trending_list if yt_mode == "trending" else yt_search_results_list
+            if yt_mode == "favorites":
+                base_list = yt_favorites_list or []
+            elif yt_mode == "trending":
+                base_list = yt_trending_list or []
+            else:
+                base_list = yt_search_results_list or []
+
+            has_more = False
+            if yt_mode in ("trending", "search") and base_list:
+                cq = "Music" if yt_mode == "trending" else yt_search_query
+                if yt.get_continuation_token(cq):
+                    has_more = True
+
+            cur_videos = list(base_list)
+            if has_more:
+                cur_videos.append({
+                    "id": "__LOAD_MORE__",
+                    "is_load_more": True,
+                    "title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
+                    "disp_title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
+                })
             total_v = len(cur_videos)
             scroll_row = scroll_offsets.get("yt_grid", 0)
 
@@ -3893,15 +4042,32 @@ def main():
                     draw_text(msg_main, font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 - 12, 0, 246, 246, center_x=True, center_y=True)
                     sub_hint = "Đang kết nối YouTube InnerTube API..." if state.current_lang == "VI" else "Connecting to YouTube InnerTube API..."
                     draw_text(sub_hint, font_sub, state.SCREEN_W // 2, state.SCREEN_H // 2 + 26, 140, 175, 210, center_x=True, center_y=True)
+                elif yt_mode == "favorites":
+                    fav_empty_txt = "Chưa có video yêu thích nào" if state.current_lang == "VI" else "No favorite videos yet"
+                    draw_text(fav_empty_txt, font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 - 12, 180, 200, 225, center_x=True, center_y=True)
+                    fav_hint = "Bấm [Y] khi chọn video bất kỳ để thêm vào đây" if state.current_lang == "VI" else "Press [Y] on any video to add to favorites"
+                    draw_text(fav_hint, font_sub, state.SCREEN_W // 2, state.SCREEN_H // 2 + 24, 0, 230, 255, center_x=True, center_y=True)
                 else:
                     draw_text(tr("yt_no_results"), font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 + 20, 160, 180, 210, center_x=True, center_y=True)
             else:
                 cols = 3
                 rows = 2
-                gap_x = 26
-                gap_y = 14
-                card_w = 348
-                card_h = 250
+                is_small_screen = (state.SCREEN_W < 1200)
+                if is_small_screen:
+                    card_w = 280
+                    card_h = 194
+                    gap_x = 18
+                    gap_y = 10
+                    tw = 256
+                    th = 144
+                else:
+                    card_w = 320
+                    card_h = 210
+                    gap_x = 24
+                    gap_y = 12
+                    tw = 296
+                    th = 166
+
                 start_x = (state.SCREEN_W - (cols * card_w + (cols - 1) * gap_x)) // 2
                 start_y = 112
 
@@ -3925,74 +4091,89 @@ def main():
                             fill_rect(cx, cy, card_w, card_h, 18, 24, 40, 240)
                             draw_rect(cx, cy, card_w, card_h, 36, 48, 76, 255, thickness=1)
 
-                        # Thumbnail Area (Standard 16:9 YouTube ratio: 320x180)
-                        tw = 320
-                        th = 180
                         tx = cx + (card_w - tw) // 2
-                        ty = cy + 8
+                        ty = cy + (6 if is_small_screen else 8)
 
-                        v_id = v_data.get("id", "")
-                        tex, orig_w, orig_h = (None, 0, 0)
-                        if v_id and (v_id in yt_cached_thumb_ids):
-                            t_path = os.path.join(YT_CACHE_DIR, f"{v_id}.jpg")
-                            if t_path in img_texture_cache:
-                                tex, orig_w, orig_h = get_texture_and_size(t_path)
-                            elif yt_new_textures_loaded_this_frame < 1:
-                                # Throttled texture decoding: max 1 new JPEG decode per frame to maintain smooth 60 FPS
-                                tex, orig_w, orig_h = get_texture_and_size(t_path)
-                                if tex:
-                                    yt_new_textures_loaded_this_frame += 1
+                        if v_data.get("is_load_more"):
+                            # LOAD MORE CARD
+                            fill_rect(tx, ty, tw, th, 14, 20, 34, 255)
+                            draw_rect(tx, ty, tw, th, 38, 54, 85, 255, thickness=1)
 
-                        if tex:
-                            # Proportional fit preserving standard 16:9 aspect ratio
-                            if orig_w > 0 and orig_h > 0:
-                                scale = min(tw / float(orig_w), th / float(orig_h))
-                                dw = int(orig_w * scale)
-                                dh = int(orig_h * scale)
-                                dx = tx + (tw - dw) // 2
-                                dy = ty + (th - dh) // 2
-                                dest_r = sdl2.SDL_Rect(dx, dy, dw, dh)
+                            if yt_load_more_state.get("active"):
+                                dots = "." * (int(now * 3.5) % 4)
+                                load_txt = f"Đang tải{dots}" if state.current_lang == "VI" else f"Loading{dots}"
+                                draw_text(load_txt, font_sub, tx + tw // 2, ty + th // 2, 0, 246, 246, center_x=True, center_y=True)
                             else:
-                                dest_r = sdl2.SDL_Rect(tx, ty, tw, th)
-                            sdl2.SDL_RenderCopy(renderer, tex, None, dest_r)
+                                draw_text("▶▶", font_title, tx + tw // 2, ty + th // 2 - 12, 0, 230, 255, center_x=True, center_y=True)
+                                more_lbl = "TẢI THÊM" if state.current_lang == "VI" else "LOAD MORE"
+                                draw_text(more_lbl, font_badge, tx + tw // 2, ty + th // 2 + 18, 200, 225, 245, center_x=True, center_y=True)
+
+                            text_y = ty + th + 6
+                            title_txt = "Bấm A để tải thêm" if state.current_lang == "VI" else "Press A to load more"
+                            title_col = (0, 230, 255) if is_sel else (140, 170, 205)
+                            draw_text(title_txt, font_sub, cx + 12, text_y, title_col[0], title_col[1], title_col[2])
                         else:
-                            fill_rect(tx, ty, tw, th, 12, 16, 26, 255)
-                            draw_rect(tx, ty, tw, th, 30, 42, 65, 255, thickness=1)
-                            pw, ph = 50, 34
-                            px = tx + (tw - pw) // 2
-                            py = ty + (th - ph) // 2
-                            fill_rect(px, py, pw, ph, 230, 33, 23, 255)
-                            draw_text("▶", font_badge, px + pw // 2, py + ph // 2, 255, 255, 255, center_x=True, center_y=True)
+                            # NORMAL VIDEO CARD
+                            v_id = v_data.get("id", "")
+                            tex, orig_w, orig_h = (None, 0, 0)
+                            if v_id and (v_id in yt_cached_thumb_ids):
+                                t_path = os.path.join(YT_CACHE_DIR, f"{v_id}.jpg")
+                                if t_path in img_texture_cache:
+                                    tex, orig_w, orig_h = get_texture_and_size(t_path)
+                                elif yt_new_textures_loaded_this_frame < 1:
+                                    tex, orig_w, orig_h = get_texture_and_size(t_path)
+                                    if tex:
+                                        yt_new_textures_loaded_this_frame += 1
 
-                        # Duration badge in bottom-right of thumbnail
-                        dur_str = v_data.get("duration", "")
-                        if dur_str:
-                            dw = measure_text(dur_str, font_badge) + 12
-                            dh = 22
-                            dx = tx + tw - dw - 6
-                            dy = ty + th - dh - 6
-                            fill_rect(dx, dy, dw, dh, 0, 0, 0, 220)
-                            draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
-                            draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
+                            if tex:
+                                if orig_w > 0 and orig_h > 0:
+                                    scale = min(tw / float(orig_w), th / float(orig_h))
+                                    dw = int(orig_w * scale)
+                                    dh = int(orig_h * scale)
+                                    dx = tx + (tw - dw) // 2
+                                    dy = ty + (th - dh) // 2
+                                    dest_r = sdl2.SDL_Rect(dx, dy, dw, dh)
+                                else:
+                                    dest_r = sdl2.SDL_Rect(tx, ty, tw, th)
+                                sdl2.SDL_RenderCopy(renderer, tex, None, dest_r)
+                            else:
+                                fill_rect(tx, ty, tw, th, 12, 16, 26, 255)
+                                draw_rect(tx, ty, tw, th, 30, 42, 65, 255, thickness=1)
+                                pw, ph = 46, 32
+                                px = tx + (tw - pw) // 2
+                                py = ty + (th - ph) // 2
+                                fill_rect(px, py, pw, ph, 230, 33, 23, 255)
+                                draw_text("▶", font_badge, px + pw // 2, py + ph // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                        # Title below thumbnail (uses pre-formatted disp_title for zero-overhead)
-                        text_y = ty + th + 6
-                        disp_title = v_data.get("disp_title") or v_data.get("title", "Video")
-                        if len(disp_title) > 30:
-                            disp_title = disp_title[:28] + "..."
-                        title_col = (255, 255, 255) if is_sel else (205, 215, 230)
-                        draw_text(disp_title, font_sub, cx + 14, text_y, title_col[0], title_col[1], title_col[2])
+                            # Favorite badge ❤️ at top-right of thumbnail
+                            if yt.is_favorite(v_id, yt_favorites_list):
+                                fw = 24
+                                fh = 20
+                                fx_pos = tx + tw - fw - 4
+                                fy_pos = ty + 4
+                                fill_rect(fx_pos, fy_pos, fw, fh, 220, 30, 50, 230)
+                                draw_rect(fx_pos, fy_pos, fw, fh, 255, 120, 140, 255, thickness=1)
+                                draw_text("♥", font_badge, fx_pos + fw // 2, fy_pos + fh // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                        # Channel name & upload time (uses pre-formatted disp_info)
-                        info_str = v_data.get("disp_info") or v_data.get("channel", "")
-                        if not info_str:
-                            pub_time = v_data.get("pub", "")
-                            chan_name = v_data.get("channel", "")
-                            info_str = f"{chan_name} • {pub_time}" if (chan_name and pub_time) else (chan_name or pub_time)
-                        if len(info_str) > 34:
-                            info_str = info_str[:32] + "..."
-                        chan_col = (0, 220, 240) if is_sel else (120, 145, 175)
-                        draw_text(info_str, font_badge, cx + 14, text_y + 24, chan_col[0], chan_col[1], chan_col[2])
+                            # Duration badge in bottom-right of thumbnail
+                            dur_str = v_data.get("duration", "")
+                            if dur_str:
+                                dw = measure_text(dur_str, font_badge) + 10
+                                dh = 20
+                                dx = tx + tw - dw - 4
+                                dy = ty + th - dh - 4
+                                fill_rect(dx, dy, dw, dh, 0, 0, 0, 220)
+                                draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
+                                draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                            # Title below thumbnail (only title, channel and upload time removed for cleanliness)
+                            text_y = ty + th + 6
+                            disp_title = v_data.get("disp_title") or v_data.get("title", "Video")
+                            max_chars = 24 if is_small_screen else 28
+                            if len(disp_title) > max_chars:
+                                disp_title = disp_title[:max_chars - 2] + "..."
+                            title_col = (255, 255, 255) if is_sel else (205, 215, 230)
+                            draw_text(disp_title, font_sub, cx + 12, text_y, title_col[0], title_col[1], title_col[2])
 
         # ----------------------------------------------------------------------
         # SCREEN: SEARCH INPUT & VIRTUAL KEYBOARD WITH SYSTEM FILTER BAR
@@ -4541,6 +4722,10 @@ def main():
             elif current_screen == "rom_games":
                 a_label = "Xem chi tiết"
                 b_label = "Quay lại"
+            elif current_screen == "yt_grid":
+                cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < len(cur_videos)) else {}
+                a_label = "Tải thêm" if cur_v_sel.get("is_load_more") else "Xem"
+                b_label = "Quay lại"
             else:
                 a_label = "Chọn / Mở"
                 b_label = "Quay lại" if len(screen_stack) > 1 else "Thoát"
@@ -4578,10 +4763,19 @@ def main():
                 draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
 
             elif current_screen == "yt_grid":
-                fx = draw_footer_btn(fx, "A", "Xem", (0, 230, 140))
                 fx = draw_footer_btn(fx, "X", "Tìm kiếm", (0, 190, 255))
-                if yt_mode == "search" or yt_query_idx != 0:
-                    fx = draw_footer_btn(fx, "Y", "Mặc định", (255, 180, 0))
+                cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < len(cur_videos)) else {}
+                if not cur_v_sel.get("is_load_more"):
+                    is_fav = yt.is_favorite(cur_v_sel.get("id"), yt_favorites_list) if cur_v_sel else False
+                    y_lbl = "Bỏ thích" if is_fav else "Yêu thích"
+                    fx = draw_footer_btn(fx, "Y", y_lbl, (255, 75, 110) if is_fav else (255, 180, 0))
+
+                cur_q = yt_recent_queries[yt_query_idx] if (0 <= yt_query_idx < len(yt_recent_queries)) else ""
+                fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
+                protected_set = set(yt.DEFAULT_PRESET_QUERIES) | {fav_label}
+                if cur_q and (cur_q not in protected_set):
+                    fx = draw_footer_btn(fx, "SL", "Xóa từ khóa", (240, 70, 70), is_dark_btn=False)
+
                 draw_footer_btn(state.SCREEN_W - 220, "L1/R1", "Từ khóa", (70, 95, 140), is_dark_btn=False)
 
             elif current_screen == "yt_search_input":
