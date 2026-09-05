@@ -32,6 +32,7 @@ SECTIONS = [
     ("toan-man-hinh", "Full screen", "Toàn màn hình"),
     ("luu-game", "Saves", "Save game"),
     ("su-co", "Troubleshooting", "Xử lý sự cố"),
+    ("nguon", "Source & Credits", "Nguồn & Tác quyền"),
 ]
 
 # Physical pad layouts H / K / X, from the emulator package's own guide.
@@ -136,8 +137,8 @@ SHORTCUTS = [
      ("MENU + D-pad Trái", "Chuyển các hướng chéo D-pad thành các phím 1, 3, 7, 9")),
     (("On-screen text input", "*: Delete, #: Add, 2/4: Letters a-z, 1/3: Digits 0-9, 7/9: Symbols"),
      ("Bàn phím ảo nhập text", "*: Xóa ký tự, #: Thêm, 2/4: Chọn chữ a-z, 1/3: Chọn số 0-9, 7/9: Ký tự đặc biệt")),
-    (("START + R3", "Cycle PIXEL → SMOOTH → HQ"),
-     ("START + R3", "Chạy vòng PIXEL → SMOOTH → HQ")),
+    (("START + R3", "Cycle PIXEL → SMOOTH → HQ (legacy)"),
+     ("START + R3", "Chạy vòng PIXEL → SMOOTH → HQ (bản cũ)")),
     (("START + B", "Rotate the screen"), ("START + B", "Xoay màn hình")),
     (("START + Y", "Mouse mode on/off (X clicks)"),
      ("START + Y", "Bật/tắt mouse mode (X là click)")),
@@ -154,6 +155,28 @@ TROUBLE = [
       "Game đang sai chế độ máy. Gần như chắc chắn nó đang ở <b>P</b>, mà ở chế độ đó "
       "D-pad gửi ra số 2/4/6/8 — game nào chờ GameAction sẽ không nghe thấy gì. "
       "Giữ START, bấm SELECT tới khi góc màn hiện <b>N</b>.")),
+    (("How do I type in-game text or character names?",
+      "When a text input prompt appears, the emulator displays an on-screen keyboard "
+      "powered by <code>font.ttf</code>. Use <b>*</b> to delete a character, <b>#</b> to confirm/add, "
+      "<b>2 / 4</b> to cycle letters a–z, <b>1 / 3</b> to cycle numbers 0–9, and <b>7 / 9</b> for special symbols."),
+     ("Làm sao để gõ văn bản hoặc đặt tên nhân vật trong game?",
+      "Khi game yêu cầu nhập văn bản, giả lập hiển thị bàn phím ảo trực quan trên màn hình "
+      "thông qua <code>font.ttf</code>. Dùng nút <b>*</b> để xoá ký tự, <b>#</b> để xác nhận/thêm ký tự, "
+      "<b>2 / 4</b> để chọn chữ cái a–z, <b>1 / 3</b> để chọn số 0–9, và <b>7 / 9</b> cho ký tự đặc biệt.")),
+    (("How do I press keys 1, 3, 7, 9 or move diagonally?",
+      "The D-pad supports 8-direction diagonal movement natively. For games requiring number keys "
+      "1, 3, 7, 9 (e.g. skills or diagonal movement in RPGs), press <b>MENU + D-pad Left</b> to toggle "
+      "mapping the 4 diagonal D-pad directions to digits 1, 3, 7, 9."),
+     ("Làm sao để bấm các phím 1, 3, 7, 9 hoặc di chuyển chéo?",
+      "D-pad đã hỗ trợ di chuyển chéo 8 hướng. Với những game Java cần bấm phím số 1, 3, 7, 9 "
+      "(như kỹ năng trong game nhập vai, toạ độ bắn súng), bấm tổ hợp <b>MENU + D-pad Trái</b> để "
+      "bật/tắt chế độ gán 4 hướng chéo thành các phím số 1, 3, 7, 9.")),
+    (("Can I play 3D Java games (M3G / Mascot Capsule)?",
+      "Yes. The launch script includes OpenGL ES compatibility links (<code>libGLES_CM.so</code>) "
+      "allowing 3D J2ME titles to run hardware-accelerated graphics on the handheld."),
+     ("Game Java 3D (M3G / Mascot Capsule) có chơi được không?",
+      "Có. Tập lệnh khởi chạy đã tích hợp sẵn thư viện liên kết OpenGL ES (<code>libGLES_CM.so</code>), "
+      "cho phép các game Java 3D đồ hoạ chạy mượt mà với tăng tốc phần cứng.")),
     (("Two games map their buttons differently",
       "That is by design: the phone mode is remembered per game, in "
       "<code>zulu17/bin/config/&lt;game&gt;/game.conf</code>. Set each game once and it sticks. "
@@ -183,6 +206,26 @@ TROUBLE = [
      ("Cài lại giả lập làm mất save",
       "Chỉ xảy ra ở 1.41 trở về trước: cài lại xoá cả thư mục giả lập, mà save nằm bên trong đó. "
       "Đã sửa ở 1.42 — save và cấu hình từng game được cất ra rồi đặt lại.")),
+]
+
+# Credits & Source records: (EN tuple, VI tuple)
+CREDITS_ROWS = [
+    (("JM (FreeJ2ME fork)", "nvcuong1312", "https://github.com/nvcuong1312/jm",
+      "Release tag 1 / JM 1.0.5 — optimized specifically for TrimUI (Brick, Smart Pro, Stock OS, NextUI). "
+      "Features on-screen virtual keyboard with font.ttf, Select toggle for linear/nearest display, "
+      "8-way diagonal D-pad, Menu + D-pad Left hotkey to 1/3/7/9, keymap.cfg, and safe exit dialog."),
+     ("Bản phân nhánh JM (FreeJ2ME)", "nvcuong1312", "https://github.com/nvcuong1312/jm",
+      "Bản phát hành tag 1 / JM 1.0.5 — tối ưu riêng cho máy TrimUI (Brick, Smart Pro trên cả hệ gốc và NextUI). "
+      "Tính năng gồm bàn phím ảo gõ text bằng font.ttf, phím Select đổi linear/nearest, "
+      "D-pad chéo 8 hướng, Menu + D-pad Trái gán 1/3/7/9, tùy biến keymap.cfg và hộp thoại xác nhận thoát an toàn.")),
+    (("FreeJ2ME (Upstream)", "hex007", "https://github.com/hex007/freej2me",
+      "The original upstream open-source J2ME emulator for modern systems, licensed under GNU General Public License v3 (GPL-3.0)."),
+     ("FreeJ2ME (Thượng nguồn gốc)", "hex007", "https://github.com/hex007/freej2me",
+      "Dự án giả lập J2ME nguồn mở nguyên bản cho các hệ máy hiện đại, phát hành theo giấy phép GNU General Public License v3 (GPL-3.0).")),
+    (("Azul Zulu OpenJDK 17", "Azul Systems / OpenJDK", "https://www.azul.com/downloads/?package=jdk",
+      "Custom lightweight Java 17 Runtime Environment (JRE) stripped using jlink for Linux aarch64, licensed under GPL v2 with Classpath Exception."),
+     ("Azul Zulu OpenJDK 17", "Azul Systems / OpenJDK", "https://www.azul.com/downloads/?package=jdk",
+      "Máy ảo Java 17 Runtime Environment (JRE) rút gọn bằng jlink cho kiến trúc Linux aarch64, theo giấy phép GPL v2 kèm Classpath Exception.")),
 ]
 
 RES_FOLDERS = ["240320", "320240", "128128", "176208", "640360"]
@@ -225,6 +268,16 @@ EXTRA_CSS = """
     border-radius:999px;padding:7px 15px;color:var(--muted);text-decoration:none;
     font-size:.9rem;transition:border-color .15s,color .15s,background .15s}
   .toc a:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
+  .credits{list-style:none;padding:0;margin:18px 0;display:grid;gap:14px;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .credit-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+  .credit-card h4{margin:0;font-size:1.05rem;color:var(--accent)}
+  .credit-card p{margin:0;font-size:.91rem;color:var(--muted);line-height:1.5}
+  .credit-card a{color:var(--accent);word-break:break-all;font-size:.88rem;text-decoration:none}
+  .credit-card a:hover{text-decoration:underline}
+  .credit-card .tag{display:inline-block;padding:3px 9px;border-radius:6px;
+    background:rgba(56,189,248,0.12);color:var(--accent);font-size:.8rem;font-weight:600}
   @media (max-width:600px){ td:first-child{white-space:normal} }
 """
 
@@ -240,10 +293,10 @@ T = {
   "og_desc": ("Resolution folders, phone modes, pad layouts, display modes and saves — "
               "everything needed to run J2ME games well on a TrimUI handheld."),
   "h1": "Java J2ME on RetroHub",
-  "lead": ("RetroHub runs J2ME games on FreeJ2ME, straight onto the screen — no RetroArch "
-           "and no libretro core involved. This page covers the parts that are not obvious, "
-           "starting with the one that confuses everybody: why two games can map their "
-           "buttons differently."),
+  "lead": ("RetroHub runs J2ME games using the JM fork of FreeJ2ME (maintained by nvcuong1312), "
+           "straight onto the screen — no RetroArch and no libretro core involved. This page "
+           "covers resolution folders, button mapping, on-screen keyboard, display settings, "
+           "and where saves live."),
   "back": "Back to the home page",
   "s_cai_dat": ("The emulator is 66 MB and ships inside the app rather than being downloaded, "
                 "so it works with no network."),
@@ -254,6 +307,8 @@ T = {
     "the folder you have — nothing else is lost.",
     "From version 1.43, an emulator older than the one inside the app is upgraded "
     "automatically the next time you open RetroHub. Saves are kept.",
+    "From version 1.65, in-app OTA updates automatically sync the latest JM runtime binaries "
+    "(FreeJ2ME jar, sdl_interface, fonts, configs) over Wi-Fi without redownloading the full 66 MB JRE.",
   ],
   "s_thu_muc": ("Every J2ME game was written for one specific handset screen, and the emulator "
                 "has no way to guess which. So the folder a game sits in is what tells it: "
@@ -284,6 +339,10 @@ T = {
              "display shortcut. The stick dead zone is 8000 to press and 6000 to release; pushed "
              "diagonally, the emulator takes whichever axis is further from centre so you do not "
              "get two directions flickering."),
+  "nut_p3": ("<b>JM 1.0.5 features:</b> The D-pad supports 8-way diagonal directions natively. "
+             "Pressing <b>MENU + D-pad Left</b> switches diagonal inputs to keypad digits 1, 3, 7, 9 "
+             "(ideal for RPG skill hotkeys or directional shooting). An on-screen virtual keyboard "
+             "appears automatically whenever a game asks for text input."),
   "s_hinh": "Three presets, switchable in the app or in-game.",
   "hinh_li": [
     "<b>PIXEL</b> — nearest-neighbour, no colour blending between pixels, whole-number scale "
@@ -293,10 +352,10 @@ T = {
     "<b>HQ</b> — asks SDL2 for its best quality. On this driver that is often identical to "
     "SMOOTH, so treat it as experimental.",
   ],
-  "hinh_p2": ("In the app: <b>Utilities → Java display mode</b>, which writes the whole preset. "
-              "In game: hold <b>START</b> and press <b>R3</b>, which changes the mode and the "
-              "integer-scaling flag and leaves the other keys alone. Either way the choice is "
-              "saved to <code>renderer.conf</code> and used again next time."),
+  "hinh_p2": ("In game: simply tap <b>SELECT</b> on its own to toggle between Linear (smooth) "
+              "and Nearest (pixel-sharp), saved to <code>graphics.cfg</code>. On older versions, "
+              "holding <b>START + R3</b> cycles presets in <code>renderer.conf</code>. "
+              "In the app: open <b>Utilities → Java display mode</b> to select your preferred profile anytime."),
   "s_toan": ("A 240×320 game is portrait; the Brick Pro panel is 1024×768, landscape. The two "
              "proportions are opposites, so no setting both fills the screen and keeps the "
              "picture honest. Here is what each choice actually gives you."),
@@ -319,6 +378,10 @@ T = {
              "picks YES, right or down picks NO, then A or X confirms; B or MENU again cancels. "
              "L3 and R3 are no longer quit buttons."),
   "h_folders": "The five folders",
+  "s_nguon_p": ("RetroHub integrates and repackages community open-source software to provide the best "
+                "Java J2ME experience on TrimUI handhelds:"),
+  "s_nguon_license": ("Third-party component notices and full license terms are preserved on your SD card "
+                      "at <code>Emus/JAVA/NOTICE.txt</code> and the <code>LICENSES/</code> directory."),
  },
  "vi": {
   "lang": "vi", "other": "en", "other_name": "English",
@@ -331,9 +394,9 @@ T = {
   "og_desc": ("Thư mục độ phân giải, chế độ máy, bố trí nút, kiểu hiển thị và save game — "
               "đủ thứ cần biết để chơi game J2ME cho ra hồn trên máy TrimUI."),
   "h1": "Chơi game Java J2ME trên RetroHub",
-  "lead": ("RetroHub chạy game J2ME bằng FreeJ2ME, vẽ thẳng lên màn hình — không qua RetroArch, "
-           "không dùng core libretro. Trang này nói những chỗ không hiển nhiên, bắt đầu bằng cái "
-           "làm ai cũng thắc mắc: vì sao hai game lại map nút khác nhau."),
+  "lead": ("RetroHub chạy game J2ME bằng bản phân nhánh JM của FreeJ2ME (phát triển bởi nvcuong1312), "
+           "vẽ thẳng lên màn hình — không qua RetroArch, không dùng core libretro. Trang này hướng dẫn "
+           "thư mục độ phân giải, gán phím, bàn phím ảo gõ text, kiểu hiển thị và save game."),
   "back": "Về trang chủ",
   "s_cai_dat": ("Bộ giả lập nặng 66 MB và nằm sẵn trong app chứ không phải tải về, nên không có "
                 "mạng vẫn cài được."),
@@ -344,6 +407,8 @@ T = {
     "không mất gì cả.",
     "Từ bản 1.43, nếu giả lập trên thẻ cũ hơn gói trong app thì app tự nâng cấp ở lần mở kế tiếp. "
     "Save giữ nguyên.",
+    "Từ bản 1.65, tính năng cập nhật OTA trong app tự động đồng bộ các file runtime JM mới nhất "
+    "(FreeJ2ME jar, sdl_interface, font, cấu hình) qua Wi-Fi mà không cần tải lại cả gói JRE 66 MB.",
   ],
   "s_thu_muc": ("Mỗi game J2ME được viết cho đúng một khổ màn điện thoại, mà emulator thì không có "
                 "cách nào đoán ra khổ nào. Nên thư mục chứa game chính là chỗ báo cho nó: một file "
@@ -371,6 +436,10 @@ T = {
   "nut_p2": ("Hai cần analog đều bấm lún xuống được, và cú bấm đó chính là L3 với R3 — đường để dùng tổ "
              "hợp đổi hình ảnh. Vùng chết của cần là 8000 để tính nhấn và 6000 để tính nhả; đẩy chéo thì "
              "emulator lấy trục nào lệch tâm nhiều hơn, để không bị rung hai hướng."),
+  "nut_p3": ("<b>Tính năng trên bản JM 1.0.5:</b> D-pad hỗ trợ bấm chéo 8 hướng mượt mà. Bấm tổ hợp "
+             "<b>MENU + D-pad Trái</b> để chuyển các hướng chéo thành các phím số 1, 3, 7, 9 (rất tiện "
+             "cho phím tắt kỹ năng hoặc game bắn súng toạ độ). Khi game cần nhập chữ, bàn phím ảo trên "
+             "màn hình sẽ tự động kích hoạt."),
   "s_hinh": "Ba preset, đổi được trong app hoặc ngay trong game.",
   "hinh_li": [
     "<b>PIXEL</b> — nearest-neighbor, không trộn màu giữa hai pixel, hệ số phóng là số nguyên. "
@@ -379,9 +448,10 @@ T = {
     "<b>HQ</b> — xin SDL2 mức chất lượng tốt nhất. Trên driver này thường ra y hệt SMOOTH, nên coi như "
     "còn thử nghiệm.",
   ],
-  "hinh_p2": ("Trong app: <b>Tiện ích → Kiểu hiển thị game Java</b>, ghi trọn cả preset. Trong game: giữ "
-              "<b>START</b> bấm <b>R3</b>, đổi kiểu hiển thị cùng cờ phóng nguyên và không đụng các khoá "
-              "còn lại. Đằng nào lựa chọn cũng được ghi vào <code>renderer.conf</code> và dùng lại lần sau."),
+  "hinh_p2": ("Trong game: chỉ cần bấm phím <b>SELECT</b> riêng để đổi qua lại giữa Linear (làm mịn) "
+              "và Nearest (sắc nét từng pixel), lưu vào <code>graphics.cfg</code>. Trên các bản cũ, giữ "
+              "<b>START + R3</b> để đổi cấu hình trong <code>renderer.conf</code>. "
+              "Trong RetroHub: vào <b>Tiện ích → Kiểu hiển thị game Java</b> để chọn chế độ mong muốn bất cứ lúc nào."),
   "s_toan": ("Game 240×320 là khổ dựng đứng; màn Brick Pro là 1024×768, nằm ngang. Hai tỉ lệ ngược nhau, "
              "nên không cấu hình nào vừa lấp kín màn vừa giữ hình cho thật. Đây là cái mỗi lựa chọn thật "
              "sự cho ra."),
@@ -403,6 +473,10 @@ T = {
              "<b>NO</b> để bấm nhầm cũng không sao. Trái hoặc lên chọn YES, phải hoặc xuống chọn NO, rồi "
              "A hay X để xác nhận; B hoặc MENU lần nữa là huỷ. L3 và R3 không còn là lệnh thoát."),
   "h_folders": "Năm thư mục",
+  "s_nguon_p": ("RetroHub tích hợp và đóng gói lại phần mềm mã nguồn mở từ cộng đồng để mang lại trải nghiệm "
+                "game Java J2ME tốt nhất trên máy cầm tay TrimUI:"),
+  "s_nguon_license": ("Thông tin ghi nhận bản quyền và toàn văn giấy phép của các bên thứ ba được lưu đầy đủ "
+                      "trên thẻ nhớ tại <code>Emus/JAVA/NOTICE.txt</code> và thư mục <code>LICENSES/</code>."),
  },
 }
 
@@ -494,6 +568,7 @@ PAGE = """<!doctype html>
       <tbody>{padrows}</tbody>
     </table></div>
     <p>{nut_p2}</p>
+    <p>{nut_p3}</p>
     <h3>{h_short}</h3>
     <ul class="keys">{shortcuts}</ul>
     <h3>{h_exit}</h3>
@@ -530,6 +605,13 @@ PAGE = """<!doctype html>
   <section id="su-co" class="rise">
     <h2>{s_su_co_h}</h2>
     <ul class="qa">{trouble}</ul>
+  </section>
+
+  <section id="nguon" class="rise">
+    <h2>{s_nguon_h}</h2>
+    <p>{s_nguon_p}</p>
+    <ul class="credits">{credits}</ul>
+    <p style="margin-top:14px;font-size:.9rem;color:var(--muted)">{s_nguon_license}</p>
   </section>
 
   <section class="rise">
@@ -599,6 +681,14 @@ def render(lang):
                         for r in SHORTCUTS)
     trouble = "".join("<li><b>%s</b><span>%s</span></li>" % pick(r, lang)
                       for r in TROUBLE)
+    credits = "".join(
+        '<li class="credit-card">'
+        '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">'
+        '<h4>%s</h4><span class="tag">%s</span></div>'
+        '<p>%s</p>'
+        '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>'
+        '</li>' % (c[0], c[1], c[3], c[2], c[2])
+        for c in (pick(r, lang) for r in CREDITS_ROWS))
 
     ld = {
         "@context": "https://schema.org", "@type": "TechArticle",
@@ -617,6 +707,7 @@ def render(lang):
         "toc": toc, "folders": folders, "cai_li": cai_li, "hinh_li": hinh_li,
         "padrows": padrows, "phonerows": phonerows, "confrows": confrows,
         "fitrows": fitrows, "shortcuts": shortcuts, "trouble": trouble,
+        "credits": credits,
         "join": "Ask in the Telegram group" if lang == "en" else "Hỏi trong nhóm Telegram",
     }
     # Section headings come from the same table the nav is built from, so a
