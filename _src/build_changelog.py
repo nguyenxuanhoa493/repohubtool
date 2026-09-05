@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.73", "2026-09-05",
+     ("Java J2ME: Fix launch crash, auto resolution detection, fallback to 240x320 and URI safety for spaces",
+      "Java J2ME: Khắc phục lỗi không mở được game, tự động nhận diện độ phân giải, fallback 240x320 và sửa lỗi tên file có khoảng trắng"),
+     [("Intelligent resolution detection & fallback: automatically extracts target screen resolutions from folder path or filename (240x320, 320x240, 176x220, etc.) and falls back to standard 240x320 instead of silently exiting when games are placed in the root Roms/JAVA folder.",
+       "Tự động nhận diện độ phân giải & đường lui thông minh: trích xuất độ phân giải từ đường dẫn thư mục hoặc tên file (240x320, 320x240, 176x220...) và tự động dự phòng 240x320 thay vì thoát ngang khi game nằm trực tiếp ở thư mục gốc Roms/JAVA."),
+      ("URI-safe execution for spaces and brackets: creates a clean /tmp/ symlink if filename contains spaces or special characters, completely eliminating Java IllegalArgumentException crashes on FreeJ2ME.",
+       "Xử lý tên file chứa dấu cách & ký tự đặc biệt: tự động tạo liên kết symlink sạch trong /tmp/ nếu tên file có khoảng trắng hoặc ngoặc, loại bỏ hoàn toàn lỗi văng crash URI của máy ảo Java."),
+      ("Comprehensive launch logging: redirects emulator output to /mnt/SDCARD/RetroHub-java.log for transparent diagnostic monitoring.",
+       "Ghi log khởi chạy toàn diện: ghi lại nhật ký chạy của giả lập ra /mnt/SDCARD/RetroHub-java.log giúp dễ dàng chẩn đoán và xử lý sự cố.")]),
+
     ("1.72", "2026-09-05",
      ("YouTube & UI: Seamless modal transitions, instant long video caching & buffering, exit splash, and 2-line title spacing",
       "YouTube & UI: Khắc phục nháy modal chờ, tối ưu tải video dài siêu tốc, hiển thị đang đóng app và tăng khoảng cách 2 dòng tiêu đề"),

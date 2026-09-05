@@ -1,12 +1,12 @@
 {
-  "version": "1.72",
+  "version": "1.73",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T22:30:00+0700",
+  "built": "2026-09-05T23:05:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "YouTube & UI: Khắc phục nháy modal chờ, tối ưu tải video dài siêu tốc, hiển thị đang đóng app và tăng khoảng cách 2 dòng tiêu đề",
-    "en": "YouTube & UI: Seamless modal transitions, instant long video caching & buffering, exit splash, and 2-line title spacing"
+    "vi": "Java J2ME: Khắc phục lỗi không mở được game, tự động nhận diện độ phân giải, fallback 240x320 và sửa lỗi tên file có khoảng trắng",
+    "en": "Java J2ME: Fix launch crash, auto resolution detection, fallback to 240x320 and URI safety for spaces"
   },
   "remove": [
     "app.pyc",
@@ -145,8 +145,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 1813,
-        "sha256": "e0736506e25b11ad24aa80c418a1dbac7525ce5c4f907029a5e1f36aa4183804"
+        "size": 2772,
+        "sha256": "a21219baea13b29ac91b6d481834dd81a0e2105cabd60797ee1fc369162af8a2"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -408,7 +408,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "20a2ffae0b4e8e82cf1a59a82be1f001c7a565cd518af6f5e369be8eb3781b8a"
+      "sha256": "3022d6fd3b2379dca72a12eda09fe4a668ef36e9ff8db7e7def71a0e546660d6"
     },
     {
       "path": "rh/yt.py",
