@@ -41,6 +41,8 @@ YT_CACHE_DIR = get_yt_cache_dir()
 YT_FEED_CACHE_FILE = os.path.join(SDCARD_PATH, ".retrohub", "cache", "yt_feed_cache.json")
 YT_FEED_FALLBACK_FILE = "/tmp/yt_feed_cache.json"
 YT_HISTORY_FILE = os.path.join(APP_DIR, "yt_history.json")
+YT_FAVORITES_FILE = os.path.join(SDCARD_PATH, ".retrohub", "yt_favorites.json")
+YT_FAVORITES_FALLBACK_FILE = os.path.join(APP_DIR, "yt_favorites.json")
 
 
 def is_nextui():

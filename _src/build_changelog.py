@@ -26,6 +26,22 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.69", "2026-09-05",
+     ("YouTube: Default Music/KPOP/USUK/Tiktok presets, Favorites tab, keyword deletion, clean responsive thumbnails & load more",
+      "YouTube: Mặc định Music, KPOP, USUK, Tiktok; tab Yêu thích; xóa từ khóa; thumbnail vừa vặn không tràn viền và tải thêm video"),
+     [("New default topic presets: changed default keywords to Music (default), KPOP, USUK, Tiktok, preserving natural YouTube ranking without artificial year or age sorting.",
+       "Bộ từ khóa mặc định mới: chuyển từ khóa sang Music (mặc định), KPOP, USUK, Tiktok, giữ nguyên thứ hạng tự nhiên từ YouTube, bỏ hoàn toàn logic nối năm và lọc ngày."),
+      ("Favorites management: press [Y] on any video to add/remove from Favorites with heart badge indicator. When favorite videos exist, YouTube opens directly to the Favorites tab by default.",
+       "Quản lý danh sách Yêu thích: bấm [Y] trên video bất kỳ để thêm/bỏ Yêu thích (có huy hiệu tim đỏ ♥). Nếu có dữ liệu, app sẽ tự động hiển thị tab Yêu thích đầu tiên khi mở menu YouTube."),
+      ("Delete custom keywords: press SELECT [SL] while browsing custom search keywords to easily remove unwanted history queries from the pill navigation bar.",
+       "Nút xóa từ khóa tìm kiếm: bấm phím SELECT [SL] khi đang ở tab từ khóa tùy chỉnh để xóa bỏ từ khóa khỏi lịch sử tìm kiếm nhanh chóng."),
+      ("Responsive compact thumbnails: reduced card and thumbnail dimensions to fit both TrimUI Brick (1024x768) and Smart Pro (1280x720) perfectly without horizontal overflow or screen clipping.",
+       "Thumbnail gọn gàng, chống tràn màn hình: thu nhỏ kích thước thẻ và thumbnail 16:9 vừa vặn tuyệt đối cho cả màn hình TrimUI Brick (1024x768) và Smart Pro (1280x720), không còn bị tràn ra ngoài biên."),
+      ("Clean single-line title: removed channel name and upload date lines for a clutter-free, modern, and readable card interface.",
+       "Giao diện tối giản, thoáng mắt: lược bỏ hoàn toàn tên kênh và thời gian đăng video, tập trung vào thumbnail và tiêu đề rõ nét."),
+      ("Load more pagination card: added a dedicated 'Load more videos' card at the end of the list powered by InnerTube continuation tokens, allowing endless browsing of video feeds.",
+       "Thẻ tải thêm video ở cuối danh sách: tích hợp thẻ 'Tải thêm' ở cuối danh sách video thông qua continuation token của YouTube InnerTube, cho phép tải thêm video liên tục tiện lợi.")]),
+
     ("1.68", "2026-09-05",
      ("Optimize YouTube menu: instant load via feed cache, parallel thumbnail prefetch, and rock-solid 60 FPS",
       "Tối ưu menu YouTube: mở tức thì qua feed cache, tải song song thumbnail và duy trì 60 FPS mượt mà"),

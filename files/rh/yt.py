@@ -10,20 +10,27 @@ import time
 import urllib.parse
 import urllib.request
 
-from rh.paths import YT_HISTORY_FILE, YT_FEED_CACHE_FILE, YT_FEED_FALLBACK_FILE
+from rh.paths import (
+    YT_HISTORY_FILE,
+    YT_FEED_CACHE_FILE,
+    YT_FEED_FALLBACK_FILE,
+    YT_FAVORITES_FILE,
+    YT_FAVORITES_FALLBACK_FILE,
+)
 
 INNERTUBE_URL = "https://www.youtube.com/youtubei/v1"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-DEFAULT_QUERIES = ["MV Vpop", "Nhạc hot tiktok", "Hot girl tiktok", "MV Kpop"]
-DEFAULT_PRESET_QUERIES = ("MV Vpop", "Nhạc hot tiktok", "Hot girl tiktok", "MV Kpop")
+DEFAULT_QUERIES = ["Music", "KPOP", "USUK", "Tiktok"]
+DEFAULT_PRESET_QUERIES = ("Music", "KPOP", "USUK", "Tiktok")
 LEGACY_PRESETS = {
-    "mv", "nhạc trẻ", "nhạc tiktok", "kpop", "nhảy tiktok", "game", "remix"
+    "mv", "nhạc trẻ", "nhạc tiktok", "kpop", "nhảy tiktok", "game", "remix",
+    "mv vpop", "nhạc hot tiktok", "hot girl tiktok", "mv kpop",
 }
 
 
 def parse_age_hours(text: str) -> float:
-    """Parse relative time string (Vietnamese or English) into hours for chronological sorting."""
+    """Parse relative time string into hours if needed."""
     if not text:
         return 999999.0
     s = text.strip().lower()
@@ -53,17 +60,8 @@ def parse_age_hours(text: str) -> float:
 
 
 def get_effective_query(query: str) -> str:
-    """Return cleaned query keyword, appending current year for preset trend categories."""
-    q = (query or "").strip()
-    if not q:
-        return ""
-    year = str(time.localtime().tm_year)
-    if year in q:
-        return q
-    for preset in DEFAULT_PRESET_QUERIES:
-        if q.lower() == preset.lower():
-            return f"{preset} {year}"
-    return q
+    """Return cleaned query keyword without altering sorting or appending year."""
+    return (query or "").strip()
 
 
 def load_search_history() -> list:
@@ -105,6 +103,75 @@ def save_search_history(queries: list):
             json.dump(combined[:10], f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"[rh.yt] Error saving search history: {e}")
+
+
+def remove_search_history_item(query_to_remove: str) -> list:
+    """Remove a custom search keyword from history and save to disk."""
+    q_clean = (query_to_remove or "").strip().lower()
+    if not q_clean:
+        return list(DEFAULT_QUERIES)
+
+    current_history = load_search_history()
+    preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES}
+    new_history = []
+    for q in current_history:
+        if q.lower() == q_clean and q.lower() not in preset_lowers:
+            continue
+        new_history.append(q)
+
+    save_search_history(new_history)
+    return new_history
+
+
+def load_favorites() -> list:
+    """Load user favorite videos list from persistent storage."""
+    for p in (YT_FAVORITES_FILE, YT_FAVORITES_FALLBACK_FILE):
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    return data
+            except Exception:
+                pass
+    return []
+
+
+def save_favorites(favorites: list):
+    """Save user favorite videos list to persistent storage."""
+    for p in (YT_FAVORITES_FILE, YT_FAVORITES_FALLBACK_FILE):
+        try:
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump(favorites, f, ensure_ascii=False, indent=2)
+            return
+        except Exception:
+            continue
+
+
+def is_favorite(video_id: str, favorites_list: list = None) -> bool:
+    """Check if a video ID is in favorites."""
+    if not video_id:
+        return False
+    favs = favorites_list if favorites_list is not None else load_favorites()
+    return any(item.get("id") == video_id for item in favs)
+
+
+def toggle_favorite(video: dict, favorites_list: list) -> tuple:
+    """Toggle favorite status of a video. Returns (new_favorites_list, is_added)."""
+    if not video or not video.get("id") or video.get("id") == "__LOAD_MORE__":
+        return favorites_list, False
+    vid = video["id"]
+    new_favs = [v for v in favorites_list if v.get("id") != vid]
+    if len(new_favs) == len(favorites_list):
+        # Video was not in favorites, add it
+        new_favs.insert(0, dict(video))
+        save_favorites(new_favs)
+        return new_favs, True
+    else:
+        # Video was in favorites, removed
+        save_favorites(new_favs)
+        return new_favs, False
 
 
 def load_feed_cache(category: str = "trending") -> tuple:
@@ -272,8 +339,51 @@ def _find_continuation_token(node) -> str:
     return ""
 
 
-def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> list:
-    """Search videos on YouTube by keyword, sorting by newest upload date by default.
+_CONTINUATION_TOKENS = {}
+
+
+def get_continuation_token(query: str) -> str:
+    """Get stored continuation token for a search query."""
+    return _CONTINUATION_TOKENS.get(query, "")
+
+
+def set_continuation_token(query: str, token: str):
+    """Store continuation token for pagination."""
+    if token:
+        _CONTINUATION_TOKENS[query] = token
+    else:
+        _CONTINUATION_TOKENS.pop(query, None)
+
+
+def fetch_more_youtube(query: str, cont_token: str = None) -> tuple:
+    """Fetch next batch of videos using continuation token. Returns (videos_list, next_token)."""
+    token = cont_token or get_continuation_token(query)
+    if not token:
+        return [], ""
+
+    payload = {
+        "context": WEB_CONTEXT,
+        "continuation": token,
+    }
+    try:
+        cont_data = _make_request("search", payload, timeout=6)
+    except Exception as e:
+        print(f"[rh.yt] Error fetching more videos for '{query}': {e}")
+        return [], ""
+
+    more_videos = []
+    try:
+        _extract_videos_from_json(cont_data, more_videos, limit=18)
+    except Exception as e:
+        print(f"[rh.yt] Extract more videos error: {e}")
+
+    next_token = _find_continuation_token(cont_data)
+    set_continuation_token(query, next_token)
+    return more_videos, next_token
+
+
+def search_youtube(query: str, limit: int = 24) -> list:
+    """Search videos on YouTube by keyword, preserving natural YouTube ranking without sorting.
 
     Returns a list of dicts:
         [{'id': str, 'title': str, 'channel': str, 'duration': str, 'thumb': str, 'pub': str, 'age': float}]
@@ -297,34 +407,24 @@ def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> li
 
     results = []
     try:
-        _extract_videos_from_json(data, results, limit=limit * 2)
+        _extract_videos_from_json(data, results, limit=limit)
     except Exception as e:
         print(f"[rh.yt] Extract videos error: {e}")
 
-    # Fetch next page via continuation token only if we have fewer than 12 candidate videos.
-    # 12 videos equal 2 full pages on the TrimUI 3x2 grid. Avoiding unnecessary continuation
-    # cuts search network latency in half (from ~4-5s down to ~1.5s).
-    if len(results) < 12:
-        cont_token = _find_continuation_token(data)
-        if cont_token:
-            try:
-                cont_payload = {"context": WEB_CONTEXT, "continuation": cont_token}
-                cont_data = _make_request("search", cont_payload, timeout=5)
-                _extract_videos_from_json(cont_data, results, limit=limit * 2)
-            except Exception as e:
-                print(f"[rh.yt] Continuation fetch error: {e}")
+    # Extract and store continuation token for "Load more" at the end of the list
+    cont_token = _find_continuation_token(data)
+    set_continuation_token(clean_query, cont_token)
 
-    # Fallback to query without appended year if 0 results
-    if not results and eff_query != clean_query:
-        payload["query"] = clean_query
+    # Only fetch continuation if the first page returned fewer than 6 candidate videos
+    if len(results) < 6 and cont_token:
         try:
-            data = _make_request("search", payload, timeout=5)
-            _extract_videos_from_json(data, results, limit=limit * 2)
-        except Exception:
-            pass
-
-    if sort_by_date and results:
-        results.sort(key=lambda x: x.get("age", 999999.0))
+            cont_payload = {"context": WEB_CONTEXT, "continuation": cont_token}
+            cont_data = _make_request("search", cont_payload, timeout=5)
+            _extract_videos_from_json(cont_data, results, limit=limit)
+            next_token = _find_continuation_token(cont_data)
+            set_continuation_token(clean_query, next_token)
+        except Exception as e:
+            print(f"[rh.yt] Continuation fetch error: {e}")
 
     final_results = results[:limit]
     if final_results:
@@ -332,12 +432,12 @@ def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> li
     return final_results
 
 
-def get_trending(limit: int = 30) -> list:
-    """Get latest music videos on YouTube using default query 'MV Vpop'."""
-    eff = get_effective_query("MV Vpop")
-    items = search_youtube(eff, limit=limit, sort_by_date=True)
+def get_trending(limit: int = 24) -> list:
+    """Get latest music videos on YouTube using default query 'Music'."""
+    items = search_youtube("Music", limit=limit)
     if items:
         save_feed_cache("trending", items)
+        save_feed_cache("Music", items)
     return items
 
 
