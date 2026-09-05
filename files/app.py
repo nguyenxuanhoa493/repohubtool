@@ -1122,10 +1122,9 @@ def main():
         "needs_alpha_sort": False
     }
 
-    # Exit App Confirmation Modal State
+    # Exit App Confirmation Modal State (Direct Hotkeys: A = Stay, B = Exit)
     exit_modal = {
         "active": False,
-        "selected_opt": 0,  # 0 = "Ở lại" (Stay), 1 = "Thoát" (Quit)
     }
 
     modal_title = None
@@ -2462,19 +2461,11 @@ def main():
                         toast_msg = q_msg
                         toast_timer = time.time()
         elif exit_modal["active"]:
-            if btn_left or btn_up:
-                exit_modal["selected_opt"] = 0
-            elif btn_right or btn_down:
-                exit_modal["selected_opt"] = 1
-            elif btn_b:
+            if btn_b:
                 exit_modal["active"] = False
                 running = False
             elif btn_a:
-                if exit_modal["selected_opt"] == 1:
-                    exit_modal["active"] = False
-                    running = False
-                else:
-                    exit_modal["active"] = False
+                exit_modal["active"] = False
         elif alphabet_modal["active"]:
             if btn_left:
                 alphabet_modal["selected_idx"] = (alphabet_modal["selected_idx"] - 1) % 27
@@ -2968,7 +2959,6 @@ def main():
             # Home Screen: X = Confirm Exit App
             if current_screen == "home" and btn_x:
                 exit_modal["active"] = True
-                exit_modal["selected_opt"] = 0
 
             # Downloaded Games: X = Toggle View Mode, Y = Random Play
             elif current_screen == "download_manager" and btn_x:
@@ -3145,7 +3135,6 @@ def main():
                     screen_stack.pop()
                 else:
                     exit_modal["active"] = True
-                    exit_modal["selected_opt"] = 0
             elif btn_a:
                 # items is rebuilt every frame and can shrink - or be empty for a
                 # frame - while the cursor still points past its end. Clamp before
@@ -3601,7 +3590,6 @@ def main():
                         screen_stack.pop()
                 elif item_id == "exit":
                     exit_modal["active"] = True
-                    exit_modal["selected_opt"] = 1
 
             # Con tro chinh la nut xem thu: di toi bo mau nao thi den doi ngay
             # toi bo mau do. Ghi vao led.json - cung duong di voi luc chon that,
@@ -4851,35 +4839,23 @@ def main():
             draw_text(tr("exit_confirm_msg"), font_item, mx + mw // 2, my + 106, 235, 245, 255, center_x=True, center_y=True)
             draw_text(tr("exit_confirm_sub"), font_sub, mx + mw // 2, my + 144, 150, 170, 200, center_x=True, center_y=True)
 
-            # Two selectable action buttons
+            # Two direct action buttons (A = Stay, B = Exit completely)
             btn_gap = 24
             bw = (mw - 80 - btn_gap) // 2
             bh = 52
             by = my + mh - bh - 24
 
-            # Button 0: Ở lại (Stay)
+            # Button 0: [A] Ở lại (Stay)
             bx0 = mx + 40
-            is_sel0 = (exit_modal["selected_opt"] == 0)
-            if is_sel0:
-                fill_rect(bx0, by, bw, bh, 0, 170, 80, 255)
-                draw_rect(bx0, by, bw, bh, 0, 255, 150, 255, thickness=3)
-                draw_text(f"[A] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
-            else:
-                fill_rect(bx0, by, bw, bh, 24, 34, 54, 255)
-                draw_rect(bx0, by, bw, bh, 55, 75, 115, 255, thickness=1)
-                draw_text(f"[A] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 170, 190, 220, center_x=True, center_y=True)
+            fill_rect(bx0, by, bw, bh, 0, 160, 75, 255)
+            draw_rect(bx0, by, bw, bh, 0, 255, 140, 255, thickness=2)
+            draw_text(f"[A] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
 
-            # Button 1: Thoát hẳn (Exit completely)
+            # Button 1: [B] Thoát hẳn (Exit completely)
             bx1 = bx0 + bw + btn_gap
-            is_sel1 = (exit_modal["selected_opt"] == 1)
-            if is_sel1:
-                fill_rect(bx1, by, bw, bh, 210, 45, 45, 255)
-                draw_rect(bx1, by, bw, bh, 255, 90, 90, 255, thickness=3)
-                draw_text(f"[B] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
-            else:
-                fill_rect(bx1, by, bw, bh, 24, 34, 54, 255)
-                draw_rect(bx1, by, bw, bh, 55, 75, 115, 255, thickness=1)
-                draw_text(f"[B] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 220, 110, 110, center_x=True, center_y=True)
+            fill_rect(bx1, by, bw, bh, 200, 40, 40, 255)
+            draw_rect(bx1, by, bw, bh, 255, 90, 90, 255, thickness=2)
+            draw_text(f"[B] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
         # 5.4. UPDATE AVAILABLE MODAL
