@@ -65,22 +65,19 @@ def get_effective_query(query: str) -> str:
 
 
 def load_search_history() -> list:
-    """Load list of recent search queries from disk."""
+    """Load list of recent search queries from disk. Falls back to DEFAULT_QUERIES if empty or missing."""
     try:
         if os.path.exists(YT_HISTORY_FILE):
             with open(YT_HISTORY_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list) and data:
-                    user_history = []
-                    preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES} | LEGACY_PRESETS
+                    cleaned = []
                     for q in data:
                         q_str = str(q).strip()
-                        if not q_str or q_str.lower() in preset_lowers:
-                            continue
-                        if q_str not in user_history:
-                            user_history.append(q_str)
-                    combined = list(DEFAULT_QUERIES) + user_history
-                    return combined[:10]
+                        if q_str and q_str not in cleaned:
+                            cleaned.append(q_str)
+                    if cleaned:
+                        return cleaned[:10]
     except Exception as e:
         print(f"[rh.yt] Error loading search history: {e}")
     return list(DEFAULT_QUERIES)
@@ -89,35 +86,28 @@ def load_search_history() -> list:
 def save_search_history(queries: list):
     """Save list of recent search queries to disk."""
     try:
-        user_history = []
-        preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES} | LEGACY_PRESETS
+        clean_list = []
         for q in queries:
             q_str = str(q).strip()
-            if not q_str or q_str.lower() in preset_lowers:
-                continue
-            if q_str not in user_history:
-                user_history.append(q_str)
-        combined = list(DEFAULT_QUERIES) + user_history
+            if q_str and q_str not in clean_list:
+                clean_list.append(q_str)
         os.makedirs(os.path.dirname(YT_HISTORY_FILE), exist_ok=True)
         with open(YT_HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(combined[:10], f, ensure_ascii=False, indent=2)
+            json.dump(clean_list[:10], f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"[rh.yt] Error saving search history: {e}")
 
 
 def remove_search_history_item(query_to_remove: str) -> list:
-    """Remove a custom search keyword from history and save to disk."""
+    """Remove any search keyword (preset or custom) from history and save to disk."""
     q_clean = (query_to_remove or "").strip().lower()
     if not q_clean:
-        return list(DEFAULT_QUERIES)
+        return load_search_history()
 
     current_history = load_search_history()
-    preset_lowers = {p.lower() for p in DEFAULT_PRESET_QUERIES}
-    new_history = []
-    for q in current_history:
-        if q.lower() == q_clean and q.lower() not in preset_lowers:
-            continue
-        new_history.append(q)
+    new_history = [q for q in current_history if q.strip().lower() != q_clean]
+    if not new_history:
+        new_history = list(DEFAULT_QUERIES)
 
     save_search_history(new_history)
     return new_history

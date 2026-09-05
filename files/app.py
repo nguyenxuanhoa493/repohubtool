@@ -2843,18 +2843,14 @@ def main():
                     yt_search_results_list = []
 
                     # Update recent search queries list
-                    matched_preset_idx = -1
-                    for idx, p in enumerate(yt.DEFAULT_PRESET_QUERIES):
+                    matched_idx = -1
+                    for idx, p in enumerate(yt_recent_queries):
                         if q_clean.lower() == p.lower():
-                            matched_preset_idx = idx
+                            matched_idx = idx
                             break
 
-                    if matched_preset_idx >= 0:
-                        yt_recent_queries = build_yt_recent_queries()
-                        try:
-                            yt_query_idx = yt_recent_queries.index(yt.DEFAULT_PRESET_QUERIES[matched_preset_idx])
-                        except ValueError:
-                            yt_query_idx = 0
+                    if matched_idx >= 0:
+                        yt_query_idx = matched_idx
                     else:
                         yt.save_search_history([q_clean] + [q for q in yt.load_search_history() if q.lower() != q_clean.lower()])
                         yt_recent_queries = build_yt_recent_queries()
@@ -3115,12 +3111,11 @@ def main():
                             toast_msg = ("Đã thêm vào Yêu thích ❤️" if is_added else "Đã xóa khỏi Yêu thích") if state.current_lang == "VI" else ("Added to Favorites ❤️" if is_added else "Removed from Favorites")
                             toast_timer = time.time()
 
-                elif btn_f1: # Press SELECT to delete custom search keyword
+                elif btn_f1: # Press SELECT to delete search keyword
                     if yt_recent_queries and (0 <= yt_query_idx < len(yt_recent_queries)):
                         cur_q = yt_recent_queries[yt_query_idx]
                         fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                        protected_set = set(yt.DEFAULT_PRESET_QUERIES) | {fav_label}
-                        if cur_q not in protected_set:
+                        if cur_q != fav_label:
                             yt.remove_search_history_item(cur_q)
                             yt_query_cache.pop(cur_q, None)
                             yt_recent_queries = build_yt_recent_queries()
@@ -3132,10 +3127,16 @@ def main():
                             new_q = yt_recent_queries[yt_query_idx] if yt_recent_queries else ""
                             if new_q == fav_label:
                                 yt_mode = "favorites"
+                                yt_loading_state["active"] = False
+                                _prefetch_yt_thumbs(yt_favorites_list)
                             elif new_q == "Music":
                                 yt_mode = "trending"
                                 if not yt_trending_list:
                                     start_yt_load("Music", is_trending=True)
+                                else:
+                                    yt_loading_state["active"] = False
+                                    _prefetch_yt_thumbs(yt_trending_list)
+                                    trigger_yt_adjacent_preload()
                             else:
                                 yt_mode = "search"
                                 yt_search_query = new_q
@@ -3143,10 +3144,13 @@ def main():
                                     start_yt_load(new_q, is_trending=False)
                                 else:
                                     yt_search_results_list = yt_query_cache[new_q]
+                                    yt_loading_state["active"] = False
+                                    _prefetch_yt_thumbs(yt_search_results_list)
+                                    trigger_yt_adjacent_preload()
                             toast_msg = f"Đã xóa từ khóa: {cur_q}" if state.current_lang == "VI" else f"Deleted keyword: {cur_q}"
                             toast_timer = time.time()
                         else:
-                            toast_msg = "Không thể xóa từ khóa mặc định" if state.current_lang == "VI" else "Cannot delete default keyword"
+                            toast_msg = "Không thể xóa tab Yêu thích" if state.current_lang == "VI" else "Cannot delete Favorites tab"
                             toast_timer = time.time()
 
                 elif btn_b:
@@ -4055,14 +4059,14 @@ def main():
                 is_small_screen = (state.SCREEN_W < 1200)
                 if is_small_screen:
                     card_w = 316
-                    card_h = 206
+                    card_h = 226
                     gap_x = 14
                     gap_y = 10
                     tw = 296
                     th = 166
                 else:
                     card_w = 390
-                    card_h = 248
+                    card_h = 264
                     gap_x = 18
                     gap_y = 10
                     tw = 368
@@ -4111,7 +4115,7 @@ def main():
                             text_y = ty + th + 6
                             title_txt = "Bấm A để tải thêm" if state.current_lang == "VI" else "Press A to load more"
                             title_col = (0, 230, 255) if is_sel else (140, 170, 205)
-                            draw_text(title_txt, font_sub, cx + 12, text_y, title_col[0], title_col[1], title_col[2])
+                            draw_text(title_txt, font_sub, tx + 4, text_y, title_col[0], title_col[1], title_col[2])
                         else:
                             # NORMAL VIDEO CARD
                             v_id = v_data.get("id", "")
@@ -4166,14 +4170,20 @@ def main():
                                 draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
                                 draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                            # Title below thumbnail (only title, channel and upload time removed for cleanliness)
-                            text_y = ty + th + 6
+                            # Title below thumbnail (wrapped to max 2 lines)
                             disp_title = v_data.get("disp_title") or v_data.get("title", "Video")
-                            max_chars = 26 if is_small_screen else 34
-                            if len(disp_title) > max_chars:
-                                disp_title = disp_title[:max_chars - 2] + "..."
+                            max_text_w = tw - 8
+                            t_lines = v_data.get("_wrapped_title")
+                            if t_lines is None:
+                                t_lines = wrap_text_to_width(disp_title, font_sub, max_text_w, max_lines=2)
+                                v_data["_wrapped_title"] = t_lines
+
+                            line_y = ty + th + 5
                             title_col = (255, 255, 255) if is_sel else (205, 215, 230)
-                            draw_text(disp_title, font_sub, cx + 12, text_y, title_col[0], title_col[1], title_col[2])
+                            line_spacing = 20 if is_small_screen else 22
+                            for line_str in t_lines:
+                                draw_text(line_str, font_sub, tx + 4, line_y, title_col[0], title_col[1], title_col[2])
+                                line_y += line_spacing
 
         # ----------------------------------------------------------------------
         # SCREEN: SEARCH INPUT & VIRTUAL KEYBOARD WITH SYSTEM FILTER BAR
@@ -4772,8 +4782,7 @@ def main():
 
                 cur_q = yt_recent_queries[yt_query_idx] if (0 <= yt_query_idx < len(yt_recent_queries)) else ""
                 fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                protected_set = set(yt.DEFAULT_PRESET_QUERIES) | {fav_label}
-                if cur_q and (cur_q not in protected_set):
+                if cur_q and (cur_q != fav_label):
                     fx = draw_footer_btn(fx, "SL", "Xóa từ khóa", (240, 70, 70), is_dark_btn=False)
 
                 draw_footer_btn(state.SCREEN_W - 220, "L1/R1", "Từ khóa", (70, 95, 140), is_dark_btn=False)

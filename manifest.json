@@ -1,12 +1,12 @@
 {
-  "version": "1.70",
+  "version": "1.71",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T21:50:00+0700",
+  "built": "2026-09-05T22:05:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "YouTube: Tinh chỉnh kích thước thumbnail và thẻ lớn hơn, vừa vặn tuyệt đối với chiều rộng màn hình",
-    "en": "YouTube: Refine card and thumbnail dimensions to perfectly fit screen width with balanced padding"
+    "vi": "YouTube: Cho phép xóa cả từ khóa mặc định, hiển thị tiêu đề video 2 dòng rõ ràng trọn vẹn",
+    "en": "YouTube: Allow deleting default keyword tabs, 2-line video title wrapping for improved readability"
   },
   "remove": [
     "app.pyc",
@@ -187,8 +187,8 @@
     },
     {
       "path": "app.py",
-      "size": 299503,
-      "sha256": "c4583c79a1728589380761697e8cf227c1c64912e0f59540517bff26dda56a04"
+      "size": 299905,
+      "sha256": "f69987d14271a0ca7a10b8f89b105e21776c69b96314dc6f51a9ce65b5df9411"
     },
     {
       "path": "assets/fallback.ttf",
@@ -408,12 +408,12 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "634348308bb3bc600066f096fab4b898fdd05aaa1a80d1a9dd17b60e27599db2"
+      "sha256": "5f6e852f2bf464a6a9b75453eb78bbd552986bac05238fe02bc89c8d6c1f535b"
     },
     {
       "path": "rh/yt.py",
-      "size": 23431,
-      "sha256": "61ad221c6910843d7ec1d70bc1bfeee77bb9bda21c7a2a68c2b0018d2552cb0b"
+      "size": 22945,
+      "sha256": "1f327d626c8b4e908c491d9c20415e267694624b6b64860bc2619d3f2bf47305"
     },
     {
       "path": "rh/yt_player.py",

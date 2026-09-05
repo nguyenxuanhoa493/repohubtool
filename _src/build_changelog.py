@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.71", "2026-09-05",
+     ("YouTube: Allow deleting default keyword tabs, 2-line video title wrapping for improved readability",
+      "YouTube: Cho phép xóa cả từ khóa mặc định, hiển thị tiêu đề video 2 dòng rõ ràng trọn vẹn"),
+     [("Delete any keyword: users can now remove any search keyword tab including default presets (Music, KPOP, USUK, Tiktok) via SELECT [SL], leaving only the Favorites tab protected.",
+       "Xóa mọi từ khóa: cho phép bấm phím SELECT [SL] để xóa bất kỳ tab từ khóa nào kể cả từ khóa mặc định (Music, KPOP, USUK, Tiktok), chỉ giữ lại tab Yêu thích được bảo vệ."),
+      ("Two-line title wrapping: utilized available vertical card space to display video titles across up to 2 lines with cached wrapping, making titles readable in full without early truncation.",
+       "Xuống 2 dòng tiêu đề: tận dụng chiều cao khả dụng của thẻ để hiển thị tiêu đề video tối đa 2 dòng mượt mà, giúp đọc trọn vẹn tên bài hát và clip mà không bị cắt ngắn sớm.")]),
+
     ("1.70", "2026-09-05",
      ("YouTube: Refine card and thumbnail dimensions to perfectly fit screen width with balanced padding",
       "YouTube: Tinh chỉnh kích thước thumbnail và thẻ lớn hơn, vừa vặn tuyệt đối với chiều rộng màn hình"),
