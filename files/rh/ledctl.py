@@ -210,6 +210,13 @@ def stop():
     return True
 
 
+def restart():
+    """Khoi dong lai daemon de chac chan nap code va hieu ung moi nhat."""
+    stop()
+    time.sleep(0.15)
+    return start()
+
+
 def conflicting_daemon(root=PROC_ROOT):
     """LedControl.pak cua NextUI dang chay se tranh sysfs, den nhay loan.
 
