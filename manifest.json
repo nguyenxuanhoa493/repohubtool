@@ -174,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 282031,
-      "sha256": "c6ac045eaa7e168d18072ac2afd72bed57b92c4b0e7970ddceaeec3229bfed67"
+      "size": 282750,
+      "sha256": "78b3ae8762baaba74bfa0dc22e04cb20f9117ba513ee2eb4b0a8e5b26de73ad0"
     },
     {
       "path": "assets/fallback.ttf",
@@ -244,8 +244,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 7860,
-      "sha256": "a81a9f89ca646e0001cb0df6b71c7625cf81c9db6cad386ec130dac4721f7755"
+      "size": 7722,
+      "sha256": "56079b88978208226746fbee6100ae88a9521f0b67a16c220dfa0239fb140f79"
     },
     {
       "path": "led_daemon.py",

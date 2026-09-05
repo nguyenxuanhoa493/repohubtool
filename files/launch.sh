@@ -31,16 +31,13 @@ export SDCARD_PATH="${SDCARD_PATH:-/mnt/SDCARD}"
 export PATH="$SDCARD_PATH/System/bin:$PATH"
 export LD_LIBRARY_PATH="$APP/libs:$SDCARD_PATH/System/lib:/usr/trimui/lib:/usr/lib:/lib:$LD_LIBRARY_PATH"
 
-# Chi de /usr/trimui/lib: day la SDL2 rieng cua thiet bi. pysdl2 (vendor/sdl2/
-# dll.py:_findlib) tim ten file libSDL2.so khop chinh xac o MOI thu muc trong
-# bien nay TRUOC khi xet ten co so phien ban, nen thu tu liet ke khong bao ve
-# duoc gi - neu them /usr/lib vao day va no co san mot libSDL2.so khong ghi
-# phien ban trong khi /usr/trimui/lib chi co ban ghi phien ban, ban /usr/lib
-# se thang du dung sau. Khong can them /usr/lib o day: _findlib van goi
-# ctypes.util.find_library() nhu buoc du phong sau khi quet xong bien nay, nen
-# thu vien he thong (bao gom /usr/lib) van tim duoc, chi la khong con xep
-# hang truoc ban rieng cua may.
-export PYSDL2_DLL_PATH="/usr/trimui/lib"
+# Thu vien SDL2 phu thuoc vao tung thiet bi va ban firmware:
+# - TrimUI Brick / Smart Pro dat ban tuy bien rieng o /usr/trimui/lib
+# - TrimUI Smart Pro S (TSPS), muOS va Linux handheld chuan dat o /usr/lib64 hoac /usr/lib
+# - $APP/libs cho phep dong goi san thu vien di kem neu thiet bi khong co san (Miyoo Mini,...)
+# pysdl2 ho tro nhieu thu muc ngan cach boi dau ":" va fallback cua no (ctypes.util.find_library)
+# khong chay duoc tren BusyBox vi thieu ldconfig/gcc/objdump.
+export PYSDL2_DLL_PATH="$APP/libs:/usr/trimui/lib:/usr/lib64:/usr/lib"
 
 # Kept outside the app folder so reinstalling or updating RetroHub does not
 # throw away a runtime that took a download to get.
