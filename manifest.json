@@ -1,11 +1,11 @@
 {
-  "version": "1.58",
+  "version": "1.59",
   "python": "any",
-  "built": "2026-09-05T06:30:00+0700",
+  "built": "2026-09-05T07:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tối ưu siêu tốc kho game: cuộn 60 FPS mượt mà, tải ảnh bìa thông minh và sắp xếp tức thì trong RAM",
-    "en": "Blazing fast game library: 60 FPS scrolling, lazy boxarts, and instant sorting in RAM"
+    "vi": "Nâng cấp toàn diện YouTube: sắp xếp video mới nhất, tải trước thông minh và thanh tải HUD không chặn",
+    "en": "Comprehensive YouTube upgrade: chronological sorting, speculative preloading, and non-blocking HUD"
   },
   "remove": [
     "app.pyc",
@@ -174,8 +174,8 @@
     },
     {
       "path": "app.py",
-      "size": 268793,
-      "sha256": "f8e12799d9b90475dae9ff007b1213184431a25e7516bf3847d4e342683870c8"
+      "size": 274549,
+      "sha256": "4bfbd69fe7f889ca7943313ff0508c44a73b3021a1d1be0a983227b839fc05ce"
     },
     {
       "path": "assets/fallback.ttf",
@@ -304,8 +304,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 34419,
-      "sha256": "adaaa28ba700956c235e4d15e7f88c51b4ab2161f1a92a31192ca96abe78294d"
+      "size": 34420,
+      "sha256": "3de3c32efc85958b5f931e9f96b4e8c418e4d921c53cac46876d12e70cf7a5e1"
     },
     {
       "path": "rh/j2me.py",
@@ -395,12 +395,12 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "e10be96aa65b96d87aca8bcf4bb208cd347e09deb149879be1207261ecd90dea"
+      "sha256": "e4a4e88f51a600c3ba819b49383e886ac635a34a9b8f4c41cd056e920c19daa4"
     },
     {
       "path": "rh/yt.py",
-      "size": 14220,
-      "sha256": "8f1c7e890f21182e849698363f3731556e5ddfcfbbf30969f21938036849984c"
+      "size": 18051,
+      "sha256": "a0c4b6bce99ab7794f382c981dd5c2c35bc9cfca74bf6cf5d5ed09c7f22544df"
     },
     {
       "path": "rh/yt_player.py",
