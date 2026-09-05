@@ -4,6 +4,9 @@ progdir=`dirname "$0"`
 
 
 cd /mnt/SDCARD/Emus/JAVA/zulu17/bin
+chmod +x ./sdl_interface ./java 2>/dev/null
+[ ! -e /usr/lib/libGLES_CM.so ] && [ -f /usr/lib/libGLESv1_CM.so ] && ln -sf /usr/lib/libGLESv1_CM.so /usr/lib/libGLES_CM.so 2>/dev/null
+mkdir -p ./rms ./config
 
 JAVA_HOME='/mnt/SDCARD/Emus/JAVA/zulu17'
 export JAVA_HOME

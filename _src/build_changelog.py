@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.65", "2026-09-05",
+     ("Update Java J2ME emulator (JM 1.0.5): on-screen text input, diagonal D-pad, hotkeys, display mode toggle",
+      "Cập nhật giả lập Java J2ME (JM 1.0.5): bàn phím ảo gõ chữ, D-pad chéo, phím tắt 1/3/7/9, đổi chế độ hiển thị"),
+     [("On-screen virtual keyboard: games requiring character or text input now support interactive typing via font.ttf (* to delete, # to add, 2/4 for letters, 1/3 for digits, 7/9 for special characters).",
+       "Bàn phím ảo nhập text: game Java yêu cầu nhập tên nhân vật/text giờ đã có bàn phím ảo hiển thị trực quan qua font.ttf (* xóa ký tự, # thêm ký tự, 2/4 chọn chữ a-z, 1/3 chọn số 0-9, 7/9 ký tự đặc biệt)."),
+      ("Diagonal D-pad & hotkey shortcuts: full 8-direction D-pad support, and pressing Menu + D-pad Left toggles diagonal directions to send number keys 1, 3, 7, 9.",
+       "D-pad hướng chéo và phím tắt nhanh: D-pad hỗ trợ đầy đủ 8 hướng chéo, bấm tổ hợp Menu + D-pad Trái để chuyển nhanh các hướng chéo thành các phím số 1, 3, 7, 9."),
+      ("In-game display mode toggle: press Select during gameplay to instantly switch between linear (smooth) and nearest (pixel) scaling, automatically synchronized with RetroHub display settings.",
+       "Đổi chế độ hiển thị tức thì trong game: bấm phím Select khi đang chơi để chuyển đổi giữa hai chế độ Linear (mịn) và Nearest (pixel sắc nét), tự động đồng bộ cùng cài đặt RetroHub.")]),
+
     ("1.64", "2026-09-05",
      ("Add 5 high-energy LED effects (rave strobe, thunderstorm, bass drop) and 7 vibrant themes",
       "Bổ sung 5 hiệu ứng LED sôi động (chớp giật strobe, bão sấm sét, bass drop...) và 7 theme LED mới"),

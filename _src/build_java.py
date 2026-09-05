@@ -130,6 +130,12 @@ FIT_ROWS = [
 SHORTCUTS = [
     (("START + SELECT", "Cycle P → N → E → S → M → H → K → X"),
      ("START + SELECT", "Chạy vòng P → N → E → S → M → H → K → X")),
+    (("SELECT on its own", "Toggle display mode (Linear / Nearest)"),
+     ("SELECT bấm riêng", "Đổi chế độ hiển thị (Linear / Nearest)")),
+    (("MENU + D-pad Left", "Toggle diagonal D-pad to keys 1, 3, 7, 9"),
+     ("MENU + D-pad Trái", "Chuyển các hướng chéo D-pad thành các phím 1, 3, 7, 9")),
+    (("On-screen text input", "*: Delete, #: Add, 2/4: Letters a-z, 1/3: Digits 0-9, 7/9: Symbols"),
+     ("Bàn phím ảo nhập text", "*: Xóa ký tự, #: Thêm, 2/4: Chọn chữ a-z, 1/3: Chọn số 0-9, 7/9: Ký tự đặc biệt")),
     (("START + R3", "Cycle PIXEL → SMOOTH → HQ"),
      ("START + R3", "Chạy vòng PIXEL → SMOOTH → HQ")),
     (("START + B", "Rotate the screen"), ("START + B", "Xoay màn hình")),
@@ -137,7 +143,6 @@ SHORTCUTS = [
      ("START + Y", "Bật/tắt mouse mode (X là click)")),
     (("MENU", "Ask whether to quit the game"),
      ("MENU", "Hỏi có thoát game không")),
-    (("SELECT on its own", "Key 5"), ("SELECT bấm riêng", "Số 5")),
 ]
 
 TROUBLE = [
