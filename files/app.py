@@ -13,6 +13,7 @@ import threading
 import hashlib
 import ctypes
 import json
+import math
 try:
     import db
 except Exception:
@@ -633,6 +634,76 @@ def main():
         "id": 0,
         "start_time": 0.0,
     }
+    yt_launch_state = {
+        "active": False,
+        "v_id": None,
+        "title": "",
+        "status": "idle",
+        "stream_url": None,
+        "err_msg": "",
+        "start_time": 0.0,
+    }
+
+    def _show_yt_handoff_splash(v_title):
+        for _ in range(2):
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 13, 17, 28, 255)
+            fill_rect(0, 0, state.SCREEN_W, HEADER_H, 20, 28, 46, 255)
+            fill_rect(0, HEADER_H - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
+            draw_text("YouTube", font_title, 40, HEADER_H // 2, 255, 255, 255, center_y=True)
+
+            mw = 760
+            mh = 210
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+            fill_rect(mx, my, mw, mh, 20, 26, 42, 255)
+            draw_rect(mx, my, mw, mh, 0, 220, 255, 255, thickness=2)
+
+            fill_rect(mx + 28, my + 22, 140, 26, 230, 33, 23, 255)
+            draw_text("▶ YouTube Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
+
+            t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
+            ty = my + 64
+            for tl in t_lines:
+                draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
+                ty += 32
+            start_txt = "Đang mở trình phát RetroArch..." if state.current_lang == "VI" else "Starting RetroArch player..."
+            draw_text(start_txt, font_modal_val, mx + 30, my + mh - 38, 0, 255, 160)
+            sdl2.SDL_RenderPresent(renderer)
+
+    def launch_yt_video_handoff(v_id, s_url, s_title):
+        try:
+            info_file = "/tmp/yt_stream_info.json"
+            stream_info = {
+                "video_id": v_id,
+                "stream_url": s_url,
+                "title": s_title
+            }
+            with open(info_file, "w", encoding="utf-8") as _sf:
+                json.dump(stream_info, _sf)
+
+            _resume_state = {
+                "screen_stack": screen_stack if len(screen_stack) > 1 else ["home", "yt_grid"],
+                "selected_indices": selected_indices,
+                "scroll_offsets": scroll_offsets,
+                "yt_mode": yt_mode,
+                "yt_search_query": yt_search_query,
+                "yt_trending_list": yt_trending_list,
+                "yt_search_results_list": yt_search_results_list,
+                "yt_recent_queries": yt_recent_queries,
+                "yt_query_idx": yt_query_idx,
+                "yt_query_cache": yt_query_cache,
+            }
+            with open("/tmp/retrohub_resume.json", "w", encoding="utf-8") as _rf:
+                json.dump(_resume_state, _rf)
+
+            play_cmd = yt.build_play_command(v_id, info_file=info_file)
+            with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
+                f.write(play_cmd)
+            subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
+            return True
+        except Exception as e:
+            print(f"[RetroHub] Error preparing video launch: {e}")
+            return False
 
     # Khởi chạy giải nén và nạp trước yt-dlp vào bộ nhớ RAM ngầm
     import rh.yt_player as yt_player
@@ -2682,195 +2753,189 @@ def main():
             cur_videos = yt_trending_list if yt_mode == "trending" else yt_search_results_list
             total_v = len(cur_videos)
 
-            if total_v > 0:
-                cols = 3
-                rows = 2
-                per_page = 6
-                scroll_row = scroll_offsets.get("yt_grid", 0)
+            if yt_launch_state.get("active"):
+                if yt_launch_state.get("status") == "ready":
+                    v_id = yt_launch_state["v_id"]
+                    s_url = yt_launch_state["stream_url"]
+                    s_title = yt_launch_state["title"]
+                    yt_launch_state["active"] = False
+                    _show_yt_handoff_splash(s_title)
+                    launch_yt_video_handoff(v_id, s_url, s_title)
+                    running = False
+                    break
+                elif yt_launch_state.get("status") == "error":
+                    toast_msg = yt_launch_state.get("err_msg") or ("Không lấy được link phát video!" if state.current_lang == "VI" else "Failed to get video stream!")
+                    toast_timer = time.time()
+                    yt_launch_state["active"] = False
+                    yt_launch_state["status"] = "idle"
+                elif btn_b:
+                    yt_launch_state["active"] = False
+                    yt_launch_state["status"] = "idle"
+                    toast_msg = "Đã hủy kết nối" if state.current_lang == "VI" else "Cancelled connection"
+                    toast_timer = time.time()
 
-                if btn_left:
-                    if selected_idx > 0:
-                        selected_idx -= 1
-                elif btn_right:
-                    if selected_idx < total_v - 1:
-                        selected_idx += 1
-                elif btn_up:
-                    if selected_idx - cols >= 0:
-                        selected_idx -= cols
-                elif btn_down:
-                    if selected_idx + cols < total_v:
-                        selected_idx += cols
-                # Keep selected card visible in 2 rows
-                cur_row = selected_idx // cols
-                if cur_row < scroll_row:
-                    scroll_row = cur_row
-                elif cur_row >= scroll_row + rows:
-                    scroll_row = cur_row - rows + 1
+            else:
+                if total_v > 0:
+                    cols = 3
+                    rows = 2
+                    per_page = 6
+                    scroll_row = scroll_offsets.get("yt_grid", 0)
 
-                scroll_offsets["yt_grid"] = scroll_row
-                selected_indices["yt_grid"] = selected_idx
+                    if btn_left:
+                        if selected_idx > 0:
+                            selected_idx -= 1
+                    elif btn_right:
+                        if selected_idx < total_v - 1:
+                            selected_idx += 1
+                    elif btn_up:
+                        if selected_idx - cols >= 0:
+                            selected_idx -= cols
+                    elif btn_down:
+                        if selected_idx + cols < total_v:
+                            selected_idx += cols
+                    # Keep selected card visible in 2 rows
+                    cur_row = selected_idx // cols
+                    if cur_row < scroll_row:
+                        scroll_row = cur_row
+                    elif cur_row >= scroll_row + rows:
+                        scroll_row = cur_row - rows + 1
 
-                # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 0.5s
-                cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < total_v) else None
-                sel_id = cur_v_sel.get("id") if cur_v_sel else None
-                if sel_id:
-                    if sel_id != yt_last_hover_id:
-                        yt_last_hover_id = sel_id
-                        yt_hover_start_time = time.time()
-                    elif (time.time() - yt_hover_start_time > 0.5) and (sel_id not in yt_player._STREAM_CACHE):
-                        if yt_prefetch_thread is None or not yt_prefetch_thread.is_alive():
-                            def _bg_prefetch(vid_fetch):
-                                try:
-                                    yt_player.extract_stream_fast(vid_fetch)
-                                except Exception:
-                                    pass
-                            yt_prefetch_thread = threading.Thread(target=_bg_prefetch, args=(sel_id,), daemon=True)
-                            yt_prefetch_thread.start()
+                    scroll_offsets["yt_grid"] = scroll_row
+                    selected_indices["yt_grid"] = selected_idx
 
-                if btn_a and 0 <= selected_idx < total_v:
-                    cur_v = cur_videos[selected_idx]
-                    v_id = cur_v.get("id")
-                    if v_id:
-                        ra_bin = "/mnt/SDCARD/RetroArch/ra64.trimui"
-                        ff_core = "/mnt/SDCARD/Emus/FFMPEG/ffmpeg_libretro.so"
-                        if not (os.path.exists(ra_bin) and os.path.exists(ff_core)):
-                            toast_msg = tr("yt_no_player")
-                            toast_timer = time.time()
-                        else:
-                            # 1. Nếu chưa có trong cache, hiển thị hộp thoại loading để người dùng thấy phản hồi
-                            if v_id not in yt_player._STREAM_CACHE:
-                                v_title = cur_v.get("title", v_id)
-                                fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
-                                mw = 720
-                                mh = 200
-                                mx = (state.SCREEN_W - mw) // 2
-                                my = (state.SCREEN_H - mh) // 2
-                                fill_rect(mx, my, mw, mh, 20, 26, 38, 245)
-                                draw_rect(mx, my, mw, mh, 59, 130, 246, 255, thickness=2)
-                                draw_text("YouTube Stream", font_badge, mx + 30, my + 25, 239, 68, 68)
-                                t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
-                                ty = my + 65
-                                for tl in t_lines:
-                                    draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
-                                    ty += 32
-                                load_text = "Đang kết nối luồng phát tốc độ cao..." if state.current_lang == "VI" else "Connecting high-speed stream..."
-                                draw_text(load_text, font_modal_val, mx + 30, my + mh - 42, 56, 189, 248)
-                                sdl2.SDL_RenderPresent(renderer)
+                    # Tự động nạp trước luồng phát (Speculative Pre-fetch) khi người dùng dừng con trỏ ở 1 video > 0.5s
+                    cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < total_v) else None
+                    sel_id = cur_v_sel.get("id") if cur_v_sel else None
+                    if sel_id:
+                        if sel_id != yt_last_hover_id:
+                            yt_last_hover_id = sel_id
+                            yt_hover_start_time = time.time()
+                        elif (time.time() - yt_hover_start_time > 0.5) and (sel_id not in yt_player._STREAM_CACHE):
+                            if yt_prefetch_thread is None or not yt_prefetch_thread.is_alive():
+                                def _bg_prefetch(vid_fetch):
+                                    try:
+                                        yt_player.extract_stream_fast(vid_fetch)
+                                    except Exception:
+                                        pass
+                                yt_prefetch_thread = threading.Thread(target=_bg_prefetch, args=(sel_id,), daemon=True)
+                                yt_prefetch_thread.start()
 
-                            # 2. Lấy link phát từ cache tức thì (0s) hoặc hoàn tất tải
-                            from rh.yt_player import extract_stream_fast
-                            s_url, s_title = extract_stream_fast(v_id)
-
-                            if not s_url:
-                                toast_msg = "Không lấy được luồng phát video!" if state.current_lang == "VI" else "Failed to extract stream URL!"
+                    if btn_a and 0 <= selected_idx < total_v:
+                        cur_v = cur_videos[selected_idx]
+                        v_id = cur_v.get("id")
+                        if v_id:
+                            ra_bin = "/mnt/SDCARD/RetroArch/ra64.trimui"
+                            ff_core = "/mnt/SDCARD/Emus/FFMPEG/ffmpeg_libretro.so"
+                            if not (os.path.exists(ra_bin) and os.path.exists(ff_core)):
+                                toast_msg = tr("yt_no_player")
                                 toast_timer = time.time()
                             else:
-                                try:
-                                    # Luu thong tin stream vao /tmp/yt_stream_info.json de yt_player khong phai chay lai yt-dlp
-                                    info_file = "/tmp/yt_stream_info.json"
-                                    stream_info = {
-                                        "video_id": v_id,
-                                        "stream_url": s_url,
-                                        "title": s_title or v_title
-                                    }
-                                    with open(info_file, "w", encoding="utf-8") as _sf:
-                                        json.dump(stream_info, _sf)
-
-                                    # Save resume state so returning from video playback resumes at exact YouTube screen & cursor
-                                    _resume_state = {
-                                        "screen_stack": screen_stack if len(screen_stack) > 1 else ["home", "yt_grid"],
-                                        "selected_indices": selected_indices,
-                                        "scroll_offsets": scroll_offsets,
-                                        "yt_mode": yt_mode,
-                                        "yt_search_query": yt_search_query,
-                                        "yt_trending_list": yt_trending_list,
-                                        "yt_search_results_list": yt_search_results_list,
-                                        "yt_recent_queries": yt_recent_queries,
-                                        "yt_query_idx": yt_query_idx,
-                                        "yt_query_cache": yt_query_cache,
-                                    }
-                                    with open("/tmp/retrohub_resume.json", "w", encoding="utf-8") as _rf:
-                                        json.dump(_resume_state, _rf)
-
-                                    play_cmd = yt.build_play_command(v_id, info_file=info_file)
-                                    with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
-                                        f.write(play_cmd)
-                                    subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
+                                v_title = cur_v.get("title", v_id)
+                                now = time.time()
+                                cached = yt_player._STREAM_CACHE.get(v_id)
+                                if cached and now < cached[2]:
+                                    _show_yt_handoff_splash(cached[1] or v_title)
+                                    launch_yt_video_handoff(v_id, cached[0], cached[1] or v_title)
                                     running = False
-                                except Exception as e:
-                                    toast_msg = f"Error: {e}"
-                                    toast_timer = time.time()
+                                    break
+                                else:
+                                    yt_launch_state["active"] = True
+                                    yt_launch_state["v_id"] = v_id
+                                    yt_launch_state["title"] = v_title
+                                    yt_launch_state["status"] = "connecting"
+                                    yt_launch_state["stream_url"] = None
+                                    yt_launch_state["err_msg"] = ""
+                                    req_t = time.time()
+                                    yt_launch_state["start_time"] = req_t
 
-            # L1 / R1: Switch recent search keywords
-            if (btn_l1 or btn_r1) and yt_recent_queries:
-                if btn_l1:
-                    yt_query_idx = (yt_query_idx - 1) % len(yt_recent_queries)
-                else:
-                    yt_query_idx = (yt_query_idx + 1) % len(yt_recent_queries)
+                                    def _extract_worker(vid, t_str, token):
+                                        try:
+                                            s_url, s_t = yt_player.extract_stream_fast(vid)
+                                            if yt_launch_state["active"] and yt_launch_state.get("start_time") == token:
+                                                if s_url:
+                                                    yt_launch_state["stream_url"] = s_url
+                                                    yt_launch_state["title"] = s_t or t_str
+                                                    yt_launch_state["status"] = "ready"
+                                                else:
+                                                    yt_launch_state["status"] = "error"
+                                                    yt_launch_state["err_msg"] = "Không lấy được luồng phát video!" if state.current_lang == "VI" else "Failed to extract stream URL!"
+                                        except Exception as ex:
+                                            if yt_launch_state["active"] and yt_launch_state.get("start_time") == token:
+                                                yt_launch_state["status"] = "error"
+                                                yt_launch_state["err_msg"] = str(ex)
 
-                new_q = yt_recent_queries[yt_query_idx]
-                selected_idx = 0
-                selected_indices["yt_grid"] = 0
-                scroll_offsets["yt_grid"] = 0
+                                    threading.Thread(target=_extract_worker, args=(v_id, v_title, req_t), daemon=True).start()
 
-                if new_q == "MV Vpop" or yt_query_idx == 0:
-                    yt_mode = "trending"
-                    if not yt_trending_list:
-                        start_yt_load("MV Vpop", is_trending=True)
+                # L1 / R1: Switch recent search keywords
+                if (btn_l1 or btn_r1) and yt_recent_queries:
+                    if btn_l1:
+                        yt_query_idx = (yt_query_idx - 1) % len(yt_recent_queries)
                     else:
-                        yt_loading_state["active"] = False
-                        _prefetch_yt_thumbs(yt_trending_list)
-                        trigger_yt_adjacent_preload()
-                    toast_msg = "Chủ đề: MV Vpop (Mới nhất)" if state.current_lang == "VI" else "Topic: MV Vpop (Latest)"
-                    toast_timer = time.time()
-                else:
-                    yt_mode = "search"
-                    yt_search_query = new_q
-                    if new_q in yt_query_cache and yt_query_cache[new_q]:
-                        yt_search_results_list = yt_query_cache[new_q]
-                        yt_loading_state["active"] = False
-                        _prefetch_yt_thumbs(yt_search_results_list)
-                        trigger_yt_adjacent_preload()
-                    else:
-                        yt_search_results_list = []
-                        start_yt_load(new_q, is_trending=False)
-                    toast_msg = f"Từ khóa: {new_q}" if state.current_lang == "VI" else f"Keyword: {new_q}"
-                    toast_timer = time.time()
+                        yt_query_idx = (yt_query_idx + 1) % len(yt_recent_queries)
 
-                items = yt_trending_list if yt_mode == "trending" else yt_search_results_list
-                cur_videos = items
-                total_v = len(cur_videos)
-
-            if btn_x: # Press X to open Search
-                selected_indices["yt_search_input"] = 0
-                yt_input_text = ""
-                kb_cursor = [0, 0]
-                screen_stack.append("yt_search_input")
-
-            elif btn_y: # Press Y to return to trending MV Vpop
-                if yt_mode == "search" or yt_query_idx != 0:
-                    yt_query_idx = 0
-                    yt_mode = "trending"
+                    new_q = yt_recent_queries[yt_query_idx]
                     selected_idx = 0
                     selected_indices["yt_grid"] = 0
                     scroll_offsets["yt_grid"] = 0
-                    if not yt_trending_list:
-                        start_yt_load("MV Vpop", is_trending=True)
+
+                    if new_q == "MV Vpop" or yt_query_idx == 0:
+                        yt_mode = "trending"
+                        if not yt_trending_list:
+                            start_yt_load("MV Vpop", is_trending=True)
+                        else:
+                            yt_loading_state["active"] = False
+                            _prefetch_yt_thumbs(yt_trending_list)
+                            trigger_yt_adjacent_preload()
+                        toast_msg = "Chủ đề: MV Vpop (Mới nhất)" if state.current_lang == "VI" else "Topic: MV Vpop (Latest)"
+                        toast_timer = time.time()
                     else:
-                        yt_loading_state["active"] = False
-                        _prefetch_yt_thumbs(yt_trending_list)
-                        trigger_yt_adjacent_preload()
-                    toast_msg = "Đã chuyển về MV Vpop" if state.current_lang == "VI" else "Switched to MV Vpop"
-                    toast_timer = time.time()
-                    items = yt_trending_list or []
+                        yt_mode = "search"
+                        yt_search_query = new_q
+                        if new_q in yt_query_cache and yt_query_cache[new_q]:
+                            yt_search_results_list = yt_query_cache[new_q]
+                            yt_loading_state["active"] = False
+                            _prefetch_yt_thumbs(yt_search_results_list)
+                            trigger_yt_adjacent_preload()
+                        else:
+                            yt_search_results_list = []
+                            start_yt_load(new_q, is_trending=False)
+                        toast_msg = f"Từ khóa: {new_q}" if state.current_lang == "VI" else f"Keyword: {new_q}"
+                        toast_timer = time.time()
+
+                    items = yt_trending_list if yt_mode == "trending" else yt_search_results_list
                     cur_videos = items
                     total_v = len(cur_videos)
 
-            elif btn_b:
-                if len(screen_stack) > 1:
-                    screen_stack.pop()
-                else:
-                    running = False
+                if btn_x: # Press X to open Search
+                    selected_indices["yt_search_input"] = 0
+                    yt_input_text = ""
+                    kb_cursor = [0, 0]
+                    screen_stack.append("yt_search_input")
+
+                elif btn_y: # Press Y to return to trending MV Vpop
+                    if yt_mode == "search" or yt_query_idx != 0:
+                        yt_query_idx = 0
+                        yt_mode = "trending"
+                        selected_idx = 0
+                        selected_indices["yt_grid"] = 0
+                        scroll_offsets["yt_grid"] = 0
+                        if not yt_trending_list:
+                            start_yt_load("MV Vpop", is_trending=True)
+                        else:
+                            yt_loading_state["active"] = False
+                            _prefetch_yt_thumbs(yt_trending_list)
+                            trigger_yt_adjacent_preload()
+                        toast_msg = "Đã chuyển về MV Vpop" if state.current_lang == "VI" else "Switched to MV Vpop"
+                        toast_timer = time.time()
+                        items = yt_trending_list or []
+                        cur_videos = items
+                        total_v = len(cur_videos)
+
+                elif btn_b:
+                    if len(screen_stack) > 1:
+                        screen_stack.pop()
+                    else:
+                        running = False
 
 
         elif modal_title:
@@ -5298,10 +5363,35 @@ def main():
             draw_rect(bx, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
             draw_text("Đóng [Bấm A hoặc B]", font_badge, bx + btn_w // 2, by + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
 
+        # 8. YouTube Video Connecting Modal (Smooth, Flicker-Free)
+        if current_screen == "yt_grid" and yt_launch_state.get("active"):
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
+            mw, mh = 760, 210
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+            fill_rect(mx, my, mw, mh, 20, 26, 42, 250)
+            anim_pulse = (math.sin(now * 6.0) + 1.0) * 0.5
+            bc_g = int(180 + 60 * anim_pulse)
+            draw_rect(mx, my, mw, mh, 0, bc_g, 255, 255, thickness=2)
+            fill_rect(mx + 28, my + 22, 140, 26, 230, 33, 23, 255)
+            draw_text("▶ YouTube Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
+            v_title = yt_launch_state.get("title") or "Video YouTube"
+            t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
+            ty = my + 64
+            for tl in t_lines:
+                draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
+                ty += 32
+            dots = "." * (int(now * 3) % 4)
+            load_text = ("Đang kết nối luồng phát tốc độ cao" + dots) if state.current_lang == "VI" else ("Connecting high-speed stream" + dots)
+            draw_text(load_text, font_modal_val, mx + 30, my + mh - 38, 56, 189, 248)
+            cancel_str = "[B] Hủy" if state.current_lang == "VI" else "[B] Cancel"
+            cw = measure_text(cancel_str, font_badge)
+            draw_text(cancel_str, font_badge, mx + mw - 30 - cw, my + mh - 38, 140, 165, 195)
+
         sdl2.SDL_RenderPresent(renderer)
 
         # Adaptive Dynamic Eco Power Saving (60 FPS when active, ~28 FPS when idle to save battery)
-        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False)
+        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False) or yt_launch_state.get("active", False)
         if is_active:
             time.sleep(0.016)
         else:
