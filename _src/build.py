@@ -32,11 +32,24 @@ def _published_version(fallback="1.50"):
     return fallback
 
 
+def _full_release_version(fallback="1.63"):
+    """The latest full installer release on GitHub Releases."""
+    try:
+        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
+            v = json.load(f).get("full_release_version")
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    except Exception:
+        pass
+    return fallback
+
+
 VERSION = _published_version()
-VER_FULL = "RetroHub-%s-full.zip" % VERSION
-VER_NEXTUI = "RetroHub-%s-NextUI.zip" % VERSION
+FULL_VERSION = _full_release_version()
+VER_FULL = "RetroHub-%s-full.zip" % FULL_VERSION
+VER_NEXTUI = "RetroHub-%s-NextUI.zip" % FULL_VERSION
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
-       % VERSION)
+       % FULL_VERSION)
 
 # slug -> (title, description) per language. The slug is also the screenshot
 # filename, looked up under shots/<lang>/.
