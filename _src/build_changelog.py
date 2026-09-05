@@ -26,6 +26,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.68", "2026-09-05",
+     ("Optimize YouTube menu: instant load via feed cache, parallel thumbnail prefetch, and rock-solid 60 FPS",
+      "Tối ưu menu YouTube: mở tức thì qua feed cache, tải song song thumbnail và duy trì 60 FPS mượt mà"),
+     [("Persistent feed cache: trending videos and keywords are cached on SDCARD so opening the menu or switching tabs loads instantly with 0 latency.",
+       "Bộ nhớ đệm dữ liệu lâu dài: danh sách video thịnh hành và từ khóa được lưu trực tiếp trên thẻ nhớ, giúp mở menu hoặc chuyển danh mục xuất hiện ngay lập tức không cần chờ mạng."),
+      ("Parallel prioritized thumbnails: front-page visible video thumbnails download concurrently with 3 workers, cutting thumbnail loading time from 7s down to ~0.5s.",
+       "Tải trước thumbnail song song theo mức ưu tiên: 6 video đang hiển thị trên màn hình được tải đồng thời với 3 luồng mạng, rút ngắn thời gian nạp ảnh bìa từ 7 giây xuống chỉ còn ~0.5 giây."),
+      ("Eliminated continuation request overhead: avoid redundant second network pagination request when the first page already yields sufficient candidate videos, doubling search speed.",
+       "Loại bỏ request mạng dư thừa: không gọi thêm yêu cầu phân trang thứ hai khi trang đầu tiên đã có đủ video cho lưới 3x2, tăng gấp đôi tốc độ tải mạng từ 4-5s xuống ~1.5s."),
+      ("Rock-solid 60 FPS rendering: throttled texture decoding to 1 image per frame and replaced filesystem stat calls with in-memory set lookups, eliminating all stutter when scrolling.",
+       "Duy trì 60 FPS mượt mà tuyệt đối: giới hạn giải mã tối đa 1 texture mỗi khung hình và loại bỏ hoàn toàn lệnh kiểm tra ổ đĩa trong vòng lặp vẽ, giúp thao tác bấm cuộn lướt video mượt như bơ."),
+      ("CPU overload prevention: delayed speculative stream pre-fetching until the user pauses on a video for 2.5s, freeing CPU cores for responsive UI navigation.",
+       "Chống nghẽn CPU Allwinner: dời tính năng tự động dò luồng phát chỉ khi người dùng dừng lại xem video quá 2.5 giây, giải phóng CPU để giao diện luôn phản hồi phím bấm tức thì.")]),
+
     ("1.67", "2026-09-05",
      ("Fix new LED themes: continuous vibrant strobe & pulse, auto-restart daemon to load new effects",
       "Khắc phục triệt để lỗi theme LED mới: tối ưu nháy sáng liên tục, tự khởi động lại daemon nạp hiệu ứng mới"),

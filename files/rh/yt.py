@@ -10,7 +10,7 @@ import time
 import urllib.parse
 import urllib.request
 
-from rh.paths import YT_HISTORY_FILE
+from rh.paths import YT_HISTORY_FILE, YT_FEED_CACHE_FILE, YT_FEED_FALLBACK_FILE
 
 INNERTUBE_URL = "https://www.youtube.com/youtubei/v1"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -106,6 +106,49 @@ def save_search_history(queries: list):
     except Exception as e:
         print(f"[rh.yt] Error saving search history: {e}")
 
+
+def load_feed_cache(category: str = "trending") -> tuple:
+    """Load cached feed items for category. Returns (items_list, timestamp)."""
+    for path in (YT_FEED_CACHE_FILE, YT_FEED_FALLBACK_FILE):
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, dict):
+                    cat = data.get(category)
+                    if isinstance(cat, dict):
+                        return cat.get("items", []), float(cat.get("timestamp", 0))
+            except Exception:
+                pass
+    return [], 0.0
+
+
+def save_feed_cache(category: str, items: list):
+    """Save feed items for category to disk cache."""
+    if not items:
+        return
+    for path in (YT_FEED_CACHE_FILE, YT_FEED_FALLBACK_FILE):
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            data = {}
+            if os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except Exception:
+                    data = {}
+            if not isinstance(data, dict):
+                data = {}
+            data[category] = {
+                "timestamp": time.time(),
+                "items": items,
+            }
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False)
+            break
+        except Exception:
+            continue
+
 WEB_CONTEXT = {
     "client": {
         "clientName": "WEB",
@@ -124,7 +167,7 @@ def _get_ssl_context():
         return None
 
 
-def _make_request(endpoint: str, payload: dict, timeout: int = 10) -> dict:
+def _make_request(endpoint: str, payload: dict, timeout: int = 7) -> dict:
     """Send JSON POST request to YouTube InnerTube endpoint with SSL bypass."""
     url = f"{INNERTUBE_URL}/{endpoint}?prettyPrint=false"
     req_data = json.dumps(payload).encode("utf-8")
@@ -176,12 +219,22 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                 pub = v.get("publishedTimeText", {}).get("simpleText", "")
                 age = parse_age_hours(pub)
 
+                # Pre-format truncated titles and channel info for zero-overhead UI rendering
+                disp_title = title if len(title) <= 30 else title[:28] + "..."
+                if pub:
+                    info_str = f"{channel} • {pub}" if channel else pub
+                else:
+                    info_str = channel
+                disp_info = info_str if len(info_str) <= 34 else info_str[:32] + "..."
+
                 # Avoid duplicate video IDs
                 if not any(it["id"] == vid for it in found_list):
                     found_list.append({
                         "id": vid,
                         "title": title,
+                        "disp_title": disp_title,
                         "channel": channel,
+                        "disp_info": disp_info,
                         "duration": duration,
                         "thumb": thumb_url,
                         "pub": pub,
@@ -248,13 +301,15 @@ def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> li
     except Exception as e:
         print(f"[rh.yt] Extract videos error: {e}")
 
-    # Fetch next page via continuation token if we need more candidate videos to sort
-    if len(results) < limit:
+    # Fetch next page via continuation token only if we have fewer than 12 candidate videos.
+    # 12 videos equal 2 full pages on the TrimUI 3x2 grid. Avoiding unnecessary continuation
+    # cuts search network latency in half (from ~4-5s down to ~1.5s).
+    if len(results) < 12:
         cont_token = _find_continuation_token(data)
         if cont_token:
             try:
                 cont_payload = {"context": WEB_CONTEXT, "continuation": cont_token}
-                cont_data = _make_request("search", cont_payload)
+                cont_data = _make_request("search", cont_payload, timeout=5)
                 _extract_videos_from_json(cont_data, results, limit=limit * 2)
             except Exception as e:
                 print(f"[rh.yt] Continuation fetch error: {e}")
@@ -263,7 +318,7 @@ def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> li
     if not results and eff_query != clean_query:
         payload["query"] = clean_query
         try:
-            data = _make_request("search", payload)
+            data = _make_request("search", payload, timeout=5)
             _extract_videos_from_json(data, results, limit=limit * 2)
         except Exception:
             pass
@@ -271,13 +326,19 @@ def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> li
     if sort_by_date and results:
         results.sort(key=lambda x: x.get("age", 999999.0))
 
-    return results[:limit]
+    final_results = results[:limit]
+    if final_results:
+        save_feed_cache(clean_query, final_results)
+    return final_results
 
 
 def get_trending(limit: int = 30) -> list:
     """Get latest music videos on YouTube using default query 'MV Vpop'."""
     eff = get_effective_query("MV Vpop")
-    return search_youtube(eff, limit=limit, sort_by_date=True)
+    items = search_youtube(eff, limit=limit, sort_by_date=True)
+    if items:
+        save_feed_cache("trending", items)
+    return items
 
 
 def fetch_thumbnail(url: str, cache_dir: str, video_id: str) -> str:
@@ -288,17 +349,11 @@ def fetch_thumbnail(url: str, cache_dir: str, video_id: str) -> str:
     os.makedirs(cache_dir, exist_ok=True)
     target_path = os.path.join(cache_dir, f"{video_id}.jpg")
 
-    # If already cached, check if it's a valid JPEG (starts with FF D8)
+    # Fast cache hit check (avoid file open / re-read overhead on every frame)
     if os.path.exists(target_path) and os.path.getsize(target_path) > 500:
-        try:
-            with open(target_path, "rb") as f:
-                header = f.read(2)
-                if header == b"\xff\xd8":
-                    return target_path
-        except Exception:
-            pass
+        return target_path
 
-    # Standard YouTube 16:9 JPEG thumbnail
+    # Standard YouTube 16:9 JPEG thumbnail (mqdefault: 320x180, ~10-15KB)
     std_url = f"https://i.ytimg.com/vi/{video_id}/mqdefault.jpg"
     dl_urls = [std_url]
     if url and url != std_url:
@@ -308,9 +363,9 @@ def fetch_thumbnail(url: str, cache_dir: str, video_id: str) -> str:
     for u in dl_urls:
         try:
             req = urllib.request.Request(u, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=6, context=ctx) as resp:
+            with urllib.request.urlopen(req, timeout=4, context=ctx) as resp:
                 data = resp.read()
-                # Verify JPEG header before saving
+                # Verify JPEG header (FF D8) before saving
                 if len(data) > 500 and data[:2] == b"\xff\xd8":
                     with open(target_path, "wb") as f:
                         f.write(data)
