@@ -1,11 +1,11 @@
 {
-  "version": "1.60",
+  "version": "1.61",
   "python": "any",
-  "built": "2026-09-05T08:25:00+0700",
+  "built": "2026-09-05T09:20:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Trải nghiệm YouTube mượt mà: kết nối nguồn phát không nháy màn hình, sắp xếp video mới nhất và tải trước thông minh",
-    "en": "Smooth YouTube playback: zero screen flicker when connecting, real-time video sorting, and speculative preload"
+    "vi": "Thêm hộp thoại xác nhận thoát ứng dụng ở menu chính để tránh bấm nhầm",
+    "en": "Add exit confirmation dialog on home screen to prevent accidental quitting"
   },
   "remove": [
     "app.pyc",
@@ -395,7 +395,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "dd7cdcb815de2b25195d79f30c5491264fe181002cbc1a34edcb8635043a75a4"
+      "sha256": "fc12110778cdde8bfd9bf639ab0380505a587b38c1fb9c28f8144de30eb5508d"
     },
     {
       "path": "rh/yt.py",
