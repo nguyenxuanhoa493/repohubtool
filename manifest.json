@@ -1,12 +1,12 @@
 {
-  "version": "1.75",
+  "version": "1.76",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T23:30:00+0700",
+  "built": "2026-09-05T23:45:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Java J2ME: Khôi phục bản FreeJ2ME gốc sạch sẽ, gỡ bỏ hoàn toàn watermark, khôi phục đầy đủ phím tắt (START+SELECT, START+R3, START+B) và sửa lỗi mở game",
-    "en": "Java J2ME: Restore clean FreeJ2ME, remove watermark, restore all shortcuts (START+SELECT, START+R3, START+B) and fix game launching"
+    "vi": "Game Java: Thêm danh mục Tea Mobile [Chuẩn] - cập nhật 50 game TeaMobi Online (Ninja School Online, Ngọc Rồng, KPAH, Avatar 258, Army 2...) và Offline",
+    "en": "Java Games: Add Tea Mobile [Official] shelf - 50 TeaMobi Online & Offline titles (Ninja School Online, Dragon Boy, KPAH, Avatar, Army 2...)"
   },
   "remove": [
     "app.pyc",
@@ -123,10 +123,10 @@
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
     "url": "catalog/roms_store.sqlite3.gz",
-    "sha256": "81cdbed23c96f65a6b23aa0ebb4e63881998e88688808d1aea952cd230f0849b",
-    "sha256_plain": "73cc63d9242e9d81fda5b0659b9836074933cb593f77c10994a37a6bef7f6978",
-    "size": 9975415,
-    "size_plain": 34463744
+    "sha256": "ea986d7a4b5b2f938dfefd894e0480bf98199a6604651af4f68497cf4ab908db",
+    "sha256_plain": "70de070f3bef0b6bdb91fd8fa2de1f3ee7eae32fb04d727418a7718572acee7d",
+    "size": 8298184,
+    "size_plain": 31342592
   },
   "runtime": {
     "files": [
@@ -187,8 +187,8 @@
     },
     {
       "path": "app.py",
-      "size": 301829,
-      "sha256": "d5238837f36178c357afd410198785d4f1fdb6c76e45522f443985d73a68e27e"
+      "size": 301916,
+      "sha256": "4fc89f9855bba6a721fb1dd938f9dc8ac1ac1d91b40ebf0ac7ac84d03dab6db7"
     },
     {
       "path": "assets/fallback.ttf",
@@ -247,8 +247,8 @@
     },
     {
       "path": "db.py",
-      "size": 19901,
-      "sha256": "d376d03fd895c70985a0df90a3340e5e0ebc77f12947578aa0247935f6336f37"
+      "size": 20184,
+      "sha256": "7f0a2a140eb3d6fccd8cb1f811739676f015d1541640dd9061c1aaf01842ad31"
     },
     {
       "path": "icon.png",
@@ -317,8 +317,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 34991,
-      "sha256": "c22fa82369e4d48da768cee4ed0928ba7e5cf0cc0984d5ea6ced6a9a0d254078"
+      "size": 35134,
+      "sha256": "34e4e09af4b90a714dad05bcd2cf6d7c83c43681258bc0d70875ceb34f2e1333"
     },
     {
       "path": "rh/j2me.py",
@@ -408,7 +408,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "04466f9499f4c1016ce69bcef91ae44a2ed251303590db5d7ebd9f1223ea2f3d"
+      "sha256": "1e67577342de1a7c11fb9a662ab0d1a9c68f587e57ff4b77b1d040a707f72097"
     },
     {
       "path": "rh/yt.py",

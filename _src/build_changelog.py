@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.76", "2026-09-05",
+     ("Java Games: Add Tea Mobile [Official] shelf - 50 TeaMobi Online & Offline titles (Ninja School Online, Dragon Boy, KPAH, Avatar, Army 2...)",
+      "Game Java: Thêm danh mục Tea Mobile [Chuẩn] - cập nhật 50 game TeaMobi Online (Ninja School Online, Ngọc Rồng, KPAH, Avatar 258, Army 2...) và Offline"),
+     [("Dedicated Tea Mobile [Official] shelf: pinned prominently near the top of the Java category selector for instant access to 50 legendary TeaMobi titles.",
+       "Danh mục Tea Mobile [Chuẩn] chuyên biệt: được ghim trang trọng ngay đầu màn hình chọn nhóm game Java giúp mở nhanh 50 tựa game TeaMobi huyền thoại."),
+      ("8 official online games from Gomobi/TeaMobi: direct high-speed CDN downloads with official icons for Ninja School Online v2.5.1, Dragon Boy (Ngoc Rong Online) v2.5.0, Khi Phach Anh Hung v2.7.6, Avatar v2.5.8, Mobi Army 2 v3.7.1, Knight Age Online v4.0.2, Hai Tac Ti Hon v1.2.9, and Ngu Long Tranh Ba v2.9.9.",
+       "8 game online chính thức từ Gomobi/TeaMobi: tải trực tiếp từ CDN máy chủ gốc kèm icon sắc nét cho Ninja School Online v2.5.1, Chú Bé Rồng (Ngọc Rồng Online) v2.5.0, Khí Phách Anh Hùng v2.7.6, Avatar v2.5.8, Mobi Army 2 v3.7.1, Thời Đại Hiệp Sĩ v4.0.2, Hải Tặc Tí Hon v1.2.9 và Ngũ Long Tranh Bá v2.9.9."),
+      ("42 classic offline games: complete collection of offline hits including Ninja School 1, 2, 3, Ban Vit, Cau Ca, Hanh Tinh Kim Cuong, Tay Lai Lua, Pet Kingdom, Mai An Tiem, Vuon Tao, and more.",
+       "42 tựa game offline kinh điển: trọn bộ các siêu phẩm tuổi thơ gồm Ninja School 1, 2, 3, Bắn Vịt, Câu Cá, Hành Tinh Kim Cương, Tay Lái Lụa, Pet Kingdom, Mai An Tiêm, Vườn Táo, cùng hàng chục tựa game gắn liền ký ức.")]),
+
     ("1.75", "2026-09-05",
      ("Java J2ME: Restore clean FreeJ2ME, remove watermark, restore all shortcuts (START+SELECT, START+R3, START+B) and fix game launching",
       "Java J2ME: Khôi phục bản FreeJ2ME gốc sạch sẽ, gỡ bỏ hoàn toàn watermark, khôi phục đầy đủ phím tắt (START+SELECT, START+R3, START+B) và sửa lỗi mở game"),

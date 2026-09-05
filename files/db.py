@@ -263,9 +263,10 @@ _CAT_EXPR = ("CASE WHEN s.filename LIKE 'category/%/%' "
 # Hai ke khong den tu thu muc cua nguon ma duoc tinh ra, va duoc ghim len dau
 # danh sach. Ma cua chung bat dau bang "@" - ky tu khong the co trong ten thu muc
 # mot nguon dat ra - nen khong the dung ten voi mot ke that.
+CAT_TEAMOBI = "@teamobi"
 CAT_GIAITRI321 = "@giaitri321"
 CAT_LANDSCAPE = "@320x240"
-PINNED_CATS = (CAT_GIAITRI321, CAT_LANDSCAPE)
+PINNED_CATS = (CAT_TEAMOBI, CAT_GIAITRI321, CAT_LANDSCAPE)
 
 # "Da chon" chu khong phai "co ton tai": ke 320x240 phai la nhung game that su
 # tai ve ban ngang. Mot game co ban 320x240 nam lam mirror nhung mac dinh van
@@ -273,6 +274,9 @@ PINNED_CATS = (CAT_GIAITRI321, CAT_LANDSCAPE)
 _DEFAULT_SRC = ("(SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1"
                 " ORDER BY priority ASC, id ASC LIMIT 1)")
 _PINNED_SQL = {
+    CAT_TEAMOBI: ("EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id"
+                  " AND is_alive = 1 AND (source_name IN ('TEAMOBI', 'GOMOBI')"
+                  " OR filename LIKE 'category/TeaMobi/%%'))"),
     CAT_GIAITRI321: ("EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id"
                      " AND is_alive = 1 AND source_name = 'GIAITRI321')"),
     CAT_LANDSCAPE: ("EXISTS (SELECT 1 FROM game_sources WHERE id = %s"
@@ -295,7 +299,7 @@ def get_java_categories():
     cursor.execute("SELECT COUNT(*) FROM games WHERE sys_code = 'JAVA'")
     total = cursor.fetchone()[0]
 
-    # Hai ke tinh ra, ghim ngay sau ALL. Dem rieng chu khong lay tu vong group o
+    # Cac ke tinh ra, ghim ngay sau ALL. Dem rieng chu khong lay tu vong group o
     # tren: chung cat ngang cac ke that chu khong phai mot ke nua trong so do.
     pinned = []
     for code in PINNED_CATS:
@@ -305,7 +309,7 @@ def get_java_categories():
         if cnt:
             pinned.append((code, cnt))
     conn.close()
-    return [("ALL", total)] + pinned + [(r["cat"], r["cnt"]) for r in rows]
+    return [("ALL", total)] + pinned + [(r["cat"], r["cnt"]) for r in rows if r["cat"] != "TeaMobi"]
 
 
 def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offset=0,

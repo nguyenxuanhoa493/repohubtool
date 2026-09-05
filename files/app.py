@@ -110,7 +110,7 @@ from rh.updater import (apply_catalog, apply_runtime, apply_update,
 from rh.storage import human_bytes
 from rh.version import APP_VERSION, is_newer
 from rh.boxart import is_real_boxart_url
-from db import CAT_GIAITRI321, CAT_LANDSCAPE
+from db import CAT_TEAMOBI, CAT_GIAITRI321, CAT_LANDSCAPE
 from rh.catalog import (VALID_EXTS, alpha_index, get_java_category_list,
     get_games_for_view,
     get_source_systems_list,
@@ -1526,6 +1526,8 @@ def main():
         Mot cho duy nhat, dung cho ca danh sach ke lan tieu de man hinh game."""
         if code == "ALL":
             return tr("java_cat_all")
+        if code == CAT_TEAMOBI:
+            return tr("java_cat_teamobi")
         if code == CAT_GIAITRI321:
             return tr("java_cat_giaitri321")
         if code == CAT_LANDSCAPE:
