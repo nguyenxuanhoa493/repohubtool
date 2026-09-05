@@ -23,7 +23,8 @@ ERR_MARKER = "/tmp/yt_last_error.txt"
 def log(msg: str):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{timestamp}] [rh.yt_player] {msg}"
-    print(line, flush=True)
+    if __name__ == "__main__":
+        print(line, flush=True)
     try:
         with open(TEMP_LOG, "a", encoding="utf-8") as f:
             f.write(line + "\n")
