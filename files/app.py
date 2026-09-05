@@ -1122,6 +1122,12 @@ def main():
         "needs_alpha_sort": False
     }
 
+    # Exit App Confirmation Modal State
+    exit_modal = {
+        "active": False,
+        "selected_opt": 0,  # 0 = "Ở lại" (Stay), 1 = "Thoát" (Quit)
+    }
+
     modal_title = None
     modal_rows = None
     # Layout for the shared info modal. None keeps the stacked label-over-value
@@ -2455,6 +2461,19 @@ def main():
                     if q_msg:
                         toast_msg = q_msg
                         toast_timer = time.time()
+        elif exit_modal["active"]:
+            if btn_left or btn_up:
+                exit_modal["selected_opt"] = 0
+            elif btn_right or btn_down:
+                exit_modal["selected_opt"] = 1
+            elif btn_b:
+                exit_modal["active"] = False
+            elif btn_a:
+                if exit_modal["selected_opt"] == 1:
+                    exit_modal["active"] = False
+                    running = False
+                else:
+                    exit_modal["active"] = False
         elif alphabet_modal["active"]:
             if btn_left:
                 alphabet_modal["selected_idx"] = (alphabet_modal["selected_idx"] - 1) % 27
@@ -2945,8 +2964,13 @@ def main():
                 modal_style = None
 
         else:
+            # Home Screen: X = Confirm Exit App
+            if current_screen == "home" and btn_x:
+                exit_modal["active"] = True
+                exit_modal["selected_opt"] = 0
+
             # Downloaded Games: X = Toggle View Mode, Y = Random Play
-            if current_screen == "download_manager" and btn_x:
+            elif current_screen == "download_manager" and btn_x:
                 if dl_state.get("active") or dl_state.get("status") in ("downloading", "extracting"):
                     cancel_active_download()
                     toast_msg = tr("dl_cancelled_toast")
@@ -3119,7 +3143,8 @@ def main():
                 elif len(screen_stack) > 1:
                     screen_stack.pop()
                 else:
-                    running = False
+                    exit_modal["active"] = True
+                    exit_modal["selected_opt"] = 0
             elif btn_a:
                 # items is rebuilt every frame and can shrink - or be empty for a
                 # frame - while the cursor still points past its end. Clamp before
@@ -3574,7 +3599,8 @@ def main():
                     if len(screen_stack) > 1:
                         screen_stack.pop()
                 elif item_id == "exit":
-                    running = False
+                    exit_modal["active"] = True
+                    exit_modal["selected_opt"] = 1
 
             # Con tro chinh la nut xem thu: di toi bo mau nao thi den doi ngay
             # toi bo mau do. Ghi vao led.json - cung duong di voi luc chon that,
@@ -4427,8 +4453,14 @@ def main():
                 a_label = "Chọn / Mở"
                 b_label = "Quay lại" if len(screen_stack) > 1 else "Thoát"
 
-            fx = draw_footer_btn(fx, "A", a_label, (0, 230, 150))
-            fx = draw_footer_btn(fx, "B", b_label, (255, 70, 70), is_dark_btn=False)
+            if current_screen == "home":
+                a_label = "Chọn / Mở" if state.current_lang == "VI" else "Select / Open"
+                exit_txt = "Thoát" if state.current_lang == "VI" else "Exit"
+                fx = draw_footer_btn(fx, "A", a_label, (0, 230, 150))
+                fx = draw_footer_btn(fx, "X", exit_txt, (255, 70, 70), is_dark_btn=False)
+            else:
+                fx = draw_footer_btn(fx, "A", a_label, (0, 230, 150))
+                fx = draw_footer_btn(fx, "B", b_label, (255, 70, 70), is_dark_btn=False)
 
             if current_screen == "download_manager":
                 if dl_state.get("active") or dl_state.get("status") in ("downloading", "extracting"):
@@ -4794,6 +4826,59 @@ def main():
             draw_text(f"[A] {tr('lib_filter_pick')}   [B] {tr('lib_filter_close')}",
                       font_sub, mx + mw // 2, my + mh - 24, 160, 180, 210,
                       center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.35. EXIT APP CONFIRMATION MODAL
+        # ----------------------------------------------------------------------
+        elif exit_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+            mw = min(720, state.SCREEN_W - 60)
+            mh = 270
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            # Background & Outer Frame
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header bar
+            fill_rect(mx + 3, my + 3, mw - 6, 60, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 61, mw - 6, 2, 0, 246, 246, 255)
+            draw_text(tr("exit_confirm_title"), font_title, mx + mw // 2, my + 32, 0, 246, 246, center_x=True, center_y=True)
+
+            # Message content
+            draw_text(tr("exit_confirm_msg"), font_item, mx + mw // 2, my + 106, 235, 245, 255, center_x=True, center_y=True)
+            draw_text(tr("exit_confirm_sub"), font_sub, mx + mw // 2, my + 144, 150, 170, 200, center_x=True, center_y=True)
+
+            # Two selectable action buttons
+            btn_gap = 24
+            bw = (mw - 80 - btn_gap) // 2
+            bh = 52
+            by = my + mh - bh - 24
+
+            # Button 0: Ở lại (Stay)
+            bx0 = mx + 40
+            is_sel0 = (exit_modal["selected_opt"] == 0)
+            if is_sel0:
+                fill_rect(bx0, by, bw, bh, 0, 170, 80, 255)
+                draw_rect(bx0, by, bw, bh, 0, 255, 150, 255, thickness=3)
+                draw_text(f"[B] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
+            else:
+                fill_rect(bx0, by, bw, bh, 24, 34, 54, 255)
+                draw_rect(bx0, by, bw, bh, 55, 75, 115, 255, thickness=1)
+                draw_text(f"[B] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 170, 190, 220, center_x=True, center_y=True)
+
+            # Button 1: Thoát (Exit)
+            bx1 = bx0 + bw + btn_gap
+            is_sel1 = (exit_modal["selected_opt"] == 1)
+            if is_sel1:
+                fill_rect(bx1, by, bw, bh, 210, 45, 45, 255)
+                draw_rect(bx1, by, bw, bh, 255, 90, 90, 255, thickness=3)
+                draw_text(f"[A] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
+            else:
+                fill_rect(bx1, by, bw, bh, 24, 34, 54, 255)
+                draw_rect(bx1, by, bw, bh, 55, 75, 115, 255, thickness=1)
+                draw_text(f"[A] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 220, 110, 110, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
         # 5.4. UPDATE AVAILABLE MODAL
@@ -5391,7 +5476,7 @@ def main():
         sdl2.SDL_RenderPresent(renderer)
 
         # Adaptive Dynamic Eco Power Saving (60 FPS when active, ~28 FPS when idle to save battery)
-        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False) or yt_launch_state.get("active", False)
+        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False) or yt_launch_state.get("active", False) or exit_modal.get("active", False)
         if is_active:
             time.sleep(0.016)
         else:
