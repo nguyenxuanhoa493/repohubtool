@@ -2468,6 +2468,7 @@ def main():
                 exit_modal["selected_opt"] = 1
             elif btn_b:
                 exit_modal["active"] = False
+                running = False
             elif btn_a:
                 if exit_modal["selected_opt"] == 1:
                     exit_modal["active"] = False
@@ -4862,23 +4863,23 @@ def main():
             if is_sel0:
                 fill_rect(bx0, by, bw, bh, 0, 170, 80, 255)
                 draw_rect(bx0, by, bw, bh, 0, 255, 150, 255, thickness=3)
-                draw_text(f"[B] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
+                draw_text(f"[A] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
             else:
                 fill_rect(bx0, by, bw, bh, 24, 34, 54, 255)
                 draw_rect(bx0, by, bw, bh, 55, 75, 115, 255, thickness=1)
-                draw_text(f"[B] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 170, 190, 220, center_x=True, center_y=True)
+                draw_text(f"[A] {tr('exit_btn_stay')}", font_badge, bx0 + bw // 2, by + bh // 2, 170, 190, 220, center_x=True, center_y=True)
 
-            # Button 1: Thoát (Exit)
+            # Button 1: Thoát hẳn (Exit completely)
             bx1 = bx0 + bw + btn_gap
             is_sel1 = (exit_modal["selected_opt"] == 1)
             if is_sel1:
                 fill_rect(bx1, by, bw, bh, 210, 45, 45, 255)
                 draw_rect(bx1, by, bw, bh, 255, 90, 90, 255, thickness=3)
-                draw_text(f"[A] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
+                draw_text(f"[B] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
             else:
                 fill_rect(bx1, by, bw, bh, 24, 34, 54, 255)
                 draw_rect(bx1, by, bw, bh, 55, 75, 115, 255, thickness=1)
-                draw_text(f"[A] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 220, 110, 110, center_x=True, center_y=True)
+                draw_text(f"[B] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 220, 110, 110, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
         # 5.4. UPDATE AVAILABLE MODAL
