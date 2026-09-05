@@ -138,6 +138,28 @@ def runtime_supports_renderer():
 _VERSIONED = {"jar": "zulu17/bin/freej2me-sdl.jar",
               "sdl": "zulu17/bin/sdl_interface"}
 
+# Known target binary sizes for current release (JM 1.0.5).
+# In-app OTA updates download these binaries directly without replacing
+# the 66MB payload archive, so a card with these sizes is up to date.
+CURRENT_RUNTIME_SIZES = {
+    "jar": 1457649,
+    "sdl": 94816,
+}
+
+
+def is_runtime_current():
+    """True when the emulator binaries on disk match the current target release (JM 1.0.5)."""
+    if not is_j2me_runtime_ready():
+        return False
+    paths = j2me_runtime_paths()
+    for key, size in CURRENT_RUNTIME_SIZES.items():
+        try:
+            if os.path.getsize(paths[key]) != size:
+                return False
+        except OSError:
+            return False
+    return True
+
 
 def payload_binary_sizes():
     """Sizes of the emulator binaries inside the bundled archive.
@@ -161,16 +183,15 @@ def payload_binary_sizes():
 
 
 def runtime_is_stale():
-    """True when the emulator on the card is not the one inside the app.
+    """True when the emulator on the card is older than what this build ships or supports.
 
-    This is the ordinary state after an in-app update: updates carry the app's
-    own files, never the 66MB runtime, so a device keeps whatever emulator it
-    was installed with until something notices. Comparing against the payload
-    rather than looking for one particular feature means a later change to the
-    emulator is picked up too, without this having to learn a new marker each
-    time.
+    If the emulator on the card already matches the current target release
+    (CURRENT_RUNTIME_SIZES, e.g. delivered via in-app OTA update), it is NOT stale.
+    Otherwise, if a bundled payload is present, compare against payload sizes.
     """
     if not is_j2me_runtime_ready():
+        return False
+    if is_runtime_current():
         return False
     sizes = payload_binary_sizes()
     if not sizes:
@@ -638,6 +659,8 @@ def install_j2me_emulator(force=False):
         # user's display preset back on top of the restored default.
         if saved_mode:
             save_render_mode(saved_mode)
+        elif not os.path.exists(graphics_cfg_path()):
+            save_render_mode("smooth")
 
         # The stock menu caches its rom list; a stale cache would keep launching the
         # old flat paths and never find games in the resolution folders.
