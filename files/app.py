@@ -31,7 +31,16 @@ VENDOR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vendor")
 if os.path.isdir(VENDOR_PATH):
     sys.path.insert(0, VENDOR_PATH)
 
-os.environ["PYSDL2_DLL_PATH"] = "/usr/trimui/lib"
+# Where libSDL2 lives depends on the device and firmware:
+# - TrimUI Brick / Smart Pro keeps its tailored SDL in /usr/trimui/lib
+# - TrimUI Smart Pro S (TSPS), muOS, and standard Linux handhelds keep it in /usr/lib64 or /usr/lib
+# - Bundled / custom ports can drop libraries into libs/
+# pysdl2 accepts several directories separated by os.pathsep. pysdl2's own fallback
+# (ctypes.util.find_library) shells out to ldconfig, gcc, or objdump, which a BusyBox
+# userland lacks, so all candidate paths must be explicitly provided.
+_VENDOR_LIBS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libs")
+_DEFAULT_DLL_PATHS = f"{_VENDOR_LIBS}:/usr/trimui/lib:/usr/lib64:/usr/lib"
+os.environ["PYSDL2_DLL_PATH"] = os.environ.get("PYSDL2_DLL_PATH") or _DEFAULT_DLL_PATHS
 
 try:
     import sdl2
