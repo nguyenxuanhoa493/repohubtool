@@ -1,11 +1,11 @@
 {
-  "version": "1.61",
+  "version": "1.62",
   "python": "any",
-  "built": "2026-09-05T09:20:00+0700",
+  "built": "2026-09-05T15:55:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Thêm hộp thoại xác nhận thoát ứng dụng ở menu chính để tránh bấm nhầm",
-    "en": "Add exit confirmation dialog on home screen to prevent accidental quitting"
+    "vi": "Tối ưu thao tác hộp thoại xác nhận thoát: bấm [B] Thoát hẳn, [A] Ở lại trực tiếp",
+    "en": "Direct hotkey controls for exit modal: [B] Exit completely, [A] Stay"
   },
   "remove": [
     "app.pyc",
@@ -395,7 +395,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "fc12110778cdde8bfd9bf639ab0380505a587b38c1fb9c28f8144de30eb5508d"
+      "sha256": "afac533531b6de901aebe51f8d0e1c3f2c5cced896e938bdc0b21195b0bf003b"
     },
     {
       "path": "rh/yt.py",
