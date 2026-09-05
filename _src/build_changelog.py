@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.63", "2026-09-05",
+     ("Support TrimUI Smart Pro S (TSPS) and multi-device SDL2 library search",
+      "Hỗ trợ máy mới TrimUI Smart Pro S (TSPS), tối ưu tìm nạp thư viện SDL2 đa hệ máy"),
+     [("TrimUI Smart Pro S (TSPS) compatibility: resolved startup black screen by searching /usr/lib and /usr/lib64 when /usr/trimui/lib is absent.",
+       "Tương thích TrimUI Smart Pro S (TSPS): khắc phục lỗi sập màn hình đen khi khởi động bằng cách tự động nạp thư viện từ /usr/lib và /usr/lib64 khi máy không có /usr/trimui/lib."),
+      ("Multi-platform fallback chain: prioritized tailored libraries for Brick/Smart Pro while supporting standard 64-bit handhelds and bundled libs in libs/.",
+       "Chuỗi nạp thư viện đa nền tảng: ưu tiên bản SDL2 tùy biến riêng cho TrimUI Brick / Smart Pro, đồng thời sẵn sàng tương thích các bản Linux handheld 64-bit và thư mục libs/ đi kèm.")]),
+
     ("1.62", "2026-09-05",
      ("Direct hotkey controls for exit modal: [B] Exit completely, [A] Stay",
       "Tối ưu thao tác hộp thoại xác nhận thoát: bấm [B] Thoát hẳn, [A] Ở lại trực tiếp"),
