@@ -131,19 +131,14 @@ FIT_ROWS = [
 SHORTCUTS = [
     (("START + SELECT", "Cycle P → N → E → S → M → H → K → X"),
      ("START + SELECT", "Chạy vòng P → N → E → S → M → H → K → X")),
-    (("SELECT on its own", "Toggle display mode (Linear / Nearest)"),
-     ("SELECT bấm riêng", "Đổi chế độ hiển thị (Linear / Nearest)")),
-    (("MENU + D-pad Left", "Toggle diagonal D-pad to keys 1, 3, 7, 9"),
-     ("MENU + D-pad Trái", "Chuyển các hướng chéo D-pad thành các phím 1, 3, 7, 9")),
-    (("On-screen text input", "*: Delete, #: Add, 2/4: Letters a-z, 1/3: Digits 0-9, 7/9: Symbols"),
-     ("Bàn phím ảo nhập text", "*: Xóa ký tự, #: Thêm, 2/4: Chọn chữ a-z, 1/3: Chọn số 0-9, 7/9: Ký tự đặc biệt")),
-    (("START + R3", "Cycle PIXEL → SMOOTH → HQ (legacy)"),
-     ("START + R3", "Chạy vòng PIXEL → SMOOTH → HQ (bản cũ)")),
+    (("START + R3", "Cycle PIXEL → SMOOTH → HQ"),
+     ("START + R3", "Chạy vòng PIXEL → SMOOTH → HQ")),
     (("START + B", "Rotate the screen"), ("START + B", "Xoay màn hình")),
     (("START + Y", "Mouse mode on/off (X clicks)"),
      ("START + Y", "Bật/tắt mouse mode (X là click)")),
     (("MENU", "Ask whether to quit the game"),
      ("MENU", "Hỏi có thoát game không")),
+    (("SELECT on its own", "Key 5"), ("SELECT bấm riêng", "Số 5")),
 ]
 
 TROUBLE = [
@@ -155,22 +150,6 @@ TROUBLE = [
       "Game đang sai chế độ máy. Gần như chắc chắn nó đang ở <b>P</b>, mà ở chế độ đó "
       "D-pad gửi ra số 2/4/6/8 — game nào chờ GameAction sẽ không nghe thấy gì. "
       "Giữ START, bấm SELECT tới khi góc màn hiện <b>N</b>.")),
-    (("How do I type in-game text or character names?",
-      "When a text input prompt appears, the emulator displays an on-screen keyboard "
-      "powered by <code>font.ttf</code>. Use <b>*</b> to delete a character, <b>#</b> to confirm/add, "
-      "<b>2 / 4</b> to cycle letters a–z, <b>1 / 3</b> to cycle numbers 0–9, and <b>7 / 9</b> for special symbols."),
-     ("Làm sao để gõ văn bản hoặc đặt tên nhân vật trong game?",
-      "Khi game yêu cầu nhập văn bản, giả lập hiển thị bàn phím ảo trực quan trên màn hình "
-      "thông qua <code>font.ttf</code>. Dùng nút <b>*</b> để xoá ký tự, <b>#</b> để xác nhận/thêm ký tự, "
-      "<b>2 / 4</b> để chọn chữ cái a–z, <b>1 / 3</b> để chọn số 0–9, và <b>7 / 9</b> cho ký tự đặc biệt.")),
-    (("How do I press keys 1, 3, 7, 9 or move diagonally?",
-      "The D-pad supports 8-direction diagonal movement natively. For games requiring number keys "
-      "1, 3, 7, 9 (e.g. skills or diagonal movement in RPGs), press <b>MENU + D-pad Left</b> to toggle "
-      "mapping the 4 diagonal D-pad directions to digits 1, 3, 7, 9."),
-     ("Làm sao để bấm các phím 1, 3, 7, 9 hoặc di chuyển chéo?",
-      "D-pad đã hỗ trợ di chuyển chéo 8 hướng. Với những game Java cần bấm phím số 1, 3, 7, 9 "
-      "(như kỹ năng trong game nhập vai, toạ độ bắn súng), bấm tổ hợp <b>MENU + D-pad Trái</b> để "
-      "bật/tắt chế độ gán 4 hướng chéo thành các phím số 1, 3, 7, 9.")),
     (("Can I play 3D Java games (M3G / Mascot Capsule)?",
       "Yes. The launch script includes OpenGL ES compatibility links (<code>libGLES_CM.so</code>) "
       "allowing 3D J2ME titles to run hardware-accelerated graphics on the handheld."),
@@ -210,14 +189,6 @@ TROUBLE = [
 
 # Credits & Source records: (EN tuple, VI tuple)
 CREDITS_ROWS = [
-    (("JM (FreeJ2ME fork)", "nvcuong1312", "https://github.com/nvcuong1312/jm",
-      "Release tag 1 / JM 1.0.5 — optimized specifically for TrimUI (Brick, Smart Pro, Stock OS, NextUI). "
-      "Features on-screen virtual keyboard with font.ttf, Select toggle for linear/nearest display, "
-      "8-way diagonal D-pad, Menu + D-pad Left hotkey to 1/3/7/9, keymap.cfg, and safe exit dialog."),
-     ("Bản phân nhánh JM (FreeJ2ME)", "nvcuong1312", "https://github.com/nvcuong1312/jm",
-      "Bản phát hành tag 1 / JM 1.0.5 — tối ưu riêng cho máy TrimUI (Brick, Smart Pro trên cả hệ gốc và NextUI). "
-      "Tính năng gồm bàn phím ảo gõ text bằng font.ttf, phím Select đổi linear/nearest, "
-      "D-pad chéo 8 hướng, Menu + D-pad Trái gán 1/3/7/9, tùy biến keymap.cfg và hộp thoại xác nhận thoát an toàn.")),
     (("FreeJ2ME (Upstream)", "hex007", "https://github.com/hex007/freej2me",
       "The original upstream open-source J2ME emulator for modern systems, licensed under GNU General Public License v3 (GPL-3.0)."),
      ("FreeJ2ME (Thượng nguồn gốc)", "hex007", "https://github.com/hex007/freej2me",
@@ -293,10 +264,9 @@ T = {
   "og_desc": ("Resolution folders, phone modes, pad layouts, display modes and saves — "
               "everything needed to run J2ME games well on a TrimUI handheld."),
   "h1": "Java J2ME on RetroHub",
-  "lead": ("RetroHub runs J2ME games using the JM fork of FreeJ2ME (maintained by nvcuong1312), "
-           "straight onto the screen — no RetroArch and no libretro core involved. This page "
-           "covers resolution folders, button mapping, on-screen keyboard, display settings, "
-           "and where saves live."),
+  "lead": ("RetroHub runs J2ME games using FreeJ2ME straight onto the screen — "
+           "no RetroArch and no libretro core involved. This page covers resolution folders, "
+           "phone modes, button mapping, display settings and where saves live."),
   "back": "Back to the home page",
   "s_cai_dat": ("The emulator is 66 MB and ships inside the app rather than being downloaded, "
                 "so it works with no network."),
@@ -307,8 +277,8 @@ T = {
     "the folder you have — nothing else is lost.",
     "From version 1.43, an emulator older than the one inside the app is upgraded "
     "automatically the next time you open RetroHub. Saves are kept.",
-    "From version 1.65, in-app OTA updates automatically sync the latest JM runtime binaries "
-    "(FreeJ2ME jar, sdl_interface, fonts, configs) over Wi-Fi without redownloading the full 66 MB JRE.",
+    "From version 1.65, in-app OTA updates automatically sync the latest FreeJ2ME runtime binaries "
+    "(freej2me-sdl.jar, sdl_interface) over Wi-Fi without redownloading the full 66 MB JRE.",
   ],
   "s_thu_muc": ("Every J2ME game was written for one specific handset screen, and the emulator "
                 "has no way to guess which. So the folder a game sits in is what tells it: "
@@ -339,10 +309,6 @@ T = {
              "display shortcut. The stick dead zone is 8000 to press and 6000 to release; pushed "
              "diagonally, the emulator takes whichever axis is further from centre so you do not "
              "get two directions flickering."),
-  "nut_p3": ("<b>JM 1.0.5 features:</b> The D-pad supports 8-way diagonal directions natively. "
-             "Pressing <b>MENU + D-pad Left</b> switches diagonal inputs to keypad digits 1, 3, 7, 9 "
-             "(ideal for RPG skill hotkeys or directional shooting). An on-screen virtual keyboard "
-             "appears automatically whenever a game asks for text input."),
   "s_hinh": "Three presets, switchable in the app or in-game.",
   "hinh_li": [
     "<b>PIXEL</b> — nearest-neighbour, no colour blending between pixels, whole-number scale "
@@ -352,10 +318,10 @@ T = {
     "<b>HQ</b> — asks SDL2 for its best quality. On this driver that is often identical to "
     "SMOOTH, so treat it as experimental.",
   ],
-  "hinh_p2": ("In game: simply tap <b>SELECT</b> on its own to toggle between Linear (smooth) "
-              "and Nearest (pixel-sharp), saved to <code>graphics.cfg</code>. On older versions, "
-              "holding <b>START + R3</b> cycles presets in <code>renderer.conf</code>. "
-              "In the app: open <b>Utilities → Java display mode</b> to select your preferred profile anytime."),
+  "hinh_p2": ("In the app: <b>Utilities → Java display mode</b>, which writes a whole preset. "
+              "In game: hold <b>START</b> and press <b>R3</b>, which toggles the filter mode and the "
+              "integer-scaling flag and leaves the rest alone. Either way the choice lands in "
+              "<code>renderer.conf</code> and is picked up on the next launch."),
   "s_toan": ("A 240×320 game is portrait; the Brick Pro panel is 1024×768, landscape. The two "
              "proportions are opposites, so no setting both fills the screen and keeps the "
              "picture honest. Here is what each choice actually gives you."),
@@ -394,9 +360,9 @@ T = {
   "og_desc": ("Thư mục độ phân giải, chế độ máy, bố trí nút, kiểu hiển thị và save game — "
               "đủ thứ cần biết để chơi game J2ME cho ra hồn trên máy TrimUI."),
   "h1": "Chơi game Java J2ME trên RetroHub",
-  "lead": ("RetroHub chạy game J2ME bằng bản phân nhánh JM của FreeJ2ME (phát triển bởi nvcuong1312), "
-           "vẽ thẳng lên màn hình — không qua RetroArch, không dùng core libretro. Trang này hướng dẫn "
-           "thư mục độ phân giải, gán phím, bàn phím ảo gõ text, kiểu hiển thị và save game."),
+  "lead": ("RetroHub chạy game J2ME bằng FreeJ2ME vẽ thẳng lên màn hình — không qua RetroArch, "
+           "không dùng core libretro. Trang này hướng dẫn thư mục độ phân giải, chế độ máy, "
+           "bố trí nút, kiểu hiển thị và save game."),
   "back": "Về trang chủ",
   "s_cai_dat": ("Bộ giả lập nặng 66 MB và nằm sẵn trong app chứ không phải tải về, nên không có "
                 "mạng vẫn cài được."),
@@ -407,8 +373,8 @@ T = {
     "không mất gì cả.",
     "Từ bản 1.43, nếu giả lập trên thẻ cũ hơn gói trong app thì app tự nâng cấp ở lần mở kế tiếp. "
     "Save giữ nguyên.",
-    "Từ bản 1.65, tính năng cập nhật OTA trong app tự động đồng bộ các file runtime JM mới nhất "
-    "(FreeJ2ME jar, sdl_interface, font, cấu hình) qua Wi-Fi mà không cần tải lại cả gói JRE 66 MB.",
+    "Từ bản 1.65, tính năng cập nhật OTA trong app tự động đồng bộ các file runtime FreeJ2ME mới nhất "
+    "(freej2me-sdl.jar, sdl_interface) qua Wi-Fi mà không cần tải lại cả gói JRE 66 MB.",
   ],
   "s_thu_muc": ("Mỗi game J2ME được viết cho đúng một khổ màn điện thoại, mà emulator thì không có "
                 "cách nào đoán ra khổ nào. Nên thư mục chứa game chính là chỗ báo cho nó: một file "
@@ -436,10 +402,6 @@ T = {
   "nut_p2": ("Hai cần analog đều bấm lún xuống được, và cú bấm đó chính là L3 với R3 — đường để dùng tổ "
              "hợp đổi hình ảnh. Vùng chết của cần là 8000 để tính nhấn và 6000 để tính nhả; đẩy chéo thì "
              "emulator lấy trục nào lệch tâm nhiều hơn, để không bị rung hai hướng."),
-  "nut_p3": ("<b>Tính năng trên bản JM 1.0.5:</b> D-pad hỗ trợ bấm chéo 8 hướng mượt mà. Bấm tổ hợp "
-             "<b>MENU + D-pad Trái</b> để chuyển các hướng chéo thành các phím số 1, 3, 7, 9 (rất tiện "
-             "cho phím tắt kỹ năng hoặc game bắn súng toạ độ). Khi game cần nhập chữ, bàn phím ảo trên "
-             "màn hình sẽ tự động kích hoạt."),
   "s_hinh": "Ba preset, đổi được trong app hoặc ngay trong game.",
   "hinh_li": [
     "<b>PIXEL</b> — nearest-neighbor, không trộn màu giữa hai pixel, hệ số phóng là số nguyên. "
@@ -448,10 +410,9 @@ T = {
     "<b>HQ</b> — xin SDL2 mức chất lượng tốt nhất. Trên driver này thường ra y hệt SMOOTH, nên coi như "
     "còn thử nghiệm.",
   ],
-  "hinh_p2": ("Trong game: chỉ cần bấm phím <b>SELECT</b> riêng để đổi qua lại giữa Linear (làm mịn) "
-              "và Nearest (sắc nét từng pixel), lưu vào <code>graphics.cfg</code>. Trên các bản cũ, giữ "
-              "<b>START + R3</b> để đổi cấu hình trong <code>renderer.conf</code>. "
-              "Trong RetroHub: vào <b>Tiện ích → Kiểu hiển thị game Java</b> để chọn chế độ mong muốn bất cứ lúc nào."),
+  "hinh_p2": ("Trong app: <b>Tiện ích → Kiểu hiển thị game Java</b>, ghi trọn cả preset. Trong game: giữ "
+              "<b>START</b> bấm <b>R3</b>, đổi kiểu hiển thị cùng cờ phóng nguyên và không đụng các khoá "
+              "còn lại. Đằng nào lựa chọn cũng được ghi vào <code>renderer.conf</code> và dùng lại lần sau."),
   "s_toan": ("Game 240×320 là khổ dựng đứng; màn Brick Pro là 1024×768, nằm ngang. Hai tỉ lệ ngược nhau, "
              "nên không cấu hình nào vừa lấp kín màn vừa giữ hình cho thật. Đây là cái mỗi lựa chọn thật "
              "sự cho ra."),
@@ -568,7 +529,6 @@ PAGE = """<!doctype html>
       <tbody>{padrows}</tbody>
     </table></div>
     <p>{nut_p2}</p>
-    <p>{nut_p3}</p>
     <h3>{h_short}</h3>
     <ul class="keys">{shortcuts}</ul>
     <h3>{h_exit}</h3>

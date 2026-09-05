@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.75", "2026-09-05",
+     ("Java J2ME: Restore clean FreeJ2ME, remove watermark, restore all shortcuts (START+SELECT, START+R3, START+B) and fix game launching",
+      "Java J2ME: Khôi phục bản FreeJ2ME gốc sạch sẽ, gỡ bỏ hoàn toàn watermark, khôi phục đầy đủ phím tắt (START+SELECT, START+R3, START+B) và sửa lỗi mở game"),
+     [("Restored clean official FreeJ2ME runtime: completely removed the third-party trial watermark and DRM locks by reverting to the stable, clean FreeJ2ME Brick Pro binary build.",
+       "Khôi phục bản FreeJ2ME gốc sạch sẽ: gỡ bỏ hoàn toàn watermark bản dùng thử và các lớp khoá launcher bằng việc quay trở lại bản build FreeJ2ME Brick Pro chính thức, ổn định."),
+      ("Full shortcut combinations restored: restored START+SELECT (cycle phone modes P/N/E/S/M/H/K/X), START+R3 (cycle PIXEL/SMOOTH/HQ display filters), START+B (rotate screen), START+Y (mouse mode), and MENU (exit dialog).",
+       "Khôi phục đầy đủ tổ hợp phím tắt: phục hồi START+SELECT (chuyển chế độ máy P/N/E/S/M/H/K/X), START+R3 (đổi bộ lọc hiển thị PIXEL/SMOOTH/HQ), START+B (xoay màn hình), START+Y (chuột ảo) và MENU (hỏi xác nhận thoát)."),
+      ("Reliable game launching & resolution fallback: improved launch.sh retains auto-detection, fallback to 240x320 for games in root Roms/JAVA/, URI-safe symlinks for filenames with spaces, and logging to /mnt/SDCARD/RetroHub-java.log.",
+       "Khởi chạy game mượt mà & dự phòng độ phân giải: launch.sh cải tiến giữ nguyên cơ chế tự nhận diện khổ màn, fallback 240x320 cho game nằm ngoài thư mục gốc Roms/JAVA/, xử lý an toàn file có dấu cách và ghi log chẩn đoán ra /mnt/SDCARD/RetroHub-java.log.")]),
+
     ("1.74", "2026-09-05",
      ("Java J2ME: Remove launcher verification lock, fix launch crash, auto-generate main.lua and jm_version",
       "Java J2ME: Gỡ bỏ khoá xác thực launcher, sửa dứt điểm lỗi crash, tự tạo main.lua và jm_version"),
