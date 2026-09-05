@@ -22,9 +22,48 @@ LEGACY_PRESETS = {
 }
 
 
+def parse_age_hours(text: str) -> float:
+    """Parse relative time string (Vietnamese or English) into hours for chronological sorting."""
+    if not text:
+        return 999999.0
+    s = text.strip().lower()
+    if "hôm nay" in s:
+        return 4.0
+    if "hôm qua" in s or "yesterday" in s:
+        return 24.0
+    m = re.search(r"(\d+)", s)
+    if not m:
+        return 999999.0
+    val = float(m.group(1))
+    if "giây" in s or "second" in s:
+        return val / 3600.0
+    elif "phút" in s or "minute" in s:
+        return val / 60.0
+    elif "giờ" in s or "hour" in s:
+        return val
+    elif "ngày" in s or "day" in s:
+        return val * 24.0
+    elif "tuần" in s or "week" in s:
+        return val * 24.0 * 7.0
+    elif "tháng" in s or "month" in s:
+        return val * 24.0 * 30.0
+    elif "năm" in s or "year" in s:
+        return val * 24.0 * 365.0
+    return 999999.0
+
+
 def get_effective_query(query: str) -> str:
-    """Return cleaned query keyword."""
-    return (query or "").strip()
+    """Return cleaned query keyword, appending current year for preset trend categories."""
+    q = (query or "").strip()
+    if not q:
+        return ""
+    year = str(time.localtime().tm_year)
+    if year in q:
+        return q
+    for preset in DEFAULT_PRESET_QUERIES:
+        if q.lower() == preset.lower():
+            return f"{preset} {year}"
+    return q
 
 
 def load_search_history() -> list:
@@ -133,6 +172,10 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                 # YouTube InnerTube returns WebP which SDL_image on TrimUI cannot decode.
                 thumb_url = f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
 
+                # Upload relative date & computed age in hours
+                pub = v.get("publishedTimeText", {}).get("simpleText", "")
+                age = parse_age_hours(pub)
+
                 # Avoid duplicate video IDs
                 if not any(it["id"] == vid for it in found_list):
                     found_list.append({
@@ -141,6 +184,8 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                         "channel": channel,
                         "duration": duration,
                         "thumb": thumb_url,
+                        "pub": pub,
+                        "age": age,
                     })
 
         for val in node.values():
@@ -155,53 +200,84 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                 break
 
 
+def _find_continuation_token(node) -> str:
+    """Recursively search for continuation token in response dict/list."""
+    if isinstance(node, dict):
+        if "continuationCommand" in node:
+            tok = node["continuationCommand"].get("token")
+            if tok:
+                return tok
+        for val in node.values():
+            tok = _find_continuation_token(val)
+            if tok:
+                return tok
+    elif isinstance(node, list):
+        for item in node:
+            tok = _find_continuation_token(item)
+            if tok:
+                return tok
+    return ""
+
+
 def search_youtube(query: str, limit: int = 30, sort_by_date: bool = True) -> list:
     """Search videos on YouTube by keyword, sorting by newest upload date by default.
 
     Returns a list of dicts:
-        [{'id': str, 'title': str, 'channel': str, 'duration': str, 'thumb': str}]
+        [{'id': str, 'title': str, 'channel': str, 'duration': str, 'thumb': str, 'pub': str, 'age': float}]
     """
-    if not query or not query.strip():
+    clean_query = (query or "").strip()
+    if not clean_query:
         return []
+
+    eff_query = get_effective_query(clean_query)
 
     payload = {
         "context": WEB_CONTEXT,
-        "query": query.strip(),
+        "query": eff_query,
     }
-    if sort_by_date:
-        # CAISAhAB = Protobuf for: sort_by=UPLOAD_DATE (2), type=VIDEO (1)
-        payload["params"] = "CAISAhAB"
 
     try:
         data = _make_request("search", payload)
     except Exception as e:
-        print(f"[rh.yt] Search error for '{query}': {e}")
+        print(f"[rh.yt] Search error for '{eff_query}': {e}")
         return []
 
     results = []
     try:
-        _extract_videos_from_json(data, results, limit=limit)
+        _extract_videos_from_json(data, results, limit=limit * 2)
     except Exception as e:
         print(f"[rh.yt] Extract videos error: {e}")
 
-    # Fallback to standard relevance search if sort_by_date returned 0 items
-    if not results and sort_by_date:
-        payload.pop("params", None)
+    # Fetch next page via continuation token if we need more candidate videos to sort
+    if len(results) < limit:
+        cont_token = _find_continuation_token(data)
+        if cont_token:
+            try:
+                cont_payload = {"context": WEB_CONTEXT, "continuation": cont_token}
+                cont_data = _make_request("search", cont_payload)
+                _extract_videos_from_json(cont_data, results, limit=limit * 2)
+            except Exception as e:
+                print(f"[rh.yt] Continuation fetch error: {e}")
+
+    # Fallback to query without appended year if 0 results
+    if not results and eff_query != clean_query:
+        payload["query"] = clean_query
         try:
             data = _make_request("search", payload)
-            _extract_videos_from_json(data, results, limit=limit)
+            _extract_videos_from_json(data, results, limit=limit * 2)
         except Exception:
             pass
 
-    return results
+    if sort_by_date and results:
+        results.sort(key=lambda x: x.get("age", 999999.0))
+
+    return results[:limit]
 
 
 def get_trending(limit: int = 30) -> list:
     """Get latest music videos on YouTube using default query 'MV Vpop'."""
-    items = search_youtube("MV Vpop", limit=limit, sort_by_date=True)
-    if not items:
-        items = search_youtube("MV Vpop", limit=limit, sort_by_date=False)
-    return items
+    eff = get_effective_query("MV Vpop")
+    return search_youtube(eff, limit=limit, sort_by_date=True)
 
 
 def fetch_thumbnail(url: str, cache_dir: str, video_id: str) -> str:
