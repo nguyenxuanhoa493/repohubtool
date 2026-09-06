@@ -45,6 +45,7 @@ public class VirtualKeyboard {
     // Hotkey combo tracking
     private static volatile boolean selectHeld = false;
     private static volatile boolean startHeld = false;
+    private static volatile long startPressTime = 0;
     private static long lastToggleTime = 0;
 
     // Layouts
@@ -174,6 +175,7 @@ public class VirtualKeyboard {
         active = false;
         startHeld = false;
         selectHeld = false;
+        startPressTime = 0;
         System.out.println("[VK] >>> CLOSED VIRTUAL KEYBOARD <<< active=" + active);
         forceRedraw();
     }
@@ -241,6 +243,7 @@ public class VirtualKeyboard {
         // 2. START Key state tracking & combos
         if (isStartKey(key)) {
             startHeld = pressed;
+            startPressTime = pressed ? System.currentTimeMillis() : 0;
             if (pressed && selectHeld && (System.currentTimeMillis() - lastToggleTime > 250)) {
                 lastToggleTime = System.currentTimeMillis();
                 System.out.println("[VK] >>> START + SELECT COMBO DETECTED! Toggling Virtual Keyboard <<<");
@@ -258,7 +261,8 @@ public class VirtualKeyboard {
 
         // 3. START + X Combo (MANDATORY REQUIREMENT: Must hold START to toggle with X)
         if (isXKey(key)) {
-            if (startHeld) {
+            boolean validStartHeld = startHeld && (startPressTime > 0) && (System.currentTimeMillis() - startPressTime < 4000);
+            if (validStartHeld) {
                 if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
                     lastToggleTime = System.currentTimeMillis();
                     System.out.println("[VK] >>> START + X COMBO DETECTED! Toggling Virtual Keyboard <<<");
@@ -327,7 +331,7 @@ public class VirtualKeyboard {
             doSpace();
         }
         // Shoulder buttons L1 / R1: Quick cycle shift modes (abc -> ABC -> 123 -> sym)
-        else if (key == 49 || key == '1' || key == 51 || key == '3' || key == 1073741907 || key == 1073741908) {
+        else if (key == 49 || key == '1' || key == 51 || key == '3' || key == 57 || key == '9' || key == 1073741907 || key == 1073741908) {
             toggleShift();
         }
         // Button START: Submit and close

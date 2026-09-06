@@ -568,9 +568,6 @@ public class Anbu {
                                 case 0:
                                     this.code = ((this.din[1] & 255) << 24) | ((this.din[2] & 255) << 16) | ((this.din[3] & 255) << 8) | (this.din[4] & 255);
                                     boolean pressed = (this.din[0] % 2 != 0);
-                                    if (this.code == 1073741883 || this.code == 0x4000003B || this.code == 60) {
-                                        System.out.println("[Anbu] Got F2 packet from SDL! pressed=" + pressed);
-                                    }
                                     if (VirtualKeyboard.handleKey(this.code, pressed)) {
                                         break;
                                     }
@@ -639,7 +636,7 @@ public class Anbu {
                     switch (i) {
                         case 13:
                         case 111:
-                        case 0x4000003A: // Button X on TrimUI
+                        case 0x4000003A: // Button X on TrimUI -> OK / FIRE
                             return -5;
                         case 1073741903:
                             return -4;
@@ -655,7 +652,7 @@ public class Anbu {
                     switch (i) {
                         case 13:
                         case 111:
-                        case 0x4000003A: // Button X on TrimUI
+                        case 0x4000003A: // Button X on TrimUI -> OK / FIRE
                             return -5;
                         case 48:
                             return 109;
