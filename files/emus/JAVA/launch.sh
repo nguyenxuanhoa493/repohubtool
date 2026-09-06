@@ -5,6 +5,10 @@ echo "=== RetroHub Java Game Launch ==="
 echo "Date: $(date 2>/dev/null || echo 'N/A')"
 echo "Launch cmd: $0 $*"
 
+# Optimize Wi-Fi & CPU performance to prevent network stalls during map transitions
+/usr/sbin/iw dev wlan0 set power_save off 2>/dev/null
+echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null
+
 cd /mnt/SDCARD/Emus/JAVA/zulu17/bin || exit 1
 chmod +x ./sdl_interface ./java 2>/dev/null
 [ ! -e /usr/lib/libGLES_CM.so ] && [ -f /usr/lib/libGLESv1_CM.so ] && ln -sf /usr/lib/libGLESv1_CM.so /usr/lib/libGLES_CM.so 2>/dev/null
@@ -26,7 +30,7 @@ chmod -R 755 ./.java 2>/dev/null
 TIMIDITY_CFG="/mnt/SDCARD/Emus/JAVA/timidity/timidity.cfg"
 export TIMIDITY_CFG
 
-JAVA_TOOL_OPTIONS='-Xverify:none -Djava.util.prefs.systemRoot=./.java -Djava.util.prefs.userRoot=./.java/.userPrefs -Djava.awt.headless=true -Dsun.jnu.encoding=UTF-8 -Dfile.encoding=UTF-8 -Djava.library.path=/mnt/SDCARD/Emus/JAVA/zulu17/lib'
+JAVA_TOOL_OPTIONS='-Xverify:none -Xms64m -Xmx256m -Djava.util.prefs.systemRoot=./.java -Djava.util.prefs.userRoot=./.java/.userPrefs -Djava.awt.headless=true -Dsun.jnu.encoding=UTF-8 -Dfile.encoding=UTF-8 -Djava.library.path=/mnt/SDCARD/Emus/JAVA/zulu17/lib'
 export JAVA_TOOL_OPTIONS
 ROM_PATH="$*"
 if [ -z "$ROM_PATH" ]; then

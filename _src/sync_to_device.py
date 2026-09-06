@@ -13,12 +13,15 @@ TARGET_FILES = [
     ("rh/paths.py", "rh/paths.py"),
     ("rh/version.py", "rh/version.py"),
     ("rh/catalog.py", "rh/catalog.py"),
+    ("rh/j2me.py", "rh/j2me.py"),
     ("db.py", "db.py"),
     ("app.py", "app.py"),
     ("launch.sh", "launch.sh"),
-    ("bin/yt-dlp", "bin/yt-dlp"),
-    ("rh/ledfx.py", "rh/ledfx.py"),
-    ("rh/ledthemes.py", "rh/ledthemes.py"),
+    ("../manifest.json", "manifest.json"),
+    ("emus/JAVA/zulu17/bin/freej2me-sdl.jar", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/freej2me-sdl.jar"),
+    ("emus/JAVA/zulu17/bin/sdl_interface", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface"),
+    ("emus/JAVA/zulu17/bin/quickchat.txt", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/quickchat.txt"),
+    ("emus/JAVA/launch.sh", "/mnt/SDCARD/Emus/JAVA/launch.sh"),
 ]
 
 
@@ -79,8 +82,8 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     print("[*] Bắt đầu đồng bộ tệp...")
     for rel_src, rel_dst in TARGET_FILES:
-        src = os.path.join(local_root, rel_src)
-        dst = f"{app_dir}/{rel_dst}"
+        src = os.path.normpath(os.path.join(local_root, rel_src))
+        dst = rel_dst if rel_dst.startswith("/") else f"{app_dir}/{rel_dst}"
         dst_parent = os.path.dirname(dst)
         try:
             sftp.stat(dst_parent)
@@ -100,7 +103,7 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     # Chmod executable and clear pycache
     print("[*] Phân quyền và dọn dẹp bytecode cache...")
-    ssh.exec_command(f"chmod +x {app_dir}/bin/yt-dlp 2>/dev/null; rm -rf {app_dir}/rh/__pycache__ {app_dir}/__pycache__; sync")
+    ssh.exec_command(f"chmod +x {app_dir}/bin/yt-dlp /mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface /mnt/SDCARD/Emus/JAVA/launch.sh 2>/dev/null; rm -rf {app_dir}/rh/__pycache__ {app_dir}/__pycache__; sync")
     ssh.close()
     print("[+] Hoàn tất cập nhật ứng dụng trên thiết bị!")
     return True
