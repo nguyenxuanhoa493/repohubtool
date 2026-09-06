@@ -157,8 +157,8 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1522010,
-        "sha256": "4e2e65254fa02e15c1bb904303014b7b7db91895d8d1d37fa6eec421c74148b9"
+        "size": 1506918,
+        "sha256": "25553be9deab404cc9def544bcf594befb175fcc08a7be98ed786f234bd329a7"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
@@ -278,8 +278,8 @@
     },
     {
       "path": "emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-      "size": 1522010,
-      "sha256": "4e2e65254fa02e15c1bb904303014b7b7db91895d8d1d37fa6eec421c74148b9"
+      "size": 1506918,
+      "sha256": "25553be9deab404cc9def544bcf594befb175fcc08a7be98ed786f234bd329a7"
     },
     {
       "path": "emus/JAVA/zulu17/bin/keymap.cfg",
@@ -369,7 +369,7 @@
     {
       "path": "rh/j2me.py",
       "size": 35309,
-      "sha256": "5fa2f004ad37be4463a98d4f6005ae4138f6785502ffb883a4ef90a41f6e1d59"
+      "sha256": "1cb4ded50dea0a4f35034cc985ee91c0d4b3b7946fde496ec848d552c4f687dd"
     },
     {
       "path": "rh/led.py",
