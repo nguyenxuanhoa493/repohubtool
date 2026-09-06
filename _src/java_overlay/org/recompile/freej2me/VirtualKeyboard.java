@@ -42,17 +42,17 @@ public class VirtualKeyboard {
     private static long cursorBlinkTime = 0;
     private static boolean cursorVisible = true;
 
-    // Double-tap SELECT detection
-    private static final Object SELECT_LOCK = new Object();
-    private static long lastSelectTapTime = 0;
-    private static final int DOUBLE_TAP_WINDOW_MS = 350;
-    private static java.util.Timer selectTapTimer = null;
-    private static long lastOpenTime = 0;
+    // L2 + R2 combo detection
+    private static volatile boolean l2Held = false;
+    private static volatile boolean r2Held = false;
+    private static volatile boolean l2Forwarded = false;
+    private static volatile boolean r2Forwarded = false;
 
-    // Tracking combos
-    private static boolean selectHeld = false;
-    private static boolean startHeld = false;
-    private static boolean xHeld = false;
+    private static final Object COMBO_LOCK = new Object();
+    private static final int COMBO_WINDOW_MS = 140;
+    private static java.util.Timer l2Timer = null;
+    private static java.util.Timer r2Timer = null;
+    private static long lastToggleTime = 0;
 
     // Layouts
     private static final String[][] ROWS_LOWER = {
@@ -167,7 +167,7 @@ public class VirtualKeyboard {
         }
         activateQwertyMode();
         active = true;
-        lastOpenTime = System.currentTimeMillis();
+        lastToggleTime = System.currentTimeMillis();
         buffer.setLength(0);
         selRow = (quickPhrases.isEmpty()) ? 0 : -1;
         selCol = 0;
@@ -180,21 +180,64 @@ public class VirtualKeyboard {
 
     public static void close() {
         active = false;
-        cancelSelectTimer();
-        synchronized (SELECT_LOCK) {
-            lastSelectTapTime = 0;
-        }
+        cancelTimers();
+        l2Held = false;
+        r2Held = false;
+        l2Forwarded = false;
+        r2Forwarded = false;
         System.out.println("[VK] >>> CLOSED VIRTUAL KEYBOARD <<< active=" + active);
         forceRedraw();
     }
 
-    private static void cancelSelectTimer() {
-        synchronized (SELECT_LOCK) {
-            if (selectTapTimer != null) {
-                selectTapTimer.cancel();
-                selectTapTimer = null;
-            }
+    private static void cancelTimers() {
+        synchronized (COMBO_LOCK) {
+            cancelL2Timer();
+            cancelR2Timer();
         }
+    }
+
+    private static void cancelL2Timer() {
+        if (l2Timer != null) {
+            l2Timer.cancel();
+            l2Timer = null;
+        }
+    }
+
+    private static void cancelR2Timer() {
+        if (r2Timer != null) {
+            r2Timer.cancel();
+            r2Timer = null;
+        }
+    }
+
+    private static void forwardKey(int code, boolean down) {
+        new Thread(() -> {
+            try {
+                injecting = true;
+                if (down) {
+                    Mobile.getPlatform().keyPressed(code);
+                } else {
+                    Mobile.getPlatform().keyReleased(code);
+                }
+            } catch (Exception ignored) {
+            } finally {
+                injecting = false;
+            }
+        }).start();
+    }
+
+    private static void forwardTap(int code) {
+        new Thread(() -> {
+            try {
+                injecting = true;
+                Mobile.getPlatform().keyPressed(code);
+                Thread.sleep(25);
+                Mobile.getPlatform().keyReleased(code);
+            } catch (Exception ignored) {
+            } finally {
+                injecting = false;
+            }
+        }).start();
     }
 
     public static void forceRedraw() {
@@ -209,6 +252,14 @@ public class VirtualKeyboard {
      * Intercept key events from SDL / MobilePlatform.
      * Return true if the key was consumed by VirtualKeyboard.
      */
+    public static boolean isL2Key(int key) {
+        return key == 55 || key == '7' || key == 118;
+    }
+
+    public static boolean isR2Key(int key) {
+        return key == 57 || key == '9' || key == 110;
+    }
+
     public static boolean isSelectKey(int key) {
         return key == 42 || key == '*' || key == 1073741901;
     }
@@ -233,88 +284,155 @@ public class VirtualKeyboard {
         }
 
         // Debug logging for troubleshooting
-        System.out.println("[VK] handleKey: key=" + key + " (0x" + Integer.toHexString(key) + ") pressed=" + pressed + " active=" + active + " selectHeld=" + selectHeld + " startHeld=" + startHeld);
+        System.out.println("[VK] handleKey: key=" + key + " (0x" + Integer.toHexString(key) + ") pressed=" + pressed + " active=" + active + " l2Held=" + l2Held + " r2Held=" + r2Held);
 
-        // 1. SELECT Key:
-        // - When active: single tap SELECT closes the keyboard (with 250ms guard after open)
-        // - When inactive: DOUBLE-TAP (nhấp đúp 2 lần trong 350ms) opens the keyboard!
-        // - Single tap forwards '*' key to game after 350ms
-        if (isSelectKey(key)) {
+        // 1. L2 and R2 Keys (Combo L2 + R2 to Open/Close Virtual Keyboard)
+        if (isL2Key(key)) {
+            l2Held = pressed;
             if (active) {
-                if (pressed && (System.currentTimeMillis() - lastOpenTime > 250)) {
+                if (pressed && r2Held && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                    lastToggleTime = System.currentTimeMillis();
                     close();
                 }
                 return true;
             }
 
-            selectHeld = pressed;
             if (pressed) {
-                long now = System.currentTimeMillis();
-                synchronized (SELECT_LOCK) {
-                    if (now - lastSelectTapTime <= DOUBLE_TAP_WINDOW_MS && lastSelectTapTime > 0) {
-                        // DOUBLE-TAP MATCHED!
-                        cancelSelectTimer();
-                        lastSelectTapTime = 0;
-                        System.out.println("[VK] >>> DOUBLE-TAP SELECT DETECTED! Opening Virtual Keyboard <<<");
+                synchronized (COMBO_LOCK) {
+                    if (r2Held) {
+                        // L2 pressed while R2 is held -> COMBO TRIGGERED!
+                        cancelTimers();
+                        if (r2Forwarded) {
+                            forwardKey(57, false);
+                            r2Forwarded = false;
+                        }
+                        lastToggleTime = System.currentTimeMillis();
+                        System.out.println("[VK] >>> L2 + R2 COMBO DETECTED! Opening Virtual Keyboard <<<");
                         open();
                         return true;
                     } else {
-                        // First tap of potential double-tap
-                        lastSelectTapTime = now;
-                        cancelSelectTimer();
-                        selectTapTimer = new java.util.Timer("VK-SelectTap", true);
-                        selectTapTimer.schedule(new java.util.TimerTask() {
+                        // Wait COMBO_WINDOW_MS for potential R2 press
+                        cancelL2Timer();
+                        l2Forwarded = false;
+                        l2Timer = new java.util.Timer("VK-L2Wait", true);
+                        l2Timer.schedule(new java.util.TimerTask() {
                             @Override
                             public void run() {
-                                synchronized (SELECT_LOCK) {
-                                    lastSelectTapTime = 0;
-                                    selectTapTimer = null;
-                                }
-                                // Single tap timed out -> user only tapped once, forward '*' to game
-                                if (!active && !startHeld) {
-                                    new Thread(() -> {
-                                        try {
-                                            injecting = true;
-                                            Mobile.getPlatform().keyPressed(42);
-                                            Thread.sleep(25);
-                                            Mobile.getPlatform().keyReleased(42);
-                                        } catch (Exception ignored) {
-                                        } finally {
-                                            injecting = false;
-                                        }
-                                    }).start();
+                                synchronized (COMBO_LOCK) {
+                                    l2Timer = null;
+                                    if (l2Held && !active) {
+                                        l2Forwarded = true;
+                                        forwardKey(55, true);
+                                    }
                                 }
                             }
-                        }, DOUBLE_TAP_WINDOW_MS);
-                        return true; // absorb first press while waiting for potential 2nd tap
+                        }, COMBO_WINDOW_MS);
+                        return true;
                     }
                 }
             } else {
-                return true; // absorb release
+                // L2 released
+                synchronized (COMBO_LOCK) {
+                    boolean hadTimer = (l2Timer != null);
+                    cancelL2Timer();
+                    if (l2Forwarded) {
+                        l2Forwarded = false;
+                        forwardKey(55, false);
+                    } else if (hadTimer && !active) {
+                        forwardTap(55);
+                    }
+                    return true;
+                }
             }
         }
 
-        // 2. START Key:
+        if (isR2Key(key)) {
+            r2Held = pressed;
+            if (active) {
+                if (pressed && l2Held && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                    lastToggleTime = System.currentTimeMillis();
+                    close();
+                }
+                return true;
+            }
+
+            if (pressed) {
+                synchronized (COMBO_LOCK) {
+                    if (l2Held) {
+                        // R2 pressed while L2 is held -> COMBO TRIGGERED!
+                        cancelTimers();
+                        if (l2Forwarded) {
+                            forwardKey(55, false);
+                            l2Forwarded = false;
+                        }
+                        lastToggleTime = System.currentTimeMillis();
+                        System.out.println("[VK] >>> R2 + L2 COMBO DETECTED! Opening Virtual Keyboard <<<");
+                        open();
+                        return true;
+                    } else {
+                        // Wait COMBO_WINDOW_MS for potential L2 press
+                        cancelR2Timer();
+                        r2Forwarded = false;
+                        r2Timer = new java.util.Timer("VK-R2Wait", true);
+                        r2Timer.schedule(new java.util.TimerTask() {
+                            @Override
+                            public void run() {
+                                synchronized (COMBO_LOCK) {
+                                    r2Timer = null;
+                                    if (r2Held && !active) {
+                                        r2Forwarded = true;
+                                        forwardKey(57, true);
+                                    }
+                                }
+                            }
+                        }, COMBO_WINDOW_MS);
+                        return true;
+                    }
+                }
+            } else {
+                // R2 released
+                synchronized (COMBO_LOCK) {
+                    boolean hadTimer = (r2Timer != null);
+                    cancelR2Timer();
+                    if (r2Forwarded) {
+                        r2Forwarded = false;
+                        forwardKey(57, false);
+                    } else if (hadTimer && !active) {
+                        forwardTap(57);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        // 2. SELECT Key:
+        // - When active: single tap closes keyboard
+        // - When inactive: passes straight to game (*)
+        if (isSelectKey(key)) {
+            if (active) {
+                if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                    lastToggleTime = System.currentTimeMillis();
+                    close();
+                }
+                return true;
+            }
+            return false;
+        }
+
+        // 3. START Key:
         // - When active: tap START submits text and closes
-        // - When inactive: passes straight to game or emulator profile switch (cancels pending SELECT tap)
+        // - When inactive: passes straight to game / emulator
         if (isStartKey(key)) {
-            startHeld = pressed;
             if (active) {
                 if (pressed) {
                     submitAndClose();
                 }
                 return true;
             }
-            if (pressed) {
-                cancelSelectTimer();
-                synchronized (SELECT_LOCK) {
-                    lastSelectTapTime = 0;
-                }
-            }
             return false;
         }
 
-        // 3. Optional F2 / Menu button fallback
+        // 4. Optional F2 fallback
         if (isF2Key(key) || key == 59) {
             if (pressed) {
                 toggle();
@@ -377,7 +495,7 @@ public class VirtualKeyboard {
         }
         // Button SELECT: Close
         else if (isSelectKey(key)) {
-            if (System.currentTimeMillis() - lastOpenTime > 250) {
+            if (System.currentTimeMillis() - lastToggleTime > 250) {
                 close();
             }
         }
@@ -810,7 +928,7 @@ public class VirtualKeyboard {
         // 5. Footer Help Hint
         g.setFont(fontSmall);
         g.setColor(MUTED_TEXT);
-        String hint = "A/X:Gõ/Chọn  B:Xóa  Y:Cách  START:Xong  SELECT:Đóng";
+        String hint = "A/X:Gõ  B:Xóa  Y:Cách  START:Xong  L2+R2/SELECT:Đóng";
         int hintW = g.getFontMetrics().stringWidth(hint);
         g.drawString(hint, panelX + (panelW - hintW) / 2, curY + 8);
 
