@@ -65,7 +65,7 @@ public class MobilePlatform {
     }
 
     public void keyPressed(int key) {
-        if (VirtualKeyboard.handleKey(key, true)) {
+        if (VirtualKeyboard.active) {
             return;
         }
         this.updateKeyState(key, 1);
@@ -81,7 +81,7 @@ public class MobilePlatform {
     }
 
     public void keyReleased(int key) {
-        if (VirtualKeyboard.handleKey(key, false)) {
+        if (VirtualKeyboard.active) {
             return;
         }
         this.updateKeyState(key, 0);

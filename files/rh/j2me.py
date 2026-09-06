@@ -141,7 +141,7 @@ _VERSIONED = {"jar": "zulu17/bin/freej2me-sdl.jar",
 
 # Known target binary sizes for current release (FreeJ2ME v1.79+).
 CURRENT_RUNTIME_SIZES = {
-    "jar": 1523865,
+    "jar": 1522010,
     "sdl": 450072,
 }
 

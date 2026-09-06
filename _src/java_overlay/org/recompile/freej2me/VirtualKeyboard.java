@@ -42,7 +42,8 @@ public class VirtualKeyboard {
     private static long cursorBlinkTime = 0;
     private static boolean cursorVisible = true;
 
-    // START + X hotkey combo tracking
+    // Hotkey combo tracking
+    private static volatile boolean selectHeld = false;
     private static volatile boolean startHeld = false;
     private static long lastToggleTime = 0;
 
@@ -157,7 +158,6 @@ public class VirtualKeyboard {
         if (!quickPhrasesLoaded) {
             loadQuickPhrases();
         }
-        activateQwertyMode();
         active = true;
         lastToggleTime = System.currentTimeMillis();
         buffer.setLength(0);
@@ -173,6 +173,7 @@ public class VirtualKeyboard {
     public static void close() {
         active = false;
         startHeld = false;
+        selectHeld = false;
         System.out.println("[VK] >>> CLOSED VIRTUAL KEYBOARD <<< active=" + active);
         forceRedraw();
     }
@@ -190,21 +191,19 @@ public class VirtualKeyboard {
      * Return true if the key was consumed by VirtualKeyboard.
      */
     public static boolean isHotkey(int key) {
-        // sdl_interface sends SDLK_F1 (0x4000003A / 1073741882) when START is held and X is pressed.
+        // sdl_interface sends SDLK_F1 (0x4000003A / 1073741882) when START is held and Y is pressed.
         // Also support F2 (0x4000003B / 1073741883) and console F-keys.
         return key == 1073741882 || key == 0x4000003A || key == 58
             || key == 1073741883 || key == 0x4000003B || key == 59 || key == 60;
     }
 
     public static boolean isStartKey(int key) {
-        return key == 7 || key == 35 || key == '#' || key == 1073741900;
-    }
-
-    public static boolean isXKey(int key) {
-        return key == 53 || key == '5' || key == 13 || key == -5 || key == 111 || key == 'x' || key == 'X';
+        // Only actual START / '#' keys (ASCII 35 = '#', SDL scancode 1073741900)
+        return key == 35 || key == '#' || key == 1073741900;
     }
 
     public static boolean isSelectKey(int key) {
+        // Only actual SELECT / '*' keys (ASCII 42 = '*', SDL scancode 1073741901)
         return key == 42 || key == '*' || key == 1073741901;
     }
 
@@ -215,49 +214,46 @@ public class VirtualKeyboard {
             return false;
         }
 
-        // Debug logging for troubleshooting
-        System.out.println("[VK] handleKey: key=" + key + " (0x" + Integer.toHexString(key) + ") pressed=" + pressed + " active=" + active + " startHeld=" + startHeld);
-
-        // 1. Hardware Hotkey: START + X handled by sdl_interface emitting SDLK_F1 (0x4000003A)
+        // 1. Hardware Hotkey: START + Y handled by sdl_interface emitting SDLK_F1 (0x4000003A)
         if (isHotkey(key)) {
             if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
                 lastToggleTime = System.currentTimeMillis();
-                System.out.println("[VK] >>> HOTKEY F1/F2 DETECTED! Toggling Virtual Keyboard <<<");
+                System.out.println("[VK] >>> HOTKEY F1 (START + Y) DETECTED! Toggling Virtual Keyboard <<<");
                 toggle();
             }
             return true;
         }
 
-        // 2. START Key tracking & submit
-        if (isStartKey(key)) {
-            startHeld = pressed;
+        // 2. Track SELECT and START states for SELECT + START combo
+        if (isSelectKey(key)) {
+            selectHeld = pressed;
+            if (pressed && startHeld && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                lastToggleTime = System.currentTimeMillis();
+                System.out.println("[VK] >>> SELECT + START COMBO DETECTED! Toggling Virtual Keyboard <<<");
+                toggle();
+                return true;
+            }
             if (active) {
-                if (pressed) {
-                    submitAndClose();
+                if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                    lastToggleTime = System.currentTimeMillis();
+                    close();
                 }
                 return true;
             }
             return false;
         }
 
-        // 3. Software Fallback: START held + X pressed
-        if (startHeld && isXKey(key)) {
-            if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
+        if (isStartKey(key)) {
+            startHeld = pressed;
+            if (pressed && selectHeld && (System.currentTimeMillis() - lastToggleTime > 250)) {
                 lastToggleTime = System.currentTimeMillis();
-                System.out.println("[VK] >>> START + X SOFTWARE COMBO DETECTED! Toggling Virtual Keyboard <<<");
+                System.out.println("[VK] >>> START + SELECT COMBO DETECTED! Toggling Virtual Keyboard <<<");
                 toggle();
+                return true;
             }
-            return true;
-        }
-
-        // 4. SELECT Key:
-        // - When active: single tap closes keyboard
-        // - When inactive: passes straight to game (*)
-        if (isSelectKey(key)) {
             if (active) {
-                if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
-                    lastToggleTime = System.currentTimeMillis();
-                    close();
+                if (pressed) {
+                    submitAndClose();
                 }
                 return true;
             }
@@ -459,80 +455,6 @@ public class VirtualKeyboard {
     }
 
     /**
-     * Activate QWERTY mode across game text field classes (e.g. Teamobi TField/dx).
-     * Prevents numbers ('0'..'9') from being treated as 12-key phone keypad T9 multi-tap.
-     */
-    public static void activateQwertyMode() {
-        try {
-            if (Mobile.getPlatform() == null || Mobile.getPlatform().loader == null) {
-                return;
-            }
-            ClassLoader loader = Mobile.getPlatform().loader;
-
-            // 1. Ensure main.a.E is false (standard Nokia mode, not BlackBerry)
-            try {
-                Class<?> mainClass = Class.forName("main.a", false, loader);
-                java.lang.reflect.Field fE = mainClass.getDeclaredField("E");
-                fE.setAccessible(true);
-                fE.setBoolean(null, false);
-            } catch (Throwable ignored) {}
-
-            // 2. Candidate classes for Teamobi & standard J2ME games
-            String[] candidateClasses = {
-                "dx", "TField", "b", "cu", "cq", "cw", "ea", "f", "cl", "m"
-            };
-            for (String cname : candidateClasses) {
-                checkAndActivateClass(loader, cname);
-            }
-
-            // 3. Dynamic scan via loader's zipfs if available
-            try {
-                java.lang.reflect.Field fZip = loader.getClass().getDeclaredField("zipfs");
-                fZip.setAccessible(true);
-                java.nio.file.FileSystem zipfs = (java.nio.file.FileSystem) fZip.get(loader);
-                if (zipfs != null) {
-                    for (java.nio.file.Path root : zipfs.getRootDirectories()) {
-                        try (java.util.stream.Stream<java.nio.file.Path> stream = java.nio.file.Files.walk(root, 2)) {
-                            stream.forEach(p -> {
-                                String s = p.toString();
-                                if (s.endsWith(".class")) {
-                                    int start = s.startsWith("/") ? 1 : 0;
-                                    String cname = s.substring(start, s.length() - 6).replace('/', '.');
-                                    if (cname.length() <= 3 || cname.toLowerCase().contains("field")) {
-                                        checkAndActivateClass(loader, cname);
-                                    }
-                                }
-                            });
-                        } catch (Throwable ignored) {}
-                    }
-                }
-            } catch (Throwable ignored) {}
-        } catch (Throwable e) {
-            System.out.println("[VK] activateQwertyMode error: " + e);
-        }
-    }
-
-    private static void checkAndActivateClass(ClassLoader loader, String cname) {
-        try {
-            Class<?> clazz = Class.forName(cname, false, loader);
-            // Look for static boolean fields like 'm' or 'isQwerty'
-            for (java.lang.reflect.Field f : clazz.getDeclaredFields()) {
-                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())
-                        && f.getType() == boolean.class) {
-                    String fname = f.getName().toLowerCase();
-                    if (fname.equals("m") || fname.contains("qwerty")) {
-                        try {
-                            f.setAccessible(true);
-                            f.setBoolean(null, true);
-                            System.out.println("[VK] Set " + cname + "." + f.getName() + " = true (QWERTY mode active)");
-                        } catch (Throwable ignored) {}
-                    }
-                }
-            }
-        } catch (Throwable ignored) {}
-    }
-
-    /**
      * Inject string into active game input field.
      */
     public static void inject(final String text) {
@@ -550,11 +472,9 @@ public class VirtualKeyboard {
         } catch (Exception ignored) {}
 
         // 2. Keystroke injection for Canvas-based Online Games
-        activateQwertyMode();
         new Thread(() -> {
             try {
                 injecting = true;
-                activateQwertyMode();
                 Thread.sleep(80);
                 for (int i = 0; i < text.length(); i++) {
                     char c = text.charAt(i);
@@ -752,7 +672,7 @@ public class VirtualKeyboard {
         // 5. Footer Help Hint
         g.setFont(fontSmall);
         g.setColor(MUTED_TEXT);
-        String hint = "A/X:Gõ  B:Xóa  Y:Cách  START:Xong  START+X/SELECT:Đóng";
+        String hint = "A/X:Gõ  B:Xóa  Y:Cách  START:Xong  SELECT:Đóng  [START+Y]";
         int hintW = g.getFontMetrics().stringWidth(hint);
         g.drawString(hint, panelX + (panelW - hintW) / 2, curY + 8);
 

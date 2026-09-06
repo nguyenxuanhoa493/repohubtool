@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.81", "2026-09-06",
+     ("Java Games: Fix unresponsive controls after opening virtual keyboard, eliminate disruptive class reflection, standardize hotkeys to START + Y (hardware) and SELECT + START with zero Nokia skill conflicts",
+      "Game Java: Sửa triệt để lỗi liệt nút sau khi mở bàn phím ảo, loại bỏ hoàn toàn can thiệp reflection gây lỗi game; chuẩn hoá phím tắt mở bàn phím sang START + Y (phần cứng) hoặc SELECT + START (trung tâm) không ảnh hưởng phím kỹ năng Nokia"),
+     [("Fix unresponsive controls bug: resolved the root cause where opening the virtual keyboard corrupted game key states by eliminating aggressive class reflection that forcibly modified static field flags in obfuscated game classes (e.g. Ninja School). All in-game controls and skills remain 100% responsive after closing the keyboard.",
+       "Sửa triệt để lỗi liệt phím điều khiển: khắc phục triệt để nguyên nhân khiến nhân vật bị đơ/liệt nút sau khi mở bàn phím ảo bằng việc gỡ bỏ hoàn toàn cơ chế quét reflection làm biến dạng các cờ trạng thái phím trong game (như Ninja School). Mọi nút bấm và chiêu thức trong game hoạt động trơn tru 100% cả trước và sau khi mở bàn phím."),
+      ("Safe, conflict-free hotkey combos: primary hotkey is hardware-intercepted START + Y (emits SDLK_F1, zero key leakage into game), with center-button SELECT + START as clean secondary combo. Nokia skill keys 1, 3, 7, 9 (L1, R1, L2, R2) and attack key 5 (X) are completely unburdened and never trigger the keyboard accidentally.",
+       "Tổ hợp phím tắt an toàn tuyệt đối: phím tắt chính là START + Y (được phần cứng sdl_interface chặn và gửi mã F1 riêng biệt, không lọt phím vào game), kèm tổ hợp 2 nút trung tâm SELECT + START. Toàn bộ các phím kỹ năng 1, 3, 7, 9 (L1, R1, L2, R2) và phím đánh 5 (X) hoàn toàn không bị ảnh hưởng, không bao giờ lo bật nhầm bàn phím giữa trận đấu."),
+      ("Clean state handling and keyboard navigation: when virtual keyboard is active, all inputs are captured exclusively for typing without affecting the game character; upon closing, all key states are cleanly reset.",
+       "Quản lý trạng thái phím sạch sẽ: khi bàn phím đang mở, các nút điều hướng và phím gõ được cô lập hoàn toàn cho bàn phím ảo mà không làm nhân vật di chuyển; khi đóng bàn phím, mọi cờ phím được trả về trạng thái tự do ngay lập tức.")]),
+
     ("1.80", "2026-09-06",
      ("Auto-check & update Java Emulator: On app startup and post-update, automatically verify and synchronize the latest FreeJ2ME runtime binaries and configs, preventing legacy overwrites",
       "Tự động kiểm tra & cập nhật Giả lập Java: Khi mở app hoặc khi cập nhật app, hệ thống luôn tự động kiểm tra và đồng bộ phiên bản FreeJ2ME mới nhất, không bao giờ bị ghi đè bản cũ"),
