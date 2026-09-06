@@ -1,12 +1,12 @@
 {
-  "version": "1.76",
+  "version": "1.77",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-05T23:45:00+0700",
+  "built": "2026-09-06T11:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java: Thêm danh mục Tea Mobile [Chuẩn] - cập nhật 50 game TeaMobi Online (Ninja School Online, Ngọc Rồng, KPAH, Avatar 258, Army 2...) và Offline",
-    "en": "Java Games: Add Tea Mobile [Official] shelf - 50 TeaMobi Online & Offline titles (Ninja School Online, Dragon Boy, KPAH, Avatar, Army 2...)"
+    "vi": "Game Java: Sửa lỗi phím SELECT gán nhầm số 5 (chuyển sang phím *), nhấp đúp (Double-tap) SELECT để mở Bàn phím ảo gõ chat, bổ sung menu Cài đặt Java & Quản lý danh sách từ khóa gõ nhanh (Quick Chat)",
+    "en": "Java Games: Fix SELECT key mapped to 5 (remap to *), double-tap SELECT to open Virtual Keyboard for chatting, add Java Settings & Quick Chat phrase manager in RetroHub"
   },
   "remove": [
     "app.pyc",
@@ -145,8 +145,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 2812,
-        "sha256": "bc9b0c7ed06b48af66d47e977c2841d5154bae7efd194f8cb4f4d337d97f6aad"
+        "size": 3053,
+        "sha256": "414126b5812b1c337bc7ef9bfe8becf39fdda291478a7e05ea6f16f816b7da2b"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -157,20 +157,26 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1479020,
-        "sha256": "0e61ff4620198bb65769a09eb629863cd8aae5116c7ea88e95c59ffb6bda9c48"
+        "size": 1526039,
+        "sha256": "b7968b858d887fb0796c205a28b0a80fa8add45582787f4864c87e9970b333f0"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
         "url": "files/emus/JAVA/zulu17/bin/keymap.cfg",
-        "size": 133,
-        "sha256": "7efbfea3f99d72d3e34f53a45e0275b2ddded7bc5518eaeb336246bd86171db0"
+        "size": 141,
+        "sha256": "2ee1d46b8820c08f0500184ddb468c987106e0bd95c78d47923dcd5ca561d6bb"
       },
       {
         "path": "zulu17/bin/sdl_interface",
         "url": "files/emus/JAVA/zulu17/bin/sdl_interface",
         "size": 450072,
-        "sha256": "ea0282c5eaa0bc1d4c8325526c378a9863a91001c033f929cd35d37c8c05bf72"
+        "sha256": "c1d856f8d66d21e3b7ce607399b2ac9b1963117ff81feceeb14a1d7b52b00f89"
+      },
+      {
+        "path": "zulu17/bin/quickchat.txt",
+        "url": "files/emus/JAVA/zulu17/bin/quickchat.txt",
+        "size": 89,
+        "sha256": "7ae145addf2537f5031cc269446d6814d7c2e6e568346dfa5a14c943991540b8"
       }
     ]
   },
@@ -187,8 +193,8 @@
     },
     {
       "path": "app.py",
-      "size": 301916,
-      "sha256": "4fc89f9855bba6a721fb1dd938f9dc8ac1ac1d91b40ebf0ac7ac84d03dab6db7"
+      "size": 307714,
+      "sha256": "9e43cccdae64b75f133e72478957c3d13ea9696a9a2e4c74018978732c3b7072"
     },
     {
       "path": "assets/fallback.ttf",
@@ -317,13 +323,13 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 35134,
-      "sha256": "34e4e09af4b90a714dad05bcd2cf6d7c83c43681258bc0d70875ceb34f2e1333"
+      "size": 36483,
+      "sha256": "d71178d211a28b0209053b82031a7b6c2212a3f38ec756d8b9347bf85dc3c8f0"
     },
     {
       "path": "rh/j2me.py",
-      "size": 28635,
-      "sha256": "ce44bdb4e081a95908a8fb52ec65210926d2b30c23562600f111491ed3556b4d"
+      "size": 31516,
+      "sha256": "9b5de4a10455a3f8873fc5d9939424e0b9dc4e04cac4bb5eeb69983996a1a749"
     },
     {
       "path": "rh/led.py",
@@ -408,7 +414,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "1e67577342de1a7c11fb9a662ab0d1a9c68f587e57ff4b77b1d040a707f72097"
+      "sha256": "0ae73628b6ec0713238085d1ed140760a4aca165e6cc511108cbfbf417050eda"
     },
     {
       "path": "rh/yt.py",

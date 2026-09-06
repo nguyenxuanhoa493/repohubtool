@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.77", "2026-09-06",
+     ("Java Games: Fix SELECT key mapped to 5 (remap to *), double-tap SELECT to open Virtual Keyboard for chatting, add Java Settings & Quick Chat phrase manager in RetroHub",
+      "Game Java: Sửa lỗi phím SELECT gán nhầm số 5 (chuyển sang phím *), nhấp đúp (Double-tap) SELECT để mở Bàn phím ảo gõ chat, bổ sung menu Cài đặt Java & Quản lý danh sách từ khóa gõ nhanh (Quick Chat)"),
+     [("Fix hardcoded SELECT key in binary: patched sdl_interface to unbind SELECT from key 5 (which caused accidental attacks in online games) and map cleanly to * (ASCII 42).",
+       "Vá mã phím SELECT trong tệp nhị phân: sửa trực tiếp sdl_interface để gỡ phím SELECT khỏi số 5 (vốn gây tự động đánh/tấn công trong game online) và chuyển sang phím * (mã 42) chuẩn xác."),
+      ("Double-tap SELECT Virtual Keyboard: double-tap SELECT within 350ms to open full on-screen QWERTY virtual keyboard with debounce protection and quick phrases bar. Single-tap SELECT still forwards * to game.",
+       "Bàn phím ảo kích hoạt bằng nhấp đúp SELECT: nhấn đúp SELECT trong 350ms để mở bàn phím ảo QWERTY đầy đủ có chống ấn nhầm và thanh cụm từ chat nhanh. Nhấn đơn SELECT vẫn gửi phím * vào game bình thường."),
+      ("Java Settings & Quick Chat manager in RetroHub: renamed display settings to 'Cài đặt Java' (default HQ render mode) and added a dedicated screen to view, add, delete, and reset quick chat phrases stored in quickchat.txt.",
+       "Menu Cài đặt Java & Quản lý từ khóa gõ nhanh: đổi tên mục cài đặt thành 'Cài đặt Java' (mặc định chế độ hình ảnh HQ) và bổ sung màn hình quản lý, thêm/xóa/đặt lại danh sách từ khóa chat nhanh lưu tại quickchat.txt.")]),
+
     ("1.76", "2026-09-05",
      ("Java Games: Add Tea Mobile [Official] shelf - 50 TeaMobi Online & Offline titles (Ninja School Online, Dragon Boy, KPAH, Avatar, Army 2...)",
       "Game Java: Thêm danh mục Tea Mobile [Chuẩn] - cập nhật 50 game TeaMobi Online (Ninja School Online, Ngọc Rồng, KPAH, Avatar 258, Army 2...) và Offline"),

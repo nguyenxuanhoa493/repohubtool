@@ -50,15 +50,15 @@ DEFAULT_RESOLUTION = "320240"
 # keymap.cfg - it parses the file at startup and never reads the values back - and
 # picks the pad layout from control_profile.cfg/control_cycle.cfg instead, which
 # the player cycles on the device with START+SELECT.
-RENDER_MODES = ["pixel", "smooth", "hq"]
+RENDER_MODES = ["hq", "smooth", "pixel"]
 DEFAULT_RENDER_MODE = "hq"
 RENDER_PRESETS = {
-    "pixel":  {"render_mode": "pixel",  "integer_scaling": "true",  "keep_aspect": "true",
-               "text_aa": "false", "shape_aa": "false", "m3g_filter": "nearest"},
-    "smooth": {"render_mode": "smooth", "integer_scaling": "false", "keep_aspect": "true",
-               "text_aa": "true",  "shape_aa": "true",  "m3g_filter": "linear"},
     "hq":     {"render_mode": "hq",     "integer_scaling": "false", "keep_aspect": "true",
                "text_aa": "true",  "shape_aa": "true",  "m3g_filter": "linear"},
+    "smooth": {"render_mode": "smooth", "integer_scaling": "false", "keep_aspect": "true",
+               "text_aa": "true",  "shape_aa": "true",  "m3g_filter": "linear"},
+    "pixel":  {"render_mode": "pixel",  "integer_scaling": "true",  "keep_aspect": "true",
+               "text_aa": "false", "shape_aa": "false", "m3g_filter": "nearest"},
 }
 
 
@@ -67,6 +67,7 @@ RENDER_PRESETS = {
 # that wipes zulu17 to unpack a fresh copy would take both with it, so they are
 # moved aside first and put back afterwards.
 USER_DATA_DIRS = ("bin/rms", "bin/config")
+USER_DATA_FILES = ("bin/quickchat.txt",)
 
 
 def j2me_runtime_paths():
@@ -221,20 +222,7 @@ def graphics_cfg_path():
 
 
 def load_render_mode():
-    """Which of the three presets is in force, from graphics.cfg or renderer.conf.
-
-    In JM (nvcuong1312), Select in-game toggles graphics.cfg (0=pixel/nearest, 1=smooth/linear).
-    On older builds, START+R3 rewrites renderer.conf.
-    """
-    try:
-        with open(graphics_cfg_path(), "r", encoding="utf-8") as f:
-            val = f.read().strip()
-            if val == "0":
-                return "pixel"
-            elif val == "1":
-                return "smooth"
-    except Exception:
-        pass
+    """Which of the three presets is in force, from renderer.conf or graphics.cfg."""
     try:
         with open(renderer_conf_path(), "r", encoding="utf-8") as f:
             for line in f:
@@ -247,6 +235,15 @@ def load_render_mode():
                     return v if v in RENDER_MODES else DEFAULT_RENDER_MODE
     except Exception:
         pass
+    try:
+        with open(graphics_cfg_path(), "r", encoding="utf-8") as f:
+            val = f.read().strip()
+            if val == "0":
+                return "pixel"
+            elif val == "1":
+                return "smooth"
+    except Exception:
+        pass
     return DEFAULT_RENDER_MODE
 
 
@@ -254,7 +251,7 @@ def save_render_mode(mode):
     """Write preset out to both graphics.cfg and renderer.conf. Returns True when saved."""
     if mode not in RENDER_MODES:
         return False
-    # graphics.cfg: 0 = nearest/pixel, 1 = linear/smooth
+    # graphics.cfg: 0 = nearest/pixel, 1 = linear/smooth/hq
     g_val = "0" if mode == "pixel" else "1"
     try:
         os.makedirs(os.path.dirname(graphics_cfg_path()), exist_ok=True)
@@ -275,6 +272,81 @@ def save_render_mode(mode):
     except Exception as e:
         print(f"Error saving J2ME renderer.conf: {e}")
         return False
+
+
+# ------------------------------------------------------------------ quick chat
+DEFAULT_QUICKCHAT = [
+    "taikhoan",
+    "matkhau",
+    "ok",
+    "pt di",
+    "doi xiu",
+    "giao dich",
+    "a",
+    "hs",
+    "td50",
+]
+
+
+def quickchat_path():
+    return f"{RUNTIME_DIR}/bin/quickchat.txt"
+
+
+def load_quickchat():
+    """Load quickchat phrases from quickchat.txt. Returns list of strings."""
+    path = quickchat_path()
+    if not os.path.exists(path):
+        return list(DEFAULT_QUICKCHAT)
+    try:
+        phrases = []
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    phrases.append(line)
+        return phrases if phrases else list(DEFAULT_QUICKCHAT)
+    except Exception as e:
+        print(f"Error reading quickchat.txt: {e}")
+        return list(DEFAULT_QUICKCHAT)
+
+
+def save_quickchat(phrases):
+    """Write phrases list to quickchat.txt. Returns True when saved."""
+    path = quickchat_path()
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        lines = ["# Danh sach chuoi mau / Quick Chat"] + [p.strip() for p in phrases if p.strip()]
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+        return True
+    except Exception as e:
+        print(f"Error saving quickchat.txt: {e}")
+        return False
+
+
+def add_quickchat(phrase):
+    """Add a new phrase to quickchat.txt."""
+    phrase = phrase.strip()
+    if not phrase:
+        return False
+    phrases = load_quickchat()
+    if phrase not in phrases:
+        phrases.append(phrase)
+        return save_quickchat(phrases)
+    return True
+
+
+def delete_quickchat(phrase):
+    """Delete a phrase from quickchat.txt."""
+    phrase = phrase.strip()
+    phrases = load_quickchat()
+    new_phrases = [p for p in phrases if p != phrase]
+    return save_quickchat(new_phrases)
+
+
+def reset_quickchat():
+    """Restore quickchat.txt to default phrases."""
+    return save_quickchat(DEFAULT_QUICKCHAT)
 
 
 # ------------------------------------------------------------------ rom folders
@@ -552,6 +624,17 @@ def _stash_user_data(stash):
             moved.append(rel)
         except Exception as e:
             print(f"stash {rel} failed: {e}")
+    for rel in USER_DATA_FILES:
+        src = os.path.join(RUNTIME_DIR, rel)
+        if not os.path.isfile(src):
+            continue
+        dst = os.path.join(stash, rel)
+        try:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
+            moved.append(rel)
+        except Exception as e:
+            print(f"stash {rel} failed: {e}")
     return moved
 
 
@@ -576,6 +659,16 @@ def _restore_user_data(stash):
                 elif os.path.exists(d_path):
                     os.remove(d_path)
                 shutil.move(s_path, d_path)
+        except Exception as e:
+            print(f"restore {rel} failed: {e}")
+    for rel in USER_DATA_FILES:
+        src = os.path.join(stash, rel)
+        if not os.path.isfile(src):
+            continue
+        dst = os.path.join(RUNTIME_DIR, rel)
+        try:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
         except Exception as e:
             print(f"restore {rel} failed: {e}")
 
@@ -659,8 +752,12 @@ def install_j2me_emulator(force=False):
         # user's display preset back on top of the restored default.
         if saved_mode:
             save_render_mode(saved_mode)
-        elif not os.path.exists(graphics_cfg_path()):
-            save_render_mode("smooth")
+        elif not os.path.exists(renderer_conf_path()) and not os.path.exists(graphics_cfg_path()):
+            save_render_mode(DEFAULT_RENDER_MODE)
+
+        # Ensure quickchat.txt exists
+        if not os.path.exists(quickchat_path()):
+            reset_quickchat()
 
         # The stock menu caches its rom list; a stale cache would keep launching the
         # old flat paths and never find games in the resolution folders.
