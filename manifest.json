@@ -1,12 +1,12 @@
 {
-  "version": "1.80",
+  "version": "1.81",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-06T13:40:00+0700",
+  "built": "2026-09-06T14:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tự động kiểm tra & cập nhật Giả lập Java: Khi mở app hoặc khi cập nhật app, hệ thống luôn tự động kiểm tra và đồng bộ phiên bản FreeJ2ME mới nhất, không bao giờ bị ghi đè bản cũ",
-    "en": "Auto-check & update Java Emulator: On app startup and post-update, automatically verify and synchronize the latest FreeJ2ME runtime binaries and configs, preventing legacy overwrites"
+    "vi": "Game Java: Sửa triệt để lỗi liệt nút sau khi mở bàn phím ảo, loại bỏ can thiệp reflection gây lỗi game; chuẩn hoá phím tắt mở bàn phím sang START + Y (phần cứng) hoặc SELECT + START (trung tâm) không ảnh hưởng phím kỹ năng Nokia",
+    "en": "Java Games: Fix unresponsive controls after opening virtual keyboard, eliminate disruptive class reflection, standardize hotkeys to START + Y (hardware) and SELECT + START with zero Nokia skill conflicts"
   },
   "remove": [
     "app.pyc",
@@ -157,8 +157,8 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1523865,
-        "sha256": "aed3a32c2af87eb9eb20d8e34ba967a03ecb8ebfe5f119b382d60847d8547b6f"
+        "size": 1522010,
+        "sha256": "4e2e65254fa02e15c1bb904303014b7b7db91895d8d1d37fa6eec421c74148b9"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
@@ -278,8 +278,8 @@
     },
     {
       "path": "emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-      "size": 1523865,
-      "sha256": "aed3a32c2af87eb9eb20d8e34ba967a03ecb8ebfe5f119b382d60847d8547b6f"
+      "size": 1522010,
+      "sha256": "4e2e65254fa02e15c1bb904303014b7b7db91895d8d1d37fa6eec421c74148b9"
     },
     {
       "path": "emus/JAVA/zulu17/bin/keymap.cfg",
@@ -369,7 +369,7 @@
     {
       "path": "rh/j2me.py",
       "size": 35309,
-      "sha256": "5444e9f985bcbc1f22c3fbebbb29137eb49f18877296354e95322f8239ed4c62"
+      "sha256": "5fa2f004ad37be4463a98d4f6005ae4138f6785502ffb883a4ef90a41f6e1d59"
     },
     {
       "path": "rh/led.py",
@@ -454,7 +454,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "a91216a9ad604fafefa5e1d2cf567491c66928cf9db50c43e9cd41665f661a52"
+      "sha256": "2a18943a5b341217a1c96dc5740423f3dcd841b9de2217cd08935e5dd16dd5f5"
     },
     {
       "path": "rh/yt.py",
