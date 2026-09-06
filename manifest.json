@@ -1,12 +1,12 @@
 {
-  "version": "1.77",
+  "version": "1.78",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-06T11:15:00+0700",
+  "built": "2026-09-06T11:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java: Sửa lỗi phím SELECT gán nhầm số 5 (chuyển sang phím *), nhấp đúp (Double-tap) SELECT để mở Bàn phím ảo gõ chat, bổ sung menu Cài đặt Java & Quản lý danh sách từ khóa gõ nhanh (Quick Chat)",
-    "en": "Java Games: Fix SELECT key mapped to 5 (remap to *), double-tap SELECT to open Virtual Keyboard for chatting, add Java Settings & Quick Chat phrase manager in RetroHub"
+    "vi": "Game Java: Đổi phím tắt mở Bàn phím ảo sang tổ hợp R2 + L2 tiện lợi, không lo ấn nhầm khi chơi game; nút SELECT trả về phím * nguyên bản không delay",
+    "en": "Java Games: Switch Virtual Keyboard hotkey to R2 + L2 combo for effortless chatting without accidental triggers; SELECT key cleanly maps to * without delay"
   },
   "remove": [
     "app.pyc",
@@ -157,8 +157,8 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1526039,
-        "sha256": "b7968b858d887fb0796c205a28b0a80fa8add45582787f4864c87e9970b333f0"
+        "size": 1527254,
+        "sha256": "092b073bd59772ecfbcfdb4cdbe1257846db82ec9a4f7eef48215f34cb06c59b"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
@@ -414,7 +414,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "0ae73628b6ec0713238085d1ed140760a4aca165e6cc511108cbfbf417050eda"
+      "sha256": "f2683a9e339580c227a0b98eefb920bfc929130376cb01a118ed39b44c84777e"
     },
     {
       "path": "rh/yt.py",

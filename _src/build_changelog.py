@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.78", "2026-09-06",
+     ("Java Games: Switch Virtual Keyboard hotkey to R2 + L2 combo for effortless chatting without accidental triggers; SELECT key cleanly maps to * without delay",
+      "Game Java: Đổi phím tắt mở Bàn phím ảo sang tổ hợp R2 + L2 tiện lợi, không lo ấn nhầm khi chơi game; nút SELECT trả về phím * nguyên bản không delay"),
+     [("R2 + L2 hotkey combination: press both shoulder triggers (R2 + L2) together or hold one and press the other to instantly open/close the virtual keyboard, completely eliminating accidental triggers during gameplay.",
+       "Tổ hợp phím nóng R2 + L2: nhấn đồng thời 2 nút vai (R2 + L2) hoặc giữ nút này bấm nút kia để đóng/mở bàn phím ảo tức thì, loại bỏ hoàn toàn tình trạng ấn nhầm khi combat trong game."),
+      ("Zero-delay SELECT key: pressing SELECT now sends * key (42) directly to game with zero delay and no double-tap buffer.",
+       "Nút SELECT phản hồi tức thì: phím SELECT gửi phím * (mã 42) vào game ngay lập tức với độ trễ 0ms, không còn cần đệm nhấp đúp."),
+      ("Clean toggle and game input safety: during L2 + R2 activation, skills are safely suppressed or released so character does not stay in skill casting states.",
+       "An toàn trạng thái phím trong game: khi kích hoạt L2 + R2, phím kỹ năng được triệt tiêu hoặc thả phím an toàn, không lo nhân vật bị kẹt chiêu thức.")]),
+
     ("1.77", "2026-09-06",
      ("Java Games: Fix SELECT key mapped to 5 (remap to *), double-tap SELECT to open Virtual Keyboard for chatting, add Java Settings & Quick Chat phrase manager in RetroHub",
       "Game Java: Sửa lỗi phím SELECT gán nhầm số 5 (chuyển sang phím *), nhấp đúp (Double-tap) SELECT để mở Bàn phím ảo gõ chat, bổ sung menu Cài đặt Java & Quản lý danh sách từ khóa gõ nhanh (Quick Chat)"),
