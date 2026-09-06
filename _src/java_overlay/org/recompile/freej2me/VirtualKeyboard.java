@@ -42,16 +42,8 @@ public class VirtualKeyboard {
     private static long cursorBlinkTime = 0;
     private static boolean cursorVisible = true;
 
-    // L2 + R2 combo detection
-    private static volatile boolean l2Held = false;
-    private static volatile boolean r2Held = false;
-    private static volatile boolean l2Forwarded = false;
-    private static volatile boolean r2Forwarded = false;
-
-    private static final Object COMBO_LOCK = new Object();
-    private static final int COMBO_WINDOW_MS = 140;
-    private static java.util.Timer l2Timer = null;
-    private static java.util.Timer r2Timer = null;
+    // START + X hotkey combo tracking
+    private static volatile boolean startHeld = false;
     private static long lastToggleTime = 0;
 
     // Layouts
@@ -180,64 +172,9 @@ public class VirtualKeyboard {
 
     public static void close() {
         active = false;
-        cancelTimers();
-        l2Held = false;
-        r2Held = false;
-        l2Forwarded = false;
-        r2Forwarded = false;
+        startHeld = false;
         System.out.println("[VK] >>> CLOSED VIRTUAL KEYBOARD <<< active=" + active);
         forceRedraw();
-    }
-
-    private static void cancelTimers() {
-        synchronized (COMBO_LOCK) {
-            cancelL2Timer();
-            cancelR2Timer();
-        }
-    }
-
-    private static void cancelL2Timer() {
-        if (l2Timer != null) {
-            l2Timer.cancel();
-            l2Timer = null;
-        }
-    }
-
-    private static void cancelR2Timer() {
-        if (r2Timer != null) {
-            r2Timer.cancel();
-            r2Timer = null;
-        }
-    }
-
-    private static void forwardKey(int code, boolean down) {
-        new Thread(() -> {
-            try {
-                injecting = true;
-                if (down) {
-                    Mobile.getPlatform().keyPressed(code);
-                } else {
-                    Mobile.getPlatform().keyReleased(code);
-                }
-            } catch (Exception ignored) {
-            } finally {
-                injecting = false;
-            }
-        }).start();
-    }
-
-    private static void forwardTap(int code) {
-        new Thread(() -> {
-            try {
-                injecting = true;
-                Mobile.getPlatform().keyPressed(code);
-                Thread.sleep(25);
-                Mobile.getPlatform().keyReleased(code);
-            } catch (Exception ignored) {
-            } finally {
-                injecting = false;
-            }
-        }).start();
     }
 
     public static void forceRedraw() {
@@ -252,28 +189,23 @@ public class VirtualKeyboard {
      * Intercept key events from SDL / MobilePlatform.
      * Return true if the key was consumed by VirtualKeyboard.
      */
-    public static boolean isL2Key(int key) {
-        return key == 55 || key == '7' || key == 118;
+    public static boolean isHotkey(int key) {
+        // sdl_interface sends SDLK_F1 (0x4000003A / 1073741882) when START is held and X is pressed.
+        // Also support F2 (0x4000003B / 1073741883) and console F-keys.
+        return key == 1073741882 || key == 0x4000003A || key == 58
+            || key == 1073741883 || key == 0x4000003B || key == 59 || key == 60;
     }
 
-    public static boolean isR2Key(int key) {
-        return key == 57 || key == '9' || key == 110;
+    public static boolean isStartKey(int key) {
+        return key == 7 || key == 35 || key == '#' || key == 1073741900;
+    }
+
+    public static boolean isXKey(int key) {
+        return key == 53 || key == '5' || key == 13 || key == -5 || key == 111 || key == 'x' || key == 'X';
     }
 
     public static boolean isSelectKey(int key) {
         return key == 42 || key == '*' || key == 1073741901;
-    }
-
-    public static boolean isXKey(int key) {
-        return key == 13 || key == -5 || key == 111 || key == 'x' || key == 'X';
-    }
-
-    public static boolean isStartKey(int key) {
-        return key == 35 || key == '#' || key == 7 || key == 1073741900;
-    }
-
-    public static boolean isF2Key(int key) {
-        return key == 1073741883 || key == 0x4000003B || key == 60;
     }
 
     private static volatile boolean injecting = false;
@@ -284,128 +216,41 @@ public class VirtualKeyboard {
         }
 
         // Debug logging for troubleshooting
-        System.out.println("[VK] handleKey: key=" + key + " (0x" + Integer.toHexString(key) + ") pressed=" + pressed + " active=" + active + " l2Held=" + l2Held + " r2Held=" + r2Held);
+        System.out.println("[VK] handleKey: key=" + key + " (0x" + Integer.toHexString(key) + ") pressed=" + pressed + " active=" + active + " startHeld=" + startHeld);
 
-        // 1. L2 and R2 Keys (Combo L2 + R2 to Open/Close Virtual Keyboard)
-        if (isL2Key(key)) {
-            l2Held = pressed;
+        // 1. Hardware Hotkey: START + X handled by sdl_interface emitting SDLK_F1 (0x4000003A)
+        if (isHotkey(key)) {
+            if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                lastToggleTime = System.currentTimeMillis();
+                System.out.println("[VK] >>> HOTKEY F1/F2 DETECTED! Toggling Virtual Keyboard <<<");
+                toggle();
+            }
+            return true;
+        }
+
+        // 2. START Key tracking & submit
+        if (isStartKey(key)) {
+            startHeld = pressed;
             if (active) {
-                if (pressed && r2Held && (System.currentTimeMillis() - lastToggleTime > 250)) {
-                    lastToggleTime = System.currentTimeMillis();
-                    close();
+                if (pressed) {
+                    submitAndClose();
                 }
                 return true;
             }
-
-            if (pressed) {
-                synchronized (COMBO_LOCK) {
-                    if (r2Held) {
-                        // L2 pressed while R2 is held -> COMBO TRIGGERED!
-                        cancelTimers();
-                        if (r2Forwarded) {
-                            forwardKey(57, false);
-                            r2Forwarded = false;
-                        }
-                        lastToggleTime = System.currentTimeMillis();
-                        System.out.println("[VK] >>> L2 + R2 COMBO DETECTED! Opening Virtual Keyboard <<<");
-                        open();
-                        return true;
-                    } else {
-                        // Wait COMBO_WINDOW_MS for potential R2 press
-                        cancelL2Timer();
-                        l2Forwarded = false;
-                        l2Timer = new java.util.Timer("VK-L2Wait", true);
-                        l2Timer.schedule(new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                synchronized (COMBO_LOCK) {
-                                    l2Timer = null;
-                                    if (l2Held && !active) {
-                                        l2Forwarded = true;
-                                        forwardKey(55, true);
-                                    }
-                                }
-                            }
-                        }, COMBO_WINDOW_MS);
-                        return true;
-                    }
-                }
-            } else {
-                // L2 released
-                synchronized (COMBO_LOCK) {
-                    boolean hadTimer = (l2Timer != null);
-                    cancelL2Timer();
-                    if (l2Forwarded) {
-                        l2Forwarded = false;
-                        forwardKey(55, false);
-                    } else if (hadTimer && !active) {
-                        forwardTap(55);
-                    }
-                    return true;
-                }
-            }
+            return false;
         }
 
-        if (isR2Key(key)) {
-            r2Held = pressed;
-            if (active) {
-                if (pressed && l2Held && (System.currentTimeMillis() - lastToggleTime > 250)) {
-                    lastToggleTime = System.currentTimeMillis();
-                    close();
-                }
-                return true;
+        // 3. Software Fallback: START held + X pressed
+        if (startHeld && isXKey(key)) {
+            if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                lastToggleTime = System.currentTimeMillis();
+                System.out.println("[VK] >>> START + X SOFTWARE COMBO DETECTED! Toggling Virtual Keyboard <<<");
+                toggle();
             }
-
-            if (pressed) {
-                synchronized (COMBO_LOCK) {
-                    if (l2Held) {
-                        // R2 pressed while L2 is held -> COMBO TRIGGERED!
-                        cancelTimers();
-                        if (l2Forwarded) {
-                            forwardKey(55, false);
-                            l2Forwarded = false;
-                        }
-                        lastToggleTime = System.currentTimeMillis();
-                        System.out.println("[VK] >>> R2 + L2 COMBO DETECTED! Opening Virtual Keyboard <<<");
-                        open();
-                        return true;
-                    } else {
-                        // Wait COMBO_WINDOW_MS for potential L2 press
-                        cancelR2Timer();
-                        r2Forwarded = false;
-                        r2Timer = new java.util.Timer("VK-R2Wait", true);
-                        r2Timer.schedule(new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                synchronized (COMBO_LOCK) {
-                                    r2Timer = null;
-                                    if (r2Held && !active) {
-                                        r2Forwarded = true;
-                                        forwardKey(57, true);
-                                    }
-                                }
-                            }
-                        }, COMBO_WINDOW_MS);
-                        return true;
-                    }
-                }
-            } else {
-                // R2 released
-                synchronized (COMBO_LOCK) {
-                    boolean hadTimer = (r2Timer != null);
-                    cancelR2Timer();
-                    if (r2Forwarded) {
-                        r2Forwarded = false;
-                        forwardKey(57, false);
-                    } else if (hadTimer && !active) {
-                        forwardTap(57);
-                    }
-                    return true;
-                }
-            }
+            return true;
         }
 
-        // 2. SELECT Key:
+        // 4. SELECT Key:
         // - When active: single tap closes keyboard
         // - When inactive: passes straight to game (*)
         if (isSelectKey(key)) {
@@ -419,28 +264,7 @@ public class VirtualKeyboard {
             return false;
         }
 
-        // 3. START Key:
-        // - When active: tap START submits text and closes
-        // - When inactive: passes straight to game / emulator
-        if (isStartKey(key)) {
-            if (active) {
-                if (pressed) {
-                    submitAndClose();
-                }
-                return true;
-            }
-            return false;
-        }
-
-        // 4. Optional F2 fallback
-        if (isF2Key(key) || key == 59) {
-            if (pressed) {
-                toggle();
-            }
-            return true;
-        }
-
-        // If not active, pass all game keys (L1, R1, 1..9, 0, D-pad, A, B, X, Y) cleanly to game
+        // If not active, pass all game keys (D-pad, 0-9, 1-3-7-9 skills, A, B, X, Y) cleanly to game
         if (!active) {
             return false;
         }
@@ -471,8 +295,8 @@ public class VirtualKeyboard {
             moveRight();
         }
         // Button A or X (Confirm / Type / Select):
-        // Physical button A sends 119 ('w'). Button X sends 13 (Enter).
-        else if (key == 119 || key == 'w' || key == 'W' || key == 13 || key == 111 || key == -5 || key == -7 || key == 'x' || key == 'X' || key == 10 || key == 32) {
+        // Physical button A sends 119 ('w'). Button X sends 13 (Enter) or 53 ('5').
+        else if (key == 119 || key == 'w' || key == 'W' || key == 13 || key == 111 || key == -5 || key == -7 || key == 'x' || key == 'X' || key == 10 || key == 32 || key == 53 || key == '5') {
             pressCurrentKey();
         }
         // Button B (Backspace / Close when empty):
@@ -928,7 +752,7 @@ public class VirtualKeyboard {
         // 5. Footer Help Hint
         g.setFont(fontSmall);
         g.setColor(MUTED_TEXT);
-        String hint = "A/X:Gõ  B:Xóa  Y:Cách  START:Xong  L2+R2/SELECT:Đóng";
+        String hint = "A/X:Gõ  B:Xóa  Y:Cách  START:Xong  START+X/SELECT:Đóng";
         int hintW = g.getFontMetrics().stringWidth(hint);
         g.drawString(hint, panelX + (panelW - hintW) / 2, curY + 8);
 
