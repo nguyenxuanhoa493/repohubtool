@@ -139,72 +139,164 @@ def runtime_supports_renderer():
 _VERSIONED = {"jar": "zulu17/bin/freej2me-sdl.jar",
               "sdl": "zulu17/bin/sdl_interface"}
 
-# Known target binary sizes for current release (JM 1.0.5).
-# In-app OTA updates download these binaries directly without replacing
-# the 66MB payload archive, so a card with these sizes is up to date.
+# Known target binary sizes for current release (FreeJ2ME v1.79+).
 CURRENT_RUNTIME_SIZES = {
-    "jar": 1479020,
+    "jar": 1523865,
     "sdl": 450072,
 }
 
 
+def target_runtime_sizes():
+    """Dynamically determine target binary sizes from APP_DIR/emus/JAVA if present, else fallback."""
+    sizes = dict(CURRENT_RUNTIME_SIZES)
+    bundled_jar = os.path.join(APP_DIR, "emus", "JAVA", "zulu17", "bin", "freej2me-sdl.jar")
+    if os.path.isfile(bundled_jar):
+        try:
+            sizes["jar"] = os.path.getsize(bundled_jar)
+        except OSError:
+            pass
+    bundled_sdl = os.path.join(APP_DIR, "emus", "JAVA", "zulu17", "bin", "sdl_interface")
+    if os.path.isfile(bundled_sdl):
+        try:
+            sizes["sdl"] = os.path.getsize(bundled_sdl)
+        except OSError:
+            pass
+    return sizes
+
+
 def is_runtime_current():
-    """True when the emulator binaries on disk match the current target release (JM 1.0.5)."""
+    """True when the emulator binaries on disk match the current target release."""
     if not is_j2me_runtime_ready():
         return False
     paths = j2me_runtime_paths()
-    for key, size in CURRENT_RUNTIME_SIZES.items():
+    targets = target_runtime_sizes()
+    for key, size in targets.items():
         try:
             if os.path.getsize(paths[key]) != size:
+                return False
+        except OSError:
+            return False
+    # Check if launch.sh in EMU_DIR differs from bundled launch.sh
+    bundled_launch = os.path.join(APP_DIR, "emus", "JAVA", "launch.sh")
+    if os.path.isfile(bundled_launch):
+        try:
+            target_launch = f"{EMU_DIR}/launch.sh"
+            if not os.path.exists(target_launch) or os.path.getsize(bundled_launch) != os.path.getsize(target_launch):
                 return False
         except OSError:
             return False
     return True
 
 
-def payload_binary_sizes():
-    """Sizes of the emulator binaries inside the bundled archive.
-
-    Reads tar headers and stops once both are seen - they sit early in the
-    stream. Measured at about 2s on a Brick Pro, and cached, so that is paid
-    once per version of the payload.
-    """
-    def probe(path):
-        want = dict(_VERSIONED)
-        found = {}
-        with tarfile.open(path, "r:gz") as tf:
-            for m in tf:
-                for key, tail in want.items():
-                    if m.name.endswith(tail):
-                        found[key] = m.size
-                if len(found) == len(want):
-                    break
-        return found or False
-    return _cached_probe(PAYLOAD, "payload", probe) or {}
-
-
 def runtime_is_stale():
-    """True when the emulator on the card is older than what this build ships or supports.
-
-    If the emulator on the card already matches the current target release
-    (CURRENT_RUNTIME_SIZES, e.g. delivered via in-app OTA update), it is NOT stale.
-    Otherwise, if a bundled payload is present, compare against payload sizes.
-    """
+    """True when the emulator on the card is missing, unconfigured, or differs from current release."""
     if not is_j2me_runtime_ready():
-        return False
-    if is_runtime_current():
-        return False
-    sizes = payload_binary_sizes()
-    if not sizes:
-        return False
-    paths = j2me_runtime_paths()
-    for key, size in sizes.items():
-        try:
-            if os.path.getsize(paths[key]) != size:
-                return True
-        except OSError:
-            return True
+        return True
+    if not is_runtime_current():
+        return True
     return False
+
+
+def sync_bundled_runtime_files():
+    """Copies newer or missing emulator files from APP_DIR/emus/JAVA to SDCARD_PATH/Emus/JAVA.
+    Returns list of updated file basenames.
+    """
+    bundled_root = os.path.join(APP_DIR, "emus", "JAVA")
+    if not os.path.isdir(bundled_root):
+        return []
+    updated = []
+    os.makedirs(EMU_DIR, exist_ok=True)
+    os.makedirs(os.path.join(RUNTIME_DIR, "bin"), exist_ok=True)
+    for root, _, files in os.walk(bundled_root):
+        for fname in files:
+            # Skip user-customized files if they already exist
+            if fname in ("quickchat.txt", "graphics.cfg", "renderer.conf"):
+                dst = os.path.join(EMU_DIR, os.path.relpath(os.path.join(root, fname), bundled_root))
+                if os.path.exists(dst):
+                    continue
+            src = os.path.join(root, fname)
+            rel = os.path.relpath(src, bundled_root)
+            dst = os.path.join(EMU_DIR, rel)
+            should_copy = False
+            if not os.path.exists(dst):
+                should_copy = True
+            else:
+                try:
+                    if os.path.getsize(src) != os.path.getsize(dst):
+                        should_copy = True
+                except OSError:
+                    should_copy = True
+            if should_copy:
+                try:
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    shutil.copy2(src, dst)
+                    if fname in ("launch.sh", "sdl_interface", "java"):
+                        try:
+                            os.chmod(dst, 0o755)
+                        except OSError:
+                            pass
+                    updated.append(fname)
+                except Exception as e:
+                    print(f"Error syncing {rel}: {e}")
+    return updated
+
+
+def ensure_latest_j2me_installed():
+    """Ensure latest Java J2ME emulator is installed and up-to-date.
+    Called both on app startup and after an app update.
+    Returns (ok, message or None).
+    """
+    vi = state.current_lang == "VI"
+    updated_files = []
+
+    # 1. If Java JRE is missing and payload exists, unpack full JRE
+    if not os.path.exists(f"{RUNTIME_DIR}/bin/java") and has_payload():
+        ok, msg = install_j2me_emulator(force=False)
+        if not ok:
+            return False, msg
+        updated_files.append("java")
+
+    # 2. Always sync latest bundled files from APP_DIR/emus/JAVA
+    synced = sync_bundled_runtime_files()
+    if synced:
+        updated_files.extend(synced)
+        _probe_cache.pop("runtime", None)
+
+    # 3. Ensure configs and directories exist
+    ensure_rom_dirs()
+    if not os.path.exists(renderer_conf_path()) and not os.path.exists(graphics_cfg_path()):
+        save_render_mode(DEFAULT_RENDER_MODE)
+    if not os.path.exists(quickchat_path()):
+        reset_quickchat()
+
+    # 4. Ensure executable permissions
+    for p in (f"{EMU_DIR}/launch.sh", f"{RUNTIME_DIR}/bin/sdl_interface", f"{RUNTIME_DIR}/bin/java"):
+        if os.path.exists(p):
+            try:
+                os.chmod(p, 0o755)
+            except OSError:
+                pass
+
+    # 5. Ensure NextUI Pak
+    for plat in ("tg5040", "tg5050"):
+        pak_dir = f"{SDCARD_PATH}/Emus/{plat}/JAVA.pak"
+        try:
+            os.makedirs(pak_dir, exist_ok=True)
+            launch_dest = f"{pak_dir}/launch.sh"
+            if not os.path.exists(launch_dest) and os.path.exists(f"{EMU_DIR}/launch.sh"):
+                shutil.copy2(f"{EMU_DIR}/launch.sh", launch_dest)
+                os.chmod(launch_dest, 0o755)
+            cfg_dest = f"{pak_dir}/config.json"
+            if not os.path.exists(cfg_dest) and os.path.exists(f"{EMU_DIR}/config.json"):
+                shutil.copy2(f"{EMU_DIR}/config.json", cfg_dest)
+        except Exception as e:
+            print(f"Failed to setup {plat} JAVA.pak: {e}")
+
+    if updated_files:
+        msg = ("Đã cài đặt/cập nhật Giả lập Java mới nhất" if vi
+               else "Installed/updated latest Java emulator")
+        return True, msg
+    return True, None
 
 
 def has_payload():
@@ -693,9 +785,8 @@ def install_j2me_emulator(force=False):
     stash = None
     upgraded = False
     try:
-        stale = (not force) and runtime_is_stale()
-        force = force or stale
         saved_mode = load_render_mode() if force else None
+        # Only wipe RUNTIME_DIR if user explicitly requested full repair/reinstall
         if force and os.path.isdir(RUNTIME_DIR):
             stash = tempfile.mkdtemp(prefix=".rh_j2me_", dir=EMU_DIR)
             _stash_user_data(stash)
@@ -704,17 +795,20 @@ def install_j2me_emulator(force=False):
         os.makedirs(IMG_DIR, exist_ok=True)
         ensure_rom_dirs()
 
-        # Unpack only when there is nothing there - a repair and an upgrade both
-        # cleared the folder above, so both land here. Re-extracting 65MB on every
-        # press would take minutes on this hardware.
+        # Unpack JRE payload only when java binary is missing
         if not os.path.exists(f"{RUNTIME_DIR}/bin/java"):
             if not has_payload():
                 return False, ("Thiếu gói cài trong app (payload/j2me_sdl.tar.gz)"
                                if vi else "Installer payload missing from app folder")
             with tarfile.open(PAYLOAD, "r:gz") as tf:
                 tf.extractall(f"{SDCARD_PATH}/Emus")
-            upgraded = stale
-            # Both binaries on disk just changed under the cached answers.
+            upgraded = True
+            _probe_cache.pop("runtime", None)
+
+        # Always sync latest bundled files (freej2me-sdl.jar, sdl_interface, launch.sh, etc.)
+        synced = sync_bundled_runtime_files()
+        if synced:
+            upgraded = True
             _probe_cache.pop("runtime", None)
 
         for rel in ("zulu17/bin/java", "zulu17/bin/sdl_interface"):
