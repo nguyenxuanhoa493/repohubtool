@@ -14,6 +14,7 @@ TARGET_FILES = [
     ("rh/version.py", "rh/version.py"),
     ("rh/catalog.py", "rh/catalog.py"),
     ("rh/j2me.py", "rh/j2me.py"),
+    ("rh/updater.py", "rh/updater.py"),
     ("db.py", "db.py"),
     ("app.py", "app.py"),
     ("launch.sh", "launch.sh"),

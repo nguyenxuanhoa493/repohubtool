@@ -247,7 +247,8 @@ def runtime_pending(manifest):
         return []
     out = []
     for f in r["files"]:
-        if sha256_of(os.path.join(RUNTIME_ROOT, f["path"])) != f["sha256"]:
+        target_path = os.path.join(RUNTIME_ROOT, f["path"])
+        if not os.path.exists(target_path) or sha256_of(target_path) != f["sha256"]:
             out.append(f)
     return out
 

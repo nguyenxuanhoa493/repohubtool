@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.80", "2026-09-06",
+     ("Auto-check & update Java Emulator: On app startup and post-update, automatically verify and synchronize the latest FreeJ2ME runtime binaries and configs, preventing legacy overwrites",
+      "Tự động kiểm tra & cập nhật Giả lập Java: Khi mở app hoặc khi cập nhật app, hệ thống luôn tự động kiểm tra và đồng bộ phiên bản FreeJ2ME mới nhất, không bao giờ bị ghi đè bản cũ"),
+     [("Automatic startup Java verification: on every RetroHub launch, the app automatically checks whether the installed Java emulator matches the latest target release. Any missing or updated binaries (freej2me-sdl.jar, sdl_interface, launch.sh, config.json) are synchronized immediately without manual intervention.",
+       "Tự động kiểm tra Java khi mở app: mỗi khi khởi động RetroHub, ứng dụng tự động đối soát xem bộ giả lập Java trên thẻ đã đúng phiên bản mới nhất chưa. Mọi tệp nhị phân hoặc cấu hình mới (freej2me-sdl.jar, sdl_interface, launch.sh, config.json) đều được tự động đồng bộ ngay mà không cần thao tác thủ công."),
+      ("Robust post-update synchronization: after OTA self-updates, the app automatically installs and overlays the latest FreeJ2ME emulator files, guaranteeing that new features and key mappings are active right away.",
+       "Đồng bộ chuẩn xác sau khi cập nhật OTA: sau mỗi lần cập nhật ứng dụng qua Wi-Fi, RetroHub tự động cài đặt và phủ bản FreeJ2ME mới nhất, đảm bảo tính năng mới và phím tắt hoạt động ngay lập tức."),
+      ("Eliminate legacy payload overwrites: fixed stale runtime detection logic that previously risked restoring older 1.63 payload files over newer OTA updates, protecting all user configurations and game progress.",
+       "Chấm dứt hiện tượng ghi đè bản cũ: sửa triệt để logic kiểm tra runtime cũ vốn có thể làm bung lại gói payload 1.63 đè lên bản mới, bảo vệ toàn vẹn dữ liệu cài đặt và tiến trình chơi game của người dùng.")]),
+
     ("1.79", "2026-09-06",
      ("Java Games: Switch Virtual Keyboard hotkey to START + X (F1, zero conflict with Nokia skills 1, 3, 7, 9), restore instant 0ms latency for shoulder buttons L1/R1/L2/R2",
       "Game Java: Đổi phím tắt Bàn phím ảo sang START + X (không trùng phím kỹ năng 1, 3, 7, 9 của Nokia), khôi phục phản hồi phím vai L1/R1/L2/R2 nguyên bản với độ trễ 0ms"),

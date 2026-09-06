@@ -95,7 +95,7 @@ from rh.splash import (apply_splash_update,
     scan_directory_for_images,
     scan_splash_images)
 from rh.j2me import (RENDER_MODES, RESOLUTIONS,
-    install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
+    ensure_latest_j2me_installed, install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
     load_render_mode, move_to_resolution, pretty_resolution, resolution_of_path,
     repair_encrypted_jars, repair_unsafe_jar_names, rom_dir_for, runtime_is_stale,
     runtime_supports_renderer, safe_jar_name, save_render_mode,
@@ -200,33 +200,14 @@ def auto_check_and_supplement_environment():
     """Silently checks and auto-supplements missing libraries, emulator cores, and fixes permissions."""
     repaired_items = []
     
-    # 1. Rewrite the JAVA system glue when it is missing or stale. Gate on the
-    # config file, not on a core binary: the previous check keyed off SquirrelJME,
-    # which is not the runtime in use, so deleting that stale core would have
-    # retriggered a full reinstall.
-    java_cfg = f"{SDCARD_PATH}/Emus/JAVA/config.json"
-    java_launch = f"{SDCARD_PATH}/Emus/JAVA/launch.sh"
-    if is_j2me_runtime_ready() and not (os.path.exists(java_cfg) and os.path.exists(java_launch)):
-        try:
-            install_j2me_emulator()
-            repaired_items.append("Đã bổ sung cấu hình hệ máy Java J2ME" if state.current_lang == "VI" else "Restored Java J2ME system config")
-        except Exception as e:
-            print(f"Error restoring J2ME config: {e}")
-
-    # 1b. An emulator older than the archive shipped inside the app. This is what
-    # a newer full package dropped over an existing install leaves behind, and
-    # nothing used to notice: the old emulator still ran, so the card looked
-    # healthy while every feature the new build added was unreachable. Saves are
-    # kept. This runs off the startup thread, so the notice goes through
-    # startup_notice rather than straight to a toast.
+    # 1. Luon kiem tra va cai/cap nhat gia lap Java moi nhat khi mo app
     try:
-        if runtime_is_stale():
-            ok_up, msg_up = install_j2me_emulator()
-            if ok_up:
-                startup_notice["msg"] = msg_up
-                repaired_items.append(msg_up)
+        ok_java, msg_java = ensure_latest_j2me_installed()
+        if ok_java and msg_java:
+            startup_notice["msg"] = msg_java
+            repaired_items.append(msg_java)
     except Exception as e:
-        print(f"Error upgrading J2ME runtime: {e}")
+        print(f"Error ensuring latest J2ME runtime on startup: {e}")
 
     # 1c. Jars the emulator cannot open. It builds a "jar:file:<path>" URI and
     # never escapes it, so one space in the name and it cannot read the manifest
@@ -1370,6 +1351,12 @@ def main():
                 except Exception as e:
                     print(f"Runtime update error: {e}")
                     state.pending_catalog_notice = tr(RUNTIME_FAILED)
+
+            # Luon kiem tra va dong bo gia lap Java moi nhat sau khi cap nhat app
+            try:
+                ensure_latest_j2me_installed()
+            except Exception as e:
+                print(f"Error ensuring latest J2ME runtime after update: {e}")
 
         # Kho game di sau va di rieng: tai hong thi ban .py van giu nguyen va
         # app van len phien ban moi, chi la chua co bia. Lan kiem tra sau

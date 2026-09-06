@@ -1,12 +1,12 @@
 {
-  "version": "1.79",
+  "version": "1.80",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-06T13:30:00+0700",
+  "built": "2026-09-06T13:40:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java: Đổi phím tắt Bàn phím ảo sang START + X (không trùng phím kỹ năng 1, 3, 7, 9 của Nokia), khôi phục phản hồi phím vai L1/R1/L2/R2 nguyên bản với độ trễ 0ms",
-    "en": "Java Games: Switch Virtual Keyboard hotkey to START + X (F1, zero conflict with Nokia skills 1, 3, 7, 9), restore instant 0ms latency for shoulder buttons L1/R1/L2/R2"
+    "vi": "Tự động kiểm tra & cập nhật Giả lập Java: Khi mở app hoặc khi cập nhật app, hệ thống luôn tự động kiểm tra và đồng bộ phiên bản FreeJ2ME mới nhất, không bao giờ bị ghi đè bản cũ",
+    "en": "Auto-check & update Java Emulator: On app startup and post-update, automatically verify and synchronize the latest FreeJ2ME runtime binaries and configs, preventing legacy overwrites"
   },
   "remove": [
     "app.pyc",
@@ -193,8 +193,8 @@
     },
     {
       "path": "app.py",
-      "size": 307714,
-      "sha256": "9e43cccdae64b75f133e72478957c3d13ea9696a9a2e4c74018978732c3b7072"
+      "size": 306857,
+      "sha256": "6e725889b504e4c9bec4f1d5bf341565ac77c99b6428f8df0b4cda99994c4097"
     },
     {
       "path": "assets/fallback.ttf",
@@ -255,6 +255,46 @@
       "path": "db.py",
       "size": 20184,
       "sha256": "7f0a2a140eb3d6fccd8cb1f811739676f015d1541640dd9061c1aaf01842ad31"
+    },
+    {
+      "path": "emus/JAVA/NOTICE.txt",
+      "size": 6657,
+      "sha256": "faf54b3361b33822fbcdd44f4de2073441feee1ffb5255cb0012d5a8acc23219"
+    },
+    {
+      "path": "emus/JAVA/config.json",
+      "size": 263,
+      "sha256": "88510b7895c9b4364c2ae2c17c099f6d2edc0c60e05f46fb168593757902ffb6"
+    },
+    {
+      "path": "emus/JAVA/launch.sh",
+      "size": 3053,
+      "sha256": "414126b5812b1c337bc7ef9bfe8becf39fdda291478a7e05ea6f16f816b7da2b"
+    },
+    {
+      "path": "emus/JAVA/zulu17/bin/font.ttf",
+      "size": 556216,
+      "sha256": "2ec33f84606cbaa0a1a944488e14f97faf2f6a25ecdd8354f5358f06da13c7d9"
+    },
+    {
+      "path": "emus/JAVA/zulu17/bin/freej2me-sdl.jar",
+      "size": 1523865,
+      "sha256": "aed3a32c2af87eb9eb20d8e34ba967a03ecb8ebfe5f119b382d60847d8547b6f"
+    },
+    {
+      "path": "emus/JAVA/zulu17/bin/keymap.cfg",
+      "size": 141,
+      "sha256": "2ee1d46b8820c08f0500184ddb468c987106e0bd95c78d47923dcd5ca561d6bb"
+    },
+    {
+      "path": "emus/JAVA/zulu17/bin/quickchat.txt",
+      "size": 89,
+      "sha256": "7ae145addf2537f5031cc269446d6814d7c2e6e568346dfa5a14c943991540b8"
+    },
+    {
+      "path": "emus/JAVA/zulu17/bin/sdl_interface",
+      "size": 450072,
+      "sha256": "c1d856f8d66d21e3b7ce607399b2ac9b1963117ff81feceeb14a1d7b52b00f89"
     },
     {
       "path": "icon.png",
@@ -328,8 +368,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 31516,
-      "sha256": "9b5de4a10455a3f8873fc5d9939424e0b9dc4e04cac4bb5eeb69983996a1a749"
+      "size": 35309,
+      "sha256": "5444e9f985bcbc1f22c3fbebbb29137eb49f18877296354e95322f8239ed4c62"
     },
     {
       "path": "rh/led.py",
@@ -408,13 +448,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 23252,
-      "sha256": "f73c92433beb8f74d3ba14a86c4490b04b383535cdece14e59ab6b37461587b8"
+      "size": 23321,
+      "sha256": "91026dafab1d06c0d2e3e3f31420641e2d15258747f3573b424c0dff7ccfeabb"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "2fb269323527c24539bf04c085a4ca051a7a76b1ba9aab6d4d1f3ad117a5ae69"
+      "sha256": "a91216a9ad604fafefa5e1d2cf567491c66928cf9db50c43e9cd41665f661a52"
     },
     {
       "path": "rh/yt.py",
