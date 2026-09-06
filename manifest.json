@@ -1,12 +1,12 @@
 {
-  "version": "1.82",
+  "version": "1.83",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-06T14:35:00+0700",
+  "built": "2026-09-06T15:10:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java: Sửa triệt để lỗi bấm X bị bật bàn phím ảo, chuẩn hoá tổ hợp START + X (phải giữ START mới kích hoạt), nút X đánh quái phím 5 mượt mà 100%, bổ sung Bluetooth stub chống văng game khi khởi động",
-    "en": "Java Games: Fix standalone X button triggering virtual keyboard, strictly require START + X combo to activate, map X button cleanly to key 5 for attacks, and add JSR-82 Bluetooth stubs preventing startup crash"
+    "vi": "Game Java: Khôi phục chuẩn 100% key map gốc Nokia (-5 cho phím OK/X), chỉ mở bàn phím ảo khi giữ START + bấm X, bảo toàn tuyệt đối hệ thống phím gốc",
+    "en": "Java Games: Restore authentic Nokia key mapping (-5 for OK/X), strictly toggle Virtual Keyboard only on START + X combo, completely preserving original controls"
   },
   "remove": [
     "app.pyc",
@@ -157,8 +157,8 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1526947,
-        "sha256": "3439110d28c628233d2e53f1ef6c6452f2eb64ed198b5b9e9f77e77137f89ccb"
+        "size": 1526755,
+        "sha256": "4bcfd063c8f5a170d8a1a389f45be31b73cdafe681c4ad46f59d05fa6482fcac"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
@@ -278,8 +278,8 @@
     },
     {
       "path": "emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-      "size": 1526947,
-      "sha256": "3439110d28c628233d2e53f1ef6c6452f2eb64ed198b5b9e9f77e77137f89ccb"
+      "size": 1526755,
+      "sha256": "4bcfd063c8f5a170d8a1a389f45be31b73cdafe681c4ad46f59d05fa6482fcac"
     },
     {
       "path": "emus/JAVA/zulu17/bin/keymap.cfg",
@@ -454,7 +454,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "66c10bf1cf46cf98e285804b10a98e55976100c51d6e9672bfa17c09d5083daf"
+      "sha256": "51fc2717fb1293b84f5783957c444474ce7605087e9ecce913de73acd2a2c112"
     },
     {
       "path": "rh/yt.py",

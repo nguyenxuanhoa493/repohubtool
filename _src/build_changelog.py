@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.83", "2026-09-06",
+     ("Java Games: Restore authentic Nokia key mapping (-5 for OK/X), strictly toggle Virtual Keyboard only on START + X combo, completely preserving original controls",
+      "Game Java: Khôi phục chuẩn 100% key map gốc Nokia (-5 cho phím OK/X), chỉ mở bàn phím ảo khi giữ START + bấm X, bảo toàn tuyệt đối hệ thống phím gốc"),
+     [("Restore 100% authentic Nokia keymap: button X and OK button cleanly return -5 in Nokia mode (Canvas FIRE / attack), -26 in Siemens, -20 in Motorola, and 53 in standard keypad mode, restoring flawless combat, attack, and menu navigation in Ninja School and all J2ME games.",
+       "Khôi phục chuẩn 100% keymap gốc: nút X và nút OK luôn trả về đúng mã -5 trong chế độ Nokia (Canvas FIRE / đánh quái), -26 ở Siemens, -20 ở Motorola và 53 ở chế độ bàn phím số tiêu chuẩn, giúp nhân vật tấn công, ra chiêu và chọn menu chuẩn xác 100% trong Ninja School và toàn bộ game Java."),
+      ("Strict START + X combo activation: the Virtual Keyboard now strictly requires holding START while pressing X (with 4-second timeout protection and instant reset). Pressing button X alone will never trigger the keyboard and passes straight to the game with zero latency.",
+       "Chuẩn hoá chặt chẽ tổ hợp START + X: bàn phím ảo chỉ kích hoạt khi giữ phím START rồi mới nhấn X (có cơ chế timeout 4s tự huỷ trạng thái kẹt phím). Bấm nút X độc lập tuyệt đối không mở bàn phím và phản hồi đòn đánh ngay lập tức.")]),
+
     ("1.82", "2026-09-06",
      ("Java Games: Fix standalone X button triggering virtual keyboard, strictly require START + X combo to activate, map X button cleanly to key 5 for attacks, and add JSR-82 Bluetooth stubs preventing startup crash",
       "Game Java: Sửa triệt để lỗi bấm X bị bật bàn phím ảo, chuẩn hoá tổ hợp START + X (phải giữ START mới kích hoạt), nút X đánh quái phím 5 mượt mà 100%, bổ sung Bluetooth stub chống văng game khi khởi động"),
