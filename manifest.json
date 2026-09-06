@@ -1,12 +1,12 @@
 {
-  "version": "1.78",
+  "version": "1.79",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-06T11:30:00+0700",
+  "built": "2026-09-06T13:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java: Đổi phím tắt mở Bàn phím ảo sang tổ hợp R2 + L2 tiện lợi, không lo ấn nhầm khi chơi game; nút SELECT trả về phím * nguyên bản không delay",
-    "en": "Java Games: Switch Virtual Keyboard hotkey to R2 + L2 combo for effortless chatting without accidental triggers; SELECT key cleanly maps to * without delay"
+    "vi": "Game Java: Đổi phím tắt Bàn phím ảo sang START + X (không trùng phím kỹ năng 1, 3, 7, 9 của Nokia), khôi phục phản hồi phím vai L1/R1/L2/R2 nguyên bản với độ trễ 0ms",
+    "en": "Java Games: Switch Virtual Keyboard hotkey to START + X (F1, zero conflict with Nokia skills 1, 3, 7, 9), restore instant 0ms latency for shoulder buttons L1/R1/L2/R2"
   },
   "remove": [
     "app.pyc",
@@ -157,8 +157,8 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1527254,
-        "sha256": "092b073bd59772ecfbcfdb4cdbe1257846db82ec9a4f7eef48215f34cb06c59b"
+        "size": 1523865,
+        "sha256": "aed3a32c2af87eb9eb20d8e34ba967a03ecb8ebfe5f119b382d60847d8547b6f"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
@@ -414,7 +414,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "f2683a9e339580c227a0b98eefb920bfc929130376cb01a118ed39b44c84777e"
+      "sha256": "2fb269323527c24539bf04c085a4ca051a7a76b1ba9aab6d4d1f3ad117a5ae69"
     },
     {
       "path": "rh/yt.py",

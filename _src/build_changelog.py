@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.79", "2026-09-06",
+     ("Java Games: Switch Virtual Keyboard hotkey to START + X (F1, zero conflict with Nokia skills 1, 3, 7, 9), restore instant 0ms latency for shoulder buttons L1/R1/L2/R2",
+      "Game Java: Đổi phím tắt Bàn phím ảo sang START + X (không trùng phím kỹ năng 1, 3, 7, 9 của Nokia), khôi phục phản hồi phím vai L1/R1/L2/R2 nguyên bản với độ trễ 0ms"),
+     [("START + X hotkey combo (F1): hold START and press X to open or close the virtual keyboard. The hardware sdl_interface translates this combination into SDLK_F1 (0x4000003A), which is completely ignored by Nokia game MIDlets, preventing accidental attacks or skill casting.",
+       "Tổ hợp phím nóng START + X (mã F1): giữ START và bấm X để đóng/mở bàn phím ảo. Trình điều khiển phần cứng sdl_interface tự động chuyển đổi tổ hợp này thành mã phím riêng biệt SDLK_F1 (0x4000003A), hoàn toàn không trùng với 12 phím Nokia trong game, không lo nhân vật bị tự động đánh hay tung chiêu."),
+      ("100% Native 0ms latency for shoulder triggers: removed all delay timers and combo buffering from L2 (7) and R2 (9/3). All shoulder buttons (L1, R1, L2, R2) and face buttons respond instantaneously to in-game skills.",
+       "Khôi phục 100% độ trễ 0ms cho các phím vai: gỡ bỏ hoàn toàn bộ đếm thời gian chờ tổ hợp khỏi L2 (phím 7) và R2 (phím 9/3). Tất cả các phím vai (L1, R1, L2, R2) và phím bấm trên máy phản hồi chiêu thức tức thì chuẩn xác."),
+      ("Multiple quick close methods: close the keyboard anytime by pressing START + X, single-tap SELECT, or pressing START (submits typed text and closes).",
+       "Đa dạng cách đóng bàn phím nhanh: có thể đóng bàn phím bất cứ lúc nào bằng tổ hợp START + X, phím SELECT, hoặc bấm phím START (vừa gửi nội dung đã gõ vừa đóng).")]),
+
     ("1.78", "2026-09-06",
      ("Java Games: Switch Virtual Keyboard hotkey to R2 + L2 combo for effortless chatting without accidental triggers; SELECT key cleanly maps to * without delay",
       "Game Java: Đổi phím tắt mở Bàn phím ảo sang tổ hợp R2 + L2 tiện lợi, không lo ấn nhầm khi chơi game; nút SELECT trả về phím * nguyên bản không delay"),
