@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.82", "2026-09-06",
+     ("Java Games: Fix standalone X button triggering virtual keyboard, strictly require START + X combo to activate, map X button cleanly to key 5 for attacks, and add JSR-82 Bluetooth stubs preventing startup crash",
+      "Game Java: Sửa triệt để lỗi bấm X bị bật bàn phím ảo, chuẩn hoá tổ hợp START + X (phải giữ START mới kích hoạt), nút X đánh quái phím 5 mượt mà 100%, bổ sung Bluetooth stub chống văng game khi khởi động"),
+     [("Fix standalone X button hotkey issue: corrected the key mapping where pressing button X alone previously triggered the virtual keyboard. The virtual keyboard now strictly requires the START + X combination (hold START, then tap X) or SELECT + START.",
+       "Sửa triệt để lỗi bấm nút X bị bật bàn phím ảo: sửa lỗi nhận diện phím khiến việc nhấn nút X độc lập vô tình kích hoạt bàn phím ảo. Giờ đây bàn phím ảo yêu cầu chuẩn xác tổ hợp START + X (phải giữ phím START rồi mới bấm X) hoặc tổ hợp phụ SELECT + START."),
+      ("Dedicated attack / action key 5 for button X: pressing button X independently without holding START cleanly maps to Nokia key 5 / OK across all phone modes, allowing smooth combat and interactions in games like Ninja School.",
+       "Nút X đánh quái và tương tác phím 5 mượt mà: khi bấm nút X một mình (không giữ START), phím được chuyển tiếp trơn tru thành phím 5 / OK của Nokia ở mọi chế độ máy, giúp nhân vật tấn công và dùng kỹ năng hoàn hảo trong các game như Ninja School."),
+      ("Add JSR-82 Bluetooth stubs preventing startup crashes: implemented standard javax.bluetooth API stubs (LocalDevice, DiscoveryAgent, UUID) inside freej2me-sdl.jar, completely resolving NoClassDefFoundError crashes on games with multiplayer checks.",
+       "Tích hợp stub Bluetooth JSR-82 chống văng game: bổ sung đầy đủ các lớp javax.bluetooth chuẩn vào freej2me-sdl.jar, khắc phục triệt để lỗi sập game NoClassDefFoundError khi khởi động các game có tính năng kiểm tra Bluetooth.")]),
+
     ("1.81", "2026-09-06",
      ("Java Games: Fix unresponsive controls after opening virtual keyboard, eliminate disruptive class reflection, standardize hotkeys to START + Y (hardware) and SELECT + START with zero Nokia skill conflicts",
       "Game Java: Sửa triệt để lỗi liệt nút sau khi mở bàn phím ảo, loại bỏ hoàn toàn can thiệp reflection gây lỗi game; chuẩn hoá phím tắt mở bàn phím sang START + Y (phần cứng) hoặc SELECT + START (trung tâm) không ảnh hưởng phím kỹ năng Nokia"),

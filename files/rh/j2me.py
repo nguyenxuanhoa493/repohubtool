@@ -139,9 +139,9 @@ def runtime_supports_renderer():
 _VERSIONED = {"jar": "zulu17/bin/freej2me-sdl.jar",
               "sdl": "zulu17/bin/sdl_interface"}
 
-# Known target binary sizes for current release (FreeJ2ME v1.79+).
+# Known target binary sizes for current release (FreeJ2ME v1.82+).
 CURRENT_RUNTIME_SIZES = {
-    "jar": 1506918,
+    "jar": 1526947,
     "sdl": 450072,
 }
 

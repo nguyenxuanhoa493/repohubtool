@@ -638,8 +638,8 @@ public class Anbu {
                 if (this.useFlag == 1) {
                     switch (i) {
                         case 13:
-                            return -5;
                         case 111:
+                        case 0x4000003A: // Button X on TrimUI
                             return -5;
                         case 1073741903:
                             return -4;
@@ -654,6 +654,8 @@ public class Anbu {
                 if (this.useFlag == 2) {
                     switch (i) {
                         case 13:
+                        case 111:
+                        case 0x4000003A: // Button X on TrimUI
                             return -5;
                         case 48:
                             return 109;
@@ -667,8 +669,6 @@ public class Anbu {
                             return 110;
                         case 101:
                             return 117;
-                        case 111:
-                            return -5;
                         case 114:
                             return 106;
                         case 1073741903:
@@ -684,8 +684,8 @@ public class Anbu {
                 if (this.useFlag == 3) {
                     switch (i) {
                         case 13:
-                            return -26;
                         case 111:
+                        case 0x4000003A: // Button X on TrimUI
                             return -26;
                         case 113:
                             return -1;
@@ -704,8 +704,8 @@ public class Anbu {
                 if (this.useFlag == 4) {
                     switch (i) {
                         case 13:
-                            return -20;
                         case 111:
+                        case 0x4000003A: // Button X on TrimUI
                             return -20;
                         case 113:
                             return -21;
@@ -729,6 +729,7 @@ public class Anbu {
                         System.exit(0);
                         return 0;
                     case 13:
+                    case 0x4000003A: // Button X on TrimUI -> Key 5 / OK
                         return 53;
                     case 27:
                         Audio.destroy();

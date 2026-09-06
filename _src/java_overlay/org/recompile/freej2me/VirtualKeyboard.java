@@ -190,21 +190,26 @@ public class VirtualKeyboard {
      * Intercept key events from SDL / MobilePlatform.
      * Return true if the key was consumed by VirtualKeyboard.
      */
-    public static boolean isHotkey(int key) {
-        // sdl_interface sends SDLK_F1 (0x4000003A / 1073741882) when START is held and Y is pressed.
-        // Also support F2 (0x4000003B / 1073741883) and console F-keys.
-        return key == 1073741882 || key == 0x4000003A || key == 58
-            || key == 1073741883 || key == 0x4000003B || key == 59 || key == 60;
+    public static boolean isFKey(int key) {
+        // Standalone F2 key for PC / external USB keyboard debug
+        return key == 1073741883 || key == 0x4000003B || key == 59;
     }
 
     public static boolean isStartKey(int key) {
-        // Only actual START / '#' keys (ASCII 35 = '#', SDL scancode 1073741900)
-        return key == 35 || key == '#' || key == 1073741900;
+        // Actual START / '#' keys (ASCII 35 = '#', SDL scancode 1073741900, or Nokia key 'r'=114)
+        return key == 35 || key == '#' || key == 114 || key == 'r' || key == 1073741900;
     }
 
     public static boolean isSelectKey(int key) {
-        // Only actual SELECT / '*' keys (ASCII 42 = '*', SDL scancode 1073741901)
-        return key == 42 || key == '*' || key == 1073741901;
+        // Actual SELECT / '*' keys (ASCII 42 = '*', SDL scancode 1073741901, or Nokia key 'e'=101)
+        return key == 42 || key == '*' || key == 101 || key == 'e' || key == 1073741901;
+    }
+
+    public static boolean isXKey(int key) {
+        // Button X: SDLK_F1 (0x4000003A / 1073741882 emitted by sdl_interface on TrimUI),
+        // or ASCII '5' (53), Enter (13), 'x', 'X', -5
+        return key == 1073741882 || key == 0x4000003A || key == 53 || key == '5'
+            || key == 13 || key == 111 || key == 'x' || key == 'X' || key == -5;
     }
 
     private static volatile boolean injecting = false;
@@ -214,17 +219,7 @@ public class VirtualKeyboard {
             return false;
         }
 
-        // 1. Hardware Hotkey: START + Y handled by sdl_interface emitting SDLK_F1 (0x4000003A)
-        if (isHotkey(key)) {
-            if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
-                lastToggleTime = System.currentTimeMillis();
-                System.out.println("[VK] >>> HOTKEY F1 (START + Y) DETECTED! Toggling Virtual Keyboard <<<");
-                toggle();
-            }
-            return true;
-        }
-
-        // 2. Track SELECT and START states for SELECT + START combo
+        // 1. SELECT Key state tracking & combos
         if (isSelectKey(key)) {
             selectHeld = pressed;
             if (pressed && startHeld && (System.currentTimeMillis() - lastToggleTime > 250)) {
@@ -243,6 +238,7 @@ public class VirtualKeyboard {
             return false;
         }
 
+        // 2. START Key state tracking & combos
         if (isStartKey(key)) {
             startHeld = pressed;
             if (pressed && selectHeld && (System.currentTimeMillis() - lastToggleTime > 250)) {
@@ -258,6 +254,31 @@ public class VirtualKeyboard {
                 return true;
             }
             return false;
+        }
+
+        // 3. START + X Combo (MANDATORY REQUIREMENT: Must hold START to toggle with X)
+        if (isXKey(key)) {
+            if (startHeld) {
+                if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                    lastToggleTime = System.currentTimeMillis();
+                    System.out.println("[VK] >>> START + X COMBO DETECTED! Toggling Virtual Keyboard <<<");
+                    toggle();
+                }
+                return true; // Consumed when START is held
+            }
+            // When START is NOT held, DO NOT consume here!
+            // If inactive, it falls through cleanly to game as attack / key 5.
+            // If active, it will be handled by processActiveInput below.
+        }
+
+        // 4. Standalone F2 key (external USB keyboard / PC debug)
+        if (isFKey(key)) {
+            if (pressed && (System.currentTimeMillis() - lastToggleTime > 250)) {
+                lastToggleTime = System.currentTimeMillis();
+                System.out.println("[VK] >>> F2 KEY DETECTED! Toggling Virtual Keyboard <<<");
+                toggle();
+            }
+            return true;
         }
 
         // If not active, pass all game keys (D-pad, 0-9, 1-3-7-9 skills, A, B, X, Y) cleanly to game
@@ -291,8 +312,8 @@ public class VirtualKeyboard {
             moveRight();
         }
         // Button A or X (Confirm / Type / Select):
-        // Physical button A sends 119 ('w'). Button X sends 13 (Enter) or 53 ('5').
-        else if (key == 119 || key == 'w' || key == 'W' || key == 13 || key == 111 || key == -5 || key == -7 || key == 'x' || key == 'X' || key == 10 || key == 32 || key == 53 || key == '5') {
+        // Physical button A sends 119 ('w'). Button X sends 1073741882 (0x4000003A) or 13 (Enter) or 53 ('5').
+        else if (key == 119 || key == 'w' || key == 'W' || key == 13 || key == 111 || key == -5 || key == -7 || key == 'x' || key == 'X' || key == 10 || key == 32 || key == 53 || key == '5' || key == 1073741882 || key == 0x4000003A) {
             pressCurrentKey();
         }
         // Button B (Backspace / Close when empty):
@@ -672,7 +693,7 @@ public class VirtualKeyboard {
         // 5. Footer Help Hint
         g.setFont(fontSmall);
         g.setColor(MUTED_TEXT);
-        String hint = "A/X:Gõ  B:Xóa  Y:Cách  START:Xong  SELECT:Đóng  [START+Y]";
+        String hint = "A/X:Gõ  B:Xóa  Y:Cách  START:Xong  START+X:Mở/Đóng";
         int hintW = g.getFontMetrics().stringWidth(hint);
         g.drawString(hint, panelX + (panelW - hintW) / 2, curY + 8);
 
