@@ -449,8 +449,8 @@
     },
     {
       "path": "rh/tiktok.py",
-      "size": 22447,
-      "sha256": "25105d4ef201467aef2eb85620f98241fd5b47af238d181b1d23ce6bd480e0fe"
+      "size": 23037,
+      "sha256": "372972b4e2cb63a21354ddfe2b3d1f5fcd558f378b873c1d140b50cbb8b15f80"
     },
     {
       "path": "rh/updater.py",
