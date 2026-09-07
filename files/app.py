@@ -77,11 +77,13 @@ from rh.sysinfo import (get_battery_info,
 from rh.services import (get_sftp_guide_rows,
     get_ssh_guide_rows,
     get_stream_guide_rows,
+    get_gameweb_guide_rows,
     is_adb_running,
     is_mtp_running,
     is_sftpgo_running,
     is_ssh_running,
     is_streamer_running,
+    is_gameweb_running,
     is_wifi_awake,
     stream_supported,
     toggle_adb,
@@ -89,6 +91,7 @@ from rh.services import (get_sftp_guide_rows,
     toggle_sftpgo,
     toggle_ssh,
     toggle_streamer,
+    toggle_gameweb,
     toggle_wifi_awake)
 from rh.splash import (apply_splash_update,
     convert_and_fit_splash,
@@ -1693,6 +1696,7 @@ def main():
         "adb": False,
         "mtp": False,
         "streamer": False,
+        "gameweb": False,
         "wifi_awake": False
     }
     last_service_check_time = 0
@@ -1723,6 +1727,7 @@ def main():
             service_states["adb"] = is_adb_running()
             service_states["mtp"] = is_mtp_running()
             service_states["streamer"] = is_streamer_running()
+            service_states["gameweb"] = is_gameweb_running()
             service_states["wifi_awake"] = is_wifi_awake()
             last_service_check_time = now
 
@@ -1740,6 +1745,7 @@ def main():
             downloaded_items_cache = None
             cached_lib_games_key = None
 
+        gameweb_on = service_states["gameweb"]
         sftp_on = service_states["sftp"]
         ssh_on = service_states["ssh"]
         adb_on = service_states["adb"]
@@ -2094,6 +2100,9 @@ def main():
         # NETWORK SERVICES: Only Toggles and View Guide / Info [XEM] show badges
         elif current_screen == "network":
             header_title = tr("net_title")
+            items.append({"id": "gameweb_toggle", "title": tr("gameweb_item"), "type": "toggle", "state": gameweb_on})
+            if gameweb_on:
+                items.append({"id": "gameweb_guide", "title": tr("gameweb_guide"), "label": tr("view"), "sub": True})
             items.append({"id": "sftp_toggle", "title": tr("sftp_item"), "type": "toggle", "state": sftp_on})
             if sftp_on:
                 items.append({"id": "sftp_guide", "title": tr("sftp_guide"), "label": tr("view"), "sub": True})
@@ -3945,6 +3954,16 @@ def main():
                     modal_title = "HƯỚNG DẪN STREAM 24 FPS" if state.current_lang == "VI" else "24 FPS STREAM GUIDE"
                     modal_style = "big"
                     modal_rows = get_stream_guide_rows()
+                elif item_id == "gameweb_toggle":
+                    msg = toggle_gameweb()
+                    service_states["gameweb"] = is_gameweb_running()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                elif item_id == "gameweb_guide":
+                    modal_title = "QUẢN LÝ GAME QUA WEB (8090)" if state.current_lang == "VI" else "WEB GAME MANAGER (8090)"
+                    modal_style = "big"
+                    modal_rows = get_gameweb_guide_rows()
                 elif item_id == "app_version":
                     if not update_modal["checking"]:
                         update_modal["checking"] = True

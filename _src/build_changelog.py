@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.89", "2026-09-08",
+     ("Web Game Manager: Integrated port 8090 web server in Services menu, enabling game renaming, boxart scraping (Libretro CDN), system moving, and ROM uploading via browser",
+      "Quản lý Game qua Web: Tích hợp máy chủ web cổng 8090 trong menu Dịch vụ, cho phép đổi tên game, cào ảnh bìa (Libretro CDN), chuyển hệ máy và tải ROM trực tiếp qua trình duyệt"),
+     [("Convenient Web Game Management: Access http://<IP>:8090 from any phone or PC on the same Wi-Fi to manage all games with zero cable or SD card removal required.",
+       "Quản lý Game qua Trình duyệt: Truy cập địa chỉ http://<IP>:8090 từ điện thoại hoặc máy tính trong cùng mạng Wi-Fi để xem và quản lý toàn bộ kho game mà không cần rút thẻ nhớ."),
+      ("Auto Boxart Scraping & Renaming: Seamlessly scrape official boxarts from Libretro Thumbnails CDN, preview images, rename ROMs with synchronized boxart updating, and move ROMs between systems instantly.",
+       "Cào ảnh bìa & Đổi tên thông minh: Tự động tìm và tải ảnh bìa gốc từ kho Libretro Thumbnails CDN, đổi tên game đồng bộ cả file ảnh, chuyển game giữa các hệ máy và kéo thả tải ROM mới lên thẻ nhớ.")]),
+
     ("1.88", "2026-09-08",
      ("Sega CD Emulator: Bundled Sega CD / Mega CD configs and launchers (PicoDrive, GenesisPlusGX, GX Wide), auto-sync themes and ROMs/Imgs directories",
       "Giả lập Sega CD: Tích hợp cấu hình và trình khởi chạy Sega CD / Mega CD (PicoDrive, GenesisPlusGX, GX Wide), tự động đồng bộ theme và thư mục ROMs/Imgs"),

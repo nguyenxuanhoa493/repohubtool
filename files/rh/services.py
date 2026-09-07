@@ -6,10 +6,11 @@ import sys
 import time
 import subprocess
 
-from .paths import EX_OPTIONS_FILE, STREAMER_SCRIPT
+from .paths import EX_OPTIONS_FILE, STREAMER_SCRIPT, GAMEWEB_SCRIPT
 from . import state
 from .sysinfo import (get_ip, is_sftpgo_running, is_ssh_running,
-                      is_adb_running, is_mtp_running, is_streamer_running)
+                      is_adb_running, is_mtp_running, is_streamer_running,
+                      is_gameweb_running)
 
 def save_options(sftpgo_val=None, ssh_val=None, adb_val=None, mtp_val=None):
     cur_sftp = sftpgo_val if sftpgo_val is not None else ("Y" if is_sftpgo_running() else "N")
@@ -105,6 +106,15 @@ def toggle_streamer():
         ip = get_ip()
         return f"Đã bật Stream (Web: http://{ip}:8088)" if state.current_lang == "VI" else f"Enabled Stream (Web: http://{ip}:8088)"
 
+def toggle_gameweb():
+    if is_gameweb_running():
+        subprocess.call("pkill -9 -f gameweb.py 2>/dev/null", shell=True)
+        return "Đã tắt Quản lý Game Web" if state.current_lang == "VI" else "Disabled Web Game Manager"
+    else:
+        subprocess.Popen([sys.executable, GAMEWEB_SCRIPT], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True, start_new_session=True)
+        ip = get_ip()
+        return f"Đã bật Quản lý Game (Web: http://{ip}:8090)" if state.current_lang == "VI" else f"Enabled Web Game Manager (http://{ip}:8090)"
+
 def wifi_iface():
     """Interface holding the default route, e.g. wlan0."""
     try:
@@ -169,6 +179,20 @@ def get_stream_guide_rows():
         ("Trên web có" if vi else "On the page",
          "Quay video, chụp ảnh, đổi tỉ lệ 4:3 / 16:9" if vi
          else "Record, screenshot, 4:3 / 16:9 switch"),
+    ]
+
+def get_gameweb_guide_rows():
+    ip = get_ip()
+    vi = state.current_lang == "VI"
+    return [
+        ("Mở trên máy tính / điện thoại" if vi else "Open in desktop / mobile browser",
+         f"http://{ip}:8090"),
+        ("Chức năng Web" if vi else "Web Features",
+         "Đổi tên game, Cào ảnh bìa (Art), Chuyển hệ máy, Tải ROM" if vi
+         else "Rename games, Scrape boxart, Move systems, Upload ROMs"),
+        ("Tương thích" if vi else "Compatibility",
+         "Chrome, Safari, Edge, Cốc Cốc trên cùng mạng Wi-Fi" if vi
+         else "Any modern browser on same Wi-Fi network"),
     ]
 
 def get_sftp_guide_rows():

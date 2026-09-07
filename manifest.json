@@ -1,12 +1,12 @@
 {
-  "version": "1.88",
+  "version": "1.89",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-08T00:01:14+0700",
+  "built": "2026-09-08T01:33:18+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Giả lập Sega CD: Tích hợp cấu hình và trình khởi chạy Sega CD / Mega CD (PicoDrive, GenesisPlusGX, GX Wide), tự động đồng bộ theme và thư mục ROMs/Imgs",
-    "en": "Sega CD Emulator: Bundled Sega CD / Mega CD configs and launchers (PicoDrive, GenesisPlusGX, GX Wide), auto-sync themes and ROMs/Imgs directories"
+    "vi": "Quản lý Game qua Web: Tích hợp máy chủ web cổng 8090 trong menu Dịch vụ, cho phép đổi tên game, cào ảnh bìa (Libretro CDN), chuyển hệ máy và tải ROM trực tiếp qua trình duyệt",
+    "en": "Web Game Manager: Integrated port 8090 web server in Services menu, enabling game renaming, boxart scraping (Libretro CDN), system moving, and ROM uploading via browser"
   },
   "remove": [
     "app.pyc",
@@ -195,8 +195,8 @@
     },
     {
       "path": "app.py",
-      "size": 309975,
-      "sha256": "b10446aa0aaab9f985c192717bbf5e4321fb5d1f0b3492c217e840dda3cfc60b"
+      "size": 311022,
+      "sha256": "4c0264d03b12a88c86af664f638063b3aaf5c627c5f0f2fd5cad128d8c0572c7"
     },
     {
       "path": "assets/fallback.ttf",
@@ -349,6 +349,11 @@
       "sha256": "adf245df4596d069174872b082cc449f198100211a81d58a00fd4392f958f62f"
     },
     {
+      "path": "gameweb.py",
+      "size": 55835,
+      "sha256": "b89c4e2b5d4f16842737463fed5790c5ecd6c34ef0392f1daf6f9f364a61be37"
+    },
+    {
       "path": "icon.png",
       "size": 3289,
       "sha256": "96c8db504c86847a327dd38e2f6d23d0668856dd4b5f2b56fdee1e2044532865"
@@ -415,8 +420,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 37523,
-      "sha256": "c117453f8c83cf4bf104e1fbf4bd0b12d2bb92d502a7035290bd8657708e198e"
+      "size": 37772,
+      "sha256": "8af93b4ad23abb6d1b3254df4e1410e071091971bd436d1da9218146b76b38b0"
     },
     {
       "path": "rh/j2me.py",
@@ -465,8 +470,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 3222,
-      "sha256": "1cbb2c666e2aefdeab0fe47c27f2dbce60301344c90c8ce6628ae626124631f6"
+      "size": 3275,
+      "sha256": "c14c795069da66895f0f8d4da24ede5f7ee36f62211d3e706fd8ac3d9775d088"
     },
     {
       "path": "rh/romfiles.py",
@@ -475,8 +480,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 9841,
-      "sha256": "80e641fd7385cf24c4acec20aeb01be8218cc59b9b3fd8c2a1f33fce2d804ad3"
+      "size": 11136,
+      "sha256": "b9a810c74c072c8d9292155e924de4bff8c317d5e4d548d093fa8cb1503c0de4"
     },
     {
       "path": "rh/splash.py",
@@ -495,8 +500,8 @@
     },
     {
       "path": "rh/sysinfo.py",
-      "size": 11541,
-      "sha256": "df42b4cfa96f120a8982483f9cbc80ebf7f4962e5160a0334fe9a9663271439a"
+      "size": 11635,
+      "sha256": "307fd1d2b5c32de84e9b9584676f5c539996062af639d2eadd2706f14bf94daa"
     },
     {
       "path": "rh/updater.py",
@@ -506,7 +511,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "78d7aabb393a9fe27813487e4cf2614d7f2d63e9c7f0338579e146266652979a"
+      "sha256": "088d061f9565426f42ec7bfd79ff67b41f398656930f5f56a45bd2a0d31cc3f1"
     },
     {
       "path": "rh/yt.py",
@@ -904,6 +909,6 @@
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
     }
   ],
-  "notes": "Tích hợp cấu hình và trình khởi chạy Sega CD / Mega CD (PicoDrive, GenesisPlusGX, GX Wide), tự động đồng bộ theme và thư mục ROMs/Imgs trên thẻ nhớ.",
-  "notes_en": "Bundled Sega CD / Mega CD configs and launchers (PicoDrive, GenesisPlusGX, GX Wide), auto-sync themes and ROMs/Imgs directories on SDCARD."
+  "notes": "Tích hợp máy chủ web cổng 8090 trong menu Dịch vụ, cho phép đổi tên game, cào ảnh bìa (Libretro CDN), chuyển hệ máy và tải ROM trực tiếp qua trình duyệt.",
+  "notes_en": "Integrated port 8090 web server in Services menu, enabling game renaming, boxart scraping (Libretro CDN), system moving, and ROM uploading via browser."
 }

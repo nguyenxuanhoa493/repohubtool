@@ -12,6 +12,7 @@ CATALOG_FILE = os.path.join(APP_DIR, "catalog", "catalogs.json")
 SETTINGS_FILE = os.path.join(APP_DIR, "settings.json")
 TEMP_DOWNLOAD_DIR = f"{SDCARD_PATH}/Roms/.tmp_download"
 STREAMER_SCRIPT = os.path.join(APP_DIR, "streamer.py")
+GAMEWEB_SCRIPT = os.path.join(APP_DIR, "gameweb.py")
 ASSETS_DIR = os.path.join(APP_DIR, "assets")
 FLAG_FILES = {"VI": os.path.join(ASSETS_DIR, "flag_vi.png"),
               "EN": os.path.join(ASSETS_DIR, "flag_en.png")}
