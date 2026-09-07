@@ -27,17 +27,15 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 DEFAULT_QUERIES = [
     "Dành cho bạn",
     "Xu hướng VN",
-    "Ẩm thực quê",
     "Hài Hước VN",
-    "Thú cưng vui",
+    "Ẩm thực quê",
 ]
 DEFAULT_PRESET_QUERIES = tuple(DEFAULT_QUERIES)
 
 CATEGORY_SOUNDS = {
-    "Xu hướng VN": ["7330881678778960641", "7656281706525362965"],
-    "Ẩm thực quê": ["7061837257761639194"],
+    "Xu hướng VN": ["7330881678778960641"],
     "Hài Hước VN": ["7666054805521959688", "7677620999986858760"],
-    "Thú cưng vui": ["7624983153367927574"],
+    "Ẩm thực quê": ["7061837257761639194"],
 }
 
 VIETNAMESE_CHARS = set(
@@ -82,7 +80,7 @@ def _get_ssl_context():
         return None
 
 
-def _api_request(endpoint: str, method: str = "GET", params: dict = None, body: dict = None, timeout: int = 8) -> dict:
+def _api_request(endpoint: str, method: str = "GET", params: dict = None, body: dict = None, timeout: int = 12) -> dict:
     """Send authenticated request to TikTok REST API Gateway."""
     url = f"{API_BASE}{endpoint}"
     if params:
@@ -370,20 +368,30 @@ def _normalize_aweme_item(item: dict) -> dict:
     dur_val = video_data.get("duration", 0)
     dur_sec = dur_val // 1000 if dur_val > 1000 else dur_val
 
+    # Skip photo albums / slideshows (not playable as video)
+    if item.get("aweme_type") in (68, 150):
+        return None
+
     # Direct CDN stream URLs from play_addr.url_list
     play_addr = video_data.get("play_addr", {})
     url_list = play_addr.get("url_list", []) if isinstance(play_addr, dict) else []
     stream_url = ""
     for u in url_list:
-        if any(h in u for h in ("tiktokcdn", "tiktokv", "byteicdn")):
+        if any(h in u for h in ("tiktokcdn", "tiktokv", "byteicdn")) and "music" not in u and not u.endswith(".mp3"):
             stream_url = u
             break
-    if not stream_url and url_list:
-        stream_url = url_list[0]
+    if not stream_url:
+        for u in url_list:
+            if "music" not in u and not u.endswith(".mp3") and not u.startswith("https://www.tiktok.com") and "v16-webapp-prime" not in u:
+                stream_url = u
+                break
     if not stream_url:
         cand = video_data.get("no_watermark_url") or video_data.get("play_url") or ""
-        if cand and not cand.startswith("https://www.tiktok.com") and "v16-webapp-prime" not in cand:
+        if cand and not cand.startswith("https://www.tiktok.com") and "v16-webapp-prime" not in cand and "music" not in cand and not cand.endswith(".mp3"):
             stream_url = cand
+
+    if not stream_url:
+        return None
 
     # Cover URL
     cover_url = ""
@@ -418,7 +426,7 @@ def _normalize_aweme_item(item: dict) -> dict:
 
 def fetch_trending_feed(count: int = 20, cursor: int = 0) -> list:
     """Fetch live For You Page (FYP) videos via GET /api/v1/feed."""
-    resp = _api_request("/api/v1/feed", params={"limit": count}, timeout=6)
+    resp = _api_request("/api/v1/feed", params={"limit": count}, timeout=12)
     aweme_list = resp.get("data", {}).get("aweme_list", [])
     items = []
     seen = set()
@@ -450,9 +458,14 @@ def fetch_category_feed(category: str, count: int = 20, cursor: int = 0) -> list
     items = []
     seen = set()
     for sid in sound_ids:
-        resp = _api_request("/api/v1/music/videos", params={"music_id": sid, "limit": count}, timeout=6)
+        resp = _api_request("/api/v1/music/videos", params={"music_id": sid, "limit": count}, timeout=12)
         raw_list = resp.get("data", {}).get("aweme_list", [])
         for raw in raw_list:
+            region = raw.get("region", "")
+            desc = raw.get("desc", "")
+            author = raw.get("author", {}).get("nickname", "")
+            if not is_vietnamese_content(desc, author, region):
+                continue
             normalized = _normalize_aweme_item(raw)
             if normalized and normalized["id"] not in seen and normalized.get("stream_url"):
                 seen.add(normalized["id"])
