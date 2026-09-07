@@ -24,8 +24,21 @@ API_BASE = "https://tiktok-api.chocode.com.vn"
 API_KEY = "tk_live_1c95813ba949efce813b1378fb8bc3e1"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-DEFAULT_QUERIES = ["Xu hướng VN", "Nhạc Hot VN", "Gaming VN", "Hài Hước VN", "Ẩm Thực VN"]
-DEFAULT_PRESET_QUERIES = ("Xu hướng VN", "Nhạc Hot VN", "Gaming VN", "Hài Hước VN", "Ẩm Thực VN")
+DEFAULT_QUERIES = [
+    "Dành cho bạn",
+    "Xu hướng VN",
+    "Ẩm thực quê",
+    "Hài Hước VN",
+    "Thú cưng vui",
+]
+DEFAULT_PRESET_QUERIES = tuple(DEFAULT_QUERIES)
+
+CATEGORY_SOUNDS = {
+    "Xu hướng VN": ["7330881678778960641", "7656281706525362965"],
+    "Ẩm thực quê": ["7061837257761639194"],
+    "Hài Hước VN": ["7666054805521959688", "7677620999986858760"],
+    "Thú cưng vui": ["7624983153367927574"],
+}
 
 VIETNAMESE_CHARS = set(
     "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ"
@@ -228,10 +241,12 @@ def toggle_favorite(video: dict, favorites_list: list) -> tuple:
         return new_favs, False
 
 
-def load_feed_cache(category: str = "Xu hướng VN") -> tuple:
+def load_feed_cache(category: str = "Dành cho bạn") -> tuple:
     """Load cached feed items for category. Returns (items_list, timestamp)."""
     fallback_cats = [category]
-    if category in ("Xu hướng VN", "Xu hướng"):
+    if category in ("Dành cho bạn", "FYP", "Live"):
+        fallback_cats = ["Dành cho bạn", "FYP", "Live"]
+    elif category in ("Xu hướng VN", "Xu hướng"):
         fallback_cats = ["Xu hướng VN", "Xu hướng"]
 
     for path in (TIKTOK_FEED_CACHE_FILE, TIKTOK_FEED_FALLBACK_FILE):
@@ -245,10 +260,6 @@ def load_feed_cache(category: str = "Xu hướng VN") -> tuple:
                         if isinstance(cat_data, dict):
                             items = cat_data.get("items", [])
                             if items:
-                                # Invalidate corrupted legacy cache where other categories got trending videos
-                                if category not in ("Xu hướng VN", "Xu hướng"):
-                                    if items[0].get("id") == "7330881633496714497":
-                                        continue
                                 return items, float(cat_data.get("timestamp", 0))
             except Exception:
                 pass
@@ -341,7 +352,7 @@ def _normalize_aweme_item(item: dict) -> dict:
         return None
 
     vid_id = str(item.get("aweme_id") or "")
-    if not vid_id:
+    if not vid_id or vid_id == "7554918276849995011":
         return None
 
     desc = (item.get("desc") or "").strip()
@@ -359,18 +370,20 @@ def _normalize_aweme_item(item: dict) -> dict:
     dur_val = video_data.get("duration", 0)
     dur_sec = dur_val // 1000 if dur_val > 1000 else dur_val
 
-    # Stream URL
+    # Direct CDN stream URLs from play_addr.url_list
     play_addr = video_data.get("play_addr", {})
     url_list = play_addr.get("url_list", []) if isinstance(play_addr, dict) else []
     stream_url = ""
     for u in url_list:
-        if "video_mp4" in u or "video/" in u or ".mp4" in u:
+        if any(h in u for h in ("tiktokcdn", "tiktokv", "byteicdn")):
             stream_url = u
             break
     if not stream_url and url_list:
         stream_url = url_list[0]
     if not stream_url:
-        stream_url = video_data.get("no_watermark_url") or video_data.get("play_url") or ""
+        cand = video_data.get("no_watermark_url") or video_data.get("play_url") or ""
+        if cand and not cand.startswith("https://www.tiktok.com") and "v16-webapp-prime" not in cand:
+            stream_url = cand
 
     # Cover URL
     cover_url = ""
@@ -404,321 +417,46 @@ def _normalize_aweme_item(item: dict) -> dict:
 
 
 def fetch_trending_feed(count: int = 20, cursor: int = 0) -> list:
-    """Fetch live Vietnam trending videos using hybrid sources (TikWM VN + Gateway Music Aweme VN)."""
+    """Fetch live For You Page (FYP) videos via GET /api/v1/feed."""
+    resp = _api_request("/api/v1/feed", params={"limit": count}, timeout=6)
+    aweme_list = resp.get("data", {}).get("aweme_list", [])
     items = []
     seen = set()
+    for raw in aweme_list:
+        normalized = _normalize_aweme_item(raw)
+        if normalized and normalized["id"] not in seen and normalized.get("stream_url"):
+            seen.add(normalized["id"])
+            items.append(normalized)
 
-    # Source 1: Gateway Music Aweme VN (Top viral Vietnam audio track)
-    # Music ID 7330881678778960641 is a top trending sound in Vietnam with direct CDN streams
-    try:
-        gw_resp = _api_request(
-            "/api/v1/social/tiktok/music/aweme",
-            method="POST",
-            params={"id": "7330881678778960641", "count": count, "cursor": cursor},
-            body={},
-            timeout=5,
-        )
-        aweme_list = gw_resp.get("data", {}).get("aweme_list", [])
-        for raw in aweme_list:
-            normalized = _normalize_aweme_item(raw)
-            if normalized and normalized["id"] not in seen:
-                reg = raw.get("region") or (raw.get("author") or {}).get("region")
-                if is_vietnamese_content(normalized["title"], normalized["author"], reg):
-                    seen.add(normalized["id"])
-                    items.append(normalized)
-    except Exception as e:
-        print(f"[rh.tiktok] Gateway music aweme error: {e}")
-
-    # Source 2: TikWM Feed with region=VN (Direct fast CDN streams)
-    if len(items) < count:
-        try:
-            tikwm_url = f"https://www.tikwm.com/api/feed/list?region=VN&count={count}"
-            ctx = _get_ssl_context()
-            req = urllib.request.Request(tikwm_url, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=3.0, context=ctx) as resp:
-                t_data = json.loads(resp.read().decode("utf-8", errors="ignore"))
-            for raw in t_data.get("data", []):
-                normalized = _normalize_tikwm_item(raw)
-                if normalized and normalized["id"] not in seen:
-                    r = raw.get("region") or "VN"
-                    if is_vietnamese_content(normalized["title"], normalized["author"], r):
-                        seen.add(normalized["id"])
-                        items.append(normalized)
-        except Exception as e:
-            print(f"[rh.tiktok] TikWM VN feed error/timeout: {e}")
-
-    # Source 3: Fallback to General Feed (strictly filtered for Vietnam region)
-    if len(items) < 5:
-        resp = _api_request("/api/v1/feed", timeout=6)
-        aweme_list = resp.get("data", {}).get("aweme_list", [])
-        if not aweme_list:
-            resp = _api_request("/api/v1/social/tiktok/feed/index", method="POST", params={"count": count}, body={}, timeout=6)
-            aweme_list = resp.get("data", {}).get("aweme_list", [])
-
-        for raw in aweme_list:
-            normalized = _normalize_aweme_item(raw)
-            if normalized and normalized["id"] not in seen:
-                reg = raw.get("region") or (raw.get("author") or {}).get("region")
-                if is_vietnamese_content(normalized["title"], normalized["author"], reg):
-                    seen.add(normalized["id"])
-                    items.append(normalized)
-
-    if items:
-        save_feed_cache("Xu hướng VN", items)
-        save_feed_cache("Xu hướng", items)
+    if items and cursor == 0:
+        save_feed_cache("Dành cho bạn", items)
     return items
 
 
-GAMING_VN_SEEDS = [
-    {
-        "id": "JSsz0VXw0Ic",
-        "title": "Highlight Liên Quân Mobile Đỉnh Cao Florentino #26",
-        "disp_title": "Highlight Liên Quân Mobile Đỉnh Cao Florentino #26",
-        "author": "Liên Quân AOV",
-        "author_id": "lienquanaov",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/JSsz0VXw0Ic/hqdefault.jpg",
-        "duration": "11:50",
-        "duration_sec": 710,
-        "duration_str": "11:50",
-        "views": 450000,
-        "views_str": "450K",
-        "likes": 28000,
-        "likes_str": "28K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "iD8uXL6rQ64",
-        "title": "Những Pha Highlight Hay Nhất Liên Quân Mobile #27",
-        "disp_title": "Những Pha Highlight Hay Nhất Liên Quân Mobile #27",
-        "author": "Liên Quân AOV",
-        "author_id": "lienquanaov",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/iD8uXL6rQ64/hqdefault.jpg",
-        "duration": "11:58",
-        "duration_sec": 718,
-        "duration_str": "11:58",
-        "views": 380000,
-        "views_str": "380K",
-        "likes": 22000,
-        "likes_str": "22K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "dFndWQzBIf4",
-        "title": "Tổng Hợp Những Pha Highlight Liên Quân Hay Nhất",
-        "disp_title": "Tổng Hợp Những Pha Highlight Liên Quân Hay Nhất",
-        "author": "Khanh Duey",
-        "author_id": "khanhduey",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/dFndWQzBIf4/hqdefault.jpg",
-        "duration": "21:59",
-        "duration_sec": 1319,
-        "duration_str": "21:59",
-        "views": 520000,
-        "views_str": "520K",
-        "likes": 35000,
-        "likes_str": "35K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "0Wm8K5Qm86c",
-        "title": "Pha Xử Lý Mãn Nhãn Kéo Tâm One-Shot Full Đỏ",
-        "disp_title": "Pha Xử Lý Mãn Nhãn Kéo Tâm One-Shot Full Đỏ",
-        "author": "Free Fire VN",
-        "author_id": "freefirevn",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/0Wm8K5Qm86c/hqdefault.jpg",
-        "duration": "28:52",
-        "duration_sec": 1732,
-        "duration_str": "28:52",
-        "views": 610000,
-        "views_str": "610K",
-        "likes": 42000,
-        "likes_str": "42K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "ZblmYXhiqIQ",
-        "title": "Múa Florentino Cân 4 Cực Khét Trận Đấu Đỉnh Cao",
-        "disp_title": "Múa Florentino Cân 4 Cực Khét Trận Đấu Đỉnh Cao",
-        "author": "Florentino Pro",
-        "author_id": "florentinopro",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/ZblmYXhiqIQ/hqdefault.jpg",
-        "duration": "20:52",
-        "duration_sec": 1252,
-        "duration_str": "20:52",
-        "views": 290000,
-        "views_str": "290K",
-        "likes": 19000,
-        "likes_str": "19K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "vssse1lBbgs",
-        "title": "Độ Mixi Và Những Pha Bắn PUBG Sấy Cháy Máy",
-        "disp_title": "Độ Mixi Và Những Pha Bắn PUBG Sấy Cháy Máy",
-        "author": "Bộ Tộc MixiGaming",
-        "author_id": "mixigaming",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/vssse1lBbgs/hqdefault.jpg",
-        "duration": "14:04",
-        "duration_sec": 844,
-        "duration_str": "14:04",
-        "views": 850000,
-        "views_str": "850K",
-        "likes": 65000,
-        "likes_str": "65K",
-        "source": "tiktok_search",
-    },
-]
-
-HAI_HUOC_VN_SEEDS = [
-    {
-        "id": "QXworC7D6Dw",
-        "title": "Tổng Hợp Video Hài Hước Trên TikTok Việt Nam #6",
-        "disp_title": "Tổng Hợp Video Hài Hước Trên TikTok Việt Nam #6",
-        "author": "Trôn TV",
-        "author_id": "trontv",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/QXworC7D6Dw/hqdefault.jpg",
-        "duration": "8:24",
-        "duration_sec": 504,
-        "duration_str": "8:24",
-        "views": 720000,
-        "views_str": "720K",
-        "likes": 48000,
-        "likes_str": "48K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "N9Rlju3Tp1c",
-        "title": "Những Pha Troll Bạn Thân Cười Ra Nước Mắt",
-        "disp_title": "Những Pha Troll Bạn Thân Cười Ra Nước Mắt",
-        "author": "Trôn TV",
-        "author_id": "trontv",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/N9Rlju3Tp1c/hqdefault.jpg",
-        "duration": "8:01",
-        "duration_sec": 481,
-        "duration_str": "8:01",
-        "views": 540000,
-        "views_str": "540K",
-        "likes": 36000,
-        "likes_str": "36K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "CYqzxlq62FI",
-        "title": "Ai Cười Trước Là Thua - Thử Thách Nhịn Cười",
-        "disp_title": "Ai Cười Trước Là Thua - Thử Thách Nhịn Cười",
-        "author": "TikTok Hài",
-        "author_id": "tiktokhai",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/CYqzxlq62FI/hqdefault.jpg",
-        "duration": "6:47",
-        "duration_sec": 407,
-        "duration_str": "6:47",
-        "views": 910000,
-        "views_str": "910K",
-        "likes": 75000,
-        "likes_str": "75K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "cQEeHazyiWw",
-        "title": "Tổng Hợp Video Meme Hài Hước Vô Tri Đỉnh Cao",
-        "disp_title": "Tổng Hợp Video Meme Hài Hước Vô Tri Đỉnh Cao",
-        "author": "Meme Việt",
-        "author_id": "memeviet",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/cQEeHazyiWw/hqdefault.jpg",
-        "duration": "7:45",
-        "duration_sec": 465,
-        "duration_str": "7:45",
-        "views": 630000,
-        "views_str": "630K",
-        "likes": 51000,
-        "likes_str": "51K",
-        "source": "tiktok_search",
-    },
-    {
-        "id": "p3VXfvAl_vo",
-        "title": "Video Meme Hài Hước Của Bóng Đá Việt Nam",
-        "disp_title": "Video Meme Hài Hước Của Bóng Đá Việt Nam",
-        "author": "Góc LyLy",
-        "author_id": "goclyly",
-        "stream_url": "",
-        "cover_url": "https://i.ytimg.com/vi/p3VXfvAl_vo/hqdefault.jpg",
-        "duration": "16:37",
-        "duration_sec": 997,
-        "duration_str": "16:37",
-        "views": 410000,
-        "views_str": "410K",
-        "likes": 29000,
-        "likes_str": "29K",
-        "source": "tiktok_search",
-    },
-]
-
-
 def fetch_category_feed(category: str, count: int = 20, cursor: int = 0) -> list:
-    """Fetch videos specifically for a designated preset category without cross-tab duplication."""
+    """Fetch videos specifically for a designated preset category using real Sound IDs."""
     if cursor == 0:
         cached_items, _ = load_feed_cache(category)
         if cached_items:
             return cached_items
 
+    if category in ("Dành cho bạn", "FYP", "Live"):
+        return fetch_trending_feed(count=count, cursor=cursor)
+
+    sound_ids = CATEGORY_SOUNDS.get(category, [])
+    if not sound_ids:
+        return fetch_trending_feed(count=count, cursor=cursor)
+
     items = []
     seen = set()
-
-    if category == "Nhạc Hot VN":
-        # Viral Remix / Dance track (Breakbeat Danza Kuduro Remix)
-        try:
-            gw_resp = _api_request(
-                "/api/v1/social/tiktok/music/aweme",
-                method="POST",
-                params={"id": "7543606690990558008", "count": count, "cursor": cursor},
-                body={},
-                timeout=5,
-            )
-            raw_list = gw_resp.get("data", {}).get("aweme_list", [])
-            for raw in raw_list:
-                normalized = _normalize_aweme_item(raw)
-                if normalized and normalized["id"] not in seen:
-                    seen.add(normalized["id"])
-                    items.append(normalized)
-        except Exception as e:
-            print(f"[rh.tiktok] Category {category} error: {e}")
-
-    elif category == "Ẩm Thực VN":
-        # Rural cooking, farming & Vietnamese food (Dương Cường Camera)
-        try:
-            gw_resp = _api_request(
-                "/api/v1/social/tiktok/music/aweme",
-                method="POST",
-                params={"id": "7061837257761639194", "count": count, "cursor": cursor},
-                body={},
-                timeout=5,
-            )
-            raw_list = gw_resp.get("data", {}).get("aweme_list", [])
-            for raw in raw_list:
-                normalized = _normalize_aweme_item(raw)
-                if normalized and normalized["id"] not in seen:
-                    seen.add(normalized["id"])
-                    items.append(normalized)
-        except Exception as e:
-            print(f"[rh.tiktok] Category {category} error: {e}")
-
-    elif category == "Gaming VN":
-        items = [dict(v) for v in GAMING_VN_SEEDS]
-
-    elif category == "Hài Hước VN":
-        items = [dict(v) for v in HAI_HUOC_VN_SEEDS]
-
-    else:
-        return fetch_trending_feed(count=count, cursor=cursor)
+    for sid in sound_ids:
+        resp = _api_request("/api/v1/music/videos", params={"music_id": sid, "limit": count}, timeout=6)
+        raw_list = resp.get("data", {}).get("aweme_list", [])
+        for raw in raw_list:
+            normalized = _normalize_aweme_item(raw)
+            if normalized and normalized["id"] not in seen and normalized.get("stream_url"):
+                seen.add(normalized["id"])
+                items.append(normalized)
 
     if items and cursor == 0:
         save_feed_cache(category, items)
@@ -729,79 +467,29 @@ _STREAM_CACHE = {}
 
 
 def search_tiktok(keyword: str, count: int = 20, offset: int = 0) -> list:
-    """Search TikTok videos focusing strictly on Vietnam region or resolve direct URL/ID."""
+    """Route keyword or category to real TikTok feed."""
     q = (keyword or "").strip()
-    if not q or q in ("Xu hướng", "Xu hướng VN", "Trending VN", "Trending"):
+    if not q or q in ("Dành cho bạn", "FYP", "Live"):
         return fetch_trending_feed(count=count, cursor=offset)
 
-    # 1. Preset categories routing (Each tab has its own independent feed)
-    if q in ("Nhạc Hot VN", "Gaming VN", "Hài Hước VN", "Ẩm Thực VN"):
+    if q in CATEGORY_SOUNDS:
         return fetch_category_feed(q, count=count, cursor=offset)
 
-    # 2. If keyword is a direct URL or short link
-    if "tiktok.com" in q:
-        resp = _api_request("/api/v1/social/tiktok/detail/url", method="POST", params={"url": q}, body={})
-        data = resp.get("data", {})
-        if data:
-            item = _normalize_aweme_item(data)
-            if item:
-                return [item]
+    for cat in CATEGORY_SOUNDS:
+        if q.lower() in cat.lower() or cat.lower() in q.lower():
+            return fetch_category_feed(cat, count=count, cursor=offset)
 
-    # 3. If keyword is a pure numeric Aweme ID
-    if q.isdigit() and len(q) >= 15:
-        resp = _api_request("/api/v1/social/tiktok/detail/aweme", method="POST", params={"aweme_id": q}, body={})
-        data = resp.get("data", {})
-        if data:
-            item = _normalize_aweme_item(data)
-            if item:
-                return [item]
-
-    # 4. Custom keyword search via Shorts / Video Search
-    # Search short Vietnamese clips matching exact user keyword
-    try:
-        from rh import yt
-        yt_results = yt.search_youtube(f"{q} tiktok", limit=count)
-        items = []
-        for v in yt_results:
-            vid_id = str(v.get("id") or "")
-            title = v.get("title") or ""
-            author = v.get("channel") or "TikToker"
-            dur_sec = v.get("duration_sec") or 0
-            dur_str = v.get("duration") or format_duration(dur_sec)
-            cover = v.get("thumbnail") or ""
-            items.append({
-                "id": vid_id,
-                "title": title,
-                "disp_title": title,
-                "author": author,
-                "author_id": author,
-                "stream_url": "",
-                "cover_url": cover,
-                "duration": dur_str,
-                "duration_sec": dur_sec,
-                "duration_str": dur_str,
-                "views": v.get("views", 0),
-                "views_str": v.get("views_str", ""),
-                "likes": 0,
-                "likes_str": "",
-                "source": "tiktok_search",
-            })
-        if items and offset == 0:
-            save_feed_cache(q, items)
-        return items
-    except Exception as e:
-        print(f"[rh.tiktok] Search error: {e}")
-        return []
+    return fetch_trending_feed(count=count, cursor=offset)
 
 
 def fetch_more_tiktok(query_str: str, current_count: int = 0) -> list:
     """Fetch additional videos for pagination / infinite scroll."""
     q = (query_str or "").strip()
-    if not q or q in ("Xu hướng", "Xu hướng VN", "Trending VN", "Trending"):
-        return fetch_trending_feed(count=20, cursor=current_count)
-    if q in ("Nhạc Hot VN", "Gaming VN", "Hài Hước VN", "Ẩm Thực VN"):
+    if not q or q in ("Dành cho bạn", "FYP", "Live"):
+        return fetch_trending_feed(count=10, cursor=current_count)
+    if q in CATEGORY_SOUNDS:
         return fetch_category_feed(q, count=20, cursor=current_count)
-    return search_tiktok(q, count=20, offset=current_count)
+    return fetch_trending_feed(count=10, cursor=current_count)
 
 
 def resolve_stream_url(video_id: str, item: dict = None) -> tuple:
@@ -815,47 +503,13 @@ def resolve_stream_url(video_id: str, item: dict = None) -> tuple:
     # Fast path: check if item already has a direct CDN stream URL
     if item and item.get("stream_url"):
         s = item["stream_url"]
-        if s.startswith("http") and ("tiktokcdn" in s or "tiktokv" in s or "byteicdn" in s or ".mp4" in s):
+        if s.startswith("http") and not s.startswith("https://www.tiktok.com") and "v16-webapp-prime" not in s:
             res = (s, item.get("title", video_id))
             _STREAM_CACHE[video_id] = res
             return res
 
-    # Fast path 2: Check if item comes from custom keyword search / shorts (YouTube extractor)
-    if item and (item.get("source") == "tiktok_search" or (len(video_id) == 11 and not video_id.isdigit())):
-        try:
-            from rh import yt
-            s_url, v_title = yt.extract_stream_url(video_id)
-            if s_url:
-                res = (s_url, v_title or item.get("title", video_id))
-                _STREAM_CACHE[video_id] = res
-                return res
-        except Exception as e:
-            print(f"[rh.tiktok] Stream resolve via yt error: {e}")
-
-    # Try resolving via detail/aweme
-    resp = _api_request("/api/v1/social/tiktok/detail/aweme", method="POST", params={"aweme_id": video_id}, body={})
-    data = resp.get("data", {})
-    vid_data = data.get("video", {})
-    stream_url = vid_data.get("no_watermark_url") or vid_data.get("play_url") or ""
-    title = data.get("desc") or (item.get("title") if item else video_id)
-
-    if stream_url and stream_url.startswith("http") and not stream_url.startswith("https://www.tiktok.com"):
-        res = (stream_url, title)
-        _STREAM_CACHE[video_id] = res
-        return res
-
-    # Try resolving via video/download endpoint
-    resp2 = _api_request("/api/v1/video/download", params={"aweme_id": video_id})
-    data2 = resp2.get("data", {})
-    vid_data2 = data2.get("video", {})
-    stream_url2 = vid_data2.get("no_watermark_url") or vid_data2.get("play_url") or ""
-    if stream_url2 and stream_url2.startswith("http") and not stream_url2.startswith("https://www.tiktok.com"):
-        res = (stream_url2, title)
-        _STREAM_CACHE[video_id] = res
-        return res
-
-    final_url = stream_url or (item.get("stream_url") if item else "")
-    res = (final_url, title)
+    final_url = item.get("stream_url") if item else ""
+    res = (final_url, item.get("title", video_id) if item else video_id)
     if final_url:
         _STREAM_CACHE[video_id] = res
     return res

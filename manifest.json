@@ -1,12 +1,12 @@
 {
-  "version": "1.85",
+  "version": "1.86",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-07T21:15:00+0700",
+  "built": "2026-09-07T22:45:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "TikTok Video: Phân tách nguồn cấp độc lập cho từng tab (Xu hướng VN, Nhạc Hot VN, Gaming VN, Hài Hước VN, Ẩm Thực VN), loại bỏ trùng lặp video giữa các tab",
-    "en": "TikTok Video: Separate independent feeds for each category tab (Trending VN, Music VN, Gaming VN, Comedy VN, Food VN), completely eliminating clip duplication"
+    "vi": "TikTok Video: Chuyển đổi toàn diện sang các endpoint dữ liệu thật (Dành cho bạn FYP Live, Xu hướng VN, Ẩm thực quê, Hài Hước VN, Thú cưng vui), đảm bảo 100% video đều có nguồn phát trực tiếp",
+    "en": "TikTok Video: Transition to verified live endpoints (For You FYP Live, Trending VN, Rural Food, Comedy VN, Cute Pets), guaranteeing 100% playable direct stream URLs"
   },
   "remove": [
     "app.pyc",
@@ -194,8 +194,8 @@
     },
     {
       "path": "app.py",
-      "size": 367170,
-      "sha256": "eeca84c7e33b8e270c01b15d1860fc39faf53eb86751919d022fb797ce34f26f"
+      "size": 366911,
+      "sha256": "f6f1cda308e665772a7a9d85e1a72990b922253ec031cfa37f83293c924e1931"
     },
     {
       "path": "assets/fallback.ttf",
@@ -364,8 +364,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 37518,
-      "sha256": "b0faa33133cda183d85357e887ca6f68684221e86033c411a716c9748a679172"
+      "size": 37523,
+      "sha256": "c117453f8c83cf4bf104e1fbf4bd0b12d2bb92d502a7035290bd8657708e198e"
     },
     {
       "path": "rh/j2me.py",
@@ -449,8 +449,8 @@
     },
     {
       "path": "rh/tiktok.py",
-      "size": 36246,
-      "sha256": "29ccd3c1fb54073f81db8b0037464e97f5240fbf05bedfc3d66b47a6ddcc1eb0"
+      "size": 22447,
+      "sha256": "25105d4ef201467aef2eb85620f98241fd5b47af238d181b1d23ce6bd480e0fe"
     },
     {
       "path": "rh/updater.py",
@@ -460,7 +460,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "d1af095a7cc272acc8b394c67de703817ffc27f7d1076ff9a82b79a46bdc767e"
+      "sha256": "56c9c2a7a9d1bff5fa468003558d3ea6a7800ef94733c96975ec0f45f827e7c8"
     },
     {
       "path": "rh/yt.py",
