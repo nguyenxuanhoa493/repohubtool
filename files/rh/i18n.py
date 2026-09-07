@@ -31,6 +31,8 @@ TEXTS = {
         "back_search": "< Quay lại ô tìm kiếm",
         
         "net_title": "QUẢN LÝ DỊCH VỤ HỆ THỐNG",
+        "gameweb_item": "Quản lý Game qua Web (Cổng 8090)",
+        "gameweb_guide": "   - Hướng dẫn Quản lý Game qua Web",
         "sftp_item": "SFTPGo (Web / SFTP)",
         "sftp_guide": "   - Hướng dẫn kết nối SFTPGo",
         "ssh_item": "SSH Server (OpenSSH, cổng 22)",
@@ -375,6 +377,8 @@ TEXTS = {
         "back_search": "< Back to Search Bar",
         
         "net_title": "SYSTEM SERVICES MANAGER",
+        "gameweb_item": "Web Game Manager (Port 8090)",
+        "gameweb_guide": "   - Web Game Manager Guide",
         "sftp_item": "SFTPGo (Web / SFTP)",
         "sftp_guide": "   - SFTPGo Connection Guide",
         "ssh_item": "SSH Server (Port 22)",

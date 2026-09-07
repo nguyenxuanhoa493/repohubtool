@@ -74,6 +74,9 @@ def is_mtp_running():
 def is_streamer_running():
     return is_proc_running(['streamer', 'ustreamer', 'mjpg_streamer']) or is_port_listening(8088)
 
+def is_gameweb_running():
+    return is_proc_running(['gameweb']) or is_port_listening(8090)
+
 def get_mac_address():
     try:
         mac = subprocess.check_output("cat /sys/class/net/wlan0/address 2>/dev/null || echo 'N/A'", shell=True).decode().strip()

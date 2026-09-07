@@ -17,6 +17,7 @@ TARGET_FILES = [
     ("rh/updater.py", "rh/updater.py"),
     ("db.py", "db.py"),
     ("app.py", "app.py"),
+    ("gameweb.py", "gameweb.py"),
     ("launch.sh", "launch.sh"),
     ("../manifest.json", "manifest.json"),
     ("emus/JAVA/zulu17/bin/freej2me-sdl.jar", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/freej2me-sdl.jar"),
@@ -113,7 +114,7 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     # Chmod executable and clear pycache
     print("[*] Phân quyền và dọn dẹp bytecode cache...")
-    ssh.exec_command(f"chmod +x {app_dir}/bin/yt-dlp /mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface /mnt/SDCARD/Emus/JAVA/launch.sh /mnt/SDCARD/Emus/SEGACD/*.sh 2>/dev/null; mkdir -p /mnt/SDCARD/Roms/SEGACD /mnt/SDCARD/Imgs/SEGACD; rm -rf {app_dir}/rh/__pycache__ {app_dir}/__pycache__; sync")
+    ssh.exec_command(f"chmod +x {app_dir}/gameweb.py {app_dir}/bin/yt-dlp /mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface /mnt/SDCARD/Emus/JAVA/launch.sh /mnt/SDCARD/Emus/SEGACD/*.sh 2>/dev/null; mkdir -p /mnt/SDCARD/Roms/SEGACD /mnt/SDCARD/Imgs/SEGACD; rm -rf {app_dir}/rh/__pycache__ {app_dir}/__pycache__; sync")
     ssh.close()
     print("[+] Hoàn tất cập nhật ứng dụng trên thiết bị!")
     return True
