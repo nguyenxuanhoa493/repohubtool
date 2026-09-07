@@ -1,12 +1,12 @@
 {
-  "version": "1.83",
+  "version": "1.84",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-06T15:10:00+0700",
+  "built": "2026-09-07T14:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java: Khôi phục chuẩn 100% key map gốc Nokia (-5 cho phím OK/X), chỉ mở bàn phím ảo khi giữ START + bấm X, bảo toàn tuyệt đối hệ thống phím gốc",
-    "en": "Java Games: Restore authentic Nokia key mapping (-5 for OK/X), strictly toggle Virtual Keyboard only on START + X combo, completely preserving original controls"
+    "vi": "TikTok Video: Duyệt video xu hướng/FYP, tìm kiếm, lưu yêu thích, tải phân trang vô tận và phát video trực tiếp qua RetroArch FFMPEG core",
+    "en": "TikTok Video: Browse trending/FYP, search, favorites, infinite pagination, and smooth streaming playback via RetroArch FFMPEG core"
   },
   "remove": [
     "app.pyc",
@@ -39,6 +39,7 @@
     "rh/state.pyc",
     "rh/storage.pyc",
     "rh/sysinfo.pyc",
+    "rh/tiktok.pyc",
     "rh/updater.pyc",
     "rh/version.pyc",
     "rh/yt.pyc",
@@ -193,8 +194,8 @@
     },
     {
       "path": "app.py",
-      "size": 306857,
-      "sha256": "6e725889b504e4c9bec4f1d5bf341565ac77c99b6428f8df0b4cda99994c4097"
+      "size": 366493,
+      "sha256": "bda98d26edecf6bd8a0ead37368c59ddde35b25104bef583accb659608d2c03a"
     },
     {
       "path": "assets/fallback.ttf",
@@ -363,8 +364,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 36483,
-      "sha256": "d71178d211a28b0209053b82031a7b6c2212a3f38ec756d8b9347bf85dc3c8f0"
+      "size": 37488,
+      "sha256": "f6ade6f7811056b3feb2023008aec864ec12f3d98b349012b538449e8a9f83f6"
     },
     {
       "path": "rh/j2me.py",
@@ -413,8 +414,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 3221,
-      "sha256": "cf23fd7185c02edc2f3c1a7ce647d33c69939c2208b3cb913172e9709a323697"
+      "size": 4055,
+      "sha256": "a95a4deeb40a8b99bc7d0defb9332b1ccac25e79558cf99dd9df1a681d89a568"
     },
     {
       "path": "rh/romfiles.py",
@@ -447,6 +448,11 @@
       "sha256": "df42b4cfa96f120a8982483f9cbc80ebf7f4962e5160a0334fe9a9663271439a"
     },
     {
+      "path": "rh/tiktok.py",
+      "size": 18832,
+      "sha256": "68b198f0dccf6bd255826c0bde94b8b65c51cbc570ee28da79571168df77454c"
+    },
+    {
       "path": "rh/updater.py",
       "size": 23321,
       "sha256": "91026dafab1d06c0d2e3e3f31420641e2d15258747f3573b424c0dff7ccfeabb"
@@ -454,7 +460,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "51fc2717fb1293b84f5783957c444474ce7605087e9ecce913de73acd2a2c112"
+      "sha256": "6f7b13a2697e07e8c7adf3085dab0ad98807f77111506323158a888cb029259f"
     },
     {
       "path": "rh/yt.py",
