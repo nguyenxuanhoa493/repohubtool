@@ -8,14 +8,25 @@
 
 import os
 import sys
+import re
 import time
 import json
 import shutil
+import subprocess
+import ssl
 import urllib.request
 import urllib.parse
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
+
+try:
+    _SSL_CONTEXT = ssl.create_default_context()
+    _SSL_CONTEXT.check_hostname = False
+    _SSL_CONTEXT.verify_mode = ssl.CERT_NONE
+except Exception:
+    _SSL_CONTEXT = None
 
 PORT = 8090
 
@@ -63,39 +74,335 @@ SYSTEM_NAMES = {
     "JAVA": "Java J2ME (Mobile)",
 }
 
-# Mapping sang tên repository của Libretro Thumbnails
+# Mapping sang tên hệ máy chuẩn trên thumbnails.libretro.com
 LIBRETRO_MAP = {
-    "GBA": "Nintendo_-_Game_Boy_Advance",
-    "GBC": "Nintendo_-_Game_Boy_Color",
-    "GB": "Nintendo_-_Game_Boy",
-    "FC": "Nintendo_-_Nintendo_Entertainment_System",
-    "NES": "Nintendo_-_Nintendo_Entertainment_System",
-    "SFC": "Nintendo_-_Super_Nintendo_Entertainment_System",
-    "SNES": "Nintendo_-_Super_Nintendo_Entertainment_System",
-    "N64": "Nintendo_-_Nintendo_64",
-    "NDS": "Nintendo_-_Nintendo_DS",
-    "MD": "Sega_-_Mega_Drive_-_Genesis",
-    "GENESIS": "Sega_-_Mega_Drive_-_Genesis",
-    "SEGACD": "Sega_-_Mega-CD_-_Sega_CD",
-    "GG": "Sega_-_Game_Gear",
-    "MS": "Sega_-_Master_System_-_Mark_III",
-    "SS": "Sega_-_Saturn",
-    "DC": "Sega_-_Dreamcast",
-    "PS": "Sony_-_PlayStation",
-    "PS1": "Sony_-_PlayStation",
-    "PSP": "Sony_-_PlayStation_Portable",
-    "PCE": "NEC_-_PC_Engine_-_TurboGrafx_16",
-    "WS": "Bandai_-_WonderSwan",
-    "WSC": "Bandai_-_WonderSwan_Color",
-    "NGP": "SNK_-_Neo_Geo_Pocket",
-    "NEOGEO": "SNK_-_Neo_Geo",
-    "ATARI2600": "Atari_-_2600",
-    "ATARI7800": "Atari_-_7800",
-    "LYNX": "Atari_-_Lynx",
-    "FBNEO": "FBNeo_-_Arcade_Games",
+    "GBA": "Nintendo - Game Boy Advance",
+    "GBC": "Nintendo - Game Boy Color",
+    "GB": "Nintendo - Game Boy",
+    "FC": "Nintendo - Nintendo Entertainment System",
+    "NES": "Nintendo - Nintendo Entertainment System",
+    "SFC": "Nintendo - Super Nintendo Entertainment System",
+    "SNES": "Nintendo - Super Nintendo Entertainment System",
+    "N64": "Nintendo - Nintendo 64",
+    "NDS": "Nintendo - Nintendo DS",
+    "MD": "Sega - Mega Drive - Genesis",
+    "GENESIS": "Sega - Mega Drive - Genesis",
+    "SEGACD": "Sega - Mega-CD - Sega CD",
+    "GG": "Sega - Game Gear",
+    "MS": "Sega - Master System - Mark III",
+    "SS": "Sega - Saturn",
+    "DC": "Sega - Dreamcast",
+    "PS": "Sony - PlayStation",
+    "PS1": "Sony - PlayStation",
+    "PSP": "Sony - PlayStation Portable",
+    "PCE": "NEC - PC Engine - TurboGrafx 16",
+    "WS": "Bandai - WonderSwan",
+    "WSC": "Bandai - WonderSwan Color",
+    "NGP": "SNK - Neo Geo Pocket",
+    "NEOGEO": "SNK - Neo Geo",
+    "ATARI2600": "Atari - 2600",
+    "ATARI7800": "Atari - 7800",
+    "LYNX": "Atari - Lynx",
+    "FBNEO": "FBNeo - Arcade Games",
     "MAME": "MAME",
-    "ARCADE": "FBNeo_-_Arcade_Games",
+    "ARCADE": "FBNeo - Arcade Games",
+    "CPS1": "FBNeo - Arcade Games",
+    "CPS2": "FBNeo - Arcade Games",
+    "CPS3": "FBNeo - Arcade Games",
 }
+
+_LIBRETRO_INDEX_CACHE = {}
+
+def get_catalog_db_path():
+    # 1. Tìm trực tiếp database sqlite3
+    candidates = [
+        os.path.join(SDCARD_PATH, "Apps", "RetroHub", "catalog", "roms_store.sqlite3"),
+        os.path.join(SDCARD_PATH, "RetroHub", "catalog", "roms_store.sqlite3"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "catalog", "roms_store.sqlite3"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog", "roms_store.sqlite3"),
+        "/tmp/roms_store.sqlite3",
+    ]
+    for c in candidates:
+        if os.path.isfile(c) and os.path.getsize(c) > 1000000:
+            return c
+
+    # 2. Tìm file nén .sqlite3.gz để giải nén tức thì vào /tmp
+    gz_candidates = [
+        os.path.join(SDCARD_PATH, "Apps", "RetroHub", "catalog", "roms_store.sqlite3.gz"),
+        os.path.join(SDCARD_PATH, "RetroHub", "catalog", "roms_store.sqlite3.gz"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "catalog", "roms_store.sqlite3.gz"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog", "roms_store.sqlite3.gz"),
+    ]
+    for gz in gz_candidates:
+        if os.path.isfile(gz):
+            try:
+                import gzip
+                out_tmp = "/tmp/roms_store.sqlite3"
+                if not os.path.isfile(out_tmp) or os.path.getsize(out_tmp) < 1000000:
+                    with gzip.open(gz, "rb") as f_in, open(out_tmp, "wb") as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                return out_tmp
+            except Exception as e:
+                print(f"Error decompressing {gz}: {e}")
+    return None
+
+STOP_WORDS = {
+    'of', 'the', 'a', 'an', 'and', 'in', 'on', 'to', 'for', 'at', 'by', 'from',
+    'with', 'de', 'der', 'die', 'das', 'le', 'la', 'les',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
+}
+
+def search_catalog_db(sys_code, query, max_results=8):
+    db_p = get_catalog_db_path()
+    if not db_p:
+        return []
+    try:
+        import sqlite3
+        conn = sqlite3.connect(db_p, timeout=5)
+        cur = conn.cursor()
+
+        sys_aliases = [sys_code.upper()]
+        if sys_code.upper() in ("NES", "FC"):
+            sys_aliases = ["FC", "NES"]
+        elif sys_code.upper() in ("SNES", "SFC"):
+            sys_aliases = ["SFC", "SNES"]
+        elif sys_code.upper() in ("GENESIS", "MD"):
+            sys_aliases = ["MD", "GENESIS"]
+        elif sys_code.upper() in ("PS1", "PS"):
+            sys_aliases = ["PS", "PS1"]
+
+        clean_q = re.sub(r'\(.*?\)|\[.*?\]', '', query).strip()
+        words = [w.lower() for w in clean_q.split() if w]
+        if not words:
+            words = [w.lower() for w in query.strip().split() if w]
+        if not words:
+            return []
+
+        placeholders = ",".join("?" * len(sys_aliases))
+
+        def execute_query(w_list):
+            sql = f"SELECT title, img_url FROM games WHERE sys_code IN ({placeholders}) AND img_url IS NOT NULL AND img_url != ''"
+            params = list(sys_aliases)
+            for w in w_list:
+                sql += " AND lower(title) LIKE ?"
+                params.append(f"%{w}%")
+            sql += f" LIMIT {max_results}"
+            cur.execute(sql, params)
+            return [r for r in cur.fetchall() if r[1] and "no-image" not in r[1].lower()]
+
+        # Lần 1: Khớp tất cả các từ trong query
+        rows = execute_query(words)
+
+        # Lần 2: Nếu không có kết quả, loại bỏ stop words và số phụ để tìm từ khóa cốt lõi
+        if not rows and len(words) > 1:
+            sig_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
+            if sig_words and sig_words != words:
+                rows = execute_query(sig_words)
+
+        conn.close()
+
+        results = []
+        for title, img_url in rows:
+            results.append({
+                "title": title,
+                "type": "Catalog DB",
+                "url": img_url
+            })
+        return results
+    except Exception as e:
+        print(f"Error querying catalog db: {e}")
+        return []
+
+def get_libretro_file_list(sys_folder, category="Named_Boxarts", allow_fetch=True):
+    global _LIBRETRO_INDEX_CACHE
+    cache_key = f"{sys_folder}#{category}"
+    if cache_key in _LIBRETRO_INDEX_CACHE:
+        return _LIBRETRO_INDEX_CACHE[cache_key]
+
+    safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', cache_key)
+    tmp_path = f"/tmp/rh_{safe_name}.json"
+    if os.path.isfile(tmp_path):
+        try:
+            if time.time() - os.path.getmtime(tmp_path) < 7 * 86400:
+                with open(tmp_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data:
+                        _LIBRETRO_INDEX_CACHE[cache_key] = data
+                        return data
+        except Exception:
+            pass
+
+    if not allow_fetch:
+        return []
+
+    url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/{category}/"
+    html = ""
+    try:
+        res = subprocess.run(["curl", "-s", "--max-time", "6", url], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=7)
+        if res.returncode == 0 and res.stdout:
+            html = res.stdout.decode("utf-8", errors="ignore")
+    except Exception:
+        pass
+
+    if not html:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"})
+            kwargs = {"timeout": 5}
+            if _SSL_CONTEXT:
+                kwargs["context"] = _SSL_CONTEXT
+            with urllib.request.urlopen(req, **kwargs) as resp:
+                html = resp.read().decode("utf-8", errors="ignore")
+        except Exception as e:
+            pass
+
+    if html:
+        pattern = re.compile(r'href=\"([^\"/]+\.png)\"')
+        files = pattern.findall(html)
+        decoded = [urllib.parse.unquote(f) for f in files]
+        if decoded:
+            _LIBRETRO_INDEX_CACHE[cache_key] = decoded
+            try:
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    json.dump(decoded, f)
+            except Exception:
+                pass
+            return decoded
+
+    return []
+
+def search_libretro_boxarts(sys_code, query, max_results=12, allow_fetch=True):
+    sys_folder = LIBRETRO_MAP.get(sys_code.upper())
+    if not sys_folder:
+        for k, v in LIBRETRO_MAP.items():
+            if k in sys_code.upper():
+                sys_folder = v
+                break
+    if not sys_folder:
+        return []
+
+    clean_q = re.sub(r'\(.*?\)|\[.*?\]', '', query).strip()
+    words = [w.lower() for w in clean_q.split() if w]
+    if not words:
+        words = [w.lower() for w in query.strip().split() if w]
+    if not words:
+        return []
+
+    sig_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
+    if not sig_words:
+        sig_words = words
+
+    def score(name):
+        pts = len(name)
+        if "(USA" in name or "(World" in name or "(En" in name:
+            pts -= 50
+        if "(Japan" in name and "japan" not in query.lower():
+            pts += 40
+        return pts
+
+    candidates = []
+
+    # Duyệt qua Named_Boxarts, nếu không có ảnh thì tìm tiếp trong Named_Snaps và Named_Titles
+    for cat in ["Named_Boxarts", "Named_Snaps", "Named_Titles"]:
+        files = get_libretro_file_list(sys_folder, category=cat, allow_fetch=allow_fetch)
+        if not files:
+            continue
+
+        matches = [f for f in files if all(w in f.lower() for w in words)]
+        if not matches and sig_words != words:
+            matches = [f for f in files if all(w in f.lower() for w in sig_words)]
+
+        if matches:
+            matches.sort(key=score)
+            cat_label = "Boxart" if cat == "Named_Boxarts" else ("Snap" if cat == "Named_Snaps" else "Title")
+            for m in matches[:max_results]:
+                boxart_url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/{cat}/{urllib.parse.quote(m)}"
+                candidates.append({
+                    "title": m[:-4],
+                    "type": f"Libretro {cat_label}",
+                    "url": boxart_url
+                })
+            if candidates:
+                break
+
+    if not candidates:
+        clean_name = query.replace("&", "_").replace("*", "_").replace("/", "_").replace(":", "_").replace("`", "_")
+        for suffix in ["", " (USA)", " (World)", " (USA, Europe)", " (Europe)", " (Japan)"]:
+            candidate_file = f"{clean_name}{suffix}.png"
+            boxart_url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/Named_Boxarts/{urllib.parse.quote(candidate_file)}"
+            candidates.append({
+                "title": f"{clean_name}{suffix}",
+                "type": "Libretro Boxart",
+                "url": boxart_url
+            })
+
+    return candidates
+
+def is_url_alive(url, timeout=1.5):
+    """Kiểm tra nhanh xem URL ảnh có phản hồi 200/206/302 hay không (loại bỏ link chết, 404, 403 hotlink-block)."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "image/*,*/*;q=0.8"
+    }
+    try:
+        req = urllib.request.Request(url, headers=headers, method="HEAD")
+        kwargs = {"timeout": timeout}
+        if _SSL_CONTEXT:
+            kwargs["context"] = _SSL_CONTEXT
+        with urllib.request.urlopen(req, **kwargs) as resp:
+            return resp.status in (200, 301, 302, 304)
+    except Exception:
+        try:
+            req = urllib.request.Request(url, headers={**headers, "Range": "bytes=0-64"})
+            kwargs = {"timeout": timeout}
+            if _SSL_CONTEXT:
+                kwargs["context"] = _SSL_CONTEXT
+            with urllib.request.urlopen(req, **kwargs) as resp:
+                return resp.status in (200, 206, 301, 302, 304)
+        except Exception:
+            return False
+
+def search_web_images(query, max_results=8):
+    """Tìm kiếm ảnh bìa trực tiếp từ Web Image Search (Bing), không bị chặn Captcha và không cần JS.
+    Tự động kiểm tra song song và loại bỏ toàn bộ liên kết chết (404, 403, timeout) trước khi trả về."""
+    try:
+        url = "https://www.bing.com/images/search?q=" + urllib.parse.quote(query)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        req = urllib.request.Request(url, headers=headers)
+        kwargs = {"timeout": 6}
+        if _SSL_CONTEXT:
+            kwargs["context"] = _SSL_CONTEXT
+        with urllib.request.urlopen(req, **kwargs) as resp:
+            html = resp.read().decode("utf-8", errors="ignore")
+
+        items = []
+        seen = set()
+        matches = re.findall(r'&quot;murl&quot;:&quot;(https?://[^&]+)&quot;.*?&quot;t&quot;:&quot;([^&]+)&quot;', html)
+        for img_url, title in matches:
+            if img_url in seen:
+                continue
+            clean_title = re.sub(r'<.*?>', '', title).replace('&quot;', '"').replace('&amp;', '&').strip()
+            seen.add(img_url)
+            items.append({
+                "title": clean_title[:60] if clean_title else "Ảnh Web",
+                "type": "Web Search",
+                "url": img_url
+            })
+            if len(items) >= max_results + 4:
+                break
+
+        # Lọc bỏ link chết / 404 / lỗi hotlink bằng đa luồng song song
+        if items:
+            with ThreadPoolExecutor(max_workers=min(len(items), 8)) as executor:
+                alive_status = list(executor.map(lambda it: is_url_alive(it["url"]), items))
+            items = [it for it, ok in zip(items, alive_status) if ok]
+
+        return items[:max_results]
+    except Exception as e:
+        print(f"Error in search_web_images: {e}")
+        return []
 
 # Đuôi file ROM hợp lệ thường gặp
 VALID_EXTS = {
@@ -104,6 +411,48 @@ VALID_EXTS = {
     ".n64", ".z64", ".v64", ".nds", ".cso", ".pce", ".ws", ".wsc",
     ".ngp", ".ngc", ".p8", ".png", ".jar", ".a26", ".a78", ".lnx"
 }
+
+def download_image_to_file(img_url, target_path, timeout=15):
+    """Tải file ảnh từ URL (HTTP/HTTPS), bỏ qua lỗi kiểm tra SSL trên hệ máy cầm tay.
+    Thử urllib với unverified SSL trước, nếu gặp lỗi thì fallback sang curl -k."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Referer": img_url,
+    }
+
+    # 1. Thử urllib.request với unverified SSL context
+    try:
+        req = urllib.request.Request(img_url, headers=headers)
+        kwargs = {"timeout": timeout}
+        if _SSL_CONTEXT:
+            kwargs["context"] = _SSL_CONTEXT
+        with urllib.request.urlopen(req, **kwargs) as resp:
+            if resp.status == 200:
+                data = resp.read()
+                if len(data) > 32:
+                    with open(target_path, "wb") as f:
+                        f.write(data)
+                    return True, None
+    except Exception:
+        pass
+
+    # 2. Fallback sang curl -k (hỗ trợ TLS, tự bỏ qua xác thực chứng chỉ CA)
+    try:
+        cmd = [
+            "curl", "-k", "-s", "-L",
+            "--max-time", str(timeout),
+            "-A", headers["User-Agent"],
+            "-o", target_path,
+            img_url
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout + 2)
+        if res.returncode == 0 and os.path.isfile(target_path) and os.path.getsize(target_path) > 32:
+            return True, None
+    except Exception:
+        pass
+
+    return False, "Không thể tải ảnh từ URL này (vui lòng kiểm tra lại đường dẫn ảnh hoặc kết nối Wi-Fi của máy)"
 
 def format_size(bytes_val):
     for unit in ['B', 'KB', 'MB', 'GB']:
@@ -221,7 +570,15 @@ def list_system_games(sys_dir):
                 
                 art_file = art_map.get(name.lower())
                 has_art = bool(art_file)
-                art_url = f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(art_file)}" if has_art else None
+                if has_art:
+                    art_full_path = os.path.join(img_path, art_file)
+                    try:
+                        art_mtime = int(os.path.getmtime(art_full_path))
+                    except OSError:
+                        art_mtime = int(time.time())
+                    art_url = f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(art_file)}?v={art_mtime}"
+                else:
+                    art_url = None
 
                 games.append({
                     "filename": fname,
@@ -238,6 +595,71 @@ def list_system_games(sys_dir):
             print(f"Error listing games for {sys_dir}: {e}")
 
     return games
+
+def list_all_missing_art_games():
+    """Liệt kê toàn bộ các game trên thẻ nhớ chưa có ảnh bìa (boxart)."""
+    os.makedirs(ROMS_DIR, exist_ok=True)
+    os.makedirs(IMGS_DIR, exist_ok=True)
+    missing = []
+
+    try:
+        sys_dirs = sorted(os.listdir(ROMS_DIR))
+    except Exception:
+        sys_dirs = []
+
+    for sys_d in sys_dirs:
+        if sys_d.startswith("."):
+            continue
+        rom_p = os.path.join(ROMS_DIR, sys_d)
+        if not os.path.isdir(rom_p):
+            continue
+        img_p = os.path.join(IMGS_DIR, sys_d)
+        art_bases = set()
+        if os.path.isdir(img_p):
+            try:
+                for f in os.listdir(img_p):
+                    if not f.startswith(".") and os.path.splitext(f)[1].lower() in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+                        art_bases.add(os.path.splitext(f)[0].lower())
+            except Exception:
+                pass
+
+        try:
+            for fname in sorted(os.listdir(rom_p)):
+                if fname.startswith("."):
+                    continue
+                full_p = os.path.join(rom_p, fname)
+                if not os.path.isfile(full_p):
+                    continue
+                name, ext = os.path.splitext(fname)
+                if ext.lower() not in VALID_EXTS:
+                    continue
+
+                if name.lower() not in art_bases:
+                    try:
+                        st = os.stat(full_p)
+                        sz = st.st_size
+                        mtime = st.st_mtime
+                    except OSError:
+                        sz = 0
+                        mtime = 0
+
+                    missing.append({
+                        "filename": fname,
+                        "name": name,
+                        "system": sys_d,
+                        "system_name": SYSTEM_NAMES.get(sys_d.upper(), sys_d),
+                        "ext": ext,
+                        "size_str": format_size(sz),
+                        "size_bytes": sz,
+                        "mtime": mtime,
+                        "has_art": False,
+                        "art_name": None,
+                        "art_url": None
+                    })
+        except Exception as e:
+            print(f"Error scanning missing art in {sys_d}: {e}")
+
+    return missing
 
 
 class GameWebHandler(BaseHTTPRequestHandler):
@@ -281,11 +703,20 @@ class GameWebHandler(BaseHTTPRequestHandler):
 
         if path == "/api/systems":
             systems = list_all_systems()
-            self.send_json({"ok": True, "systems": systems})
+            no_art_games = list_all_missing_art_games()
+            self.send_json({
+                "ok": True,
+                "systems": systems,
+                "no_art_count": len(no_art_games)
+            })
             return
 
         if path == "/api/games":
             sys_dir = query.get("system", [""])[0]
+            if sys_dir == "__no_art__":
+                games = list_all_missing_art_games()
+                self.send_json({"ok": True, "system": "__no_art__", "games": games})
+                return
             if not sys_dir:
                 self.send_json({"ok": False, "error": "Missing system parameter"}, 400)
                 return
@@ -308,7 +739,7 @@ class GameWebHandler(BaseHTTPRequestHandler):
                         self.send_response(200)
                         self.send_header("Content-Type", mime)
                         self.send_header("Content-Length", str(len(data)))
-                        self.send_header("Cache-Control", "public, max-age=86400")
+                        self.send_header("Cache-Control", "no-cache, must-revalidate")
                         self.end_headers()
                         self.wfile.write(data)
                         return
@@ -325,40 +756,36 @@ class GameWebHandler(BaseHTTPRequestHandler):
                 self.send_json({"ok": False, "error": "Query required"}, 400)
                 return
 
-            repo_name = LIBRETRO_MAP.get(sys_code) or LIBRETRO_MAP.get(sys_code.replace(" ", "_"))
-            if not repo_name:
-                for k, v in LIBRETRO_MAP.items():
-                    if k in sys_code:
-                        repo_name = v
-                        break
-
             candidates = []
-            if repo_name:
-                clean_q = q_name.replace("&", "_").replace("*", "_").replace("/", "_").replace(":", "_").replace("`", "_")
-                boxart_url = f"https://raw.githubusercontent.com/libretro-thumbnails/{repo_name}/master/Named_Boxarts/{urllib.parse.quote(clean_q)}.png"
-                candidates.append({
-                    "title": f"{q_name} (Named Boxart)",
-                    "type": "Boxart",
-                    "url": boxart_url
-                })
-                title_url = f"https://raw.githubusercontent.com/libretro-thumbnails/{repo_name}/master/Named_Titles/{urllib.parse.quote(clean_q)}.png"
-                candidates.append({
-                    "title": f"{q_name} (Title Screen)",
-                    "type": "Title Screen",
-                    "url": title_url
-                })
-                snap_url = f"https://raw.githubusercontent.com/libretro-thumbnails/{repo_name}/master/Named_Snaps/{urllib.parse.quote(clean_q)}.png"
-                candidates.append({
-                    "title": f"{q_name} (Gameplay Snap)",
-                    "type": "Snap",
-                    "url": snap_url
-                })
+            seen_urls = set()
+
+            # 1. Ưu tiên hàng đầu: Tìm kiếm trên Web Images với từ khóa boxart
+            web_q = f"{q_name} {sys_code} boxart box art cover"
+            web_results = search_web_images(web_q, max_results=8)
+            for item in web_results:
+                if item["url"] not in seen_urls:
+                    candidates.append(item)
+                    seen_urls.add(item["url"])
+
+            # 2. Tìm trong SQLite Catalog DB (ảnh bìa chất lượng cao / Việt hóa)
+            db_results = search_catalog_db(sys_code, q_name, max_results=6)
+            for item in db_results:
+                if item["url"] not in seen_urls:
+                    candidates.append(item)
+                    seen_urls.add(item["url"])
+
+            # 3. Tìm trong Libretro Thumbnails CDN chính thức
+            allow_fetch = len(candidates) < 6
+            libretro_results = search_libretro_boxarts(sys_code, q_name, max_results=8, allow_fetch=allow_fetch)
+            for item in libretro_results:
+                if item["url"] not in seen_urls:
+                    candidates.append(item)
+                    seen_urls.add(item["url"])
 
             self.send_json({
                 "ok": True,
                 "system": sys_code,
                 "query": q_name,
-                "repo": repo_name,
                 "candidates": candidates
             })
             return
@@ -509,26 +936,39 @@ class GameWebHandler(BaseHTTPRequestHandler):
                     self.send_json({"ok": False, "error": "Thiếu dữ liệu cào ảnh"}, 400)
                     return
 
+                if img_url.startswith("//"):
+                    img_url = "https:" + img_url
+
                 base_name = os.path.splitext(fname)[0]
                 target_img_dir = os.path.join(IMGS_DIR, sys_dir)
                 os.makedirs(target_img_dir, exist_ok=True)
                 target_art = os.path.join(target_img_dir, base_name + ".png")
 
-                req = urllib.request.Request(img_url, headers={"User-Agent": "RetroHub-Tool/1.89"})
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    if resp.status == 200:
-                        data = resp.read()
-                        with open(target_art, "wb") as f:
-                            f.write(data)
-                        self.send_json({
-                            "ok": True,
-                            "message": f"Đã tải và gán ảnh bìa thành công cho {fname}!",
-                            "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?t={int(time.time())}"
-                        })
-                        return
-                    else:
-                        self.send_json({"ok": False, "error": f"Không thể tải ảnh: HTTP {resp.status}"}, 400)
-                        return
+                # Xóa các file ảnh định dạng cũ (.jpg, .jpeg, .webp, .bmp) nếu có
+                for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
+                    old_f = os.path.join(target_img_dir, base_name + old_ext)
+                    if os.path.isfile(old_f):
+                        try:
+                            os.remove(old_f)
+                        except Exception:
+                            pass
+
+                success, err_msg = download_image_to_file(img_url, target_art, timeout=15)
+                if success:
+                    try:
+                        os.utime(target_art, None)
+                    except Exception:
+                        pass
+                    now_ts = int(time.time())
+                    self.send_json({
+                        "ok": True,
+                        "message": f"Đã tải và gán ảnh bìa thành công cho {fname}!",
+                        "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
+                    })
+                    return
+                else:
+                    self.send_json({"ok": False, "error": f"Lỗi tải ảnh: {err_msg}"}, 500)
+                    return
             except Exception as e:
                 self.send_json({"ok": False, "error": f"Lỗi tải ảnh: {e}"}, 500)
             return
@@ -545,14 +985,28 @@ class GameWebHandler(BaseHTTPRequestHandler):
             os.makedirs(target_img_dir, exist_ok=True)
             target_art = os.path.join(target_img_dir, base_name + ".png")
 
+            # Xóa các file ảnh định dạng cũ (.jpg, .jpeg, .webp, .bmp) nếu có
+            for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
+                old_f = os.path.join(target_img_dir, base_name + old_ext)
+                if os.path.isfile(old_f):
+                    try:
+                        os.remove(old_f)
+                    except Exception:
+                        pass
+
             try:
                 data = self.rfile.read(content_len)
                 with open(target_art, "wb") as f:
                     f.write(data)
+                try:
+                    os.utime(target_art, None)
+                except Exception:
+                    pass
+                now_ts = int(time.time())
                 self.send_json({
                     "ok": True,
                     "message": "Đã tải lên ảnh bìa thành công!",
-                    "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?t={int(time.time())}"
+                    "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
                 })
             except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
@@ -722,16 +1176,62 @@ HTML_PAGE = r"""<!DOCTYPE html>
         
         .art-box {
             width: 100%;
-            height: 180px;
-            background: #0f172a;
+            height: 200px;
+            background: #090d16;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            cursor: pointer;
         }
-        .art-img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
-        .art-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #475569; }
+        .art-img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            margin: auto;
+            padding: 6px;
+            border-radius: 4px;
+            transition: transform 0.2s ease;
+        }
+        .art-box:hover .art-img {
+            transform: scale(1.03);
+        }
+        .art-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #64748b;
+            text-align: center;
+            user-select: none;
+        }
+        .art-sys-svg {
+            width: 54px;
+            height: 54px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+            transition: transform 0.2s, filter 0.2s;
+        }
+        .art-box:hover .art-sys-svg {
+            transform: scale(1.08);
+            filter: drop-shadow(0 6px 14px rgba(56, 189, 248, 0.25));
+        }
+        .btn-action-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-action-icon svg {
+            flex-shrink: 0;
+            display: inline-block;
+            vertical-align: middle;
+        }
         .art-btn-overlay {
             position: absolute;
             inset: 0;
@@ -792,27 +1292,139 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
         .scrape-candidates {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 10px;
-            max-height: 280px;
+            max-height: 310px;
             overflow-y: auto;
             padding: 4px;
         }
         .scrape-card {
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 6px;
+            padding: 8px 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 6px;
             background: #0f172a;
             cursor: pointer;
-            transition: border-color 0.15s;
+            transition: all 0.15s ease;
+            position: relative;
         }
-        .scrape-card:hover { border-color: var(--primary); }
-        .scrape-img { width: 100%; height: 110px; object-fit: contain; background: #000; border-radius: 4px; }
-        .scrape-label { font-size: 10px; text-align: center; color: var(--text-sub); }
+        .scrape-card:hover {
+            border-color: var(--primary);
+            background: #1e293b;
+            transform: translateY(-2px);
+        }
+        .scrape-img {
+            width: 100%;
+            height: 125px;
+            object-fit: contain;
+            background: #020617;
+            border-radius: 4px;
+        }
+        .scrape-title {
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            color: #e2e8f0;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .scrape-tag {
+            font-size: 10px;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .sys-item-special {
+            background: rgba(245, 158, 11, 0.08);
+            border-left-color: #f59e0b !important;
+            font-weight: 600;
+        }
+        .sys-item-special:hover {
+            background: rgba(245, 158, 11, 0.16);
+        }
+        .sys-item-special.active {
+            background: rgba(245, 158, 11, 0.25) !important;
+            border-left-color: #f59e0b !important;
+        }
+        .count-warn {
+            background: rgba(245, 158, 11, 0.25) !important;
+            color: #fbbf24 !important;
+            font-weight: 700;
+        }
+        .btn-batch {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #fff;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+        }
+        .btn-batch:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        .badge-sys-pill {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: #0b0f19;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+        .batch-log-item {
+            font-size: 11px;
+            padding: 5px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .game-card.is-scraping {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+        .game-card.is-success {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+        }
+        @keyframes pulseScrape {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.18); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        .scrape-spinner {
+            display: inline-block;
+            animation: pulseScrape 0.9s infinite;
+        }
 
         #toast {
             position: fixed;
@@ -867,9 +1479,24 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     <span class="search-icon">🔍</span>
                     <input type="text" id="search-input" placeholder="Tìm game trong hệ..." oninput="filterGames()">
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-green" onclick="openUploadRomModal()">+ Tải ROM lên</button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="file" id="rom-file-input-direct" multiple style="display:none" onchange="handleDirectRomFiles(event)">
+                    <button id="btn-batch-scrape-top" class="btn btn-batch" style="display:none;" onclick="toggleDirectBatchScrape()">⚡ Cào toàn bộ ảnh</button>
+                    <button class="btn btn-green" onclick="handleUploadRomClick()">+ Tải ROM lên</button>
                 </div>
+            </div>
+
+            <div id="batch-inline-bar" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div style="flex:1; min-width:0;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
+                        <span id="batch-inline-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">⚡ Đang tự động cào ảnh...</span>
+                        <span id="batch-inline-pct" style="color:#10b981; font-weight:700;">0%</span>
+                    </div>
+                    <div class="progress-bar-bg" style="height: 8px;">
+                        <div id="batch-inline-fill" class="progress-bar-fill" style="width:0%;"></div>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="stopDirectBatchScrape()">⏹️ Dừng cào</button>
             </div>
 
             <div id="games-container" class="games-grid"></div>
@@ -923,18 +1550,33 @@ HTML_PAGE = r"""<!DOCTYPE html>
     </div>
 
     <div class="modal-backdrop" id="modal-scrape">
-        <div class="modal-box" style="max-width: 640px;">
+        <div class="modal-box" style="max-width: 680px; width: 92vw;">
             <div class="modal-header">
                 <h3>Cào ảnh bìa (Boxart)</h3>
                 <button class="modal-close" onclick="closeModal('modal-scrape')">&times;</button>
             </div>
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="scrape-query" style="flex:1; background:#0f172a; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:6px;" placeholder="Nhập từ khóa tìm kiếm ảnh...">
-                <button class="btn btn-sm" onclick="executeScrapeSearch()">Tìm ảnh</button>
+                <input type="text" id="scrape-query" style="flex:1; background:#0f172a; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:6px; font-size:14px;" placeholder="Nhập từ khóa tìm kiếm ảnh..." onkeydown="if(event.key==='Enter') executeScrapeSearch()">
+                <button class="btn btn-sm" onclick="executeScrapeSearch()">🔍 Tìm ảnh</button>
             </div>
-            <div style="font-size:11px; color:var(--text-sub);">Nguồn: Libretro Thumbnails Official Database & Fast CDN</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-sub); margin-top: 2px;">
+                <span>Nguồn: RetroHub Catalog DB & Libretro Thumbnails CDN</span>
+                <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="openGoogleImageSearch()">🌐 Mở Google Images</button>
+            </div>
             
             <div id="scrape-results" class="scrape-candidates"></div>
+
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 6px; padding: 10px; margin-top: 6px;">
+                <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;">📋 Dán ảnh trực tiếp từ Clipboard (Ctrl+V) hoặc dán link:</div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="scrape-direct-url" style="flex:1; background:#0b0f19; border:1px solid var(--border); color:#fff; padding:6px 10px; border-radius:6px; font-size:12px;" placeholder="Nhấn Ctrl+V để dán ảnh đã copy, hoặc dán link https://..." onkeydown="if(event.key==='Enter') submitDirectArtUrl()">
+                    <button class="btn btn-sm btn-green" onclick="submitDirectArtUrl()">Gán link</button>
+                    <button class="btn btn-sm btn-secondary" onclick="pasteAndApplyArt()" title="Dán ảnh hoặc link từ Clipboard">📋 Dán từ Clipboard</button>
+                </div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
+                    💡 <em>Bạn có thể click chuột phải vào bất kỳ ảnh nào chọn <strong>"Sao chép hình ảnh" (Copy Image)</strong> hoặc chụp màn hình rồi bấm <strong>Ctrl+V</strong> vào đây để gán ngay!</em>
+                </div>
+            </div>
 
             <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
                 <label class="btn btn-sm btn-secondary" style="margin:0; cursor:pointer;">
@@ -946,24 +1588,82 @@ HTML_PAGE = r"""<!DOCTYPE html>
         </div>
     </div>
 
-    <div class="modal-backdrop" id="modal-upload-rom">
-        <div class="modal-box">
+    <div class="modal-backdrop" id="modal-select-upload-sys">
+        <div class="modal-box" style="max-width: 440px; width: 92vw;">
             <div class="modal-header">
-                <h3>Tải ROM lên hệ máy</h3>
-                <button class="modal-close" onclick="closeModal('modal-upload-rom')">&times;</button>
+                <h3>Chọn hệ máy để tải ROM</h3>
+                <button class="modal-close" onclick="closeModal('modal-select-upload-sys')">&times;</button>
             </div>
             <div class="form-group">
-                <label>Hệ máy đích</label>
-                <select id="upload-target-sys"></select>
+                <label>Bạn đang ở tab tổng hợp, vui lòng chọn hệ máy đích:</label>
+                <select id="modal-upload-sys-select"></select>
             </div>
-            <div class="form-group">
-                <label>Chọn tệp ROM (.zip, .gba, .sfc, .chd, .iso...)</label>
-                <input type="file" id="rom-file-input" multiple>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-select-upload-sys')">Hủy</button>
+                <button class="btn btn-green" onclick="confirmSystemAndBrowseFiles()">Chọn tệp ROM ➔</button>
             </div>
-            <div id="upload-progress" style="display:none; font-size:13px; color:#38bdf8; text-align:center;">Đang tải lên...</div>
-            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
-                <button class="btn btn-secondary" onclick="closeModal('modal-upload-rom')">Đóng</button>
-                <button class="btn btn-green" onclick="submitUploadRom()">Bắt đầu tải</button>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-upload-progress">
+        <div class="modal-box" style="max-width: 560px; width: 92vw;">
+            <div class="modal-header">
+                <h3 id="upload-prog-title">📤 Đang tải ROM lên thiết bị</h3>
+                <button class="modal-close" onclick="cancelOrCloseUpload()">&times;</button>
+            </div>
+
+            <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 12px;" id="upload-prog-sub">
+                Hệ máy đích: <strong id="upload-target-name" style="color:#38bdf8;"></strong>
+            </div>
+
+            <div style="background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
+                    <span id="upload-current-fname" style="color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;">Chuẩn bị tải lên...</span>
+                    <span id="upload-current-pct" style="color:#38bdf8; font-weight:700;">0%</span>
+                </div>
+                <div class="progress-bar-bg" style="height: 12px; margin-bottom: 6px;">
+                    <div id="upload-file-progress-bar" class="progress-bar-fill" style="width:0%;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-sub);">
+                    <span id="upload-file-size-info">0 / 0 MB</span>
+                    <span id="upload-batch-count-info">Tệp 1 / 1</span>
+                </div>
+            </div>
+
+            <div id="upload-overall-box" style="margin-bottom: 12px; display:none;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:600; margin-bottom:4px;">
+                    <span style="color:var(--text-sub);">Tổng tiến độ các tệp:</span>
+                    <span id="upload-overall-pct" style="color:#10b981; font-weight:700;">0%</span>
+                </div>
+                <div class="progress-bar-bg" style="height: 6px;">
+                    <div id="upload-overall-progress-bar" class="progress-bar-fill" style="width:0%; background: #10b981;"></div>
+                </div>
+            </div>
+
+            <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Danh sách tệp tải lên:</div>
+            <div id="upload-file-list" style="max-height: 160px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 6px; padding: 4px;"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+                <div style="font-size: 11px; color: #94a3b8;" id="upload-status-footer">
+                    Vui lòng không tắt trình duyệt khi đang tải file lớn.
+                </div>
+                <button class="btn btn-secondary" id="btn-upload-cancel" onclick="cancelOrCloseUpload()">Hủy bỏ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-preview-art" onclick="if(event.target===this) closeModal('modal-preview-art')">
+        <div class="modal-box" style="max-width: 600px; width: auto; max-height: 92vh; padding: 14px; background: rgba(15, 23, 42, 0.98); border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
+                <h4 id="preview-art-title" style="font-size: 13px; font-weight:600; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%;">Boxart</h4>
+                <button class="modal-close" onclick="closeModal('modal-preview-art')">&times;</button>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; max-height: 75vh; overflow: hidden; border-radius: 6px; background: #070a12; padding: 4px;">
+                <img id="preview-art-img" src="" alt="Full Boxart" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 4px;">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 10px;">
+                <a id="preview-art-link" href="" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 11px;">Mở ảnh gốc trong tab mới ↗</a>
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-preview-art')">Đóng</button>
             </div>
         </div>
     </div>
@@ -975,6 +1675,123 @@ HTML_PAGE = r"""<!DOCTYPE html>
         let currentSystem = null;
         let currentGames = [];
         let selectedGame = null;
+        let selectedGameSystem = null;
+        let selectedCardIdx = null;
+        let noArtTotalCount = 0;
+
+        const ICONS = {
+            palette: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.992 6.844 17.5 2 12 2z"></path></svg>`,
+            edit: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+            move: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><polyline points="9 14 12 11 15 14"></polyline></svg>`,
+            trash: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+            spinner: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="scrape-spinner"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`,
+            alert: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+        };
+
+        function getPlaceholderSvg(sys) {
+            const s = (sys || '').toUpperCase();
+            if (['GBA', 'GBC', 'GB', 'WS', 'WSC', 'NGP', 'GG'].includes(s)) {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <rect x="14" y="6" width="36" height="52" rx="6" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <rect x="19" y="12" width="26" height="20" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                    <rect x="22" y="14" width="20" height="16" rx="1" fill="#1e293b" opacity="0.6"/>
+                    <path d="M21 41h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="42" cy="39" r="2.2" fill="#ef4444"/>
+                    <circle cx="37" cy="44" r="2.2" fill="#ef4444"/>
+                    <line x1="38" y1="51" x2="42" y2="48" stroke="#475569" stroke-width="1.5"/>
+                    <line x1="41" y1="53" x2="45" y2="50" stroke="#475569" stroke-width="1.5"/>
+                </svg>`;
+            }
+            if (['FC', 'NES'].includes(s)) {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <rect x="8" y="18" width="48" height="28" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <rect x="12" y="22" width="40" height="20" rx="1" fill="#0f172a"/>
+                    <path d="M16 32h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="square"/>
+                    <rect x="27" y="33" width="3.5" height="1.5" fill="#ef4444"/>
+                    <rect x="32" y="33" width="3.5" height="1.5" fill="#ef4444"/>
+                    <circle cx="42" cy="32" r="2.5" fill="#ef4444"/>
+                    <circle cx="48" cy="32" r="2.5" fill="#ef4444"/>
+                </svg>`;
+            }
+            if (['SFC', 'SNES'].includes(s)) {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <rect x="8" y="20" width="48" height="24" rx="12" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <path d="M15 32h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="27" y1="34" x2="30" y2="31" stroke="#64748b" stroke-width="1.8"/>
+                    <line x1="32" y1="34" x2="35" y2="31" stroke="#64748b" stroke-width="1.8"/>
+                    <circle cx="46" cy="27" r="2" fill="#3b82f6"/>
+                    <circle cx="41" cy="32" r="2" fill="#eab308"/>
+                    <circle cx="51" cy="32" r="2" fill="#ef4444"/>
+                    <circle cx="46" cy="37" r="2" fill="#22c55e"/>
+                </svg>`;
+            }
+            if (['PS', 'PS1', 'PSP'].includes(s)) {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <path d="M14 20c-5 0-8 4-8 12 0 7 3 14 7 14 3 0 4-5 6-9h16c2 4 3 9 6 9 4 0 7-7 7-14 0-8-3-12-8-12-3 0-5 2-8 2h-4c-3 0-5-2-8-2z" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <circle cx="15" cy="28" r="1.5" fill="#94a3b8"/><circle cx="11" cy="32" r="1.5" fill="#94a3b8"/>
+                    <circle cx="19" cy="32" r="1.5" fill="#94a3b8"/><circle cx="15" cy="36" r="1.5" fill="#94a3b8"/>
+                    <circle cx="49" cy="28" r="1.5" fill="#10b981"/><circle cx="45" cy="32" r="1.5" fill="#ec4899"/>
+                    <circle cx="53" cy="32" r="1.5" fill="#ef4444"/><circle cx="49" cy="36" r="1.5" fill="#3b82f6"/>
+                    <circle cx="25" cy="38" r="3.5" fill="#0f172a" stroke="#334155"/>
+                    <circle cx="39" cy="38" r="3.5" fill="#0f172a" stroke="#334155"/>
+                </svg>`;
+            }
+            if (['MAME', 'ARCADE', 'CPS1', 'CPS2', 'CPS3', 'NEOGEO'].includes(s)) {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <path d="M14 6h36l-4 44H18L14 6z" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <path d="M14 6h36v8H14z" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+                    <line x1="20" y1="10" x2="44" y2="10" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="18" y="17" width="28" height="18" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                    <polygon points="15,41 49,41 51,54 13,54" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+                    <line x1="23" y1="46" x2="23" y2="50" stroke="#94a3b8" stroke-width="2"/>
+                    <circle cx="23" cy="45" r="2.8" fill="#ef4444"/>
+                    <circle cx="33" cy="46" r="1.4" fill="#3b82f6"/><circle cx="38" cy="46" r="1.4" fill="#ef4444"/><circle cx="43" cy="46" r="1.4" fill="#eab308"/>
+                    <circle cx="33" cy="50" r="1.4" fill="#3b82f6"/><circle cx="38" cy="50" r="1.4" fill="#ef4444"/><circle cx="43" cy="50" r="1.4" fill="#eab308"/>
+                </svg>`;
+            }
+            if (['MD', 'GENESIS', 'SEGACD', 'MS', 'SS', 'DC'].includes(s)) {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <path d="M8 26c0-9 8-16 24-16s24 7 24 16c0 10-6 16-12 16-5 0-7-4-12-4s-7 4-12 4c-6 0-12-6-12-16z" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <circle cx="19" cy="27" r="7" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                    <path d="M15 27h8m-4-4v8" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="40" cy="31" r="2.2" fill="#64748b"/>
+                    <circle cx="45" cy="28" r="2.2" fill="#64748b"/>
+                    <circle cx="49" cy="24" r="2.2" fill="#64748b"/>
+                </svg>`;
+            }
+            if (s === 'NDS') {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <rect x="16" y="8" width="32" height="22" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <rect x="21" y="12" width="22" height="14" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                    <line x1="16" y1="32" x2="48" y2="32" stroke="#334155" stroke-width="2"/>
+                    <rect x="16" y="34" width="32" height="22" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <rect x="21" y="38" width="22" height="14" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                </svg>`;
+            }
+            if (s === 'JAVA') {
+                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                    <rect x="18" y="6" width="28" height="52" rx="5" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <line x1="28" y1="10" x2="36" y2="10" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+                    <rect x="22" y="14" width="20" height="17" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+                    <rect x="28" y="34" width="8" height="6" rx="2" fill="#334155" stroke="#64748b" stroke-width="1"/>
+                    <circle cx="32" cy="37" r="1" fill="#38bdf8"/>
+                    <circle cx="24" cy="44" r="1" fill="#64748b"/><circle cx="32" cy="44" r="1" fill="#64748b"/><circle cx="40" cy="44" r="1" fill="#64748b"/>
+                    <circle cx="24" cy="49" r="1" fill="#64748b"/><circle cx="32" cy="49" r="1" fill="#64748b"/><circle cx="40" cy="49" r="1" fill="#64748b"/>
+                    <circle cx="24" cy="53" r="1" fill="#64748b"/><circle cx="32" cy="53" r="1" fill="#64748b"/><circle cx="40" cy="53" r="1" fill="#64748b"/>
+                </svg>`;
+            }
+            return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
+                <rect x="8" y="16" width="48" height="30" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                <rect x="12" y="20" width="40" height="22" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+                <path d="M16 31h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                <rect x="28" y="33" width="3" height="1.5" rx="0.5" fill="#64748b"/>
+                <rect x="33" y="33" width="3" height="1.5" rx="0.5" fill="#64748b"/>
+                <circle cx="44" cy="27" r="1.8" fill="#ef4444"/>
+                <circle cx="40" cy="31" r="1.8" fill="#3b82f6"/>
+                <circle cx="48" cy="31" r="1.8" fill="#22c55e"/>
+                <circle cx="44" cy="35" r="1.8" fill="#eab308"/>
+            </svg>`;
+        }
 
         function showToast(msg, isErr=false) {
             const t = document.getElementById("toast");
@@ -986,6 +1803,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
         function closeModal(id) {
             document.getElementById(id).style.display = "none";
+        }
+
+        function openArtPreview(url, title) {
+            if (!url) return;
+            document.getElementById("preview-art-img").src = url;
+            document.getElementById("preview-art-title").innerText = title || "Xem Boxart";
+            document.getElementById("preview-art-link").href = url;
+            document.getElementById("modal-preview-art").style.display = "flex";
         }
 
         async function loadStatus() {
@@ -1000,16 +1825,52 @@ HTML_PAGE = r"""<!DOCTYPE html>
             }
         }
 
+        function updateNoArtBadge() {
+            const badgeEl = document.getElementById("no-art-count-badge");
+            if (badgeEl) {
+                badgeEl.innerText = noArtTotalCount;
+                if (noArtTotalCount <= 0) {
+                    badgeEl.classList.remove("count-warn");
+                } else {
+                    badgeEl.classList.add("count-warn");
+                }
+            }
+            const topBtn = document.getElementById("btn-batch-scrape-top");
+            if (topBtn && !isBatchScraping) {
+                if (currentSystem === '__no_art__') {
+                    if (noArtTotalCount > 0) {
+                        topBtn.style.display = "inline-flex";
+                        topBtn.innerText = `⚡ Cào toàn bộ (${noArtTotalCount})`;
+                        topBtn.className = "btn btn-batch";
+                    } else {
+                        topBtn.style.display = "none";
+                    }
+                } else {
+                    const remainingInSys = currentGames.filter(g => !g.has_art).length;
+                    if (remainingInSys > 0) {
+                        topBtn.style.display = "inline-flex";
+                        topBtn.innerText = `⚡ Cào toàn bộ (${remainingInSys})`;
+                        topBtn.className = "btn btn-batch";
+                    } else {
+                        topBtn.style.display = "none";
+                    }
+                }
+            }
+        }
+
         async function loadSystems(refresh=false) {
             try {
-                const res = await fetch("/api/systems");
+                const res = await fetch("/api/systems?_t=" + Date.now());
                 const data = await res.json();
                 if (data.ok) {
                     allSystems = data.systems;
+                    noArtTotalCount = data.no_art_count || 0;
                     renderSystems();
-                    if (!currentSystem && allSystems.length > 0) {
-                        selectSystem(allSystems[0].dir);
-                    } else if (refresh && currentSystem) {
+                    if (!currentSystem) {
+                        if (allSystems.length > 0) {
+                            selectSystem(allSystems[0].dir);
+                        }
+                    } else if (refresh) {
                         selectSystem(currentSystem);
                     }
                 }
@@ -1021,12 +1882,19 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
         function renderSystems() {
             const listEl = document.getElementById("systems-list");
-            listEl.innerHTML = allSystems.map(s => `
+            let html = `
+                <div class="sys-item sys-item-special ${currentSystem === '__no_art__' ? 'active' : ''}" onclick="selectSystem('__no_art__')">
+                    <span>⚠️ Chưa có Boxart</span>
+                    <span id="no-art-count-badge" class="count ${noArtTotalCount > 0 ? 'count-warn' : ''}">${noArtTotalCount}</span>
+                </div>
+            `;
+            html += allSystems.map(s => `
                 <div class="sys-item ${currentSystem === s.dir ? 'active' : ''}" onclick="selectSystem('${s.dir}')">
                     <span>${s.name}</span>
                     <span class="count">${s.count}</span>
                 </div>
             `).join('');
+            listEl.innerHTML = html;
         }
 
         async function selectSystem(sysDir) {
@@ -1037,12 +1905,21 @@ HTML_PAGE = r"""<!DOCTYPE html>
             cont.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-sub);">Đang tải danh sách game...</div>`;
             document.getElementById("empty-state").style.display = "none";
 
+            const inlineBar = document.getElementById("batch-inline-bar");
+            if (inlineBar && !isBatchScraping) {
+                inlineBar.style.display = "none";
+            }
+
             try {
-                const res = await fetch(`/api/games?system=${encodeURIComponent(sysDir)}`);
+                const res = await fetch(`/api/games?system=${encodeURIComponent(sysDir)}&_t=${Date.now()}`);
                 const data = await res.json();
                 if (data.ok) {
                     currentGames = data.games;
+                    if (sysDir === "__no_art__") {
+                        noArtTotalCount = currentGames.length;
+                    }
                     renderGames(currentGames);
+                    updateNoArtBadge();
                 }
             } catch (e) {
                 showToast("Lỗi tải danh sách game!", true);
@@ -1058,33 +1935,43 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 return;
             }
             emptyEl.style.display = "none";
-            cont.innerHTML = games.map(g => `
-                <div class="game-card">
-                    <div class="art-box">
-                        ${g.has_art ? `<img class="art-img" src="${g.art_url}" loading="lazy" alt="${g.name}">` : `
-                            <div class="art-placeholder">
-                                <div style="font-size:28px;">🎮</div>
-                                <span style="font-size:11px;">Chưa có ảnh bìa</span>
+            const isNoArtView = currentSystem === "__no_art__";
+            cont.innerHTML = games.map((g, idx) => {
+                const gSys = g.system || currentSystem;
+                return `
+                <div class="game-card" id="game-card-${idx}">
+                    <div class="art-box" id="art-box-${idx}">
+                        ${g.has_art ? `<img class="art-img" src="${g.art_url}" loading="lazy" alt="${g.name}" onclick="openArtPreview('${g.art_url}', '${escapeJs(g.name)}')" title="Nhấp để xem ảnh đầy đủ">` : `
+                            <div class="art-placeholder" onclick="openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})" title="Nhấp để cào ảnh">
+                                ${getPlaceholderSvg(gSys)}
+                                <span style="font-size:11px; font-weight:500;">Chưa có ảnh bìa</span>
                             </div>
                         `}
                         <div class="art-btn-overlay">
-                            <button class="btn btn-sm btn-green" onclick="openScrapeModal('${escapeJs(g.filename)}')">🎨 Cào Art</button>
+                            <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
                         </div>
                     </div>
                     <div class="game-info">
-                        <div class="game-title" title="${g.filename}">${g.name}</div>
-                        <div class="game-meta">
-                            <span>${g.ext.toUpperCase()}</span>
-                            <span>${g.size_str}</span>
+                        <div>
+                            <div class="game-title" title="${g.filename}">${g.name}</div>
+                            ${isNoArtView ? `
+                                <div style="margin-top: 4px;">
+                                    <span class="badge-sys-pill" title="${g.system_name || gSys}">${g.system_name || gSys}</span>
+                                </div>
+                            ` : ''}
+                            <div class="game-meta" style="margin-top: 6px;">
+                                <span>${g.ext.toUpperCase()}</span>
+                                <span>${g.size_str}</span>
+                            </div>
                         </div>
                         <div class="game-actions">
-                            <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openRenameModal('${escapeJs(g.filename)}')">✏️ Sửa</button>
-                            <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openMoveModal('${escapeJs(g.filename)}')">📦 Chuyển</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteGame('${escapeJs(g.filename)}')">🗑️</button>
+                            <button class="btn btn-secondary btn-sm btn-action-icon" style="flex:1" onclick="openRenameModal('${escapeJs(g.filename)}', '${gSys}')">${ICONS.edit} <span>Sửa</span></button>
+                            <button class="btn btn-secondary btn-sm btn-action-icon" style="flex:1" onclick="openMoveModal('${escapeJs(g.filename)}', '${gSys}')">${ICONS.move} <span>Chuyển</span></button>
+                            <button class="btn btn-danger btn-sm btn-action-icon" onclick="deleteGame('${escapeJs(g.filename)}', '${gSys}')" title="Xóa game">${ICONS.trash}</button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function filterGames() {
@@ -1101,8 +1988,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
             return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
         }
 
-        function openRenameModal(filename) {
+        function openRenameModal(filename, gameSystem) {
             selectedGame = filename;
+            selectedGameSystem = gameSystem || currentSystem;
             document.getElementById("rename-old").value = filename;
             document.getElementById("rename-new").value = filename;
             document.getElementById("modal-rename").style.display = "flex";
@@ -1115,12 +2003,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 closeModal("modal-rename");
                 return;
             }
+            const targetSys = selectedGameSystem || currentSystem;
             try {
                 const res = await fetch("/api/rename", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        system: currentSystem,
+                        system: targetSys,
                         old_filename: selectedGame,
                         new_filename: newName
                     })
@@ -1129,7 +2018,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 if (data.ok) {
                     showToast(data.message);
                     closeModal("modal-rename");
-                    selectSystem(currentSystem);
+                    if (currentSystem === "__no_art__") {
+                        loadSystems(true);
+                    } else {
+                        selectSystem(currentSystem);
+                    }
                 } else {
                     showToast(data.error, true);
                 }
@@ -1138,11 +2031,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
             }
         }
 
-        function openMoveModal(filename) {
+        function openMoveModal(filename, gameSystem) {
             selectedGame = filename;
+            selectedGameSystem = gameSystem || currentSystem;
             document.getElementById("move-game").value = filename;
             const sel = document.getElementById("move-target-sys");
-            sel.innerHTML = allSystems.filter(s => s.dir !== currentSystem).map(s => `
+            sel.innerHTML = allSystems.filter(s => s.dir !== selectedGameSystem).map(s => `
                 <option value="${s.dir}">${s.name} (${s.dir})</option>
             `).join('');
             document.getElementById("modal-move").style.display = "flex";
@@ -1151,12 +2045,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
         async function submitMove() {
             const targetSys = document.getElementById("move-target-sys").value;
             if (!targetSys) return;
+            const fromSys = selectedGameSystem || currentSystem;
             try {
                 const res = await fetch("/api/move", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        from_system: currentSystem,
+                        from_system: fromSys,
                         to_system: targetSys,
                         filename: selectedGame
                     })
@@ -1174,14 +2069,15 @@ HTML_PAGE = r"""<!DOCTYPE html>
             }
         }
 
-        async function deleteGame(filename) {
+        async function deleteGame(filename, gameSystem) {
             if (!confirm(`Bạn có chắc chắn muốn xóa game "${filename}" khỏi thẻ nhớ không?`)) return;
+            const targetSys = gameSystem || selectedGameSystem || currentSystem;
             try {
                 const res = await fetch("/api/delete", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        system: currentSystem,
+                        system: targetSys,
                         filename: filename,
                         delete_art: true
                     })
@@ -1198,46 +2094,244 @@ HTML_PAGE = r"""<!DOCTYPE html>
             }
         }
 
-        function openScrapeModal(filename) {
+        function cleanGameQuery(filename) {
+            let base = filename.replace(/\.[^/.]+$/, "");
+            base = base.replace(/[_\.\+]+/g, " ");
+            base = base.replace(/\s*[\(\[][^\)\]]*[\)\]]\s*/g, " ");
+            base = base.replace(/\b(EUR|USA|JAP|JPN|PAL|NTSC|MULTi\d*|Goomba|Razor1911|Dump)\b/gi, " ");
+            base = base.replace(/[-–—]\s*[a-zA-Z0-9]+$/g, " ");
+            base = base.replace(/\b(PSP|PS1|PS2|GBA|NDS|SNES|NES|MD|GENESIS)\b/gi, " ");
+            base = base.replace(/[-–—]+/g, " ");
+            return base.replace(/\s+/g, " ").trim();
+        }
+
+        function openScrapeModal(filename, gameSystem, cardIdx=null) {
             selectedGame = filename;
-            const base = filename.replace(/\.[^/.]+$/, "");
-            document.getElementById("scrape-query").value = base;
+            selectedGameSystem = gameSystem || currentSystem;
+            selectedCardIdx = cardIdx;
+            const cleanName = cleanGameQuery(filename);
+            document.getElementById("scrape-query").value = cleanName;
+            document.getElementById("scrape-direct-url").value = "";
             document.getElementById("scrape-results").innerHTML = "";
             document.getElementById("modal-scrape").style.display = "flex";
             executeScrapeSearch();
         }
 
+        function updateCardArtSuccess(idx, filename, gSys, newArtUrl) {
+            if (idx === null || idx === undefined) return;
+            const cardEl = document.getElementById(`game-card-${idx}`);
+            const artBoxEl = document.getElementById(`art-box-${idx}`);
+            if (artBoxEl) {
+                artBoxEl.innerHTML = `
+                    <img class="art-img" src="${newArtUrl}" loading="lazy" alt="${filename}" onclick="openArtPreview('${newArtUrl}', '${escapeJs(filename)}')" title="Nhấp để xem ảnh đầy đủ">
+                    <div class="art-btn-overlay">
+                        <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
+                    </div>
+                `;
+            }
+            if (cardEl) {
+                cardEl.classList.remove("is-scraping");
+                cardEl.classList.add("is-success");
+            }
+            if (currentGames[idx]) {
+                currentGames[idx].has_art = true;
+                currentGames[idx].art_url = newArtUrl;
+            }
+            if (noArtTotalCount > 0) {
+                noArtTotalCount--;
+                updateNoArtBadge();
+            }
+        }
+
+        function openGoogleImageSearch() {
+            const q = document.getElementById("scrape-query").value.trim();
+            const targetSys = selectedGameSystem || currentSystem || '';
+            const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q + ' ' + targetSys + ' box art cover')}`;
+            window.open(url, '_blank');
+        }
+
+        async function submitDirectArtUrl() {
+            const url = document.getElementById("scrape-direct-url").value.trim();
+            if (!url) {
+                showToast("Vui lòng dán đường dẫn ảnh hợp lệ!", true);
+                return;
+            }
+            await applyScrapedArt(url);
+        }
+
+        async function uploadBlobArt(fileOrBlob) {
+            const targetSys = selectedGameSystem || currentSystem;
+            try {
+                showToast("Đang tải ảnh từ Clipboard lên máy...");
+                const res = await fetch(`/api/upload_art?system=${encodeURIComponent(targetSys)}&filename=${encodeURIComponent(selectedGame)}`, {
+                    method: "POST",
+                    headers: {"Content-Type": fileOrBlob.type || "image/png"},
+                    body: fileOrBlob
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || "Đã lưu ảnh bìa từ Clipboard thành công!");
+                    closeModal("modal-scrape");
+                    const newArtUrl = `/art/${encodeURIComponent(targetSys)}/${encodeURIComponent(selectedGame.replace(/\.[^/.]+$/, "") + '.png')}?v=${Date.now()}`;
+                    if (selectedCardIdx !== null) {
+                        updateCardArtSuccess(selectedCardIdx, selectedGame, targetSys, newArtUrl);
+                    } else {
+                        if (currentSystem === "__no_art__") {
+                            loadSystems(true);
+                        } else {
+                            selectSystem(currentSystem);
+                        }
+                    }
+                } else {
+                    showToast(data.error || "Lỗi tải ảnh lên!", true);
+                }
+            } catch (err) {
+                showToast("Lỗi khi tải ảnh từ Clipboard lên máy!", true);
+            }
+        }
+
+        async function pasteAndApplyArt() {
+            try {
+                if (navigator.clipboard && navigator.clipboard.read) {
+                    try {
+                        const items = await navigator.clipboard.read();
+                        for (const item of items) {
+                            for (const type of item.types) {
+                                if (type.startsWith("image/")) {
+                                    const blob = await item.getType(type);
+                                    showToast("Đã đọc được ảnh từ Clipboard! Đang lưu...");
+                                    await uploadBlobArt(blob);
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (readErr) {}
+                }
+
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    try {
+                        const text = await navigator.clipboard.readText();
+                        const trimmed = (text || "").trim();
+                        if (trimmed && (trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
+                            document.getElementById("scrape-direct-url").value = trimmed;
+                            showToast("Đã lấy link ảnh từ Clipboard, đang tải...");
+                            await applyScrapedArt(trimmed);
+                            return;
+                        }
+                    } catch (textErr) {}
+                }
+
+                const inputEl = document.getElementById("scrape-direct-url");
+                if (inputEl) {
+                    inputEl.focus();
+                    inputEl.select();
+                }
+                showToast("Nhấn phím Ctrl+V ngay trên bàn phím để dán trực tiếp ảnh vào đây!", false);
+            } catch (e) {
+                showToast("Nhấn phím Ctrl+V để dán trực tiếp ảnh từ Clipboard!", false);
+            }
+        }
+
+        window.addEventListener("paste", async (e) => {
+            const modal = document.getElementById("modal-scrape");
+            if (modal && modal.style.display === "flex") {
+                const activeEl = document.activeElement;
+                if (activeEl && activeEl.id === "scrape-query") return;
+
+                const clipboardData = e.clipboardData || window.clipboardData;
+                if (!clipboardData) return;
+
+                const items = clipboardData.items;
+                if (items && items.length > 0) {
+                    for (let i = 0; i < items.length; i++) {
+                        if (items[i].type && items[i].type.startsWith("image/")) {
+                            const file = items[i].getAsFile();
+                            if (file) {
+                                e.preventDefault();
+                                showToast("Đã nhận ảnh trực tiếp từ Clipboard! Đang lưu...");
+                                await uploadBlobArt(file);
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                const text = clipboardData.getData("text")?.trim() || "";
+                if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
+                    e.preventDefault();
+                    document.getElementById("scrape-direct-url").value = text;
+                    showToast("Đã nhận link ảnh từ Clipboard! Đang tải...");
+                    applyScrapedArt(text);
+                }
+            }
+        });
+
+        window.addEventListener("dragover", (e) => {
+            const modal = document.getElementById("modal-scrape");
+            if (modal && modal.style.display === "flex") {
+                e.preventDefault();
+            }
+        });
+        window.addEventListener("drop", async (e) => {
+            const modal = document.getElementById("modal-scrape");
+            if (modal && modal.style.display === "flex") {
+                e.preventDefault();
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type && file.type.startsWith("image/")) {
+                        showToast("Đã nhận ảnh kéo thả! Đang lưu...");
+                        await uploadBlobArt(file);
+                    }
+                }
+            }
+        });
+
         async function executeScrapeSearch() {
             const q = document.getElementById("scrape-query").value.trim();
             if (!q) return;
+            const targetSys = selectedGameSystem || currentSystem;
             const resBox = document.getElementById("scrape-results");
-            resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-sub);">Đang tìm ảnh bìa...</div>`;
+            resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--text-sub);">⏳ Đang tìm ảnh trong kho dữ liệu...</div>`;
 
             try {
-                const res = await fetch(`/api/scrape/search?system=${encodeURIComponent(currentSystem)}&query=${encodeURIComponent(q)}`);
+                const res = await fetch(`/api/scrape/search?system=${encodeURIComponent(targetSys)}&query=${encodeURIComponent(q)}`);
                 const data = await res.json();
-                if (data.ok && data.candidates.length > 0) {
+                if (data.ok && data.candidates && data.candidates.length > 0) {
                     resBox.innerHTML = data.candidates.map((c, idx) => `
                         <div class="scrape-card" onclick="applyScrapedArt('${escapeJs(c.url)}')">
-                            <img class="scrape-img" src="${c.url}" onerror="this.parentElement.style.display='none'" alt="${c.type}">
-                            <span class="scrape-label">${c.type}</span>
+                            <img class="scrape-img" src="${c.url}" loading="lazy" onerror="handleScrapeImgError(this)" alt="${c.title}">
+                            <span class="scrape-title" title="${c.title}">${c.title}</span>
+                            <span class="scrape-tag">${c.type}</span>
                         </div>
                     `).join('');
                 } else {
-                    resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-sub);">Không tìm thấy ảnh trên CDN cho từ khóa này. Bạn có thể bấm "Tải ảnh từ máy" bên dưới!</div>`;
+                    resBox.innerHTML = `
+                        <div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--text-sub);">
+                            <div style="margin-bottom:8px; font-size:13px;">⚠️ Chưa tìm thấy ảnh phù hợp với từ khóa này.</div>
+                            <div style="font-size:12px;">Bạn có thể chỉnh từ khóa ngắn gọn hơn, bấm <strong>"Mở Google Images"</strong> hoặc <strong>"Tải ảnh từ máy"</strong>!</div>
+                        </div>
+                    `;
                 }
             } catch (e) {
-                resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--danger);">Lỗi tìm ảnh bìa!</div>`;
+                resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--danger);">Lỗi khi tìm ảnh bìa! Vui lòng thử lại.</div>`;
+            }
+        }
+
+        function handleScrapeImgError(img) {
+            const card = img.closest('.scrape-card');
+            if (card) {
+                card.remove();
             }
         }
 
         async function applyScrapedArt(url) {
+            const targetSys = selectedGameSystem || currentSystem;
             try {
                 const res = await fetch("/api/scrape/apply", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        system: currentSystem,
+                        system: targetSys,
                         filename: selectedGame,
                         image_url: url
                     })
@@ -1246,7 +2340,16 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 if (data.ok) {
                     showToast(data.message);
                     closeModal("modal-scrape");
-                    selectSystem(currentSystem);
+                    const newArtUrl = `/art/${encodeURIComponent(targetSys)}/${encodeURIComponent(selectedGame.replace(/\.[^/.]+$/, "") + '.png')}?v=${Date.now()}`;
+                    if (selectedCardIdx !== null) {
+                        updateCardArtSuccess(selectedCardIdx, selectedGame, targetSys, newArtUrl);
+                    } else {
+                        if (currentSystem === "__no_art__") {
+                            loadSystems(true);
+                        } else {
+                            selectSystem(currentSystem);
+                        }
+                    }
                 } else {
                     showToast(data.error, true);
                 }
@@ -1258,8 +2361,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
         async function uploadCustomArt(e) {
             const file = e.target.files[0];
             if (!file) return;
+            const targetSys = selectedGameSystem || currentSystem;
             try {
-                const res = await fetch(`/api/upload_art?system=${encodeURIComponent(currentSystem)}&filename=${encodeURIComponent(selectedGame)}`, {
+                const res = await fetch(`/api/upload_art?system=${encodeURIComponent(targetSys)}&filename=${encodeURIComponent(selectedGame)}`, {
                     method: "POST",
                     headers: {"Content-Type": file.type || "application/octet-stream"},
                     body: file
@@ -1268,7 +2372,16 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 if (data.ok) {
                     showToast(data.message);
                     closeModal("modal-scrape");
-                    selectSystem(currentSystem);
+                    const newArtUrl = `/art/${encodeURIComponent(targetSys)}/${encodeURIComponent(selectedGame.replace(/\.[^/.]+$/, "") + '.png')}?v=${Date.now()}`;
+                    if (selectedCardIdx !== null) {
+                        updateCardArtSuccess(selectedCardIdx, selectedGame, targetSys, newArtUrl);
+                    } else {
+                        if (currentSystem === "__no_art__") {
+                            loadSystems(true);
+                        } else {
+                            selectSystem(currentSystem);
+                        }
+                    }
                 } else {
                     showToast(data.error, true);
                 }
@@ -1277,42 +2390,377 @@ HTML_PAGE = r"""<!DOCTYPE html>
             }
         }
 
-        function openUploadRomModal() {
-            const sel = document.getElementById("upload-target-sys");
-            sel.innerHTML = allSystems.map(s => `
-                <option value="${s.dir}" ${s.dir === currentSystem ? 'selected' : ''}>${s.name} (${s.dir})</option>
-            `).join('');
-            document.getElementById("rom-file-input").value = "";
-            document.getElementById("upload-progress").style.display = "none";
-            document.getElementById("modal-upload-rom").style.display = "flex";
-        }
+        // ==========================================
+        // TÍNH NĂNG CÀO TOÀN BỘ TRỰC TIẾP (KHÔNG MODAL - UPDATE LIVE LIST)
+        // ==========================================
+        let isBatchScraping = false;
+        let stopBatchRequested = false;
 
-        async function submitUploadRom() {
-            const targetSys = document.getElementById("upload-target-sys").value;
-            const files = document.getElementById("rom-file-input").files;
-            if (!targetSys || files.length === 0) {
-                alert("Vui lòng chọn ít nhất một file ROM!");
+        async function toggleDirectBatchScrape() {
+            if (isBatchScraping) {
+                stopDirectBatchScrape();
                 return;
             }
-            const prog = document.getElementById("upload-progress");
-            prog.style.display = "block";
+            startDirectBatchScrape();
+        }
 
-            for (let i = 0; i < files.length; i++) {
-                const f = files[i];
-                prog.innerText = `Đang tải lên (${i+1}/${files.length}): ${f.name}...`;
-                try {
-                    await fetch(`/api/upload_rom?system=${encodeURIComponent(targetSys)}&filename=${encodeURIComponent(f.name)}`, {
-                        method: "POST",
-                        headers: {"Content-Type": "application/octet-stream"},
-                        body: f
-                    });
-                } catch (e) {
-                    showToast(`Lỗi tải lên ${f.name}`, true);
+        function stopDirectBatchScrape() {
+            if (isBatchScraping) {
+                stopBatchRequested = true;
+                const statusEl = document.getElementById("batch-inline-status");
+                if (statusEl) statusEl.innerText = "⏸️ Đang dừng cào...";
+                const topBtn = document.getElementById("btn-batch-scrape-top");
+                if (topBtn) topBtn.innerText = "Đang dừng...";
+            }
+        }
+
+        async function startDirectBatchScrape() {
+            const targets = [];
+            for (let i = 0; i < currentGames.length; i++) {
+                if (!currentGames[i].has_art) {
+                    targets.push({ game: currentGames[i], index: i });
                 }
             }
-            showToast(`Đã tải lên ${files.length} ROM thành công!`);
-            closeModal("modal-upload-rom");
+
+            if (targets.length === 0) {
+                showToast("Tất cả game trong danh sách hiện tại đều đã có ảnh bìa!");
+                return;
+            }
+
+            isBatchScraping = true;
+            stopBatchRequested = false;
+
+            const inlineBar = document.getElementById("batch-inline-bar");
+            inlineBar.style.display = "flex";
+            const statusText = document.getElementById("batch-inline-status");
+            const pctText = document.getElementById("batch-inline-pct");
+            const fillBar = document.getElementById("batch-inline-fill");
+            const topBtn = document.getElementById("btn-batch-scrape-top");
+
+            if (topBtn) {
+                topBtn.innerText = `⏹️ Dừng cào (${targets.length})`;
+                topBtn.className = "btn btn-danger";
+            }
+
+            let successCount = 0;
+            const total = targets.length;
+
+            for (let t = 0; t < total; t++) {
+                if (stopBatchRequested) break;
+
+                const { game: g, index: idx } = targets[t];
+                const gSys = g.system || currentSystem;
+                const gSysName = g.system_name || gSys;
+                const cleanTitle = cleanGameQuery(g.filename);
+
+                // Update tiến độ inline bar
+                const pct = Math.round((t / total) * 100);
+                pctText.innerText = `${pct}%`;
+                fillBar.style.width = `${pct}%`;
+                statusText.innerHTML = `⚡ [${t + 1}/${total}] Đang tìm ảnh: <strong>${g.name}</strong> (${gSysName})...`;
+
+                // Highlight thẻ game tương ứng trên màn hình
+                const cardEl = document.getElementById(`game-card-${idx}`);
+                const artBoxEl = document.getElementById(`art-box-${idx}`);
+                if (cardEl) {
+                    cardEl.classList.add("is-scraping");
+                    cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (artBoxEl) {
+                    artBoxEl.innerHTML = `
+                        <div class="art-placeholder" style="color:#38bdf8;">
+                            ${ICONS.spinner}
+                            <span style="font-size:11px;">Đang tìm ảnh...</span>
+                        </div>
+                    `;
+                }
+
+                let found = false;
+                try {
+                    const sRes = await fetch(`/api/scrape/search?system=${encodeURIComponent(gSys)}&query=${encodeURIComponent(cleanTitle)}`);
+                    const sData = await sRes.json();
+                    if (sData.ok && sData.candidates && sData.candidates.length > 0) {
+                        const best = sData.candidates[0]; // Ưu tiên ảnh đầu tiên
+                        const aRes = await fetch("/api/scrape/apply", {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({
+                                system: gSys,
+                                filename: g.filename,
+                                image_url: best.url
+                            })
+                        });
+                        const aData = await aRes.json();
+                        if (aData.ok) {
+                            found = true;
+                            successCount++;
+                            const newArtUrl = `/art/${encodeURIComponent(gSys)}/${encodeURIComponent(g.name + '.png')}?v=${Date.now()}`;
+                            g.has_art = true;
+                            g.art_url = newArtUrl;
+
+                            // Cập nhật TRỰC TIẾP thẻ game vào list hiện tại!
+                            if (artBoxEl) {
+                                artBoxEl.innerHTML = `
+                                    <img class="art-img" src="${newArtUrl}" loading="lazy" alt="${g.name}" onclick="openArtPreview('${newArtUrl}', '${escapeJs(g.name)}')" title="Nhấp để xem ảnh đầy đủ">
+                                    <div class="art-btn-overlay">
+                                        <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
+                                    </div>
+                                `;
+                            }
+                            if (cardEl) {
+                                cardEl.classList.remove("is-scraping");
+                                cardEl.classList.add("is-success");
+                            }
+                            if (noArtTotalCount > 0) {
+                                noArtTotalCount--;
+                                updateNoArtBadge();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error("Scrape error:", err);
+                }
+
+                if (!found) {
+                    if (cardEl) cardEl.classList.remove("is-scraping");
+                    if (artBoxEl) {
+                        artBoxEl.innerHTML = `
+                            <div class="art-placeholder" onclick="openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})" title="Nhấp để cào ảnh">
+                                ${ICONS.alert}
+                                <span style="font-size:11px; color:#f59e0b;">Không tìm thấy</span>
+                            </div>
+                            <div class="art-btn-overlay">
+                                <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Nghỉ ngắn giữa các lượt cào
+                if (!stopBatchRequested && t < total - 1) {
+                    await new Promise(r => setTimeout(r, 350));
+                }
+            }
+
+            fillBar.style.width = "100%";
+            pctText.innerText = "100%";
+            isBatchScraping = false;
+
+            if (stopBatchRequested) {
+                statusText.innerText = `⏸️ Đã dừng. Đã cập nhật thành công ${successCount}/${total} ảnh bìa.`;
+                showToast(`Đã dừng: Cập nhật thành công ${successCount} ảnh!`);
+            } else {
+                statusText.innerText = `✅ Hoàn tất! Đã cập nhật ${successCount}/${total} ảnh bìa vào danh sách.`;
+                showToast(`Hoàn tất: Đã cào xong ${successCount}/${total} ảnh bìa!`);
+            }
+
+            updateNoArtBadge();
+
+            setTimeout(() => {
+                if (!isBatchScraping) {
+                    inlineBar.style.display = "none";
+                }
+            }, 4000);
+        }
+
+        // ==========================================
+        // TÍNH NĂNG TẢI ROM LÊN (CHỌN FILE LUÔN & SHOW TIẾN ĐỘ)
+        // ==========================================
+        let pendingUploadSystem = null;
+        let currentUploadXhr = null;
+        let isUploadingRom = false;
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function handleUploadRomClick() {
+            if (!currentSystem || currentSystem === '__no_art__') {
+                const sel = document.getElementById("modal-upload-sys-select");
+                sel.innerHTML = allSystems.map(s => `
+                    <option value="${s.dir}">${s.name} (${s.dir})</option>
+                `).join('');
+                document.getElementById("modal-select-upload-sys").style.display = "flex";
+            } else {
+                pendingUploadSystem = currentSystem;
+                document.getElementById("rom-file-input-direct").click();
+            }
+        }
+
+        function confirmSystemAndBrowseFiles() {
+            const sel = document.getElementById("modal-upload-sys-select");
+            pendingUploadSystem = sel.value;
+            closeModal("modal-select-upload-sys");
+            document.getElementById("rom-file-input-direct").click();
+        }
+
+        function cancelOrCloseUpload() {
+            if (isUploadingRom) {
+                if (!confirm("Đang tải tệp lên thiết bị. Bạn có chắc muốn hủy bỏ không?")) {
+                    return;
+                }
+                isUploadingRom = false;
+                if (currentUploadXhr) {
+                    currentUploadXhr.abort();
+                }
+            }
+            document.getElementById("modal-upload-progress").style.display = "none";
             loadSystems(true);
+        }
+
+        function uploadSingleRomFile(file, targetSys, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                currentUploadXhr = xhr;
+                xhr.open("POST", `/api/upload_rom?system=${encodeURIComponent(targetSys)}&filename=${encodeURIComponent(file.name)}`, true);
+                xhr.setRequestHeader("Content-Type", "application/octet-stream");
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        onProgress(e.loaded, e.total);
+                    }
+                };
+
+                xhr.onload = () => {
+                    currentUploadXhr = null;
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const res = JSON.parse(xhr.responseText);
+                            resolve(res);
+                        } catch (err) {
+                            resolve({ok: true});
+                        }
+                    } else {
+                        reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                    }
+                };
+
+                xhr.onerror = () => {
+                    currentUploadXhr = null;
+                    reject(new Error("Lỗi mạng khi tải lên!"));
+                };
+
+                xhr.onabort = () => {
+                    currentUploadXhr = null;
+                    reject(new Error("Đã hủy tải"));
+                };
+
+                xhr.send(file);
+            });
+        }
+
+        async function handleDirectRomFiles(e) {
+            const files = Array.from(e.target.files);
+            e.target.value = '';
+            if (files.length === 0) return;
+
+            const targetSys = pendingUploadSystem || currentSystem;
+            if (!targetSys || targetSys === '__no_art__') {
+                showToast("Vui lòng chọn hệ máy đích!", true);
+                return;
+            }
+
+            const sysObj = allSystems.find(s => s.dir === targetSys);
+            const sysName = sysObj ? sysObj.name : targetSys;
+
+            // Mở modal hiển thị tiến độ
+            document.getElementById("upload-target-name").innerText = `${sysName} (${targetSys})`;
+            document.getElementById("upload-prog-title").innerText = `📤 Đang tải ${files.length} ROM lên thiết bị`;
+            document.getElementById("btn-upload-cancel").innerText = "Hủy bỏ";
+            document.getElementById("btn-upload-cancel").className = "btn btn-secondary";
+            document.getElementById("upload-status-footer").innerText = "Vui lòng không tắt trình duyệt khi đang tải file lớn.";
+            
+            const overallBox = document.getElementById("upload-overall-box");
+            if (files.length > 1) {
+                overallBox.style.display = "block";
+                document.getElementById("upload-overall-pct").innerText = "0%";
+                document.getElementById("upload-overall-progress-bar").style.width = "0%";
+            } else {
+                overallBox.style.display = "none";
+            }
+
+            // Render danh sách file ban đầu
+            const fileListEl = document.getElementById("upload-file-list");
+            fileListEl.innerHTML = files.map((f, i) => `
+                <div id="upload-item-${i}" class="batch-log-item">
+                    <span id="upload-item-icon-${i}" style="width:20px; text-align:center;">⚪</span>
+                    <span style="color:#e2e8f0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${f.name}">${f.name}</span>
+                    <span style="color:var(--text-sub); font-size:10px;">${formatBytes(f.size)}</span>
+                    <span id="upload-item-status-${i}" style="color:var(--text-sub); font-size:10px; width:65px; text-align:right;">Chờ...</span>
+                </div>
+            `).join('');
+
+            document.getElementById("modal-upload-progress").style.display = "flex";
+            isUploadingRom = true;
+
+            let successCount = 0;
+            for (let i = 0; i < files.length; i++) {
+                if (!isUploadingRom) break;
+                const f = files[i];
+
+                // Cập nhật thông tin file hiện tại
+                document.getElementById("upload-current-fname").innerText = f.name;
+                document.getElementById("upload-current-pct").innerText = "0%";
+                document.getElementById("upload-file-progress-bar").style.width = "0%";
+                document.getElementById("upload-file-size-info").innerText = `0 / ${formatBytes(f.size)}`;
+                document.getElementById("upload-batch-count-info").innerText = `Tệp ${i + 1} / ${files.length}`;
+
+                const itemIcon = document.getElementById(`upload-item-icon-${i}`);
+                const itemStatus = document.getElementById(`upload-item-status-${i}`);
+                if (itemIcon) itemIcon.innerText = "⏳";
+                if (itemStatus) {
+                    itemStatus.innerText = "0%";
+                    itemStatus.style.color = "#38bdf8";
+                }
+
+                try {
+                    await uploadSingleRomFile(f, targetSys, (loaded, total) => {
+                        const pct = Math.round((loaded / total) * 100);
+                        document.getElementById("upload-current-pct").innerText = `${pct}%`;
+                        document.getElementById("upload-file-progress-bar").style.width = `${pct}%`;
+                        document.getElementById("upload-file-size-info").innerText = `${formatBytes(loaded)} / ${formatBytes(total)}`;
+                        if (itemStatus) itemStatus.innerText = `${pct}%`;
+                    });
+
+                    successCount++;
+                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#10b981; font-weight:bold;">✓</span>`;
+                    if (itemStatus) {
+                        itemStatus.innerText = "Xong";
+                        itemStatus.style.color = "#10b981";
+                    }
+                } catch (err) {
+                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#ef4444; font-weight:bold;">✗</span>`;
+                    if (itemStatus) {
+                        itemStatus.innerText = "Lỗi";
+                        itemStatus.style.color = "#ef4444";
+                    }
+                }
+
+                if (files.length > 1) {
+                    const overallPct = Math.round(((i + 1) / files.length) * 100);
+                    document.getElementById("upload-overall-pct").innerText = `${overallPct}%`;
+                    document.getElementById("upload-overall-progress-bar").style.width = `${overallPct}%`;
+                }
+            }
+
+            isUploadingRom = false;
+            document.getElementById("upload-current-pct").innerText = "100%";
+            document.getElementById("upload-file-progress-bar").style.width = "100%";
+            document.getElementById("btn-upload-cancel").innerText = "Đóng";
+            document.getElementById("btn-upload-cancel").className = "btn btn-green";
+            document.getElementById("upload-prog-title").innerText = `✅ Hoàn tất tải lên (${successCount}/${files.length} ROM)`;
+            document.getElementById("upload-status-footer").innerText = `Đã tải lên ${successCount} tệp thành công vào hệ máy ${sysName}.`;
+            showToast(`Đã tải lên ${successCount} tệp ROM thành công!`);
+
+            if (currentSystem === targetSys) {
+                selectSystem(currentSystem);
+            } else {
+                loadSystems(true);
+            }
         }
 
         loadSystems();

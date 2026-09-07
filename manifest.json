@@ -1,12 +1,12 @@
 {
-  "version": "1.89",
+  "version": "1.90",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-08T01:33:18+0700",
+  "built": "2026-09-08T03:26:22+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Quản lý Game qua Web: Tích hợp máy chủ web cổng 8090 trong menu Dịch vụ, cho phép đổi tên game, cào ảnh bìa (Libretro CDN), chuyển hệ máy và tải ROM trực tiếp qua trình duyệt",
-    "en": "Web Game Manager: Integrated port 8090 web server in Services menu, enabling game renaming, boxart scraping (Libretro CDN), system moving, and ROM uploading via browser"
+    "vi": "Quản lý Game qua Web: Cào ảnh hàng loạt trực tiếp trên danh sách (không modal), biểu tượng SVG vector cho từng hệ máy và hiển thị trọn vẹn 100% ảnh bìa",
+    "en": "Web Game Manager: Inline batch scraping with real-time card updates, SVG vector system icons, and full uncropped boxart view"
   },
   "remove": [
     "app.pyc",
@@ -350,8 +350,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 55835,
-      "sha256": "b89c4e2b5d4f16842737463fed5790c5ecd6c34ef0392f1daf6f9f364a61be37"
+      "size": 128729,
+      "sha256": "1fd33531cca030ab0c5a84cd1e9d730efc71350eb988666426bb099acc77d188"
     },
     {
       "path": "icon.png",
@@ -511,7 +511,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "088d061f9565426f42ec7bfd79ff67b41f398656930f5f56a45bd2a0d31cc3f1"
+      "sha256": "b215602d80ba83bb0c064c967105a39abd07c8b85815996c5ecf64344a31772d"
     },
     {
       "path": "rh/yt.py",
@@ -909,6 +909,6 @@
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
     }
   ],
-  "notes": "Tích hợp máy chủ web cổng 8090 trong menu Dịch vụ, cho phép đổi tên game, cào ảnh bìa (Libretro CDN), chuyển hệ máy và tải ROM trực tiếp qua trình duyệt.",
-  "notes_en": "Integrated port 8090 web server in Services menu, enabling game renaming, boxart scraping (Libretro CDN), system moving, and ROM uploading via browser."
+  "notes": "Cào ảnh hàng loạt trực tiếp trên danh sách (không modal), biểu tượng SVG vector cho từng hệ máy và hiển thị trọn vẹn 100% ảnh bìa.",
+  "notes_en": "Inline batch scraping with real-time card updates, SVG vector system icons, and full uncropped boxart view."
 }
