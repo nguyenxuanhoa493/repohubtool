@@ -5,8 +5,8 @@
   "built": "2026-09-07T14:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "TikTok Video: Duyệt video xu hướng/FYP, tìm kiếm, lưu yêu thích, tải phân trang vô tận và phát video trực tiếp qua RetroArch FFMPEG core",
-    "en": "TikTok Video: Browse trending/FYP, search, favorites, infinite pagination, and smooth streaming playback via RetroArch FFMPEG core"
+    "vi": "TikTok Video: Tối ưu duyệt và tìm kiếm video khu vực Việt Nam (Xu hướng VN, Nhạc Hot VN, Gaming VN...), loại bỏ video nước ngoài",
+    "en": "TikTok Video: Focused on Vietnam region videos (Trending VN, Music VN, Gaming VN), filtered foreign content"
   },
   "remove": [
     "app.pyc",
@@ -194,8 +194,8 @@
     },
     {
       "path": "app.py",
-      "size": 367053,
-      "sha256": "d515af64ec154f0d22eaa6e36404124e54d91f38c5e5a00f48af9bc175d94e45"
+      "size": 367170,
+      "sha256": "eeca84c7e33b8e270c01b15d1860fc39faf53eb86751919d022fb797ce34f26f"
     },
     {
       "path": "assets/fallback.ttf",
@@ -364,8 +364,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 37488,
-      "sha256": "f6ade6f7811056b3feb2023008aec864ec12f3d98b349012b538449e8a9f83f6"
+      "size": 37518,
+      "sha256": "b0faa33133cda183d85357e887ca6f68684221e86033c411a716c9748a679172"
     },
     {
       "path": "rh/j2me.py",
@@ -449,8 +449,8 @@
     },
     {
       "path": "rh/tiktok.py",
-      "size": 18882,
-      "sha256": "6af05ec4ab2a5fe753dcab804503c7f7909e3bcd20536026dfc55311c0d7271d"
+      "size": 26832,
+      "sha256": "1ea0b73f422f65eb4f57f1af8b7afaf3915158c23fa28a1cc38424d741baf6f1"
     },
     {
       "path": "rh/updater.py",
