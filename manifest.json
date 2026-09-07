@@ -1,12 +1,12 @@
 {
-  "version": "1.87",
+  "version": "1.88",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-07T22:45:00+0700",
+  "built": "2026-09-08T00:01:14+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Giao diện & Hiệu năng: Loại bỏ hoàn toàn menu TikTok, giải phóng bộ nhớ RAM và tối ưu hóa độ ổn định hệ thống",
-    "en": "UI & Performance: Remove TikTok menu and integration to streamline user interface and optimize system stability"
+    "vi": "Giả lập Sega CD: Tích hợp cấu hình và trình khởi chạy Sega CD / Mega CD (PicoDrive, GenesisPlusGX, GX Wide), tự động đồng bộ theme và thư mục ROMs/Imgs",
+    "en": "Sega CD Emulator: Bundled Sega CD / Mega CD configs and launchers (PicoDrive, GenesisPlusGX, GX Wide), auto-sync themes and ROMs/Imgs directories"
   },
   "remove": [
     "app.pyc",
@@ -195,8 +195,8 @@
     },
     {
       "path": "app.py",
-      "size": 307149,
-      "sha256": "80c60eff88ce668ea9eac34f2dd4f8faf98846b81f205f8ad0580ec1c3f54b93"
+      "size": 309975,
+      "sha256": "b10446aa0aaab9f985c192717bbf5e4321fb5d1f0b3492c217e840dda3cfc60b"
     },
     {
       "path": "assets/fallback.ttf",
@@ -284,6 +284,11 @@
       "sha256": "4bcfd063c8f5a170d8a1a389f45be31b73cdafe681c4ad46f59d05fa6482fcac"
     },
     {
+      "path": "emus/JAVA/zulu17/bin/graphics.cfg",
+      "size": 1,
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
       "path": "emus/JAVA/zulu17/bin/keymap.cfg",
       "size": 141,
       "sha256": "2ee1d46b8820c08f0500184ddb468c987106e0bd95c78d47923dcd5ca561d6bb"
@@ -297,6 +302,51 @@
       "path": "emus/JAVA/zulu17/bin/sdl_interface",
       "size": 450072,
       "sha256": "c1d856f8d66d21e3b7ce607399b2ac9b1963117ff81feceeb14a1d7b52b00f89"
+    },
+    {
+      "path": "emus/SEGACD/config.json",
+      "size": 674,
+      "sha256": "a8a7539d4f3d640291420ae3a74cad3fc48b4741ab0c4d549310b03355efbd95"
+    },
+    {
+      "path": "emus/SEGACD/cpufreq.sh",
+      "size": 152,
+      "sha256": "231eef08baad1c1e7e8ddbe7427e2fba01501753c7f290c20b79f6e1b760c358"
+    },
+    {
+      "path": "emus/SEGACD/cpuswitch.sh",
+      "size": 191,
+      "sha256": "0733d555c8a541b49550847ec2abcc9c5554c731922f2640c3dd960aa677bed3"
+    },
+    {
+      "path": "emus/SEGACD/launch.sh",
+      "size": 480,
+      "sha256": "31df193b11dfc986e243d7db11844ee61550c6f06a771399bbc5cf8c6d5cac8d"
+    },
+    {
+      "path": "emus/SEGACD/launch_genplus.sh",
+      "size": 291,
+      "sha256": "d2318ca8a85b8834ac1803a73944eb433527e3049bd239c3383fcde66e65d40a"
+    },
+    {
+      "path": "emus/SEGACD/launch_genplus_wide.sh",
+      "size": 296,
+      "sha256": "5e0dfe2438fada7b274bc9dce111b99e1bb42ebb4ee001213944cb9787696471"
+    },
+    {
+      "path": "emus/_theme/bg-segacd.png",
+      "size": 755312,
+      "sha256": "7d29cc72709f76872f93398154e7ced05ca8edd0bc018949b429be1edd8c6d44"
+    },
+    {
+      "path": "emus/_theme/ic-segacd.png",
+      "size": 46581,
+      "sha256": "d9760363c24b26937d561c702beb08293d92486cfa7d16b9578d837e0272a014"
+    },
+    {
+      "path": "emus/_theme/poster-segacd.png",
+      "size": 194213,
+      "sha256": "adf245df4596d069174872b082cc449f198100211a81d58a00fd4392f958f62f"
     },
     {
       "path": "icon.png",
@@ -340,13 +390,13 @@
     },
     {
       "path": "rh/catalog.py",
-      "size": 11215,
-      "sha256": "7a8d8e761abe4ccd4e42a0635078cc966a3dfcf39e0dc180928e3cc3e5ede740"
+      "size": 11250,
+      "sha256": "9c7362350a53be0aba37f69ce6af4efa82b1c3f0756ee1cabf210a5c1b0a87fb"
     },
     {
       "path": "rh/corepicker.py",
-      "size": 7372,
-      "sha256": "904290908c857f96caa1acf4f502661bb894a629e32c2cf2ee57fae5f35f2b34"
+      "size": 7565,
+      "sha256": "bfb9a1967d684e4b8e4d83abae9f7bcf76b40b5ce9bbecc9fe4378b5ec8eb2f7"
     },
     {
       "path": "rh/downloader.py",
@@ -456,7 +506,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "65ded1f57c0cce9e7a4e73fad1f5d0639523c5976af1b48f78f945a762485133"
+      "sha256": "78d7aabb393a9fe27813487e4cf2614d7f2d63e9c7f0338579e146266652979a"
     },
     {
       "path": "rh/yt.py",
@@ -854,6 +904,6 @@
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
     }
   ],
-  "notes": "Loại bỏ hoàn toàn menu và các tính năng TikTok để tối ưu giao diện và bộ nhớ, tập trung vào YouTube Player và ROM Store mượt mà.",
-  "notes_en": "Completely remove TikTok menu and modules to optimize memory and UI performance, focusing on smooth YouTube Player and ROM Store."
+  "notes": "Tích hợp cấu hình và trình khởi chạy Sega CD / Mega CD (PicoDrive, GenesisPlusGX, GX Wide), tự động đồng bộ theme và thư mục ROMs/Imgs trên thẻ nhớ.",
+  "notes_en": "Bundled Sega CD / Mega CD configs and launchers (PicoDrive, GenesisPlusGX, GX Wide), auto-sync themes and ROMs/Imgs directories on SDCARD."
 }

@@ -23,6 +23,15 @@ TARGET_FILES = [
     ("emus/JAVA/zulu17/bin/sdl_interface", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface"),
     ("emus/JAVA/zulu17/bin/quickchat.txt", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/quickchat.txt"),
     ("emus/JAVA/launch.sh", "/mnt/SDCARD/Emus/JAVA/launch.sh"),
+    ("emus/SEGACD/config.json", "/mnt/SDCARD/Emus/SEGACD/config.json"),
+    ("emus/SEGACD/launch.sh", "/mnt/SDCARD/Emus/SEGACD/launch.sh"),
+    ("emus/SEGACD/launch_genplus.sh", "/mnt/SDCARD/Emus/SEGACD/launch_genplus.sh"),
+    ("emus/SEGACD/launch_genplus_wide.sh", "/mnt/SDCARD/Emus/SEGACD/launch_genplus_wide.sh"),
+    ("emus/SEGACD/cpufreq.sh", "/mnt/SDCARD/Emus/SEGACD/cpufreq.sh"),
+    ("emus/SEGACD/cpuswitch.sh", "/mnt/SDCARD/Emus/SEGACD/cpuswitch.sh"),
+    ("emus/_theme/bg-segacd.png", "/mnt/SDCARD/Emus/_theme/bg-segacd.png"),
+    ("emus/_theme/ic-segacd.png", "/mnt/SDCARD/Emus/_theme/ic-segacd.png"),
+    ("emus/_theme/poster-segacd.png", "/mnt/SDCARD/Emus/_theme/poster-segacd.png"),
 ]
 
 
@@ -104,7 +113,7 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     # Chmod executable and clear pycache
     print("[*] Phân quyền và dọn dẹp bytecode cache...")
-    ssh.exec_command(f"chmod +x {app_dir}/bin/yt-dlp /mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface /mnt/SDCARD/Emus/JAVA/launch.sh 2>/dev/null; rm -rf {app_dir}/rh/__pycache__ {app_dir}/__pycache__; sync")
+    ssh.exec_command(f"chmod +x {app_dir}/bin/yt-dlp /mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface /mnt/SDCARD/Emus/JAVA/launch.sh /mnt/SDCARD/Emus/SEGACD/*.sh 2>/dev/null; mkdir -p /mnt/SDCARD/Roms/SEGACD /mnt/SDCARD/Imgs/SEGACD; rm -rf {app_dir}/rh/__pycache__ {app_dir}/__pycache__; sync")
     ssh.close()
     print("[+] Hoàn tất cập nhật ứng dụng trên thiết bị!")
     return True

@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.88", "2026-09-08",
+     ("Sega CD Emulator: Bundled Sega CD / Mega CD configs and launchers (PicoDrive, GenesisPlusGX, GX Wide), auto-sync themes and ROMs/Imgs directories",
+      "Giả lập Sega CD: Tích hợp cấu hình và trình khởi chạy Sega CD / Mega CD (PicoDrive, GenesisPlusGX, GX Wide), tự động đồng bộ theme và thư mục ROMs/Imgs"),
+     [("Full Sega CD Emulator Setup: Bundled official emulator launchers, cpufreq tuning, and multi-core options (PicoDrive default, GenesisPlusGX, and GenesisPlusGX Wide) with clean fallback and permissions handling.",
+       "Tích hợp trọn bộ giả lập Sega CD: Đóng gói sẵn cấu hình, script ép xung tối ưu (cpufreq/cpuswitch) và hỗ trợ đa core (PicoDrive mặc định, GenesisPlusGX và GenesisPlusGX Wide) với cơ chế tự động cấp quyền 755."),
+      ("Auto-sync Theme & Folders: Automatically deploys icons, background, and poster artwork to Emus/_theme and scaffolds Roms/SEGACD and Imgs/SEGACD on SDCARD on startup.",
+       "Tự động đồng bộ Theme & Thư mục: Tự động cài đặt biểu tượng (ic-segacd.png), hình nền (bg-segacd.png) và poster vào Emus/_theme trên thẻ nhớ, tự động tạo sẵn thư mục chứa game Roms/SEGACD và ảnh bìa Imgs/SEGACD.")]),
+
     ("1.87", "2026-09-07",
      ("UI & Performance: Remove TikTok menu and integration to streamline user interface and optimize system stability",
       "Giao diện & Hiệu năng: Loại bỏ hoàn toàn menu TikTok, giải phóng bộ nhớ RAM và tối ưu hóa độ ổn định hệ thống"),

@@ -110,6 +110,7 @@ SYSTEM_NAMES = {
     "SFC": "Super Nintendo (SFC / SNES)",
     "FC": "NES / Famicom (FC)",
     "MD": "Sega Genesis (MD / Mega Drive)",
+    "SEGACD": "Sega CD / Mega CD",
     "GB": "Game Boy (GB)",
     "GBC": "Game Boy Color (GBC)",
     "GG": "Sega Game Gear (GG)",
