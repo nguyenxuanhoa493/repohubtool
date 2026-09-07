@@ -14,6 +14,7 @@ import hashlib
 import ctypes
 import json
 import math
+import shutil
 try:
     import db
 except Exception:
@@ -188,12 +189,70 @@ SYS_BADGE = {
     "LYNX": ("ATARI LYNX", (195, 145, 15)),
     "DC": ("DREAMCAST", (240, 115, 20)),
     "SS": ("SEGA SATURN", (135, 145, 160)),
+    "SEGACD": ("SEGA CD", (0, 136, 207)),
     "JAVA": ("JAVA", (205, 97, 85)),
 }
 
 # Written by the startup repair thread, drained by the main loop into a toast: a
 # background thread has no business touching the UI's own state.
 startup_notice = {"msg": None}
+
+
+def ensure_segacd_installed():
+    """Ensure SEGACD emulator configs, scripts, themes, and directories exist on SDCARD."""
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    bundled_segacd = os.path.join(app_dir, "emus", "SEGACD")
+    if not os.path.isdir(bundled_segacd):
+        return False
+
+    target_emu = f"{SDCARD_PATH}/Emus/SEGACD"
+    os.makedirs(target_emu, exist_ok=True)
+    os.makedirs(f"{SDCARD_PATH}/Roms/SEGACD", exist_ok=True)
+    os.makedirs(f"{SDCARD_PATH}/Imgs/SEGACD", exist_ok=True)
+
+    # Sync emulator scripts & config
+    try:
+        for fname in os.listdir(bundled_segacd):
+            src = os.path.join(bundled_segacd, fname)
+            dst = os.path.join(target_emu, fname)
+            if not os.path.isfile(src):
+                continue
+            should_copy = False
+            if not os.path.exists(dst):
+                should_copy = True
+            else:
+                try:
+                    if os.path.getsize(src) != os.path.getsize(dst):
+                        should_copy = True
+                except OSError:
+                    should_copy = True
+            if should_copy:
+                try:
+                    shutil.copy2(src, dst)
+                except Exception as e:
+                    print(f"Error copying SEGACD {fname}: {e}")
+            if fname.endswith(".sh"):
+                try:
+                    os.chmod(dst, 0o755)
+                except OSError:
+                    pass
+    except Exception as e:
+        print(f"Error syncing SEGACD emulator files: {e}")
+
+    # Sync theme files
+    bundled_theme = os.path.join(app_dir, "emus", "_theme")
+    if os.path.isdir(bundled_theme):
+        target_theme = f"{SDCARD_PATH}/Emus/_theme"
+        os.makedirs(target_theme, exist_ok=True)
+        for tf in ("bg-segacd.png", "ic-segacd.png", "poster-segacd.png"):
+            tsrc = os.path.join(bundled_theme, tf)
+            tdst = os.path.join(target_theme, tf)
+            if os.path.isfile(tsrc) and (not os.path.exists(tdst) or os.path.getsize(tsrc) != os.path.getsize(tdst)):
+                try:
+                    shutil.copy2(tsrc, tdst)
+                except Exception as e:
+                    print(f"Error copying theme {tf}: {e}")
+    return True
 
 
 def auto_check_and_supplement_environment():
@@ -208,6 +267,12 @@ def auto_check_and_supplement_environment():
             repaired_items.append(msg_java)
     except Exception as e:
         print(f"Error ensuring latest J2ME runtime on startup: {e}")
+
+    # 1b. Tu dong kiem tra va cai dat/dong bo gia lap Sega CD
+    try:
+        ensure_segacd_installed()
+    except Exception as e:
+        print(f"Error ensuring SEGACD runtime on startup: {e}")
 
     # 1c. Jars the emulator cannot open. It builds a "jar:file:<path>" URI and
     # never escapes it, so one space in the name and it cannot read the manifest
@@ -253,7 +318,9 @@ def auto_check_and_supplement_environment():
         print(f"Error reapplying Wi-Fi power save: {e}")
 
     # 3. Check and Create standard ROMs & Imgs directories
-    for d in [f"{SDCARD_PATH}/Roms/JAVA", f"{SDCARD_PATH}/Imgs/JAVA", f"{SDCARD_PATH}/Apps/RetroHub/catalog"]:
+    for d in [f"{SDCARD_PATH}/Roms/JAVA", f"{SDCARD_PATH}/Imgs/JAVA",
+              f"{SDCARD_PATH}/Roms/SEGACD", f"{SDCARD_PATH}/Imgs/SEGACD",
+              f"{SDCARD_PATH}/Apps/RetroHub/catalog"]:
         try:
             if not os.path.exists(d):
                 os.makedirs(d, exist_ok=True)
@@ -264,6 +331,10 @@ def auto_check_and_supplement_environment():
     try:
         if os.path.exists(f"{SDCARD_PATH}/Emus/JAVA/launch.sh"):
             os.chmod(f"{SDCARD_PATH}/Emus/JAVA/launch.sh", 0o755)
+        for sname in ("launch.sh", "launch_genplus.sh", "launch_genplus_wide.sh", "cpufreq.sh", "cpuswitch.sh"):
+            sp = f"{SDCARD_PATH}/Emus/SEGACD/{sname}"
+            if os.path.exists(sp):
+                os.chmod(sp, 0o755)
     except Exception:
         pass
 

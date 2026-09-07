@@ -41,6 +41,8 @@ ALTERNATIVES = {
     "GG":     ("GenesisPlusGX", [("PicoDrive", "picodrive", "launch_picodrive.sh")]),
     "MS":     ("PicoDrive", [("GenesisPlusGX", "genesis_plus_gx", "launch_gpgx.sh")]),
     "PS":     ("PCSX ReARMed", [("SwanStation", "swanstation", "launch_swanstation.sh")]),
+    "SEGACD": ("PicoDrive", [("GenesisPlusGX", "genesis_plus_gx", "launch_genplus.sh"),
+                             ("GenesisPlusGX Wide", "genesis_plus_gx_wide", "launch_genplus_wide.sh")]),
 }
 
 
