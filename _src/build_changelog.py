@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.84", "2026-09-07",
+     ("TikTok Video: Browse trending/FYP, search, favorites, infinite pagination, and smooth streaming playback via RetroArch FFMPEG core",
+      "TikTok Video: Duyệt video xu hướng/FYP, tìm kiếm, lưu yêu thích, tải phân trang vô tận và phát video trực tiếp qua RetroArch FFMPEG core"),
+     [("New TikTok Menu: Added dedicated TikTok video browser on Home screen powered by TikTok REST API Gateway with For You Page (FYP) trending videos, keyword search, and custom favorites.",
+       "Menu TikTok mới: Bổ sung mục duyệt video TikTok ngay tại màn hình chính với cổng kết nối TikTok REST API Gateway, hỗ trợ xem video xu hướng (FYP), tìm kiếm theo từ khóa và lưu danh sách yêu thích cá nhân."),
+      ("High Performance & Zero-latency Launch: Fast-path stream resolution, speculative background stream pre-fetch on hover, multi-threaded thumbnail prefetching, and rate-limited GPU texture uploads for 60fps silky smooth scrolling.",
+       "Hiệu năng cao & Khởi chạy tức thì: Trích xuất trước luồng phát khi dừng con trỏ, nạp trước nội dung các tab lân cận, tải ảnh bìa đa luồng phân cấp và giới hạn nạp texture GPU đảm bảo cuộn lướt mượt mà 60fps không giật lag."),
+      ("Seamless Video Streaming via RetroArch: Directly hands off high-definition watermark-free MP4 stream URLs to RetroArch FFMPEG core with custom resume state and player controls.",
+       "Phát video mượt mà qua RetroArch: Tự động trích xuất luồng MP4 chất lượng cao không logo và bàn giao sang core FFMPEG của RetroArch, tự động lưu và khôi phục trạng thái xem khi quay lại ứng dụng.")]),
+
     ("1.83", "2026-09-06",
      ("Java Games: Restore authentic Nokia key mapping (-5 for OK/X), strictly toggle Virtual Keyboard only on START + X combo, completely preserving original controls",
       "Game Java: Khôi phục chuẩn 100% key map gốc Nokia (-5 cho phím OK/X), chỉ mở bàn phím ảo khi giữ START + bấm X, bảo toàn tuyệt đối hệ thống phím gốc"),

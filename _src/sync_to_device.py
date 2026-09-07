@@ -9,6 +9,7 @@ import paramiko
 TARGET_FILES = [
     ("rh/yt.py", "rh/yt.py"),
     ("rh/yt_player.py", "rh/yt_player.py"),
+    ("rh/tiktok.py", "rh/tiktok.py"),
     ("rh/i18n.py", "rh/i18n.py"),
     ("rh/paths.py", "rh/paths.py"),
     ("rh/version.py", "rh/version.py"),
