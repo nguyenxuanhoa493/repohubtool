@@ -1,12 +1,12 @@
 {
-  "version": "1.84",
+  "version": "1.85",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-07T14:30:00+0700",
+  "built": "2026-09-07T21:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "TikTok Video: Tối ưu duyệt và tìm kiếm video khu vực Việt Nam (Xu hướng VN, Nhạc Hot VN, Gaming VN...), loại bỏ video nước ngoài",
-    "en": "TikTok Video: Focused on Vietnam region videos (Trending VN, Music VN, Gaming VN), filtered foreign content"
+    "vi": "TikTok Video: Phân tách nguồn cấp độc lập cho từng tab (Xu hướng VN, Nhạc Hot VN, Gaming VN, Hài Hước VN, Ẩm Thực VN), loại bỏ trùng lặp video giữa các tab",
+    "en": "TikTok Video: Separate independent feeds for each category tab (Trending VN, Music VN, Gaming VN, Comedy VN, Food VN), completely eliminating clip duplication"
   },
   "remove": [
     "app.pyc",
@@ -449,8 +449,8 @@
     },
     {
       "path": "rh/tiktok.py",
-      "size": 26832,
-      "sha256": "1ea0b73f422f65eb4f57f1af8b7afaf3915158c23fa28a1cc38424d741baf6f1"
+      "size": 36246,
+      "sha256": "29ccd3c1fb54073f81db8b0037464e97f5240fbf05bedfc3d66b47a6ddcc1eb0"
     },
     {
       "path": "rh/updater.py",
@@ -460,7 +460,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "6f7b13a2697e07e8c7adf3085dab0ad98807f77111506323158a888cb029259f"
+      "sha256": "d1af095a7cc272acc8b394c67de703817ffc27f7d1076ff9a82b79a46bdc767e"
     },
     {
       "path": "rh/yt.py",

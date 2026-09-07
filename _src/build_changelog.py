@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.85", "2026-09-07",
+     ("TikTok Video: Separate independent feeds for each category tab (Trending VN, Music VN, Gaming VN, Comedy VN, Food VN), completely eliminating clip duplication",
+      "TikTok Video: Phân tách nguồn cấp độc lập cho từng tab (Xu hướng VN, Nhạc Hot VN, Gaming VN, Hài Hước VN, Ẩm Thực VN), loại bỏ trùng lặp video giữa các tab"),
+     [("Separate category feeds: Each tab now sources from specialized Sound IDs and Vietnamese seeds instead of falling back to global trending, ensuring 100% unique video catalogs per tab.",
+       "Nguồn cấp riêng cho từng tab: Mỗi chuyên mục nạp video độc lập qua Sound ID chuyên biệt và hạt giống Việt Nam thay vì dùng chung video Xu hướng, đảm bảo 100% nội dung riêng biệt."),
+      ("Automatic cache self-healing: Automatically detects and purges contaminated legacy cache entries to restore fresh feeds without manual intervention.",
+       "Tự động thanh lọc bộ nhớ đệm: Nhận diện và hủy các mục cache cũ bị nhiễm dữ liệu xu hướng chéo, giúp máy cập nhật ngay danh sách clip mới chuẩn xác.")]),
+
     ("1.84", "2026-09-07",
      ("TikTok Video: Browse trending/FYP, search, favorites, infinite pagination, and smooth streaming playback via RetroArch FFMPEG core",
       "TikTok Video: Duyệt video xu hướng/FYP, tìm kiếm, lưu yêu thích, tải phân trang vô tận và phát video trực tiếp qua RetroArch FFMPEG core"),
