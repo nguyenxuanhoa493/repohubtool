@@ -849,7 +849,7 @@ def main():
                 if data:
                     if is_trending:
                         tiktok_trending_list = data
-                        tiktok.save_feed_cache("Xu hướng VN", data)
+                        tiktok.save_feed_cache(query_str if query_str else "Dành cho bạn", data)
                     else:
                         tiktok_query_cache[query_str] = data
                         tiktok_search_results_list = data
@@ -3826,22 +3826,18 @@ def main():
                         _prefetch_tiktok_thumbs(tiktok_favorites_list)
                         toast_msg = "Danh sách Yêu thích" if state.current_lang == "VI" else "Favorites List"
                         toast_timer = time.time()
-                    elif new_q in ("Xu hướng VN", "Xu hướng"):
+                    elif new_q in ("Dành cho bạn", "Xu hướng VN", "Xu hướng"):
                         tiktok_mode = "trending"
-                        if not tiktok_trending_list:
-                            cached_tr, _ = tiktok.load_feed_cache("Xu hướng VN")
-                            if cached_tr:
-                                tiktok_trending_list = cached_tr
-                                tiktok_loading_state["active"] = False
-                                _prefetch_tiktok_thumbs(tiktok_trending_list)
-                                trigger_tiktok_adjacent_preload()
-                            else:
-                                start_tiktok_load("Xu hướng VN", is_trending=True)
-                        else:
+                        cached_tr, _ = tiktok.load_feed_cache(new_q)
+                        if cached_tr:
+                            tiktok_trending_list = cached_tr
                             tiktok_loading_state["active"] = False
                             _prefetch_tiktok_thumbs(tiktok_trending_list)
                             trigger_tiktok_adjacent_preload()
-                        toast_msg = "Chủ đề: Xu hướng VN (FYP)" if state.current_lang == "VI" else "Topic: Trending VN (FYP)"
+                        else:
+                            tiktok_trending_list = []
+                            start_tiktok_load(new_q, is_trending=True)
+                        toast_msg = f"Chủ đề: {new_q}" if state.current_lang == "VI" else f"Topic: {new_q}"
                         toast_timer = time.time()
                     else:
                         tiktok_mode = "search"
@@ -3862,14 +3858,12 @@ def main():
                             else:
                                 tiktok_search_results_list = []
                                 start_tiktok_load(new_q, is_trending=False)
-                        toast_msg = f"Từ khóa: {new_q}" if state.current_lang == "VI" else f"Keyword: {new_q}"
+                        toast_msg = f"Chủ đề: {new_q}" if state.current_lang == "VI" else f"Topic: {new_q}"
                         toast_timer = time.time()
 
-                if btn_x: # Press X to open Search
-                    selected_indices["tiktok_search_input"] = 0
-                    tiktok_input_text = ""
-                    kb_cursor = [0, 0]
-                    screen_stack.append("tiktok_search_input")
+                if btn_x: # Press X in TikTok
+                    toast_msg = "Chuyển tab [L1/R1] để xem các chủ đề video" if state.current_lang == "VI" else "Switch tabs [L1/R1] to browse topics"
+                    toast_timer = time.time()
 
                 elif btn_y: # Press Y to Toggle Favorite
                     if 0 <= selected_idx < total_v:
@@ -5908,7 +5902,7 @@ def main():
                     fx = draw_footer_btn(fx, "SL", "Xóa từ khóa", (240, 70, 70), is_dark_btn=False)
 
             elif current_screen == "tiktok_grid":
-                fx = draw_footer_btn(fx, "X", "Tìm kiếm" if state.current_lang == "VI" else "Search", (0, 190, 255))
+                fx = draw_footer_btn(fx, "L1/R1", "Đổi tab" if state.current_lang == "VI" else "Switch tab", (0, 190, 255))
                 cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < len(cur_videos)) else {}
                 if not cur_v_sel.get("is_load_more"):
                     is_fav = tiktok.is_favorite(cur_v_sel.get("id"), tiktok_favorites_list) if cur_v_sel else False

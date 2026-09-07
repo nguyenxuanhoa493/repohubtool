@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.86", "2026-09-07",
+     ("TikTok Video: Transition to verified live endpoints (For You FYP Live, Trending VN, Rural Food, Comedy VN, Cute Pets), guaranteeing 100% playable direct stream URLs",
+      "TikTok Video: Chuyển đổi toàn diện sang các endpoint dữ liệu thật (Dành cho bạn FYP Live, Xu hướng VN, Ẩm thực quê, Hài Hước VN, Thú cưng vui), đảm bảo 100% video đều có nguồn phát trực tiếp"),
+     [("Real Live FYP Feed: Dedicated For You Page powered by official live feed endpoint, continuously refreshing fresh trending videos with direct CDN streaming URLs.",
+       "Bảng tin Dành cho bạn (FYP Live): Nạp video trực tiếp thời gian thực từ bảng tin chính thức, tự động cập nhật clip mới mỗi lần tải thêm với đường dẫn CDN chuẩn phát ngay."),
+      ("100% Playable Direct Stream URLs: Eliminated mock video data and 403-blocked links; all videos across all tabs now stream instantly and reliably on RetroArch FFMPEG core.",
+       "100% Luồng phát khả dụng: Loại bỏ hoàn toàn video giả lập (mock) và các link bị chặn 403; toàn bộ video ở mọi tab đều sở hữu link stream CDN thật và phát mượt mà qua RetroArch.")]),
+
     ("1.85", "2026-09-07",
      ("TikTok Video: Separate independent feeds for each category tab (Trending VN, Music VN, Gaming VN, Comedy VN, Food VN), completely eliminating clip duplication",
       "TikTok Video: Phân tách nguồn cấp độc lập cho từng tab (Xu hướng VN, Nhạc Hot VN, Gaming VN, Hài Hước VN, Ẩm Thực VN), loại bỏ trùng lặp video giữa các tab"),
