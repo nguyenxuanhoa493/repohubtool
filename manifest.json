@@ -194,8 +194,8 @@
     },
     {
       "path": "app.py",
-      "size": 366493,
-      "sha256": "bda98d26edecf6bd8a0ead37368c59ddde35b25104bef583accb659608d2c03a"
+      "size": 367053,
+      "sha256": "d515af64ec154f0d22eaa6e36404124e54d91f38c5e5a00f48af9bc175d94e45"
     },
     {
       "path": "assets/fallback.ttf",
@@ -449,8 +449,8 @@
     },
     {
       "path": "rh/tiktok.py",
-      "size": 18832,
-      "sha256": "68b198f0dccf6bd255826c0bde94b8b65c51cbc570ee28da79571168df77454c"
+      "size": 18882,
+      "sha256": "6af05ec4ab2a5fe753dcab804503c7f7909e3bcd20536026dfc55311c0d7271d"
     },
     {
       "path": "rh/updater.py",

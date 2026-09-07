@@ -377,8 +377,10 @@ def main():
     MAX_TEXT_CACHE = 280
 
     def draw_text(text, font, x, y, r, g, b, a=255, center_x=False, center_y=False):
-        if not text:
+        if text is None or text == "":
             return 0, 0
+        if not isinstance(text, str):
+            text = str(text)
         now_ts = time.time()
         key = (text, id(font), r, g, b, a)
         cached = text_texture_cache.get(key)
@@ -421,8 +423,10 @@ def main():
         Character counts are a poor proxy here: Vietnamese diacritics and the
         proportional font make identical-length strings render very differently.
         """
-        if not text:
+        if text is None or text == "":
             return 0
+        if not isinstance(text, str):
+            text = str(text)
         key = (text, id(font))
         cached = _text_w_cache.get(key)
         if cached is not None:
@@ -441,7 +445,11 @@ def main():
         Falls back to a hard character split for a single word longer than the
         line, and ellipsises whatever still does not fit on the final line.
         """
-        text = (text or "").strip()
+        if text is None or text == "":
+            return [""]
+        if not isinstance(text, str):
+            text = str(text)
+        text = text.strip()
         if not text or measure_text(text, font) <= max_w:
             return [text]
 
@@ -5255,7 +5263,11 @@ def main():
                                 draw_text("♥", font_badge, fx_pos + fw // 2, fy_pos + fh // 2, 255, 255, 255, center_x=True, center_y=True)
 
                             # Author or Duration badge at bottom-right/bottom-left of thumbnail
-                            dur_str = v_data.get("duration", "")
+                            dur_val = v_data.get("duration_str") or v_data.get("duration", "")
+                            if isinstance(dur_val, int):
+                                dur_str = tiktok.format_duration(dur_val)
+                            else:
+                                dur_str = str(dur_val or "")
                             if dur_str:
                                 dw = measure_text(dur_str, font_badge) + 10
                                 dh = 20
@@ -5265,7 +5277,7 @@ def main():
                                 draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
                                 draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                            author_str = v_data.get("author", "")
+                            author_str = str(v_data.get("author") or "")
                             if author_str:
                                 disp_auth = f"@{author_str}" if not author_str.startswith("@") else author_str
                                 aw = min(tw // 2, measure_text(disp_auth, font_badge) + 10)
@@ -5277,7 +5289,7 @@ def main():
                                 draw_text(disp_auth, font_badge, ax + aw // 2, ay + ah // 2, 0, 242, 234, center_x=True, center_y=True)
 
                             # Title below thumbnail (wrapped to max 2 lines)
-                            raw_title = v_data.get("title") or v_data.get("disp_title") or "Video TikTok"
+                            raw_title = str(v_data.get("title") or v_data.get("disp_title") or "Video TikTok")
                             max_text_w = tw - 8
                             t_lines = v_data.get("_wrapped_title")
                             if t_lines is None:
