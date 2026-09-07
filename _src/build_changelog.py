@@ -26,6 +26,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.87", "2026-09-07",
+     ("UI & Performance: Remove TikTok menu and integration to streamline user interface and optimize system stability",
+      "Giao diện & Hiệu năng: Loại bỏ hoàn toàn menu TikTok, giải phóng bộ nhớ RAM và tối ưu hóa độ ổn định hệ thống"),
+     [("Complete Removal of TikTok: Removed the TikTok menu from Home screen, deleted unused background feeds, video pre-fetch workers, and streaming caches, freeing substantial RAM and preventing unexpected crash issues.",
+       "Gỡ bỏ hoàn toàn TikTok: Loại bỏ mục TikTok khỏi menu chính, xóa sạch các luồng tải ngầm, bộ nhớ đệm video và cache thumbnail, giải phóng bộ nhớ RAM và loại bỏ triệt để nguy cơ gián đoạn hoạt động của máy.")]),
+
     ("1.86", "2026-09-07",
      ("TikTok Video: Transition to verified live endpoints (For You FYP Live, Trending VN, Rural Food, Comedy VN, Cute Pets), guaranteeing 100% playable direct stream URLs",
       "TikTok Video: Chuyển đổi toàn diện sang các endpoint dữ liệu thật (Dành cho bạn FYP Live, Xu hướng VN, Ẩm thực quê, Hài Hước VN, Thú cưng vui), đảm bảo 100% video đều có nguồn phát trực tiếp"),

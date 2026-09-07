@@ -67,8 +67,8 @@ except ImportError as _e:
 from rh import state
 from rh.paths import (FLAG_FILES, is_nextui, QR_BMC_FILE, QR_DONATE_FILE,
     QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW,
-    YT_CACHE_DIR, TIKTOK_CACHE_DIR)
-from rh import corepicker, yt, tiktok
+    YT_CACHE_DIR)
+from rh import corepicker, yt
 from rh.i18n import tr, wrap_title_2lines
 from rh.sysinfo import (get_battery_info,
     get_device_info_rows,
@@ -523,9 +523,7 @@ def main():
         "rom_systems": 0,
         "rom_games": 0,
         "yt_grid": 0,
-        "yt_search_input": 0,
-        "tiktok_grid": 0,
-        "tiktok_search_input": 0
+        "yt_search_input": 0
     }
     scroll_offsets = {
         "home": 0,
@@ -541,9 +539,7 @@ def main():
         "file_browser": 0,
         "splash_manager": 0,
         "yt_grid": 0,
-        "yt_search_input": 0,
-        "tiktok_grid": 0,
-        "tiktok_search_input": 0
+        "yt_search_input": 0
     }
     current_source = "VIET"
     current_rom_system = "ALL"
@@ -676,298 +672,6 @@ def main():
         "total_w": 0,
     }
 
-    # TikTok REST API & Favorites state
-    tiktok_favorites_list = tiktok.load_favorites()
-    tiktok_trending_list = []
-    tiktok_search_query = ""
-    tiktok_search_results_list = []
-
-    def build_tiktok_recent_queries():
-        base_queries = tiktok.load_search_history()
-        fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-        if tiktok_favorites_list:
-            return [fav_label] + [q for q in base_queries if q != fav_label]
-        else:
-            return [q for q in base_queries if q != fav_label]
-
-    tiktok_recent_queries = build_tiktok_recent_queries()
-    tiktok_query_idx = 0
-    tiktok_mode = "favorites" if tiktok_favorites_list else "trending"
-    tiktok_query_cache = {}
-    tiktok_input_text = ""
-    tiktok_last_hover_id = None
-    tiktok_hover_start_time = 0
-    tiktok_loading_state = {
-        "active": False,
-        "query": "",
-        "id": 0,
-        "start_time": 0.0,
-    }
-    tiktok_launch_state = {
-        "active": False,
-        "v_id": None,
-        "title": "",
-        "status": "idle",
-        "stream_url": None,
-        "err_msg": "",
-        "start_time": 0.0,
-    }
-    tiktok_cached_thumb_ids = set()
-    try:
-        if os.path.exists(TIKTOK_CACHE_DIR):
-            for _f in os.listdir(TIKTOK_CACHE_DIR):
-                if _f.endswith(".jpg"):
-                    tiktok_cached_thumb_ids.add(_f[:-4])
-    except Exception:
-        pass
-    tiktok_pills_cache = {
-        "queries": None,
-        "pills_w": [],
-        "pill_x_pos": [],
-        "total_w": 0,
-    }
-    tiktok_load_more_state = {
-        "active": False,
-        "query": "",
-    }
-    tiktok_preload_thread = None
-    tiktok_prefetch_thread = None
-
-    def _show_tiktok_handoff_splash(v_title):
-        mw = min(760, state.SCREEN_W - 60)
-        mh = 210
-        mx = (state.SCREEN_W - mw) // 2
-        my = (state.SCREEN_H - mh) // 2
-        for _ in range(2):
-            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
-            fill_rect(mx, my, mw, mh, 20, 26, 42, 250)
-            draw_rect(mx, my, mw, mh, 254, 44, 85, 255, thickness=2)
-
-            fill_rect(mx + 28, my + 22, 130, 26, 254, 44, 85, 255)
-            draw_text("♪ TikTok Stream", font_badge, mx + 28 + 65, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
-
-            t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
-            ty = my + 64
-            for tl in t_lines:
-                draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
-                ty += 32
-            start_txt = "Đang mở trình phát RetroArch..." if state.current_lang == "VI" else "Starting RetroArch player..."
-            draw_text(start_txt, font_modal_val, mx + 30, my + mh - 38, 0, 255, 160)
-            sdl2.SDL_RenderPresent(renderer)
-
-    def launch_tiktok_video_handoff(v_id, s_url, s_title):
-        try:
-            info_file = "/tmp/tiktok_stream_info.json"
-            stream_info = {
-                "video_id": v_id,
-                "stream_url": s_url,
-                "title": s_title
-            }
-            with open(info_file, "w", encoding="utf-8") as _sf:
-                json.dump(stream_info, _sf)
-
-            _resume_state = {
-                "screen_stack": screen_stack if len(screen_stack) > 1 else ["home", "tiktok_grid"],
-                "selected_indices": selected_indices,
-                "scroll_offsets": scroll_offsets,
-                "tiktok_mode": tiktok_mode,
-                "tiktok_search_query": tiktok_search_query,
-                "tiktok_trending_list": tiktok_trending_list,
-                "tiktok_search_results_list": tiktok_search_results_list,
-                "tiktok_recent_queries": tiktok_recent_queries,
-                "tiktok_query_idx": tiktok_query_idx,
-                "tiktok_query_cache": tiktok_query_cache,
-            }
-            with open("/tmp/retrohub_resume.json", "w", encoding="utf-8") as _rf:
-                json.dump(_resume_state, _rf)
-
-            play_cmd = tiktok.build_play_command(v_id, info_file=info_file)
-            with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
-                f.write(play_cmd)
-            subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
-            return True
-        except Exception as e:
-            print(f"[RetroHub] Error preparing TikTok video launch: {e}")
-            return False
-
-    def _prefetch_tiktok_thumbs(video_list, priority_count=6):
-        if not video_list:
-            return
-
-        def _worker():
-            high_pri = video_list[:priority_count]
-            low_pri = video_list[priority_count:24]
-
-            def _fetch_one(v):
-                vid = v.get("id")
-                cover_url = v.get("cover_url")
-                stream_url = v.get("stream_url")
-                if vid and (vid not in tiktok_cached_thumb_ids):
-                    p = tiktok.fetch_thumbnail(cover_url, TIKTOK_CACHE_DIR, vid, stream_url=stream_url)
-                    if p:
-                        tiktok_cached_thumb_ids.add(vid)
-
-            from concurrent.futures import ThreadPoolExecutor
-            try:
-                with ThreadPoolExecutor(max_workers=3) as executor:
-                    list(executor.map(_fetch_one, high_pri))
-            except Exception:
-                for v in high_pri:
-                    _fetch_one(v)
-
-            if low_pri:
-                try:
-                    with ThreadPoolExecutor(max_workers=2) as executor:
-                        list(executor.map(_fetch_one, low_pri))
-                except Exception:
-                    for v in low_pri:
-                        _fetch_one(v)
-
-        threading.Thread(target=_worker, daemon=True).start()
-
-    def start_tiktok_load(query_str, is_trending=False, is_bg_refresh=False):
-        nonlocal tiktok_search_results_list, tiktok_trending_list
-        if not is_bg_refresh:
-            tiktok_loading_state["active"] = True
-        tiktok_loading_state["query"] = query_str
-        tiktok_loading_state["id"] += 1
-        req_id = tiktok_loading_state["id"]
-        tiktok_loading_state["start_time"] = time.time()
-
-        def _worker():
-            nonlocal tiktok_search_results_list, tiktok_trending_list
-            try:
-                if is_trending:
-                    data = tiktok.fetch_trending_feed(count=20) or []
-                else:
-                    data = tiktok.search_tiktok(query_str, count=20) or []
-            except Exception as e:
-                print(f"[RetroHub] TikTok bg fetch error: {e}")
-                data = []
-
-            if req_id == tiktok_loading_state["id"]:
-                if data:
-                    if is_trending:
-                        tiktok_trending_list = data
-                        tiktok.save_feed_cache(query_str if query_str else "Dành cho bạn", data)
-                    else:
-                        tiktok_query_cache[query_str] = data
-                        tiktok_search_results_list = data
-                        tiktok.save_feed_cache(query_str, data)
-                    _prefetch_tiktok_thumbs(data)
-                tiktok_loading_state["active"] = False
-                if not is_bg_refresh and data:
-                    trigger_tiktok_adjacent_preload()
-            else:
-                if not is_trending and data:
-                    tiktok_query_cache[query_str] = data
-
-        threading.Thread(target=_worker, daemon=True).start()
-
-    def load_more_tiktok_videos(query_str):
-        nonlocal tiktok_search_results_list, tiktok_trending_list, toast_msg, toast_timer
-        if tiktok_load_more_state.get("active"):
-            return
-        tiktok_load_more_state["active"] = True
-        tiktok_load_more_state["query"] = query_str
-
-        def _more_worker():
-            nonlocal tiktok_search_results_list, tiktok_trending_list, toast_msg, toast_timer
-            try:
-                if tiktok_mode == "trending":
-                    cur_len = len(tiktok_trending_list)
-                    more_v = tiktok.fetch_more_tiktok("Xu hướng VN", current_count=cur_len)
-                    if more_v:
-                        exist_ids = {v.get("id") for v in tiktok_trending_list}
-                        to_add = [v for v in more_v if v.get("id") not in exist_ids]
-                        tiktok_trending_list.extend(to_add)
-                        tiktok.save_feed_cache("Xu hướng VN", tiktok_trending_list)
-                        _prefetch_tiktok_thumbs(to_add, priority_count=len(to_add))
-                        toast_msg = f"Đã tải thêm {len(to_add)} video TikTok" if state.current_lang == "VI" else f"Loaded {len(to_add)} more TikTok videos"
-                    else:
-                        toast_msg = "Không còn video TikTok nào nữa" if state.current_lang == "VI" else "No more TikTok videos"
-                else:
-                    cur_len = len(tiktok_search_results_list)
-                    more_v = tiktok.fetch_more_tiktok(query_str, current_count=cur_len)
-                    if more_v:
-                        exist_ids = {v.get("id") for v in tiktok_search_results_list}
-                        to_add = [v for v in more_v if v.get("id") not in exist_ids]
-                        tiktok_search_results_list.extend(to_add)
-                        tiktok_query_cache[query_str] = tiktok_search_results_list
-                        tiktok.save_feed_cache(query_str, tiktok_search_results_list)
-                        _prefetch_tiktok_thumbs(to_add, priority_count=len(to_add))
-                        toast_msg = f"Đã tải thêm {len(to_add)} video TikTok" if state.current_lang == "VI" else f"Loaded {len(to_add)} more TikTok videos"
-                    else:
-                        toast_msg = "Không còn video TikTok nào nữa" if state.current_lang == "VI" else "No more TikTok videos"
-            except Exception as e:
-                toast_msg = f"Lỗi: {e}"
-            finally:
-                tiktok_load_more_state["active"] = False
-                toast_timer = time.time()
-
-        threading.Thread(target=_more_worker, daemon=True).start()
-
-    def trigger_tiktok_adjacent_preload():
-        nonlocal tiktok_preload_thread
-        if not tiktok_recent_queries or len(tiktok_recent_queries) < 2:
-            return
-
-        cur_idx = tiktok_query_idx
-        next_idx = (cur_idx + 1) % len(tiktok_recent_queries)
-        prev_idx = (cur_idx - 1) % len(tiktok_recent_queries)
-
-        candidates = []
-        for idx in (next_idx, prev_idx):
-            if 0 <= idx < len(tiktok_recent_queries):
-                q = tiktok_recent_queries[idx]
-                if q in ("Yêu thích", "Favorites"):
-                    continue
-                if q in ("Xu hướng VN", "Xu hướng"):
-                    if not tiktok_trending_list:
-                        candidates.append((q, True))
-                else:
-                    if q not in tiktok_query_cache or not tiktok_query_cache[q]:
-                        candidates.append((q, False))
-
-        if not candidates:
-            return
-
-        def _preload_worker():
-            time.sleep(1.5)
-            for target_q, is_tr in candidates:
-                if tiktok_loading_state.get("active", False):
-                    break
-                try:
-                    if is_tr:
-                        if not tiktok_trending_list:
-                            cached_tr, _ = tiktok.load_feed_cache("Xu hướng VN")
-                            if cached_tr:
-                                tiktok_trending_list.extend(cached_tr)
-                                _prefetch_tiktok_thumbs(cached_tr)
-                            else:
-                                data = tiktok.fetch_trending_feed(count=20) or []
-                                if data and not tiktok_trending_list:
-                                    tiktok_trending_list.extend(data)
-                                    _prefetch_tiktok_thumbs(data)
-                    else:
-                        if target_q not in tiktok_query_cache or not tiktok_query_cache[target_q]:
-                            cached_q, _ = tiktok.load_feed_cache(target_q)
-                            if cached_q:
-                                tiktok_query_cache[target_q] = cached_q
-                                _prefetch_tiktok_thumbs(cached_q)
-                            else:
-                                data = tiktok.search_tiktok(target_q, count=20) or []
-                                if data:
-                                    tiktok_query_cache[target_q] = data
-                                    _prefetch_tiktok_thumbs(data)
-                except Exception as e:
-                    print(f"[RetroHub] TikTok preload error for {target_q}: {e}")
-                time.sleep(0.8)
-
-        if tiktok_preload_thread is None or not tiktok_preload_thread.is_alive():
-            tiktok_preload_thread = threading.Thread(target=_preload_worker, daemon=True)
-            tiktok_preload_thread.start()
-
     def _show_yt_handoff_splash(v_title):
         # Draw seamless dim overlay & modal on top of existing screen contents without wiping background
         mw = min(760, state.SCREEN_W - 60)
@@ -1085,19 +789,7 @@ def main():
                 saved_cache = _r_data.get("yt_query_cache")
                 if isinstance(saved_cache, dict):
                     yt_query_cache = saved_cache
-                tiktok_mode = _r_data.get("tiktok_mode", tiktok_mode)
-                tiktok_search_query = _r_data.get("tiktok_search_query", tiktok_search_query) or ""
-                tiktok_trending_list = _r_data.get("tiktok_trending_list", tiktok_trending_list) or []
-                tiktok_search_results_list = _r_data.get("tiktok_search_results_list", tiktok_search_results_list) or []
-                tt_saved_queries = _r_data.get("tiktok_recent_queries")
-                if isinstance(tt_saved_queries, list) and tt_saved_queries:
-                    tiktok_recent_queries = tt_saved_queries
-                if not tiktok_recent_queries:
-                    tiktok_recent_queries = list(tiktok.DEFAULT_QUERIES)
-                tiktok_query_idx = max(0, min(len(tiktok_recent_queries) - 1, int(_r_data.get("tiktok_query_idx", 0))))
-                tt_saved_cache = _r_data.get("tiktok_query_cache")
-                if isinstance(tt_saved_cache, dict):
-                    tiktok_query_cache = tt_saved_cache
+
         except Exception as _re:
             print(f"[RetroHub] Error restoring resume state: {_re}")
 
@@ -1937,7 +1629,6 @@ def main():
     while running:
         now = time.time()
         yt_new_textures_loaded_this_frame = 0
-        tiktok_new_textures_loaded_this_frame = 0
 
         current_screen = screen_stack[-1]
         selected_idx = selected_indices.get(current_screen, 0)
@@ -2005,7 +1696,6 @@ def main():
             items = [
                 {"id": "nav_rom_store_menu", "title": tr("home_item2")},
                 {"id": "nav_youtube", "title": tr("home_item_youtube")},
-                {"id": "nav_tiktok", "title": tr("home_item_tiktok")},
                 {"id": "nav_network", "title": tr("home_item1")},
                 {"id": "nav_utilities", "title": tr("home_item3")},
                 {"id": "nav_donate", "title": tr("home_item_donate")},
@@ -2158,18 +1848,6 @@ def main():
             else:
                 header_title = f"{tr('yt_search_title')}: \"{yt_search_query}\""
                 items = yt_search_results_list or []
-
-        # TIKTOK 3x2 GRID VIEW
-        elif current_screen == "tiktok_grid":
-            if tiktok_mode == "favorites":
-                header_title = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                items = tiktok_favorites_list or []
-            elif tiktok_mode == "trending":
-                header_title = tr("tiktok_trending_title")
-                items = tiktok_trending_list or []
-            else:
-                header_title = f"{tr('tiktok_search_title')}: \"{tiktok_search_query}\""
-                items = tiktok_search_results_list or []
 
 
         # SETTINGS: things that shape the app itself, kept out of Utilities which is
@@ -2552,7 +2230,7 @@ def main():
             items = search_results_items_cache
 
         # Bounds check
-        if current_screen not in ("yt_search_input", "search_input", "tiktok_search_input"):
+        if current_screen not in ("yt_search_input", "search_input"):
             if selected_idx >= len(items):
                 selected_idx = len(items) - 1
             if selected_idx < 0:
@@ -2773,12 +2451,10 @@ def main():
                     btn_y = True
                 elif sym in [sdl2.SDLK_F1, sdl2.SDLK_m]:
                     btn_f1 = True
-                elif current_screen in ("search_input", "yt_search_input", "tiktok_search_input", "j2me_qc_input"):
+                elif current_screen in ("search_input", "yt_search_input", "j2me_qc_input"):
                     if sym == sdl2.SDLK_BACKSPACE:
                         if current_screen == "yt_search_input":
                             yt_input_text = yt_input_text[:-1]
-                        elif current_screen == "tiktok_search_input":
-                            tiktok_input_text = tiktok_input_text[:-1]
                         elif current_screen == "j2me_qc_input":
                             qc_input_text = qc_input_text[:-1]
                         else:
@@ -3247,78 +2923,6 @@ def main():
                 else:
                     yt_input_text += key_val.lower()
 
-        # TIKTOK SEARCH INPUT: PHYSICAL X = SPACE, PHYSICAL Y = DEL, START/A = SEARCH
-        elif current_screen == "tiktok_search_input":
-            if btn_up:
-                r, c = kb_cursor
-                r = (r - 1) % len(kb_rows)
-                c = min(c, len(kb_rows[r]) - 1)
-                kb_cursor = [r, c]
-            elif btn_down:
-                r, c = kb_cursor
-                r = (r + 1) % len(kb_rows)
-                c = min(c, len(kb_rows[r]) - 1)
-                kb_cursor = [r, c]
-            elif btn_left:
-                r, c = kb_cursor
-                c = (c - 1) % len(kb_rows[r])
-                kb_cursor = [r, c]
-            elif btn_right:
-                r, c = kb_cursor
-                c = (c + 1) % len(kb_rows[r])
-                kb_cursor = [r, c]
-            elif btn_x: # Physical X = Space
-                tiktok_input_text += " "
-            elif btn_y: # Physical Y = Delete
-                tiktok_input_text = tiktok_input_text[:-1]
-            elif btn_b:
-                screen_stack.pop()
-            elif (btn_start or (btn_a and kb_rows[kb_cursor[0]][kb_cursor[1]] == "SEARCH")):
-                q_clean = tiktok_input_text.strip()
-                if q_clean:
-                    tiktok_mode = "search"
-                    tiktok_search_query = q_clean
-                    selected_idx = 0
-                    selected_indices["tiktok_grid"] = 0
-                    scroll_offsets["tiktok_grid"] = 0
-                    tiktok_search_results_list = []
-
-                    # Update recent search queries list
-                    matched_idx = -1
-                    for idx, p in enumerate(tiktok_recent_queries):
-                        if q_clean.lower() == p.lower():
-                            matched_idx = idx
-                            break
-
-                    if matched_idx >= 0:
-                        tiktok_query_idx = matched_idx
-                    else:
-                        tiktok.save_search_history([q_clean] + [q for q in tiktok.load_search_history() if q.lower() != q_clean.lower()])
-                        tiktok_recent_queries = build_tiktok_recent_queries()
-                        try:
-                            tiktok_query_idx = tiktok_recent_queries.index(q_clean)
-                        except ValueError:
-                            tiktok_query_idx = 0
-
-                    screen_stack.pop()
-                    start_tiktok_load(q_clean, is_trending=False)
-                else:
-                    toast_msg = "Vui lòng nhập từ khóa!" if state.current_lang == "VI" else "Please enter search keyword!"
-                    toast_timer = time.time()
-            elif btn_a:
-                r, c = kb_cursor
-                key_val = kb_rows[r][c]
-                if key_val == "SPACE":
-                    tiktok_input_text += " "
-                elif key_val == "DEL":
-                    tiktok_input_text = tiktok_input_text[:-1]
-                elif key_val == "CLEAR":
-                    tiktok_input_text = ""
-                elif key_val == "SEARCH":
-                    pass
-                else:
-                    tiktok_input_text += key_val.lower()
-
         # J2ME QUICKCHAT INPUT: PHYSICAL X = SPACE, PHYSICAL Y = DEL, START/A = SAVE
         elif current_screen == "j2me_qc_input":
             if btn_up:
@@ -3649,293 +3253,6 @@ def main():
                         screen_stack.pop()
                     else:
                         running = False
-
-        # TIKTOK 3x2 GRID NAVIGATION: A=PLAY, B=BACK, X=SEARCH, Y=FAV, SL=DEL, LR=TABS
-        elif current_screen == "tiktok_grid":
-            if tiktok_mode == "favorites":
-                base_list = tiktok_favorites_list or []
-            elif tiktok_mode == "trending":
-                base_list = tiktok_trending_list or []
-            else:
-                base_list = tiktok_search_results_list or []
-
-            has_more = (tiktok_mode in ("trending", "search") and bool(base_list))
-            cur_videos = list(base_list)
-            if has_more:
-                cur_videos.append({
-                    "id": "__LOAD_MORE__",
-                    "is_load_more": True,
-                    "title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
-                    "disp_title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
-                })
-            total_v = len(cur_videos)
-
-            if tiktok_launch_state.get("active"):
-                if tiktok_launch_state.get("status") == "ready":
-                    v_id = tiktok_launch_state["v_id"]
-                    s_url = tiktok_launch_state["stream_url"]
-                    s_title = tiktok_launch_state["title"]
-                    tiktok_launch_state["active"] = False
-                    _show_tiktok_handoff_splash(s_title)
-                    launch_tiktok_video_handoff(v_id, s_url, s_title)
-                    running = False
-                    break
-                elif tiktok_launch_state.get("status") == "error":
-                    toast_msg = tiktok_launch_state.get("err_msg") or ("Không lấy được link phát video TikTok!" if state.current_lang == "VI" else "Failed to get TikTok video stream!")
-                    toast_timer = time.time()
-                    tiktok_launch_state["active"] = False
-                    tiktok_launch_state["status"] = "idle"
-                elif btn_b:
-                    tiktok_launch_state["active"] = False
-                    tiktok_launch_state["status"] = "idle"
-                    toast_msg = "Đã hủy kết nối" if state.current_lang == "VI" else "Cancelled connection"
-                    toast_timer = time.time()
-
-            else:
-                if total_v > 0:
-                    cols = 3
-                    rows = 2
-                    per_page = 6
-                    scroll_row = scroll_offsets.get("tiktok_grid", 0)
-
-                    if btn_left:
-                        if selected_idx > 0:
-                            selected_idx -= 1
-                    elif btn_right:
-                        if selected_idx < total_v - 1:
-                            selected_idx += 1
-                    elif btn_up:
-                        if selected_idx - cols >= 0:
-                            selected_idx -= cols
-                    elif btn_down:
-                        if selected_idx + cols < total_v:
-                            selected_idx += cols
-
-                    cur_row = selected_idx // cols
-                    if cur_row < scroll_row:
-                        scroll_row = cur_row
-                    elif cur_row >= scroll_row + rows:
-                        scroll_row = cur_row - rows + 1
-
-                    scroll_offsets["tiktok_grid"] = scroll_row
-                    selected_indices["tiktok_grid"] = selected_idx
-
-                    # Pre-fetch thumbnail & speculative stream URL extraction when hovering (> 1.0s)
-                    cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < total_v) else None
-                    sel_id = cur_v_sel.get("id") if cur_v_sel else None
-                    if sel_id and sel_id != "__LOAD_MORE__":
-                        if sel_id != tiktok_last_hover_id:
-                            tiktok_last_hover_id = sel_id
-                            tiktok_hover_start_time = time.time()
-                        elif (time.time() - tiktok_hover_start_time > 1.0) and (sel_id not in tiktok._STREAM_CACHE) and not tiktok_loading_state.get("active"):
-                            if tiktok_prefetch_thread is None or not tiktok_prefetch_thread.is_alive():
-                                def _bg_tt_prefetch(vid_fetch, item_ref):
-                                    try:
-                                        tiktok.extract_stream_fast(vid_fetch, item_ref)
-                                    except Exception:
-                                        pass
-                                tiktok_prefetch_thread = threading.Thread(target=_bg_tt_prefetch, args=(sel_id, cur_v_sel), daemon=True)
-                                tiktok_prefetch_thread.start()
-
-                        if (sel_id not in tiktok_cached_thumb_ids) and not tiktok_loading_state.get("active"):
-                            def _bg_thumb(v_obj):
-                                try:
-                                    p = tiktok.fetch_thumbnail(v_obj.get("cover_url"), TIKTOK_CACHE_DIR, v_obj.get("id"), stream_url=v_obj.get("stream_url"))
-                                    if p:
-                                        tiktok_cached_thumb_ids.add(v_obj["id"])
-                                except Exception:
-                                    pass
-                            threading.Thread(target=_bg_thumb, args=(cur_v_sel,), daemon=True).start()
-
-                    if btn_a and 0 <= selected_idx < total_v:
-                        cur_v = cur_videos[selected_idx]
-                        if cur_v.get("is_load_more"):
-                            if not tiktok_load_more_state.get("active"):
-                                cq = "Xu hướng VN" if tiktok_mode == "trending" else tiktok_search_query
-                                load_more_tiktok_videos(cq)
-                            else:
-                                toast_msg = "Đang tải thêm video..." if state.current_lang == "VI" else "Loading more videos..."
-                                toast_timer = time.time()
-                        else:
-                            v_id = cur_v.get("id")
-                            if v_id:
-                                ra_bin = "/mnt/SDCARD/RetroArch/ra64.trimui"
-                                ff_core = "/mnt/SDCARD/Emus/FFMPEG/ffmpeg_libretro.so"
-                                if not (os.path.exists(ra_bin) and os.path.exists(ff_core)):
-                                    toast_msg = tr("yt_no_player")
-                                    toast_timer = time.time()
-                                else:
-                                    v_title = cur_v.get("title", v_id)
-                                    # Fast path: check stream_url or cached stream
-                                    s_url = cur_v.get("stream_url")
-                                    if not (s_url and s_url.startswith("http") and ("tiktokcdn" in s_url or "tiktokv" in s_url or ".mp4" in s_url)):
-                                        cached_stream = tiktok._STREAM_CACHE.get(v_id)
-                                        if cached_stream and cached_stream[0]:
-                                            s_url = cached_stream[0]
-                                            v_title = cached_stream[1] or v_title
-
-                                    if s_url and s_url.startswith("http") and ("tiktokcdn" in s_url or "tiktokv" in s_url or ".mp4" in s_url):
-                                        _show_tiktok_handoff_splash(v_title)
-                                        launch_tiktok_video_handoff(v_id, s_url, v_title)
-                                        running = False
-                                        break
-                                    else:
-                                        tiktok_launch_state["active"] = True
-                                        tiktok_launch_state["v_id"] = v_id
-                                        tiktok_launch_state["title"] = v_title
-                                        tiktok_launch_state["status"] = "connecting"
-                                        tiktok_launch_state["stream_url"] = None
-                                        tiktok_launch_state["err_msg"] = ""
-                                        req_t = time.time()
-                                        tiktok_launch_state["start_time"] = req_t
-
-                                        def _tt_extract_worker(vid, item_data, t_str, token):
-                                            try:
-                                                s_u, s_t = tiktok.resolve_stream_url(vid, item_data)
-                                                if tiktok_launch_state["active"] and tiktok_launch_state.get("start_time") == token:
-                                                    if s_u and s_u.startswith("http") and not s_u.startswith("https://www.tiktok.com"):
-                                                        tiktok_launch_state["stream_url"] = s_u
-                                                        tiktok_launch_state["title"] = s_t or t_str
-                                                        tiktok_launch_state["status"] = "ready"
-                                                    else:
-                                                        tiktok_launch_state["status"] = "error"
-                                                        tiktok_launch_state["err_msg"] = "Không lấy được luồng phát video!" if state.current_lang == "VI" else "Failed to extract stream URL!"
-                                            except Exception as ex:
-                                                if tiktok_launch_state["active"] and tiktok_launch_state.get("start_time") == token:
-                                                    tiktok_launch_state["status"] = "error"
-                                                    tiktok_launch_state["err_msg"] = str(ex)
-
-                                        threading.Thread(target=_tt_extract_worker, args=(v_id, cur_v, v_title, req_t), daemon=True).start()
-
-                # L1 / R1: Switch recent search keywords
-                if (btn_l1 or btn_r1) and tiktok_recent_queries:
-                    if btn_l1:
-                        tiktok_query_idx = (tiktok_query_idx - 1) % len(tiktok_recent_queries)
-                    else:
-                        tiktok_query_idx = (tiktok_query_idx + 1) % len(tiktok_recent_queries)
-
-                    new_q = tiktok_recent_queries[tiktok_query_idx]
-                    selected_idx = 0
-                    selected_indices["tiktok_grid"] = 0
-                    scroll_offsets["tiktok_grid"] = 0
-
-                    fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                    if new_q == fav_label:
-                        tiktok_mode = "favorites"
-                        tiktok_loading_state["active"] = False
-                        _prefetch_tiktok_thumbs(tiktok_favorites_list)
-                        toast_msg = "Danh sách Yêu thích" if state.current_lang == "VI" else "Favorites List"
-                        toast_timer = time.time()
-                    elif new_q in ("Dành cho bạn", "Xu hướng VN", "Xu hướng"):
-                        tiktok_mode = "trending"
-                        cached_tr, _ = tiktok.load_feed_cache(new_q)
-                        if cached_tr:
-                            tiktok_trending_list = cached_tr
-                            tiktok_loading_state["active"] = False
-                            _prefetch_tiktok_thumbs(tiktok_trending_list)
-                            trigger_tiktok_adjacent_preload()
-                        else:
-                            tiktok_trending_list = []
-                            start_tiktok_load(new_q, is_trending=True)
-                        toast_msg = f"Chủ đề: {new_q}" if state.current_lang == "VI" else f"Topic: {new_q}"
-                        toast_timer = time.time()
-                    else:
-                        tiktok_mode = "search"
-                        tiktok_search_query = new_q
-                        if new_q in tiktok_query_cache and tiktok_query_cache[new_q]:
-                            tiktok_search_results_list = tiktok_query_cache[new_q]
-                            tiktok_loading_state["active"] = False
-                            _prefetch_tiktok_thumbs(tiktok_search_results_list)
-                            trigger_tiktok_adjacent_preload()
-                        else:
-                            cached_q, _ = tiktok.load_feed_cache(new_q)
-                            if cached_q:
-                                tiktok_query_cache[new_q] = cached_q
-                                tiktok_search_results_list = cached_q
-                                tiktok_loading_state["active"] = False
-                                _prefetch_tiktok_thumbs(cached_q)
-                                trigger_tiktok_adjacent_preload()
-                            else:
-                                tiktok_search_results_list = []
-                                start_tiktok_load(new_q, is_trending=False)
-                        toast_msg = f"Chủ đề: {new_q}" if state.current_lang == "VI" else f"Topic: {new_q}"
-                        toast_timer = time.time()
-
-                if btn_x: # Press X in TikTok
-                    toast_msg = "Chuyển tab [L1/R1] để xem các chủ đề video" if state.current_lang == "VI" else "Switch tabs [L1/R1] to browse topics"
-                    toast_timer = time.time()
-
-                elif btn_y: # Press Y to Toggle Favorite
-                    if 0 <= selected_idx < total_v:
-                        cur_v = cur_videos[selected_idx]
-                        if not cur_v.get("is_load_more"):
-                            new_favs, is_added = tiktok.toggle_favorite(cur_v, tiktok_favorites_list)
-                            tiktok_favorites_list = new_favs
-                            tiktok_recent_queries = build_tiktok_recent_queries()
-                            fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                            if tiktok_mode == "favorites":
-                                if not tiktok_favorites_list:
-                                    tiktok_mode = "trending"
-                                    tiktok_query_idx = 0
-                                    selected_idx = 0
-                                    selected_indices["tiktok_grid"] = 0
-                                    scroll_offsets["tiktok_grid"] = 0
-                                    if not tiktok_trending_list:
-                                        start_tiktok_load("Xu hướng VN", is_trending=True)
-                                else:
-                                    selected_idx = min(selected_idx, len(tiktok_favorites_list) - 1)
-                                    selected_indices["tiktok_grid"] = selected_idx
-                            toast_msg = ("Đã thêm vào Yêu thích ❤️" if is_added else "Đã xóa khỏi Yêu thích") if state.current_lang == "VI" else ("Added to Favorites ❤️" if is_added else "Removed from Favorites")
-                            toast_timer = time.time()
-
-                elif btn_f1: # Press SELECT to delete search keyword
-                    if tiktok_recent_queries and (0 <= tiktok_query_idx < len(tiktok_recent_queries)):
-                        cur_q = tiktok_recent_queries[tiktok_query_idx]
-                        fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                        if cur_q != fav_label:
-                            tiktok.remove_search_history_item(cur_q)
-                            tiktok_query_cache.pop(cur_q, None)
-                            tiktok_recent_queries = build_tiktok_recent_queries()
-                            tiktok_query_idx = max(0, min(tiktok_query_idx - 1, len(tiktok_recent_queries) - 1))
-                            selected_idx = 0
-                            selected_indices["tiktok_grid"] = 0
-                            scroll_offsets["tiktok_grid"] = 0
-
-                            new_q = tiktok_recent_queries[tiktok_query_idx] if tiktok_recent_queries else ""
-                            if new_q == fav_label:
-                                tiktok_mode = "favorites"
-                                tiktok_loading_state["active"] = False
-                                _prefetch_tiktok_thumbs(tiktok_favorites_list)
-                            elif new_q in ("Xu hướng VN", "Xu hướng"):
-                                tiktok_mode = "trending"
-                                if not tiktok_trending_list:
-                                    start_tiktok_load("Xu hướng VN", is_trending=True)
-                                else:
-                                    tiktok_loading_state["active"] = False
-                                    _prefetch_tiktok_thumbs(tiktok_trending_list)
-                                    trigger_tiktok_adjacent_preload()
-                            else:
-                                tiktok_mode = "search"
-                                tiktok_search_query = new_q
-                                if new_q not in tiktok_query_cache:
-                                    start_tiktok_load(new_q, is_trending=False)
-                                else:
-                                    tiktok_search_results_list = tiktok_query_cache[new_q]
-                                    tiktok_loading_state["active"] = False
-                                    _prefetch_tiktok_thumbs(tiktok_search_results_list)
-                                    trigger_tiktok_adjacent_preload()
-                            toast_msg = f"Đã xóa từ khóa: {cur_q}" if state.current_lang == "VI" else f"Deleted keyword: {cur_q}"
-                            toast_timer = time.time()
-                        else:
-                            toast_msg = "Không thể xóa tab Yêu thích" if state.current_lang == "VI" else "Cannot delete Favorites tab"
-                            toast_timer = time.time()
-
-                elif btn_b:
-                    if len(screen_stack) > 1:
-                        screen_stack.pop()
-                    else:
-                        running = False
-
 
         elif modal_title:
             if btn_a or btn_b:
@@ -4336,40 +3653,6 @@ def main():
                             trigger_yt_adjacent_preload()
                     screen_stack.append("yt_grid")
 
-                elif item_id == "nav_tiktok":
-                    tiktok_favorites_list = tiktok.load_favorites()
-                    tiktok_recent_queries = build_tiktok_recent_queries()
-                    selected_indices["tiktok_grid"] = 0
-                    scroll_offsets["tiktok_grid"] = 0
-
-                    if tiktok_favorites_list:
-                        tiktok_mode = "favorites"
-                        tiktok_query_idx = 0
-                        tiktok_loading_state["active"] = False
-                        _prefetch_tiktok_thumbs(tiktok_favorites_list)
-                        trigger_tiktok_adjacent_preload()
-                    else:
-                        tiktok_mode = "trending"
-                        tiktok_query_idx = 0
-                        if not tiktok_trending_list:
-                            cached_items, cached_ts = tiktok.load_feed_cache("Xu hướng VN")
-                            if cached_items:
-                                tiktok_trending_list = cached_items
-                                tiktok_loading_state["active"] = False
-                                _prefetch_tiktok_thumbs(tiktok_trending_list)
-                                if time.time() - cached_ts > 7200:
-                                    start_tiktok_load("Xu hướng VN", is_trending=True, is_bg_refresh=True)
-                                else:
-                                    trigger_tiktok_adjacent_preload()
-                            else:
-                                start_tiktok_load("Xu hướng VN", is_trending=True)
-                        else:
-                            tiktok_loading_state["active"] = False
-                            _prefetch_tiktok_thumbs(tiktok_trending_list)
-                            trigger_tiktok_adjacent_preload()
-                    screen_stack.append("tiktok_grid")
-
-
                 elif item_id == "nav_settings":
                     selected_indices["settings"] = 0
                     screen_stack.append("settings")
@@ -4719,10 +4002,9 @@ def main():
 
         _head_txt = (
             tr("yt_search_title") if current_screen == "yt_search_input"
-            else (tr("tiktok_search_title") if current_screen == "tiktok_search_input"
             else (tr("j2me_qc_input_title") if current_screen == "j2me_qc_input"
             else (tr("search_title") if current_screen == "search_input"
-            else header_title)))
+            else header_title))
         )
         draw_text(_head_txt, font_title, 40, header_h // 2, 255, 255, 255, center_y=True)
         # Version sits beside the app name on the home screen only. Measured
@@ -4737,9 +4019,9 @@ def main():
         # Battery still shows in Device Info.
 
         # ----------------------------------------------------------------------
-        # SCREEN: YOUTUBE / TIKTOK SEARCH INPUT & J2ME QUICKCHAT INPUT & VIRTUAL KEYBOARD
+        # SCREEN: YOUTUBE SEARCH INPUT & J2ME QUICKCHAT INPUT & VIRTUAL KEYBOARD
         # ----------------------------------------------------------------------
-        if current_screen in ("yt_search_input", "j2me_qc_input", "tiktok_search_input"):
+        if current_screen in ("yt_search_input", "j2me_qc_input"):
             box_x = 40
             box_y = 108
             box_w = state.SCREEN_W - 80
@@ -4751,9 +4033,6 @@ def main():
             if current_screen == "j2me_qc_input":
                 disp_query = qc_input_text + cursor_str if qc_input_text else tr("j2me_qc_input_prompt") + cursor_str
                 q_col = (255, 255, 255) if qc_input_text else (120, 140, 170)
-            elif current_screen == "tiktok_search_input":
-                disp_query = tiktok_input_text + cursor_str if tiktok_input_text else tr("search_prompt") + cursor_str
-                q_col = (255, 255, 255) if tiktok_input_text else (120, 140, 170)
             else:
                 disp_query = yt_input_text + cursor_str if yt_input_text else tr("search_prompt") + cursor_str
                 q_col = (255, 255, 255) if yt_input_text else (120, 140, 170)
@@ -5023,267 +4302,6 @@ def main():
 
                             # Title below thumbnail (wrapped to max 2 lines, generous line spacing)
                             raw_title = v_data.get("title") or v_data.get("disp_title") or "Video"
-                            max_text_w = tw - 8
-                            t_lines = v_data.get("_wrapped_title")
-                            if t_lines is None:
-                                t_lines = wrap_text_to_width(raw_title, font_sub, max_text_w, max_lines=2)
-                                v_data["_wrapped_title"] = t_lines
-
-                            line_y = ty + th + 6
-                            title_col = (255, 255, 255) if is_sel else (205, 215, 230)
-                            line_spacing = 23 if is_small_screen else 25
-                            for line_str in t_lines:
-                                draw_text(line_str, font_sub, tx + 4, line_y, title_col[0], title_col[1], title_col[2])
-                                line_y += line_spacing
-
-        # ----------------------------------------------------------------------
-        # SCREEN: TIKTOK 3x2 GRID VIEW
-        # ----------------------------------------------------------------------
-        elif current_screen == "tiktok_grid":
-            if tiktok_mode == "favorites":
-                base_list = tiktok_favorites_list or []
-            elif tiktok_mode == "trending":
-                base_list = tiktok_trending_list or []
-            else:
-                base_list = tiktok_search_results_list or []
-
-            has_more = (tiktok_mode in ("trending", "search") and bool(base_list))
-            cur_videos = list(base_list)
-            if has_more:
-                cur_videos.append({
-                    "id": "__LOAD_MORE__",
-                    "is_load_more": True,
-                    "title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
-                    "disp_title": "Tải thêm video" if state.current_lang == "VI" else "Load more videos",
-                })
-            total_v = len(cur_videos)
-            scroll_row = scroll_offsets.get("tiktok_grid", 0)
-
-            # Draw counter badge in top right of header
-            if total_v > 0:
-                cnt_str = f"{selected_idx + 1} / {total_v}"
-                cw = measure_text(cnt_str, font_sub)
-                draw_text(cnt_str, font_sub, state.SCREEN_W - 40 - cw, header_h // 2, 254, 44, 85, center_y=True)
-
-            # ------------------------------------------------------------------
-            # TOP BAR: RECENT SEARCH KEYWORDS & TABS (L1 / R1 TO SWITCH)
-            # ------------------------------------------------------------------
-            bar_y = 66
-            bar_h = 38
-            fill_rect(0, bar_y, state.SCREEN_W, bar_h, 17, 24, 40, 245)
-            fill_rect(0, bar_y + bar_h - 1, state.SCREEN_W, 1, 35, 48, 72, 255)
-
-            # Navigation hints
-            draw_text("< L1", font_footer, 20, bar_y + bar_h // 2, 0, 242, 234, center_y=True)
-            r1_txt = "R1 >"
-            r1_w = measure_text(r1_txt, font_footer)
-            draw_text(r1_txt, font_footer, state.SCREEN_W - 20 - r1_w, bar_y + bar_h // 2, 254, 44, 85, center_y=True)
-
-            # Calculate pills dimensions (cached to eliminate per-frame text measurement)
-            pill_area_x = 90
-            pill_area_w = state.SCREEN_W - 180
-            pill_gap = 10
-            pill_h = 26
-            pill_y = bar_y + (bar_h - pill_h) // 2
-
-            if tiktok_pills_cache.get("queries") != tiktok_recent_queries:
-                pills_w = [measure_text(q_item, font_badge) + 24 for q_item in tiktok_recent_queries]
-                total_pills_w = sum(pills_w) + (len(pills_w) - 1) * pill_gap if pills_w else 0
-                pill_x_pos = []
-                cur_px = 0
-                for pw in pills_w:
-                    pill_x_pos.append(cur_px)
-                    cur_px += pw + pill_gap
-                tiktok_pills_cache["queries"] = list(tiktok_recent_queries)
-                tiktok_pills_cache["pills_w"] = pills_w
-                tiktok_pills_cache["pill_x_pos"] = pill_x_pos
-                tiktok_pills_cache["total_w"] = total_pills_w
-            else:
-                pills_w = tiktok_pills_cache["pills_w"]
-                pill_x_pos = tiktok_pills_cache["pill_x_pos"]
-                total_pills_w = tiktok_pills_cache["total_w"]
-
-            safe_q_idx = max(0, min(len(pills_w) - 1, tiktok_query_idx)) if pills_w else 0
-
-            if not pills_w or total_pills_w <= pill_area_w:
-                base_x = pill_area_x + max(0, (pill_area_w - total_pills_w) // 2)
-            else:
-                active_center = pill_x_pos[safe_q_idx] + pills_w[safe_q_idx] // 2
-                desired_offset = (pill_area_w // 2) - active_center
-                max_scroll = 0
-                min_scroll = pill_area_w - total_pills_w
-                scroll_offset_x = max(min_scroll, min(max_scroll, desired_offset))
-                base_x = pill_area_x + scroll_offset_x
-
-            # Draw keyword pills
-            num_pills = min(len(tiktok_recent_queries), len(pills_w), len(pill_x_pos))
-            for q_i in range(num_pills):
-                q_txt = tiktok_recent_queries[q_i]
-                px = base_x + pill_x_pos[q_i]
-                pw = pills_w[q_i]
-                if px + pw < pill_area_x - 10 or px > pill_area_x + pill_area_w + 10:
-                    continue
-
-                is_active_q = (q_i == safe_q_idx)
-                if is_active_q:
-                    fill_rect(px, pill_y, pw, pill_h, 254, 44, 85, 255)
-                    draw_rect(px, pill_y, pw, pill_h, 255, 255, 255, 255, thickness=2)
-                    draw_text(q_txt, font_badge, px + pw // 2, pill_y + pill_h // 2, 255, 255, 255, center_x=True, center_y=True)
-                else:
-                    fill_rect(px, pill_y, pw, pill_h, 25, 35, 54, 230)
-                    draw_rect(px, pill_y, pw, pill_h, 48, 66, 94, 255, thickness=1)
-                    draw_text(q_txt, font_badge, px + pw // 2, pill_y + pill_h // 2, 180, 205, 235, center_x=True, center_y=True)
-
-            if total_v == 0:
-                if tiktok_loading_state.get("active"):
-                    q_disp = tiktok_loading_state.get("query", "")
-                    num_dots = int(now * 3.5) % 4
-                    dots = "." * num_dots
-                    msg_main = f"Đang tải video TikTok \"{q_disp}\"{dots}" if state.current_lang == "VI" else f"Loading TikTok videos \"{q_disp}\"{dots}"
-                    draw_text(msg_main, font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 - 12, 254, 44, 85, center_x=True, center_y=True)
-                    sub_hint = "Đang kết nối TikTok API Gateway..." if state.current_lang == "VI" else "Connecting to TikTok API Gateway..."
-                    draw_text(sub_hint, font_sub, state.SCREEN_W // 2, state.SCREEN_H // 2 + 26, 140, 175, 210, center_x=True, center_y=True)
-                elif tiktok_mode == "favorites":
-                    fav_empty_txt = "Chưa có video TikTok yêu thích nào" if state.current_lang == "VI" else "No favorite TikTok videos yet"
-                    draw_text(fav_empty_txt, font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 - 12, 180, 200, 225, center_x=True, center_y=True)
-                    fav_hint = "Bấm [Y] khi chọn video bất kỳ để thêm vào đây" if state.current_lang == "VI" else "Press [Y] on any video to add to favorites"
-                    draw_text(fav_hint, font_sub, state.SCREEN_W // 2, state.SCREEN_H // 2 + 24, 0, 242, 234, center_x=True, center_y=True)
-                else:
-                    draw_text(tr("tiktok_no_results"), font_item, state.SCREEN_W // 2, state.SCREEN_H // 2 + 20, 160, 180, 210, center_x=True, center_y=True)
-            else:
-                cols = 3
-                rows = 2
-                is_small_screen = (state.SCREEN_W < 1200)
-                if is_small_screen:
-                    card_w = 316
-                    card_h = 230
-                    gap_x = 14
-                    gap_y = 10
-                    tw = 296
-                    th = 166
-                else:
-                    card_w = 390
-                    card_h = 268
-                    gap_x = 18
-                    gap_y = 10
-                    tw = 368
-                    th = 207
-
-                start_x = (state.SCREEN_W - (cols * card_w + (cols - 1) * gap_x)) // 2
-                start_y = 108
-
-                for r_off in range(rows):
-                    cur_r = scroll_row + r_off
-                    for c_off in range(cols):
-                        idx = cur_r * cols + c_off
-                        if idx >= total_v:
-                            continue
-
-                        cx = start_x + c_off * (card_w + gap_x)
-                        cy = start_y + r_off * (card_h + gap_y)
-                        is_sel = (idx == selected_idx)
-                        v_data = cur_videos[idx]
-
-                        # Card Background & Border (TikTok Neon highlight)
-                        if is_sel:
-                            fill_rect(cx, cy, card_w, card_h, 30, 24, 46, 255)
-                            draw_rect(cx, cy, card_w, card_h, 254, 44, 85, 255, thickness=3)
-                        else:
-                            fill_rect(cx, cy, card_w, card_h, 18, 22, 36, 240)
-                            draw_rect(cx, cy, card_w, card_h, 36, 44, 68, 255, thickness=1)
-
-                        tx = cx + (card_w - tw) // 2
-                        ty = cy + (6 if is_small_screen else 8)
-
-                        if v_data.get("is_load_more"):
-                            # LOAD MORE CARD
-                            fill_rect(tx, ty, tw, th, 14, 20, 34, 255)
-                            draw_rect(tx, ty, tw, th, 54, 38, 65, 255, thickness=1)
-
-                            if tiktok_load_more_state.get("active"):
-                                dots = "." * (int(now * 3.5) % 4)
-                                load_txt = f"Đang tải{dots}" if state.current_lang == "VI" else f"Loading{dots}"
-                                draw_text(load_txt, font_sub, tx + tw // 2, ty + th // 2, 254, 44, 85, center_x=True, center_y=True)
-                            else:
-                                draw_text("♪♪", font_title, tx + tw // 2, ty + th // 2 - 12, 254, 44, 85, center_x=True, center_y=True)
-                                more_lbl = "TẢI THÊM" if state.current_lang == "VI" else "LOAD MORE"
-                                draw_text(more_lbl, font_badge, tx + tw // 2, ty + th // 2 + 18, 200, 225, 245, center_x=True, center_y=True)
-
-                            text_y = ty + th + 6
-                            title_txt = "Bấm A để tải thêm" if state.current_lang == "VI" else "Press A to load more"
-                            title_col = (254, 44, 85) if is_sel else (140, 170, 205)
-                            draw_text(title_txt, font_sub, tx + 4, text_y, title_col[0], title_col[1], title_col[2])
-                        else:
-                            # THUMBNAIL
-                            v_id = v_data.get("id", "")
-                            tex, orig_w, orig_h = (None, 0, 0)
-                            if v_id and (v_id in tiktok_cached_thumb_ids):
-                                t_path = os.path.join(TIKTOK_CACHE_DIR, f"{v_id}.jpg")
-                                if t_path in img_texture_cache:
-                                    tex, orig_w, orig_h = get_texture_and_size(t_path)
-                                elif tiktok_new_textures_loaded_this_frame < 1:
-                                    tex, orig_w, orig_h = get_texture_and_size(t_path)
-                                    if tex:
-                                        tiktok_new_textures_loaded_this_frame += 1
-
-                            if tex:
-                                if orig_w > 0 and orig_h > 0:
-                                    scale = min(tw / float(orig_w), th / float(orig_h))
-                                    dw = int(orig_w * scale)
-                                    dh = int(orig_h * scale)
-                                    dx = tx + (tw - dw) // 2
-                                    dy = ty + (th - dh) // 2
-                                    dest_r = sdl2.SDL_Rect(dx, dy, dw, dh)
-                                else:
-                                    dest_r = sdl2.SDL_Rect(tx, ty, tw, th)
-                                sdl2.SDL_RenderCopy(renderer, tex, None, dest_r)
-                            else:
-                                fill_rect(tx, ty, tw, th, 12, 16, 26, 255)
-                                draw_rect(tx, ty, tw, th, 30, 42, 65, 255, thickness=1)
-                                pw, ph = 46, 32
-                                px = tx + (tw - pw) // 2
-                                py = ty + (th - ph) // 2
-                                fill_rect(px, py, pw, ph, 254, 44, 85, 255)
-                                draw_text("♪", font_badge, px + pw // 2, py + ph // 2, 255, 255, 255, center_x=True, center_y=True)
-
-                            # Favorite badge ❤️ at top-right of thumbnail
-                            if tiktok.is_favorite(v_id, tiktok_favorites_list):
-                                fw = 24
-                                fh = 20
-                                fx_pos = tx + tw - fw - 4
-                                fy_pos = ty + 4
-                                fill_rect(fx_pos, fy_pos, fw, fh, 254, 44, 85, 230)
-                                draw_rect(fx_pos, fy_pos, fw, fh, 255, 120, 140, 255, thickness=1)
-                                draw_text("♥", font_badge, fx_pos + fw // 2, fy_pos + fh // 2, 255, 255, 255, center_x=True, center_y=True)
-
-                            # Author or Duration badge at bottom-right/bottom-left of thumbnail
-                            dur_val = v_data.get("duration_str") or v_data.get("duration", "")
-                            if isinstance(dur_val, int):
-                                dur_str = tiktok.format_duration(dur_val)
-                            else:
-                                dur_str = str(dur_val or "")
-                            if dur_str:
-                                dw = measure_text(dur_str, font_badge) + 10
-                                dh = 20
-                                dx = tx + tw - dw - 4
-                                dy = ty + th - dh - 4
-                                fill_rect(dx, dy, dw, dh, 0, 0, 0, 220)
-                                draw_rect(dx, dy, dw, dh, 50, 50, 50, 255, thickness=1)
-                                draw_text(dur_str, font_badge, dx + dw // 2, dy + dh // 2, 255, 255, 255, center_x=True, center_y=True)
-
-                            author_str = str(v_data.get("author") or "")
-                            if author_str:
-                                disp_auth = f"@{author_str}" if not author_str.startswith("@") else author_str
-                                aw = min(tw // 2, measure_text(disp_auth, font_badge) + 10)
-                                ah = 20
-                                ax = tx + 4
-                                ay = ty + th - ah - 4
-                                fill_rect(ax, ay, aw, ah, 0, 0, 0, 200)
-                                draw_rect(ax, ay, aw, ah, 40, 40, 40, 255, thickness=1)
-                                draw_text(disp_auth, font_badge, ax + aw // 2, ay + ah // 2, 0, 242, 234, center_x=True, center_y=True)
-
-                            # Title below thumbnail (wrapped to max 2 lines)
-                            raw_title = str(v_data.get("title") or v_data.get("disp_title") or "Video TikTok")
                             max_text_w = tw - 8
                             t_lines = v_data.get("_wrapped_title")
                             if t_lines is None:
@@ -5848,10 +4866,6 @@ def main():
                 cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < len(cur_videos)) else {}
                 a_label = "Tải thêm" if cur_v_sel.get("is_load_more") else "Xem"
                 b_label = "Quay lại"
-            elif current_screen == "tiktok_grid":
-                cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < len(cur_videos)) else {}
-                a_label = ("Tải thêm" if state.current_lang == "VI" else "Load more") if cur_v_sel.get("is_load_more") else ("Xem" if state.current_lang == "VI" else "Watch")
-                b_label = "Quay lại" if state.current_lang == "VI" else "Back"
             else:
                 a_label = "Chọn / Mở"
                 b_label = "Quay lại" if len(screen_stack) > 1 else "Thoát"
@@ -5901,20 +4915,6 @@ def main():
                 if cur_q and (cur_q != fav_label):
                     fx = draw_footer_btn(fx, "SL", "Xóa từ khóa", (240, 70, 70), is_dark_btn=False)
 
-            elif current_screen == "tiktok_grid":
-                fx = draw_footer_btn(fx, "L1/R1", "Đổi tab" if state.current_lang == "VI" else "Switch tab", (0, 190, 255))
-                cur_v_sel = cur_videos[selected_idx] if (0 <= selected_idx < len(cur_videos)) else {}
-                if not cur_v_sel.get("is_load_more"):
-                    is_fav = tiktok.is_favorite(cur_v_sel.get("id"), tiktok_favorites_list) if cur_v_sel else False
-                    y_lbl = ("Bỏ thích" if is_fav else "Yêu thích") if state.current_lang == "VI" else ("Unfavorite" if is_fav else "Favorite")
-                    fx = draw_footer_btn(fx, "Y", y_lbl, (254, 44, 85) if is_fav else (255, 180, 0))
-
-                cur_q = tiktok_recent_queries[tiktok_query_idx] if (0 <= tiktok_query_idx < len(tiktok_recent_queries)) else ""
-                fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                trend_labels = ("Xu hướng VN", "Xu hướng", "Trending VN", "Trending")
-                if cur_q and (cur_q != fav_label) and (cur_q not in trend_labels):
-                    fx = draw_footer_btn(fx, "SL", "Xóa từ khóa" if state.current_lang == "VI" else "Delete tag", (240, 70, 70), is_dark_btn=False)
-
             elif current_screen == "j2me_qc_input":
                 fx = draw_footer_btn(fx, "X", "Cách" if state.current_lang == "VI" else "Space", (0, 190, 255))
                 fx = draw_footer_btn(fx, "Y", "Xóa" if state.current_lang == "VI" else "Del", (255, 200, 0))
@@ -5929,11 +4929,6 @@ def main():
                 fx = draw_footer_btn(fx, "Y", "Xóa", (255, 200, 0))
                 fx = draw_footer_btn(fx, "ST", "Tìm", (255, 140, 0))
 
-            elif current_screen == "tiktok_search_input":
-                fx = draw_footer_btn(fx, "X", "Cách" if state.current_lang == "VI" else "Space", (0, 190, 255))
-                fx = draw_footer_btn(fx, "Y", "Xóa" if state.current_lang == "VI" else "Del", (255, 200, 0))
-                fx = draw_footer_btn(fx, "ST", "Tìm" if state.current_lang == "VI" else "Search", (255, 140, 0))
-
             elif current_screen == "search_input":
                 fx = draw_footer_btn(fx, "X", "Cách", (0, 190, 255))
                 fx = draw_footer_btn(fx, "Y", "Xóa", (255, 200, 0))
@@ -5944,7 +4939,7 @@ def main():
                 draw_footer_btn(state.SCREEN_W - 190, "LR", "Lướt 10", (70, 95, 140), is_dark_btn=False)
 
         # 4. Toast Notification
-        if toast_msg and (now - toast_timer < 2.5) and not ((current_screen == "yt_grid" and yt_loading_state.get("active")) or (current_screen == "tiktok_grid" and tiktok_loading_state.get("active"))):
+        if toast_msg and (now - toast_timer < 2.5) and not (current_screen == "yt_grid" and yt_loading_state.get("active")):
             toast_margin = 40
             tw = state.SCREEN_W - (toast_margin * 2)
             th = 44
@@ -6008,35 +5003,6 @@ def main():
             ww = measure_text(wait_txt, font_badge)
             draw_text(wait_txt, font_badge, hud_x + hud_w - 20 - ww, hud_y + hud_h // 2 - 1, 255, 215, 0, center_y=True)
 
-        # 4.7. Mini Floating TikTok Loading HUD (when fetching in background)
-        if current_screen == "tiktok_grid" and tiktok_loading_state.get("active"):
-            hud_w = state.SCREEN_W - 60
-            hud_h = 44
-            hud_x = 30
-            hud_y = foot_y - hud_h - 10
-            if dl_state.get("active") and dl_state.get("is_background", False):
-                hud_y -= (hud_h + 8)
-
-            fill_rect(hud_x, hud_y, hud_w, hud_h, 20, 22, 38, 248)
-            draw_rect(hud_x, hud_y, hud_w, hud_h, 254, 44, 85, 255, thickness=2)
-
-            anim_offset = int((now * 420) % hud_w)
-            pulse_w = 220
-            p1 = min(pulse_w, hud_w - anim_offset)
-            fill_rect(hud_x + anim_offset, hud_y + hud_h - 4, p1, 3, 0, 242, 234, 255)
-            if anim_offset + pulse_w > hud_w:
-                p2 = (anim_offset + pulse_w) - hud_w
-                fill_rect(hud_x, hud_y + hud_h - 4, p2, 3, 0, 242, 234, 255)
-
-            q_name = tiktok_loading_state.get("query", "")
-            num_dots = int(now * 3.5) % 4
-            dots = "." * num_dots
-            hud_txt = f"⏳ ĐANG TẢI TIKTOK: \"{q_name}\"{dots}" if state.current_lang == "VI" else f"⏳ LOADING TIKTOK: \"{q_name}\"{dots}"
-            draw_text(hud_txt, font_badge, hud_x + 20, hud_y + hud_h // 2 - 1, 254, 44, 85, center_y=True)
-
-            wait_txt = "Đang kết nối..." if state.current_lang == "VI" else "Connecting..."
-            ww = measure_text(wait_txt, font_badge)
-            draw_text(wait_txt, font_badge, hud_x + hud_w - 20 - ww, hud_y + hud_h // 2 - 1, 0, 242, 234, center_y=True)
 
 
         # 5. Live Progress Bar Download Modal
@@ -6932,39 +5898,10 @@ def main():
                 cw = measure_text(cancel_str, font_badge)
                 draw_text(cancel_str, font_badge, mx + mw - 30 - cw, my + mh - 38, 140, 165, 195)
 
-        # 8.5. TikTok Video Connecting Modal (Smooth, Flicker-Free)
-        if current_screen == "tiktok_grid" and tiktok_launch_state.get("active"):
-            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 185)
-            mw, mh = 760, 210
-            mx = (state.SCREEN_W - mw) // 2
-            my = (state.SCREEN_H - mh) // 2
-            fill_rect(mx, my, mw, mh, 24, 22, 38, 250)
-            anim_pulse = (math.sin(now * 6.0) + 1.0) * 0.5
-            bc_r = int(200 + 54 * anim_pulse)
-            draw_rect(mx, my, mw, mh, bc_r, 44, 85, 255, thickness=2)
-            fill_rect(mx + 28, my + 22, 140, 26, 254, 44, 85, 255)
-            draw_text("♪ TikTok Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
-            v_title = tiktok_launch_state.get("title") or "Video TikTok"
-            t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
-            ty = my + 64
-            for tl in t_lines:
-                draw_text(tl, font_sub, mx + 30, ty, 255, 255, 255)
-                ty += 32
-            if tiktok_launch_state.get("status") in ("ready", "launching"):
-                start_txt = "Đang mở trình phát RetroArch..." if state.current_lang == "VI" else "Starting RetroArch player..."
-                draw_text(start_txt, font_modal_val, mx + 30, my + mh - 38, 0, 255, 160)
-            else:
-                dots = "." * (int(now * 3) % 4)
-                load_text = ("Đang kết nối luồng phát TikTok không logo" + dots) if state.current_lang == "VI" else ("Connecting clean TikTok stream" + dots)
-                draw_text(load_text, font_modal_val, mx + 30, my + mh - 38, 0, 242, 234)
-                cancel_str = "[B] Hủy" if state.current_lang == "VI" else "[B] Cancel"
-                cw = measure_text(cancel_str, font_badge)
-                draw_text(cancel_str, font_badge, mx + mw - 30 - cw, my + mh - 38, 140, 165, 195)
-
         sdl2.SDL_RenderPresent(renderer)
 
         # Adaptive Dynamic Eco Power Saving (60 FPS when active, ~28 FPS when idle to save battery)
-        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False) or yt_launch_state.get("active", False) or tiktok_loading_state.get("active", False) or tiktok_launch_state.get("active", False) or exit_modal.get("active", False)
+        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False) or yt_launch_state.get("active", False) or exit_modal.get("active", False)
         if is_active:
             time.sleep(0.016)
         else:
