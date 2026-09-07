@@ -849,7 +849,7 @@ def main():
                 if data:
                     if is_trending:
                         tiktok_trending_list = data
-                        tiktok.save_feed_cache("Xu hướng", data)
+                        tiktok.save_feed_cache("Xu hướng VN", data)
                     else:
                         tiktok_query_cache[query_str] = data
                         tiktok_search_results_list = data
@@ -876,12 +876,12 @@ def main():
             try:
                 if tiktok_mode == "trending":
                     cur_len = len(tiktok_trending_list)
-                    more_v = tiktok.fetch_more_tiktok("Xu hướng", current_count=cur_len)
+                    more_v = tiktok.fetch_more_tiktok("Xu hướng VN", current_count=cur_len)
                     if more_v:
                         exist_ids = {v.get("id") for v in tiktok_trending_list}
                         to_add = [v for v in more_v if v.get("id") not in exist_ids]
                         tiktok_trending_list.extend(to_add)
-                        tiktok.save_feed_cache("Xu hướng", tiktok_trending_list)
+                        tiktok.save_feed_cache("Xu hướng VN", tiktok_trending_list)
                         _prefetch_tiktok_thumbs(to_add, priority_count=len(to_add))
                         toast_msg = f"Đã tải thêm {len(to_add)} video TikTok" if state.current_lang == "VI" else f"Loaded {len(to_add)} more TikTok videos"
                     else:
@@ -922,7 +922,7 @@ def main():
                 q = tiktok_recent_queries[idx]
                 if q in ("Yêu thích", "Favorites"):
                     continue
-                if q == "Xu hướng":
+                if q in ("Xu hướng VN", "Xu hướng"):
                     if not tiktok_trending_list:
                         candidates.append((q, True))
                 else:
@@ -940,7 +940,7 @@ def main():
                 try:
                     if is_tr:
                         if not tiktok_trending_list:
-                            cached_tr, _ = tiktok.load_feed_cache("Xu hướng")
+                            cached_tr, _ = tiktok.load_feed_cache("Xu hướng VN")
                             if cached_tr:
                                 tiktok_trending_list.extend(cached_tr)
                                 _prefetch_tiktok_thumbs(cached_tr)
@@ -3751,7 +3751,7 @@ def main():
                         cur_v = cur_videos[selected_idx]
                         if cur_v.get("is_load_more"):
                             if not tiktok_load_more_state.get("active"):
-                                cq = "Xu hướng" if tiktok_mode == "trending" else tiktok_search_query
+                                cq = "Xu hướng VN" if tiktok_mode == "trending" else tiktok_search_query
                                 load_more_tiktok_videos(cq)
                             else:
                                 toast_msg = "Đang tải thêm video..." if state.current_lang == "VI" else "Loading more videos..."
@@ -3826,22 +3826,22 @@ def main():
                         _prefetch_tiktok_thumbs(tiktok_favorites_list)
                         toast_msg = "Danh sách Yêu thích" if state.current_lang == "VI" else "Favorites List"
                         toast_timer = time.time()
-                    elif new_q == "Xu hướng":
+                    elif new_q in ("Xu hướng VN", "Xu hướng"):
                         tiktok_mode = "trending"
                         if not tiktok_trending_list:
-                            cached_tr, _ = tiktok.load_feed_cache("Xu hướng")
+                            cached_tr, _ = tiktok.load_feed_cache("Xu hướng VN")
                             if cached_tr:
                                 tiktok_trending_list = cached_tr
                                 tiktok_loading_state["active"] = False
                                 _prefetch_tiktok_thumbs(tiktok_trending_list)
                                 trigger_tiktok_adjacent_preload()
                             else:
-                                start_tiktok_load("Xu hướng", is_trending=True)
+                                start_tiktok_load("Xu hướng VN", is_trending=True)
                         else:
                             tiktok_loading_state["active"] = False
                             _prefetch_tiktok_thumbs(tiktok_trending_list)
                             trigger_tiktok_adjacent_preload()
-                        toast_msg = "Chủ đề: Xu hướng (FYP)" if state.current_lang == "VI" else "Topic: Trending (FYP)"
+                        toast_msg = "Chủ đề: Xu hướng VN (FYP)" if state.current_lang == "VI" else "Topic: Trending VN (FYP)"
                         toast_timer = time.time()
                     else:
                         tiktok_mode = "search"
@@ -3887,7 +3887,7 @@ def main():
                                     selected_indices["tiktok_grid"] = 0
                                     scroll_offsets["tiktok_grid"] = 0
                                     if not tiktok_trending_list:
-                                        start_tiktok_load("Xu hướng", is_trending=True)
+                                        start_tiktok_load("Xu hướng VN", is_trending=True)
                                 else:
                                     selected_idx = min(selected_idx, len(tiktok_favorites_list) - 1)
                                     selected_indices["tiktok_grid"] = selected_idx
@@ -3912,10 +3912,10 @@ def main():
                                 tiktok_mode = "favorites"
                                 tiktok_loading_state["active"] = False
                                 _prefetch_tiktok_thumbs(tiktok_favorites_list)
-                            elif new_q == "Xu hướng":
+                            elif new_q in ("Xu hướng VN", "Xu hướng"):
                                 tiktok_mode = "trending"
                                 if not tiktok_trending_list:
-                                    start_tiktok_load("Xu hướng", is_trending=True)
+                                    start_tiktok_load("Xu hướng VN", is_trending=True)
                                 else:
                                     tiktok_loading_state["active"] = False
                                     _prefetch_tiktok_thumbs(tiktok_trending_list)
@@ -4358,17 +4358,17 @@ def main():
                         tiktok_mode = "trending"
                         tiktok_query_idx = 0
                         if not tiktok_trending_list:
-                            cached_items, cached_ts = tiktok.load_feed_cache("Xu hướng")
+                            cached_items, cached_ts = tiktok.load_feed_cache("Xu hướng VN")
                             if cached_items:
                                 tiktok_trending_list = cached_items
                                 tiktok_loading_state["active"] = False
                                 _prefetch_tiktok_thumbs(tiktok_trending_list)
                                 if time.time() - cached_ts > 7200:
-                                    start_tiktok_load("Xu hướng", is_trending=True, is_bg_refresh=True)
+                                    start_tiktok_load("Xu hướng VN", is_trending=True, is_bg_refresh=True)
                                 else:
                                     trigger_tiktok_adjacent_preload()
                             else:
-                                start_tiktok_load("Xu hướng", is_trending=True)
+                                start_tiktok_load("Xu hướng VN", is_trending=True)
                         else:
                             tiktok_loading_state["active"] = False
                             _prefetch_tiktok_thumbs(tiktok_trending_list)
@@ -5917,8 +5917,8 @@ def main():
 
                 cur_q = tiktok_recent_queries[tiktok_query_idx] if (0 <= tiktok_query_idx < len(tiktok_recent_queries)) else ""
                 fav_label = "Yêu thích" if state.current_lang == "VI" else "Favorites"
-                trend_label = "Xu hướng" if state.current_lang == "VI" else "Trending"
-                if cur_q and (cur_q not in (fav_label, trend_label)):
+                trend_labels = ("Xu hướng VN", "Xu hướng", "Trending VN", "Trending")
+                if cur_q and (cur_q != fav_label) and (cur_q not in trend_labels):
                     fx = draw_footer_btn(fx, "SL", "Xóa từ khóa" if state.current_lang == "VI" else "Delete tag", (240, 70, 70), is_dark_btn=False)
 
             elif current_screen == "j2me_qc_input":

@@ -24,8 +24,41 @@ API_BASE = "https://tiktok-api.chocode.com.vn"
 API_KEY = "tk_live_1c95813ba949efce813b1378fb8bc3e1"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-DEFAULT_QUERIES = ["Xu hướng", "Gaming", "Remix", "Hài hước", "Ẩm thực"]
-DEFAULT_PRESET_QUERIES = ("Xu hướng", "Gaming", "Remix", "Hài hước", "Ẩm thực")
+DEFAULT_QUERIES = ["Xu hướng VN", "Nhạc Hot VN", "Gaming VN", "Hài Hước VN", "Ẩm Thực VN"]
+DEFAULT_PRESET_QUERIES = ("Xu hướng VN", "Nhạc Hot VN", "Gaming VN", "Hài Hước VN", "Ẩm Thực VN")
+
+VIETNAMESE_CHARS = set(
+    "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ"
+    "ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ"
+)
+
+VIETNAMESE_KEYWORDS = {
+    "vietnam", "việt nam", "viet nam", "vn", "xuhuong", "xu hướng", "xh", "fypvn", "nhachay",
+    "nhạc", "hài", "gamingvn", "lienquan", "freefire", "amthuc", "ẩm thực", "vtv",
+    "schannel", "beatvn", "tiin", "mixi", "streamer", "review", "tintuc", "tin tức",
+    "hanoi", "saigon", "danang", "haiphong", "cantho", "tiktokvn", "tiktokvietnam", "viet", "việt"
+}
+
+
+def is_vietnamese_content(title: str, author_name: str = "", region: str = "") -> bool:
+    """Check whether a video is from Vietnam region or has Vietnamese content."""
+    if region and region.upper() == "VN":
+        return True
+    foreign_regions = {"US", "BR", "PK", "NG", "IN", "NP", "GB", "RU", "KE", "ID", "PH", "LK", "BD", "MM", "KH"}
+    text = f"{title or ''} {author_name or ''}".lower()
+
+    if any(c in VIETNAMESE_CHARS for c in text):
+        return True
+
+    words = re.findall(r"[a-z0-9_#]+", text)
+    for w in words:
+        if w.lstrip("#") in VIETNAMESE_KEYWORDS:
+            return True
+
+    if region and region.upper() in foreign_regions:
+        return False
+
+    return False
 
 
 def _get_ssl_context():
@@ -89,7 +122,15 @@ def format_duration(seconds: int) -> str:
 
 
 def load_search_history() -> list:
-    """Load list of recent search queries from disk."""
+    """Load list of recent search queries from disk, migrating legacy categories."""
+    legacy_map = {
+        "Xu hướng": "Xu hướng VN",
+        "Trending": "Xu hướng VN",
+        "Gaming": "Gaming VN",
+        "Remix": "Nhạc Hot VN",
+        "Hài hước": "Hài Hước VN",
+        "Ẩm thực": "Ẩm Thực VN",
+    }
     try:
         if os.path.exists(TIKTOK_HISTORY_FILE):
             with open(TIKTOK_HISTORY_FILE, "r", encoding="utf-8") as f:
@@ -98,6 +139,7 @@ def load_search_history() -> list:
                     cleaned = []
                     for q in data:
                         q_str = str(q).strip()
+                        q_str = legacy_map.get(q_str, q_str)
                         if q_str and q_str not in cleaned:
                             cleaned.append(q_str)
                     if cleaned:
@@ -186,17 +228,24 @@ def toggle_favorite(video: dict, favorites_list: list) -> tuple:
         return new_favs, False
 
 
-def load_feed_cache(category: str = "Xu hướng") -> tuple:
+def load_feed_cache(category: str = "Xu hướng VN") -> tuple:
     """Load cached feed items for category. Returns (items_list, timestamp)."""
+    fallback_cats = [category]
+    if category in ("Xu hướng VN", "Xu hướng"):
+        fallback_cats = ["Xu hướng VN", "Xu hướng"]
+
     for path in (TIKTOK_FEED_CACHE_FILE, TIKTOK_FEED_FALLBACK_FILE):
         if os.path.exists(path):
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 if isinstance(data, dict):
-                    cat = data.get(category)
-                    if isinstance(cat, dict):
-                        return cat.get("items", []), float(cat.get("timestamp", 0))
+                    for c in fallback_cats:
+                        cat_data = data.get(c)
+                        if isinstance(cat_data, dict):
+                            items = cat_data.get("items", [])
+                            if items:
+                                return items, float(cat_data.get("timestamp", 0))
             except Exception:
                 pass
     return [], 0.0
@@ -218,15 +267,68 @@ def save_feed_cache(category: str, items: list):
                     data = {}
             if not isinstance(data, dict):
                 data = {}
+            now_ts = time.time()
             data[category] = {
-                "timestamp": time.time(),
+                "timestamp": now_ts,
                 "items": items,
             }
+            if category == "Xu hướng VN":
+                data["Xu hướng"] = {
+                    "timestamp": now_ts,
+                    "items": items,
+                }
+            elif category == "Xu hướng":
+                data["Xu hướng VN"] = {
+                    "timestamp": now_ts,
+                    "items": items,
+                }
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False)
             break
         except Exception:
             continue
+
+
+def _normalize_tikwm_item(item: dict) -> dict:
+    """Normalize video dict from TikWM API into RetroHub standardized format."""
+    if not isinstance(item, dict):
+        return None
+    vid_id = str(item.get("id") or item.get("video_id") or "")
+    if not vid_id:
+        return None
+
+    title = (item.get("title") or "").strip()
+    author_info = item.get("author") or {}
+    author_name = author_info.get("nickname") if isinstance(author_info, dict) else ""
+    author_uid = author_info.get("unique_id") if isinstance(author_info, dict) else ""
+    if not author_name:
+        author_name = author_uid or "TikToker"
+    if not title:
+        title = f"TikTok @{author_name}"
+
+    stream_url = item.get("play") or item.get("wmplay") or ""
+    cover_url = item.get("cover") or item.get("origin_cover") or ""
+    dur_sec = int(item.get("duration") or 0)
+    play_count = int(item.get("play_count") or 0)
+    digg_count = int(item.get("digg_count") or 0)
+
+    return {
+        "id": vid_id,
+        "title": title,
+        "disp_title": title,
+        "author": author_name,
+        "author_id": author_uid,
+        "stream_url": stream_url,
+        "cover_url": cover_url,
+        "duration": format_duration(dur_sec),
+        "duration_sec": dur_sec,
+        "duration_str": format_duration(dur_sec),
+        "views": play_count,
+        "views_str": format_count(play_count),
+        "likes": digg_count,
+        "likes_str": format_count(digg_count),
+        "source": "tiktok",
+    }
 
 
 def _normalize_aweme_item(item: dict) -> dict:
@@ -297,24 +399,68 @@ def _normalize_aweme_item(item: dict) -> dict:
     }
 
 
-def fetch_trending_feed(count: int = 20) -> list:
-    """Fetch live For You Page / Trending feed from TikTok."""
-    resp = _api_request("/api/v1/feed")
-    aweme_list = resp.get("data", {}).get("aweme_list", [])
-    if not aweme_list:
-        # Fallback to social feed index endpoint
-        resp = _api_request("/api/v1/social/tiktok/feed/index", method="POST", params={"count": count}, body={})
-        aweme_list = resp.get("data", {}).get("aweme_list", [])
-
+def fetch_trending_feed(count: int = 20, cursor: int = 0) -> list:
+    """Fetch live Vietnam trending videos using hybrid sources (TikWM VN + Gateway Music Aweme VN)."""
     items = []
     seen = set()
-    for raw in aweme_list:
-        normalized = _normalize_aweme_item(raw)
-        if normalized and normalized["id"] not in seen:
-            seen.add(normalized["id"])
-            items.append(normalized)
+
+    # Source 1: Gateway Music Aweme VN (Top viral Vietnam audio track)
+    # Music ID 7330881678778960641 is a top trending sound in Vietnam with direct CDN streams
+    try:
+        gw_resp = _api_request(
+            "/api/v1/social/tiktok/music/aweme",
+            method="POST",
+            params={"id": "7330881678778960641", "count": count, "cursor": cursor},
+            body={},
+            timeout=5,
+        )
+        aweme_list = gw_resp.get("data", {}).get("aweme_list", [])
+        for raw in aweme_list:
+            normalized = _normalize_aweme_item(raw)
+            if normalized and normalized["id"] not in seen:
+                reg = raw.get("region") or (raw.get("author") or {}).get("region")
+                if is_vietnamese_content(normalized["title"], normalized["author"], reg):
+                    seen.add(normalized["id"])
+                    items.append(normalized)
+    except Exception as e:
+        print(f"[rh.tiktok] Gateway music aweme error: {e}")
+
+    # Source 2: TikWM Feed with region=VN (Direct fast CDN streams)
+    if len(items) < count:
+        try:
+            tikwm_url = f"https://www.tikwm.com/api/feed/list?region=VN&count={count}"
+            ctx = _get_ssl_context()
+            req = urllib.request.Request(tikwm_url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=3.0, context=ctx) as resp:
+                t_data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+            for raw in t_data.get("data", []):
+                normalized = _normalize_tikwm_item(raw)
+                if normalized and normalized["id"] not in seen:
+                    r = raw.get("region") or "VN"
+                    if is_vietnamese_content(normalized["title"], normalized["author"], r):
+                        seen.add(normalized["id"])
+                        items.append(normalized)
+        except Exception as e:
+            print(f"[rh.tiktok] TikWM VN feed error/timeout: {e}")
+
+    # Source 3: Fallback to General Feed (strictly filtered for Vietnam region)
+    if len(items) < 5:
+        resp = _api_request("/api/v1/feed", timeout=6)
+        aweme_list = resp.get("data", {}).get("aweme_list", [])
+        if not aweme_list:
+            resp = _api_request("/api/v1/social/tiktok/feed/index", method="POST", params={"count": count}, body={}, timeout=6)
+            aweme_list = resp.get("data", {}).get("aweme_list", [])
+
+        for raw in aweme_list:
+            normalized = _normalize_aweme_item(raw)
+            if normalized and normalized["id"] not in seen:
+                reg = raw.get("region") or (raw.get("author") or {}).get("region")
+                if is_vietnamese_content(normalized["title"], normalized["author"], reg):
+                    seen.add(normalized["id"])
+                    items.append(normalized)
 
     if items:
+        save_feed_cache("Xu hướng VN", items)
         save_feed_cache("Xu hướng", items)
     return items
 
@@ -323,10 +469,10 @@ _STREAM_CACHE = {}
 
 
 def search_tiktok(keyword: str, count: int = 20, offset: int = 0) -> list:
-    """Search TikTok videos by keyword or resolve direct URL/ID with pagination support."""
+    """Search TikTok videos focusing strictly on Vietnam region or resolve direct URL/ID."""
     q = (keyword or "").strip()
-    if not q:
-        return fetch_trending_feed(count)
+    if not q or q in ("Xu hướng", "Xu hướng VN", "Trending VN", "Trending"):
+        return fetch_trending_feed(count=count, cursor=offset)
 
     # 1. If keyword is a direct URL or short link
     if "tiktok.com" in q:
@@ -346,15 +492,27 @@ def search_tiktok(keyword: str, count: int = 20, offset: int = 0) -> list:
             if item:
                 return [item]
 
-    # 3. Text search (with offset support)
+    # 3. Preset categories / keywords with Vietnam context
+    category_keywords = {
+        "Nhạc Hot VN": "nhạc hot tik tok việt nam",
+        "Gaming VN": "gaming việt nam liên quân free fire",
+        "Hài Hước VN": "hài hước việt nam vui nhộn",
+        "Ẩm Thực VN": "ẩm thực việt nam món ngon review",
+    }
+    search_q = category_keywords.get(q, q)
+    if not any(k in search_q.lower() for k in ("vn", "việt nam", "viet nam", "vietnam")):
+        search_q = f"{search_q} việt nam"
+
+    # Text search (with offset support)
+    raw_videos = []
     if offset > 0:
-        resp = _api_request("/api/v1/social/tiktok/web/search/item", method="POST", params={"keyword": q, "count": count, "offset": offset}, body={})
+        resp = _api_request("/api/v1/social/tiktok/web/search/item", method="POST", params={"keyword": search_q, "count": count, "offset": offset}, body={})
         raw_videos = resp.get("data", {}).get("item_list", [])
     else:
-        resp = _api_request("/api/v1/search/video", params={"keyword": q})
+        resp = _api_request("/api/v1/search/video", params={"keyword": search_q})
         raw_videos = resp.get("data", {}).get("videos", [])
         if not raw_videos:
-            resp = _api_request("/api/v1/social/tiktok/web/search/item", method="POST", params={"keyword": q, "count": count, "offset": 0}, body={})
+            resp = _api_request("/api/v1/social/tiktok/web/search/item", method="POST", params={"keyword": search_q, "count": count, "offset": 0}, body={})
             raw_videos = resp.get("data", {}).get("item_list", [])
 
     items = []
@@ -362,8 +520,25 @@ def search_tiktok(keyword: str, count: int = 20, offset: int = 0) -> list:
     for raw in raw_videos:
         normalized = _normalize_aweme_item(raw)
         if normalized and normalized["id"] not in seen:
-            seen.add(normalized["id"])
-            items.append(normalized)
+            is_mock = (
+                normalized["id"] == "7554918276849995011"
+                or "Trending TikTok video #" in normalized["title"]
+                or normalized["author"].endswith(" Creator")
+            )
+            if is_mock:
+                continue
+            reg = raw.get("region") or (raw.get("author") or {}).get("region")
+            if is_vietnamese_content(normalized["title"], normalized["author"], reg):
+                seen.add(normalized["id"])
+                items.append(normalized)
+
+    # If search results returned few or no real videos, supplement with Vietnam trending videos
+    if len(items) < 6:
+        tr_items = fetch_trending_feed(count=count, cursor=offset)
+        for tr_v in tr_items:
+            if tr_v["id"] not in seen:
+                seen.add(tr_v["id"])
+                items.append(tr_v)
 
     if items and offset == 0:
         save_feed_cache(q, items)
@@ -373,8 +548,8 @@ def search_tiktok(keyword: str, count: int = 20, offset: int = 0) -> list:
 def fetch_more_tiktok(query_str: str, current_count: int = 0) -> list:
     """Fetch additional videos for pagination / infinite scroll."""
     q = (query_str or "").strip()
-    if not q or q == "Xu hướng":
-        return fetch_trending_feed(count=20)
+    if not q or q in ("Xu hướng", "Xu hướng VN", "Trending VN", "Trending"):
+        return fetch_trending_feed(count=20, cursor=current_count)
     return search_tiktok(q, count=20, offset=current_count)
 
 
