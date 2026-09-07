@@ -44,25 +44,6 @@ YT_HISTORY_FILE = os.path.join(APP_DIR, "yt_history.json")
 YT_FAVORITES_FILE = os.path.join(SDCARD_PATH, ".retrohub", "yt_favorites.json")
 YT_FAVORITES_FALLBACK_FILE = os.path.join(APP_DIR, "yt_favorites.json")
 
-def get_tiktok_cache_dir():
-    """Persistent thumbnail directory on SDCARD with fallback to RAM tmpfs."""
-    sd_cache = os.path.join(SDCARD_PATH, ".retrohub", "cache", "tiktok_thumbs")
-    try:
-        os.makedirs(sd_cache, exist_ok=True)
-        return sd_cache
-    except Exception:
-        fallback = "/tmp/tiktok_thumbs"
-        os.makedirs(fallback, exist_ok=True)
-        return fallback
-
-
-TIKTOK_CACHE_DIR = get_tiktok_cache_dir()
-TIKTOK_FEED_CACHE_FILE = os.path.join(SDCARD_PATH, ".retrohub", "cache", "tiktok_feed_cache.json")
-TIKTOK_FEED_FALLBACK_FILE = "/tmp/tiktok_feed_cache.json"
-TIKTOK_HISTORY_FILE = os.path.join(APP_DIR, "tiktok_history.json")
-TIKTOK_FAVORITES_FILE = os.path.join(SDCARD_PATH, ".retrohub", "tiktok_favorites.json")
-TIKTOK_FAVORITES_FALLBACK_FILE = os.path.join(APP_DIR, "tiktok_favorites.json")
-
 
 
 def is_nextui():

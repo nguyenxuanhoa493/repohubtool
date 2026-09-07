@@ -1,12 +1,12 @@
 {
-  "version": "1.86",
+  "version": "1.87",
   "full_release_version": "1.63",
   "python": "any",
   "built": "2026-09-07T22:45:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "TikTok Video: Chuyển đổi toàn diện sang các endpoint dữ liệu thật (Dành cho bạn FYP Live, Xu hướng VN, Ẩm thực quê, Hài Hước VN, Thú cưng vui), đảm bảo 100% video đều có nguồn phát trực tiếp",
-    "en": "TikTok Video: Transition to verified live endpoints (For You FYP Live, Trending VN, Rural Food, Comedy VN, Cute Pets), guaranteeing 100% playable direct stream URLs"
+    "vi": "Giao diện & Hiệu năng: Loại bỏ hoàn toàn menu TikTok, giải phóng bộ nhớ RAM và tối ưu hóa độ ổn định hệ thống",
+    "en": "UI & Performance: Remove TikTok menu and integration to streamline user interface and optimize system stability"
   },
   "remove": [
     "app.pyc",
@@ -39,6 +39,7 @@
     "rh/state.pyc",
     "rh/storage.pyc",
     "rh/sysinfo.pyc",
+    "rh/tiktok.py",
     "rh/tiktok.pyc",
     "rh/updater.pyc",
     "rh/version.pyc",
@@ -194,8 +195,8 @@
     },
     {
       "path": "app.py",
-      "size": 366911,
-      "sha256": "f6f1cda308e665772a7a9d85e1a72990b922253ec031cfa37f83293c924e1931"
+      "size": 307149,
+      "sha256": "80c60eff88ce668ea9eac34f2dd4f8faf98846b81f205f8ad0580ec1c3f54b93"
     },
     {
       "path": "assets/fallback.ttf",
@@ -414,8 +415,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 4055,
-      "sha256": "a95a4deeb40a8b99bc7d0defb9332b1ccac25e79558cf99dd9df1a681d89a568"
+      "size": 3222,
+      "sha256": "1cbb2c666e2aefdeab0fe47c27f2dbce60301344c90c8ce6628ae626124631f6"
     },
     {
       "path": "rh/romfiles.py",
@@ -448,11 +449,6 @@
       "sha256": "df42b4cfa96f120a8982483f9cbc80ebf7f4962e5160a0334fe9a9663271439a"
     },
     {
-      "path": "rh/tiktok.py",
-      "size": 23037,
-      "sha256": "372972b4e2cb63a21354ddfe2b3d1f5fcd558f378b873c1d140b50cbb8b15f80"
-    },
-    {
       "path": "rh/updater.py",
       "size": 23321,
       "sha256": "91026dafab1d06c0d2e3e3f31420641e2d15258747f3573b424c0dff7ccfeabb"
@@ -460,7 +456,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "56c9c2a7a9d1bff5fa468003558d3ea6a7800ef94733c96975ec0f45f827e7c8"
+      "sha256": "65ded1f57c0cce9e7a4e73fad1f5d0639523c5976af1b48f78f945a762485133"
     },
     {
       "path": "rh/yt.py",
@@ -857,5 +853,7 @@
       "size": 1666,
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
     }
-  ]
+  ],
+  "notes": "Loại bỏ hoàn toàn menu và các tính năng TikTok để tối ưu giao diện và bộ nhớ, tập trung vào YouTube Player và ROM Store mượt mà.",
+  "notes_en": "Completely remove TikTok menu and modules to optimize memory and UI performance, focusing on smooth YouTube Player and ROM Store."
 }
