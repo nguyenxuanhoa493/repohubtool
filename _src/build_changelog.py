@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.90", "2026-09-08",
+     ("Web Game Manager: Inline batch scraping with real-time card updates, SVG vector system icons, and full uncropped boxart view",
+      "Quản lý Game qua Web: Cào ảnh hàng loạt trực tiếp trên danh sách (không popup modal), biểu tượng SVG vector cho từng hệ máy và hiển thị trọn vẹn 100% ảnh bìa"),
+     [("Inline Batch Scrape & Live Visual Updates: Direct batch scraping with smooth auto-scrolling, live card borders, and inline progress indicator without blocking modal overlays.",
+       "Cào ảnh hàng loạt trực tiếp: Tự động cào ảnh tuần tự và cập nhật trực tiếp vào thẻ game trên màn hình kèm thanh tiến độ inline thanh mảnh, không còn modal che khuất."),
+      ("Full-Size Boxart & SVG Vector Artwork: Displays full uncropped covers with aspect-ratio preservation, click-to-preview full-res modal, and beautiful SVG vector gamepad icons for every system placeholder.",
+       "Hiển thị trọn vẹn ảnh bìa & Icon SVG: Khung ảnh giữ đúng tỉ lệ gốc 100% không méo/crop, hỗ trợ phóng to ảnh nét căng khi nhấp chuột, thay thế toàn bộ emoji bằng vector SVG tay cầm cho từng hệ máy.")]),
+
     ("1.89", "2026-09-08",
      ("Web Game Manager: Integrated port 8090 web server in Services menu, enabling game renaming, boxart scraping (Libretro CDN), system moving, and ROM uploading via browser",
       "Quản lý Game qua Web: Tích hợp máy chủ web cổng 8090 trong menu Dịch vụ, cho phép đổi tên game, cào ảnh bìa (Libretro CDN), chuyển hệ máy và tải ROM trực tiếp qua trình duyệt"),
