@@ -2,7 +2,7 @@
   "version": "1.92",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T00:57:16+0700",
+  "built": "2026-09-09T01:05:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Tiện ích & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
@@ -409,8 +409,8 @@
     },
     {
       "path": "rh/cheat_manager.py",
-      "size": 9515,
-      "sha256": "315d894ebc2f093f23d237d53769463620b7d2bf69a2b6015aa60dd7e0705040"
+      "size": 9844,
+      "sha256": "bb0a1c0cc3b247f65731c5b080b90f97ee1ca26932427bb90aa24a04776d41fc"
     },
     {
       "path": "rh/corepicker.py",
@@ -474,8 +474,8 @@
     },
     {
       "path": "rh/logger.py",
-      "size": 13879,
-      "sha256": "2f358d7d6cea0dd23407129b3cddee8a343c3410e240de5db77ba04fdfef8154"
+      "size": 14197,
+      "sha256": "bbb3e3a18a6eac1a4a829a045cefa222cce220d7dfb219d45119274e31b3f6d3"
     },
     {
       "path": "rh/media.py",
