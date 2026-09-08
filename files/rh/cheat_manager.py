@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 """Libretro Cheat Codes Downloader & Manager for TrimUI handheld devices:
 Downloads official Libretro Cheats bundle (~37MB ZIP containing thousands of .cht files)
-and extracts them directly into RetroArch's cheats directory.
+and selectively extracts cheats only for installed games or extracts all cheats.
 """
 
 import os
+import re
 import ssl
 import time
 import zipfile
 import threading
 import urllib.request
+import urllib.parse
 from .paths import SDCARD_PATH
 
 try:
@@ -20,6 +22,54 @@ except Exception:
     _SSL_CONTEXT = None
 
 LIBRETRO_CHEATS_URL = "http://buildbot.libretro.com/assets/frontend/cheats.zip"
+
+LIBRETRO_SYSTEM_MAP = {
+    "GBA": ["Nintendo - Game Boy Advance"],
+    "GBC": ["Nintendo - Game Boy Color"],
+    "GB": ["Nintendo - Game Boy"],
+    "FC": ["Nintendo - Nintendo Entertainment System", "Nintendo - Family Computer Disk System"],
+    "NES": ["Nintendo - Nintendo Entertainment System"],
+    "SFC": ["Nintendo - Super Nintendo Entertainment System", "Nintendo - Satellaview"],
+    "SNES": ["Nintendo - Super Nintendo Entertainment System"],
+    "N64": ["Nintendo - Nintendo 64"],
+    "NDS": ["Nintendo - Nintendo DS"],
+    "MD": ["Sega - Mega Drive - Genesis"],
+    "GENESIS": ["Sega - Mega Drive - Genesis"],
+    "SEGACD": ["Sega - Mega-CD - Sega CD"],
+    "GG": ["Sega - Game Gear"],
+    "MS": ["Sega - Master System - Mark III"],
+    "SS": ["Sega - Saturn"],
+    "DC": ["Sega - Dreamcast"],
+    "PS": ["Sony - PlayStation"],
+    "PS1": ["Sony - PlayStation"],
+    "PSP": ["Sony - PlayStation Portable"],
+    "PCE": ["NEC - PC Engine - TurboGrafx 16", "NEC - PC Engine CD - TurboGrafx-CD", "NEC - PC Engine SuperGrafx"],
+    "ATARI2600": ["Atari - 2600"],
+    "ATARI5200": ["Atari - 5200"],
+    "ATARI7800": ["Atari - 7800"],
+    "LYNX": ["Atari - Lynx"],
+    "ARCADE": ["FBNeo - Arcade Games"],
+    "FBNEO": ["FBNeo - Arcade Games"],
+    "CPS1": ["FBNeo - Arcade Games"],
+    "CPS2": ["FBNeo - Arcade Games"],
+    "CPS3": ["FBNeo - Arcade Games"],
+    "MAME": ["FBNeo - Arcade Games"],
+}
+
+VALID_ROM_EXTS = {
+    ".zip", ".7z", ".rar", ".nes", ".sfc", ".smc", ".gba", ".gbc", ".gb",
+    ".md", ".gen", ".smd", ".bin", ".iso", ".cue", ".chd", ".pbp", ".nds",
+    ".z64", ".n64", ".v64", ".pce", ".cso"
+}
+
+
+def clean_game_title(name):
+    """Chuẩn hóa tên game để đối chiếu: bỏ phần mở rộng, bỏ dấu ngoặc đơn/vuông, bỏ ký tự đặc biệt."""
+    base = re.sub(r'\.[a-zA-Z0-9]+$', '', name)
+    base = re.sub(r'\s*\((?:Code Breaker|Action Replay|GameShark|Xploder|PAR|Cheats?|Raw)\)', '', base, flags=re.IGNORECASE)
+    base = re.sub(r'\(.*?\)|\[.*?\]', '', base)
+    base = re.sub(r'[^a-zA-Z0-9]+', ' ', base).lower().strip()
+    return base
 
 
 def get_cheats_dir(base_sd=None):
@@ -61,6 +111,133 @@ def count_cheats(base_sd=None):
     return st.get("count", 0)
 
 
+def scan_installed_games(base_sd=None):
+    """Quét các ROM hiện có trong thẻ nhớ và nhóm theo hệ máy Libretro."""
+    sd = base_sd or SDCARD_PATH
+    roms_base = os.path.join(sd, "Roms")
+    if not os.path.isdir(roms_base):
+        roms_base = os.path.join(sd, "Emus")
+    if not os.path.isdir(roms_base):
+        return {}
+
+    installed_map = {}
+    try:
+        for sys_dir in os.listdir(roms_base):
+            p = os.path.join(roms_base, sys_dir)
+            if not os.path.isdir(p) or sys_dir.startswith("."):
+                continue
+
+            code = re.sub(r'\(.*?\)|\[.*?\]', '', sys_dir).strip().upper()
+            target_libretro_sys = LIBRETRO_SYSTEM_MAP.get(code)
+            if not target_libretro_sys:
+                for k, v in LIBRETRO_SYSTEM_MAP.items():
+                    if k == code or k in code or code in k:
+                        target_libretro_sys = v
+                        break
+            if not target_libretro_sys:
+                target_libretro_sys = [sys_dir]
+
+            rom_files = []
+            try:
+                for f in os.listdir(p):
+                    if f.startswith("."):
+                        continue
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in VALID_ROM_EXTS:
+                        rom_files.append(f)
+            except OSError:
+                continue
+
+            for rf in rom_files:
+                base = os.path.splitext(rf)[0]
+                cln = clean_game_title(base)
+                w = set(word for word in cln.split() if len(word) > 1)
+                item = {
+                    "rom_filename": rf,
+                    "rom_basename": base,
+                    "clean_title": cln,
+                    "words": w
+                }
+                for l_sys in target_libretro_sys:
+                    if l_sys not in installed_map:
+                        installed_map[l_sys] = []
+                    installed_map[l_sys].append(item)
+    except OSError:
+        pass
+
+    return installed_map
+
+
+def match_cht_with_installed(cht_filename, installed_games_for_sys):
+    """Kiểm tra xem file .cht này có khớp với game nào trong hệ máy đang có hay không."""
+    cht_clean = clean_game_title(cht_filename)
+    cht_words = set(w for w in cht_clean.split() if len(w) > 1)
+
+    for g in installed_games_for_sys:
+        r_clean = g["clean_title"]
+        r_words = g["words"]
+
+        if r_clean == cht_clean:
+            return g
+
+        if len(r_clean) >= 4 and len(cht_clean) >= 4:
+            if r_clean in cht_clean or cht_clean in r_clean:
+                return g
+
+        if r_words and r_words.issubset(cht_words):
+            return g
+
+        if r_words and cht_words:
+            inter = len(r_words.intersection(cht_words))
+            ratio = inter / max(len(r_words), len(cht_words))
+            if ratio >= 0.75:
+                return g
+
+    return None
+
+
+def check_or_download_single_cheat(sys_code, rom_filename, base_sd=None):
+    """Kiểm tra hoặc tải cheat riêng lẻ cho một game cụ thể."""
+    sd = base_sd or SDCARD_PATH
+    primary_dir = os.path.join(sd, "RetroArch", ".retroarch", "cheats")
+    rom_base = os.path.splitext(rom_filename)[0]
+
+    code = re.sub(r'\(.*?\)|\[.*?\]', '', sys_code).strip().upper()
+    libretro_systems = LIBRETRO_SYSTEM_MAP.get(code, [sys_code])
+
+    # 1. Kiểm tra xem file cheat đã có sẵn trên máy chưa
+    for l_sys in libretro_systems:
+        target_cht = os.path.join(primary_dir, l_sys, f"{rom_base}.cht")
+        if os.path.isfile(target_cht):
+            return {"ok": True, "exists": True, "path": target_cht, "message": "Game này đã có sẵn file Cheat trên máy."}
+
+    # 2. Thử tải trực tiếp file cheat theo tên từ GitHub raw repository
+    for l_sys in libretro_systems:
+        try:
+            sys_dest = os.path.join(primary_dir, l_sys)
+            os.makedirs(sys_dest, exist_ok=True)
+
+            clean_enc = urllib.parse.quote(rom_base)
+            url = f"https://raw.githubusercontent.com/libretro/libretro-database/master/cht/{urllib.parse.quote(l_sys)}/{clean_enc}.cht"
+            req = urllib.request.Request(url, headers={"User-Agent": "RetroHub-TrimUI/1.92"})
+            urlopen_kw = {"timeout": 10}
+            if _SSL_CONTEXT is not None:
+                urlopen_kw["context"] = _SSL_CONTEXT
+            try:
+                with urllib.request.urlopen(req, **urlopen_kw) as resp:
+                    content = resp.read()
+                    target_file = os.path.join(sys_dest, f"{rom_base}.cht")
+                    with open(target_file, "wb") as f:
+                        f.write(content)
+                    return {"ok": True, "downloaded": True, "path": target_file, "message": "Đã tải file Cheat thành công!"}
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+    return {"ok": False, "message": "Chưa có file Cheat riêng cho game này. Bạn có thể bấm Tải Cheat cho game đang có."}
+
+
 class CheatDownloaderRunner:
     """Điều phối tải và giải nén kho Cheat Code chạy nền với thanh tiến độ thời gian thực."""
 
@@ -68,13 +245,16 @@ class CheatDownloaderRunner:
         self.active = False
         self.done = False
         self.stop_requested = False
-        self.phase = "idle"  # idle, downloading, extracting, done, error
+        self.phase = "idle"  # idle, scanning, downloading, extracting, done, error
+        self.mode = "installed"  # "installed" hoặc "all"
         self.downloaded_bytes = 0
         self.total_bytes = 0
         self.progress_pct = 0
         self.speed_bps = 0
         self.status_msg = ""
         self.extracted_count = 0
+        self.matched_games_count = 0
+        self.total_installed_games = 0
         self.error_msg = ""
         self._lock = threading.Lock()
         self._thread = None
@@ -90,12 +270,15 @@ class CheatDownloaderRunner:
                 "done": self.done,
                 "stop_requested": self.stop_requested,
                 "phase": self.phase,
+                "mode": self.mode,
                 "downloaded_bytes": self.downloaded_bytes,
                 "total_bytes": self.total_bytes,
                 "progress_pct": self.progress_pct,
                 "speed_bps": self.speed_bps,
                 "status_msg": self.status_msg,
                 "extracted_count": self.extracted_count,
+                "matched_games_count": self.matched_games_count,
+                "total_installed_games": self.total_installed_games,
                 "error_msg": self.error_msg,
             }
 
@@ -104,20 +287,23 @@ class CheatDownloaderRunner:
         with self._lock:
             self.status_msg = "Đang dừng tải Cheat Code..."
 
-    def start(self, base_sd=None, url=None):
+    def start(self, base_sd=None, url=None, mode="installed"):
         if self.active and not self.done:
             return False
 
         self.active = True
         self.done = False
         self.stop_requested = False
-        self.phase = "downloading"
+        self.mode = mode
+        self.phase = "scanning" if mode == "installed" else "downloading"
         self.downloaded_bytes = 0
         self.total_bytes = 0
         self.progress_pct = 0
         self.speed_bps = 0
-        self.status_msg = "Bắt đầu kết nối tải kho Cheat..."
+        self.status_msg = "Đang quét danh sách game trên máy..." if mode == "installed" else "Bắt đầu kết nối tải kho Cheat..."
         self.extracted_count = 0
+        self.matched_games_count = 0
+        self.total_installed_games = 0
         self.error_msg = ""
 
         self._thread = threading.Thread(
@@ -136,6 +322,24 @@ class CheatDownloaderRunner:
         secondary_dir = os.path.join(sd, "RetroArch", "cheats")
         os.makedirs(primary_dir, exist_ok=True)
         os.makedirs(secondary_dir, exist_ok=True)
+
+        installed_games = {}
+        if self.mode == "installed":
+            with self._lock:
+                self.phase = "scanning"
+                self.status_msg = "Đang quét danh sách game trên thẻ nhớ..."
+            installed_games = scan_installed_games(sd)
+            tot_g = sum(len(v) for v in installed_games.values())
+            with self._lock:
+                self.total_installed_games = tot_g
+            if tot_g == 0:
+                with self._lock:
+                    self.done = True
+                    self.active = False
+                    self.phase = "error"
+                    self.error_msg = "Không tìm thấy game nào trong thư mục Roms!"
+                    self.status_msg = "Chưa có game nào trong thư mục Roms để tải Cheat."
+                return
 
         tmp_zip = os.path.join(sd, "RetroArch", ".cheats_download.zip")
         if not os.path.isdir(os.path.dirname(tmp_zip)):
@@ -216,12 +420,15 @@ class CheatDownloaderRunner:
             with self._lock:
                 self.phase = "extracting"
                 self.progress_pct = 99
-                self.status_msg = "Đang giải nén hàng ngàn mã Cheat vào RetroArch..."
+                if self.mode == "installed":
+                    self.status_msg = f"Đang đối chiếu & trích xuất Cheat cho {self.total_installed_games} game..."
+                else:
+                    self.status_msg = "Đang giải nén hàng ngàn mã Cheat vào RetroArch..."
 
             extracted = 0
+            matched_games = set()
             with zipfile.ZipFile(tmp_zip, "r") as zf:
                 namelist = zf.namelist()
-                tot_members = len(namelist)
 
                 for idx, member in enumerate(namelist):
                     if self.stop_requested:
@@ -230,20 +437,49 @@ class CheatDownloaderRunner:
                     norm_p = os.path.normpath(member)
                     if norm_p.startswith("..") or os.path.isabs(norm_p):
                         continue
+                    if member.endswith("/"):
+                        continue
+
+                    parts = norm_p.split(os.sep)
+                    if len(parts) < 2:
+                        continue
+
+                    sys_part = parts[0]
+                    cht_file = parts[-1]
+
+                    matched_rom = None
+                    if self.mode == "installed":
+                        if sys_part not in installed_games:
+                            continue
+                        matched_rom = match_cht_with_installed(cht_file, installed_games[sys_part])
+                        if not matched_rom:
+                            continue
+                        matched_games.add((sys_part, matched_rom["rom_basename"]))
 
                     target_file = os.path.join(primary_dir, norm_p)
-                    if member.endswith("/"):
-                        os.makedirs(target_file, exist_ok=True)
-                    else:
-                        os.makedirs(os.path.dirname(target_file), exist_ok=True)
-                        with zf.open(member) as src, open(target_file, "wb") as dst:
-                            dst.write(src.read())
-                        extracted += 1
+                    os.makedirs(os.path.dirname(target_file), exist_ok=True)
+                    content = zf.read(member)
+                    with open(target_file, "wb") as dst:
+                        dst.write(content)
+                    extracted += 1
 
-                    if idx % 150 == 0:
+                    if self.mode == "installed" and matched_rom:
+                        alias_target = os.path.join(primary_dir, sys_part, f"{matched_rom['rom_basename']}.cht")
+                        if not os.path.isfile(alias_target):
+                            try:
+                                with open(alias_target, "wb") as af:
+                                    af.write(content)
+                            except Exception:
+                                pass
+
+                    if idx % 100 == 0:
                         with self._lock:
                             self.extracted_count = extracted
-                            self.status_msg = f"Đang giải nén: {extracted} file cheat..."
+                            self.matched_games_count = len(matched_games)
+                            if self.mode == "installed":
+                                self.status_msg = f"Đang trích xuất: {extracted} mã Cheat cho {len(matched_games)} game..."
+                            else:
+                                self.status_msg = f"Đang giải nén: {extracted} file cheat..."
 
             # Xóa file zip tạm sau khi giải nén
             if os.path.isfile(tmp_zip):
@@ -258,7 +494,11 @@ class CheatDownloaderRunner:
                 self.phase = "done"
                 self.progress_pct = 100
                 self.extracted_count = extracted
-                self.status_msg = f"Hoàn tất! Đã cài đặt thành công {extracted} mã Cheat."
+                self.matched_games_count = len(matched_games)
+                if self.mode == "installed":
+                    self.status_msg = f"Hoàn tất! Đã cài {extracted} mã Cheat cho {len(matched_games)} game của bạn."
+                else:
+                    self.status_msg = f"Hoàn tất! Đã cài đặt toàn bộ {extracted} mã Cheat."
 
         except Exception as e:
             if os.path.isfile(tmp_zip):
