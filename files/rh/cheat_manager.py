@@ -451,11 +451,7 @@ class CheatDownloaderRunner:
         secondary_dir = os.path.join(sd, "RetroArch", "cheats")
         os.makedirs(primary_dir, exist_ok=True)
         os.makedirs(secondary_dir, exist_ok=True)
-
-        if self.mode == "installed":
-            self._run_installed(sd, primary_dir, secondary_dir)
-        else:
-            self._run_all(sd, url or LIBRETRO_CHEATS_URL, primary_dir, secondary_dir)
+        self._run_installed(sd, primary_dir, secondary_dir)
 
     def _run_installed(self, sd, primary_dir, secondary_dir):
         """Chế độ thông minh: Chỉ tải các file cheat của game đang có từ CDN."""
@@ -572,123 +568,6 @@ class CheatDownloaderRunner:
                 self.status_msg = f"Hoàn tất! Đã tải {downloaded} mã Cheat ({size_kb:.0f} KB) cho {len(matched_games)} game."
 
         except Exception as e:
-            with self._lock:
-                self.done = True
-                self.active = False
-                self.phase = "error"
-                self.error_msg = str(e)
-                self.status_msg = f"Lỗi tải Cheat: {str(e)}"
-
-    def _run_all(self, sd, download_url, primary_dir, secondary_dir):
-        """Chế độ tải trọn bộ: Tải cheats.zip 37MB và giải nén toàn bộ."""
-        tmp_zip = os.path.join(sd, "RetroArch", ".cheats_download.zip")
-        if not os.path.isdir(os.path.dirname(tmp_zip)):
-            tmp_zip = "/tmp/cheats_download.zip"
-
-        try:
-            with self._lock:
-                self.phase = "downloading"
-                self.status_msg = "Đang kết nối tải toàn bộ kho Cheat (~37MB)..."
-
-            req = urllib.request.Request(
-                download_url,
-                headers={"User-Agent": "RetroHub-TrimUI/1.94"}
-            )
-            urlopen_kw = {"timeout": 20}
-            if _SSL_CONTEXT is not None:
-                urlopen_kw["context"] = _SSL_CONTEXT
-
-            with urllib.request.urlopen(req, **urlopen_kw) as resp, open(tmp_zip, "wb") as out_f:
-                tot_header = resp.getheader("Content-Length")
-                total_len = int(tot_header) if tot_header and tot_header.isdigit() else 37157000
-                with self._lock:
-                    self.total_bytes = total_len
-
-                downloaded = 0
-                start_t = time.time()
-                last_t = start_t
-                last_bytes = 0
-                chunk_size = 65536
-
-                while True:
-                    if self.stop_requested:
-                        break
-                    chunk = resp.read(chunk_size)
-                    if not chunk:
-                        break
-                    out_f.write(chunk)
-                    downloaded += len(chunk)
-
-                    now = time.time()
-                    if now - last_t >= 0.2:
-                        speed = (downloaded - last_bytes) / (now - last_t)
-                        pct = min(99, int((downloaded / total_len) * 100)) if total_len > 0 else 0
-                        mb_done = downloaded / (1024 * 1024)
-                        mb_tot = total_len / (1024 * 1024)
-                        with self._lock:
-                            self.downloaded_bytes = downloaded
-                            self.progress_pct = pct
-                            self.speed_bps = speed
-                            self.status_msg = f"Đang tải kho: {mb_done:.1f}/{mb_tot:.1f} MB ({speed/1024:.0f} KB/s)"
-                        last_t = now
-                        last_bytes = downloaded
-
-            if self.stop_requested:
-                if os.path.isfile(tmp_zip):
-                    try:
-                        os.remove(tmp_zip)
-                    except Exception:
-                        pass
-                with self._lock:
-                    self.done = True
-                    self.active = False
-                    self.status_msg = "Đã hủy tải Cheat Code!"
-                return
-
-            with self._lock:
-                self.phase = "extracting"
-                self.progress_pct = 99
-                self.status_msg = "Đang giải nén hàng ngàn mã Cheat vào RetroArch..."
-
-            extracted = 0
-            with zipfile.ZipFile(tmp_zip, "r") as zf:
-                namelist = zf.namelist()
-                for idx, member in enumerate(namelist):
-                    if self.stop_requested:
-                        break
-                    norm_p = os.path.normpath(member)
-                    if norm_p.startswith("..") or os.path.isabs(norm_p) or member.endswith("/"):
-                        continue
-                    target_file = os.path.join(primary_dir, norm_p)
-                    os.makedirs(os.path.dirname(target_file), exist_ok=True)
-                    with zf.open(member) as src, open(target_file, "wb") as dst:
-                        dst.write(src.read())
-                    extracted += 1
-                    if idx % 150 == 0:
-                        with self._lock:
-                            self.extracted_count = extracted
-                            self.status_msg = f"Đang giải nén: {extracted} file cheat..."
-
-            if os.path.isfile(tmp_zip):
-                try:
-                    os.remove(tmp_zip)
-                except Exception:
-                    pass
-
-            with self._lock:
-                self.done = True
-                self.active = False
-                self.phase = "done"
-                self.progress_pct = 100
-                self.extracted_count = extracted
-                self.status_msg = f"Hoàn tất! Đã cài đặt toàn bộ {extracted} mã Cheat."
-
-        except Exception as e:
-            if os.path.isfile(tmp_zip):
-                try:
-                    os.remove(tmp_zip)
-                except Exception:
-                    pass
             with self._lock:
                 self.done = True
                 self.active = False
