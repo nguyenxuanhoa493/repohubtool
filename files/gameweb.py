@@ -30,6 +30,24 @@ except Exception:
 
 PORT = 8090
 
+try:
+    from rh import state
+    from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
+        list_save_backups, restore_save_backup, delete_save_backup)
+    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner
+    from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
+        clear_log, get_log_size_str, get_device_id)
+except ImportError:
+    _cur_d = os.path.dirname(os.path.abspath(__file__))
+    if _cur_d not in sys.path:
+        sys.path.insert(0, _cur_d)
+    from rh import state
+    from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
+        list_save_backups, restore_save_backup, delete_save_backup)
+    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner
+    from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
+        clear_log, get_log_size_str, get_device_id)
+
 # Xác định đường dẫn thẻ nhớ
 SDCARD_PATH = os.environ.get("SDCARD_PATH") or ("/mnt/SDCARD" if os.path.isdir("/mnt/SDCARD") else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_mock_sdcard"))
 ROMS_DIR = os.path.join(SDCARD_PATH, "Roms")
@@ -756,6 +774,71 @@ class GameWebHandler(BaseHTTPRequestHandler):
             self.send_json({"ok": True, "storage": st})
             return
 
+        if path == "/api/saves":
+            self.send_json({
+                "ok": True,
+                "stats": get_saves_stats(),
+                "backups": list_save_backups()
+            })
+            return
+
+        if path == "/api/saves/download":
+            fname = query.get("file", [""])[0]
+            for b in list_save_backups():
+                if b["filename"] == fname and os.path.isfile(b["filepath"]):
+                    try:
+                        with open(b["filepath"], "rb") as f:
+                            data = f.read()
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/zip")
+                        self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
+                        self.send_header("Content-Length", str(len(data)))
+                        self.end_headers()
+                        self.wfile.write(data)
+                        return
+                    except Exception as e:
+                        print(f"Error downloading backup: {e}")
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        if path == "/api/cheats/status":
+            self.send_json({
+                "ok": True,
+                "status": get_cheats_status(),
+                "runner": cheat_runner.get_state()
+            })
+            return
+
+        if path == "/api/logs/download":
+            try:
+                rep_path = generate_debug_report()
+                if os.path.isfile(rep_path):
+                    with open(rep_path, "rb") as f:
+                        data = f.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/plain; charset=utf-8")
+                    self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(rep_path)}"')
+                    self.send_header("Content-Length", str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
+            except Exception as e:
+                print(f"Error generating debug report: {e}")
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        if path == "/api/logs/status":
+            dev_id = getattr(state, "device_id", "") or get_device_id()
+            self.send_json({
+                "ok": True,
+                "enable_logging": getattr(state, "enable_logging", True),
+                "device_id": dev_id,
+                "log_size": get_log_size_str()
+            })
+            return
+
         if path == "/api/systems":
             systems = list_all_systems()
             no_art_games = list_all_missing_art_games()
@@ -856,6 +939,113 @@ class GameWebHandler(BaseHTTPRequestHandler):
         query = urllib.parse.parse_qs(parsed.query)
 
         content_len = int(self.headers.get("Content-Length", 0))
+
+        if path == "/api/saves/backup":
+            try:
+                note = ""
+                if content_len > 0:
+                    try:
+                        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+                        note = payload.get("note", "")
+                    except Exception:
+                        pass
+                ok, res, st = create_save_backup(note=note)
+                if ok:
+                    self.send_json({"ok": True, "message": "Đã tạo bản sao lưu thành công!", "backup": st})
+                else:
+                    self.send_json({"ok": False, "error": res}, 500)
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+            return
+
+        if path == "/api/saves/restore":
+            try:
+                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+                fname = payload.get("filename", "")
+                found = None
+                for b in list_save_backups():
+                    if b["filename"] == fname:
+                        found = b["filepath"]
+                        break
+                if not found:
+                    self.send_json({"ok": False, "error": "Không tìm thấy file sao lưu"}, 404)
+                    return
+                ok, cnt, err = restore_save_backup(found)
+                if ok:
+                    self.send_json({"ok": True, "message": f"Khôi phục thành công {cnt} files save!"})
+                else:
+                    self.send_json({"ok": False, "error": err}, 500)
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+            return
+
+        if path == "/api/saves/delete":
+            try:
+                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+                fname = payload.get("filename", "")
+                found = None
+                for b in list_save_backups():
+                    if b["filename"] == fname:
+                        found = b["filepath"]
+                        break
+                if found:
+                    delete_save_backup(found)
+                    self.send_json({"ok": True, "message": "Đã xóa bản sao lưu!"})
+                else:
+                    self.send_json({"ok": False, "error": "File không tồn tại"}, 404)
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+            return
+
+        if path == "/api/cheats/download":
+            if cheat_runner.is_running():
+                self.send_json({"ok": True, "message": "Đang tải kho Cheat..."})
+            else:
+                cheat_runner.start()
+                self.send_json({"ok": True, "message": "Đã bắt đầu tải kho Cheat Libretro!"})
+            return
+
+        if path == "/api/cheats/stop":
+            cheat_runner.request_stop()
+            self.send_json({"ok": True, "message": "Đã gửi lệnh dừng tải!"})
+            return
+
+        if path == "/api/logs/send-telegram":
+            try:
+                payload = {}
+                if content_len > 0:
+                    try:
+                        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+                    except Exception:
+                        payload = {}
+                user_note = payload.get("note", "").strip() or "Gửi từ RetroHub Web Manager"
+                ok, res = upload_log_to_telegram(note=user_note)
+                if ok:
+                    self.send_json({"ok": True, "message": "Đã gửi nhật ký thành công vào Telegram của tác giả!"})
+                else:
+                    self.send_json({"ok": False, "error": str(res)}, 500)
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+            return
+
+        if path == "/api/logs/toggle":
+            state.enable_logging = not getattr(state, "enable_logging", True)
+            state.save_settings()
+            self.send_json({
+                "ok": True,
+                "enable_logging": state.enable_logging,
+                "message": "Đã BẬT ghi nhật ký" if state.enable_logging else "Đã TẮT ghi nhật ký"
+            })
+            return
+
+        if path == "/api/logs/clear":
+            clear_log()
+            self.send_json({
+                "ok": True,
+                "log_size": get_log_size_str(),
+                "message": "Đã làm sạch toàn bộ nhật ký!"
+            })
+            return
 
         if path == "/api/rename":
             try:
@@ -1575,6 +1765,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         </div>
         <div class="header-stats">
             <div class="stat-badge" id="storage-stat">Bộ nhớ: <strong>Đang đọc...</strong></div>
+            <button class="btn btn-sm btn-secondary" onclick="openSavesCheatsModal('saves')">💾 Save & Cheats</button>
             <button class="btn btn-sm btn-secondary" onclick="loadSystems(true)">⟲ Nạp lại</button>
         </div>
     </header>
@@ -1776,6 +1967,127 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 10px;">
                 <a id="preview-art-link" href="" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 11px;">Mở ảnh gốc trong tab mới ↗</a>
                 <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-preview-art')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Quản lý Save Game & Cheat Code -->
+    <div class="modal-backdrop" id="modal-saves-cheats">
+        <div class="modal-box" style="max-width: 720px; width: 92vw;">
+            <div class="modal-header">
+                <h3>Quản lý Save Game & Kho Cheat Code</h3>
+                <button class="modal-close" onclick="closeModal('modal-saves-cheats')">&times;</button>
+            </div>
+
+            <!-- Tabs -->
+            <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; padding-bottom: 8px;">
+                <button id="tab-btn-saves" class="btn btn-sm" onclick="switchSavesCheatsTab('saves')">💾 Sao lưu & Khôi phục Save</button>
+                <button id="tab-btn-cheats" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('cheats')">⚡ Kho Cheat Code (Libretro)</button>
+                <button id="tab-btn-logs" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('logs')">📡 Gửi Log & Chẩn đoán</button>
+            </div>
+
+            <!-- Tab 1: Saves -->
+            <div id="tab-content-saves">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #fff;">File Save trên thẻ nhớ</div>
+                        <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;" id="saves-summary-text">Đang quét save...</div>
+                    </div>
+                    <button class="btn btn-sm btn-green" onclick="createSaveBackupWeb()">+ Tạo bản sao lưu (.zip)</button>
+                </div>
+
+                <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #38bdf8;">Các bản sao lưu đã tạo:</div>
+                <div id="backups-list-table" style="max-height: 240px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 6px;"></div>
+            </div>
+
+            <!-- Tab 2: Cheats -->
+            <div id="tab-content-cheats" style="display: none;">
+                <div style="background: #0f172a; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #fff;">Kho Cheat Code Libretro Official</div>
+                            <div style="font-size: 12px; color: #38bdf8; margin-top: 3px;" id="cheats-status-text">Đang kiểm tra trạng thái...</div>
+                        </div>
+                        <button id="btn-cheats-action" class="btn btn-sm btn-batch" onclick="startCheatsDownloadWeb()">⚡ Tải trọn bộ Cheat (~37MB)</button>
+                    </div>
+
+                    <div id="cheats-progress-box" style="display:none; margin-top: 14px;">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
+                            <span id="cheats-prog-status" style="color:#38bdf8;">Đang tải gói Cheat...</span>
+                            <span id="cheats-prog-pct" style="color:#10b981; font-weight:700;">0%</span>
+                        </div>
+                        <div class="progress-bar-bg" style="height: 10px; margin-bottom: 8px;">
+                            <div id="cheats-prog-fill" class="progress-bar-fill" style="width:0%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button class="btn btn-sm btn-secondary" onclick="stopCheatsDownloadWeb()">Dừng tải</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 8px; padding: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">📖 Hướng dẫn bật Cheat khi đang chơi game:</div>
+                    <ul style="font-size: 11px; color: #cbd5e1; line-height: 1.8; margin-left: 20px;">
+                        <li>Khi đang trong game, bấm nút <strong>Menu</strong> (hoặc tổ hợp <strong>Select + X</strong>) để mở Quick Menu của RetroArch.</li>
+                        <li>Vào mục <strong>Cheats</strong> ➔ Chọn <strong>Load Cheat File (Replace)</strong>.</li>
+                        <li>Chọn hệ máy tương ứng và chọn tệp Cheat của game đang chơi.</li>
+                        <li>Bật <em>(Enabled)</em> các mã muốn dùng (Bất tử máu, Max Tiền, Đi xuyên tường...) rồi chọn <strong>Apply Changes</strong>.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 3: Logs -->
+            <div id="tab-content-logs" style="display: none;">
+                <div style="background: #0f172a; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">📡 Nhật ký & Chẩn đoán Hệ thống</div>
+                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">Tự động thu thập thông số phần cứng & lỗi crash để hỗ trợ kỹ thuật</div>
+                        </div>
+                        <div style="background: #1e293b; border: 1px solid #0284c7; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #38bdf8;">
+                            Mã máy: <span id="web-log-device-id" style="color: #34d399;">...</span>
+                        </div>
+                    </div>
+
+                    <!-- Toggle & Clear Section -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #0b0f19; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 600; color: #fff;">
+                                Trạng thái ghi log: <span id="web-log-status-badge" style="color: #10b981; font-weight: 700;">ĐANG BẬT</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">
+                                Dung lượng tệp log: <span id="web-log-size" style="color: #f59e0b; font-weight: 600;">0 KB</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-toggle-log-web" class="btn btn-sm btn-secondary" onclick="toggleLoggingWeb()">Tắt ghi log</button>
+                            <button id="btn-clear-log-web" class="btn btn-sm btn-secondary" style="color: #f87171;" onclick="clearLogWeb()">🗑️ Làm sạch log</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #94a3b8; display: block; margin-bottom: 4px;">Ghi chú sự cố bạn đang gặp phải (tùy chọn):</label>
+                        <input type="text" id="log-user-note" placeholder="Ví dụ: Game PS1 không có âm thanh, hoặc lỗi văng game..." style="width: 100%; padding: 8px 12px; background: #0b0f19; border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 12px; outline: none; box-sizing: border-box;">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button id="btn-send-log-tg" class="btn btn-sm btn-batch" onclick="sendLogTelegramWeb()">✈️ Gửi Log vào Telegram tác giả</button>
+                        <a href="/api/logs/download" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>📥 Tải file báo cáo (.txt) về máy</a>
+                    </div>
+
+                    <div id="log-send-status-box" style="display: none; margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 12px;"></div>
+                </div>
+
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 8px; padding: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #34d399; margin-bottom: 4px;">🔒 Bảo mật & Riêng tư:</div>
+                    <div style="font-size: 11px; color: #94a3b8; line-height: 1.6;">
+                        Báo cáo này cũng được tự động lưu dự phòng tại <code>/mnt/SDCARD/RetroHub_Debug_Report.txt</code>. Nhật ký hoàn toàn KHÔNG chứa mật khẩu Wi-Fi hoặc thông tin cá nhân của bạn.
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-saves-cheats')">Đóng</button>
             </div>
         </div>
     </div>
@@ -2934,6 +3246,310 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 selectSystem(currentSystem);
             } else {
                 loadSystems(true);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // SAVE GAMES & CHEATS MANAGER WEB JS
+        // -------------------------------------------------------------
+        let cheatsPollTimer = null;
+
+        function openSavesCheatsModal(tab = 'saves') {
+            document.getElementById('modal-saves-cheats').classList.add('active');
+            switchSavesCheatsTab(tab);
+        }
+
+        function switchSavesCheatsTab(tab) {
+            const tabBtnSaves = document.getElementById('tab-btn-saves');
+            const tabBtnCheats = document.getElementById('tab-btn-cheats');
+            const tabBtnLogs = document.getElementById('tab-btn-logs');
+            const contentSaves = document.getElementById('tab-content-saves');
+            const contentCheats = document.getElementById('tab-content-cheats');
+            const contentLogs = document.getElementById('tab-content-logs');
+
+            tabBtnSaves.className = (tab === 'saves') ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
+            tabBtnCheats.className = (tab === 'cheats') ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
+            tabBtnLogs.className = (tab === 'logs') ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
+
+            contentSaves.style.display = (tab === 'saves') ? 'block' : 'none';
+            contentCheats.style.display = (tab === 'cheats') ? 'block' : 'none';
+            contentLogs.style.display = (tab === 'logs') ? 'block' : 'none';
+
+            if (tab === 'saves') {
+                loadSavesData();
+            } else if (tab === 'cheats') {
+                loadCheatsData();
+            } else if (tab === 'logs') {
+                loadLogsData();
+            }
+        }
+
+        async function loadSavesData() {
+            try {
+                const res = await fetch('/api/saves');
+                const data = await res.json();
+                if (data.ok) {
+                    const st = data.stats || {};
+                    const totFiles = st.total_files || 0;
+                    const totMb = ((st.total_bytes || 0) / (1024 * 1024)).toFixed(2);
+                    document.getElementById('saves-summary-text').innerText = `${totFiles} file save (${totMb} MB) — ${st.types?.srm || 0} .srm / ${st.types?.state || 0} states`;
+
+                    const backups = data.backups || [];
+                    const tableBox = document.getElementById('backups-list-table');
+                    if (backups.length === 0) {
+                        tableBox.innerHTML = '<div style="text-align:center; padding: 24px; color: var(--text-sub); font-size:12px;">Chưa có bản sao lưu nào. Hãy bấm "+ Tạo bản sao lưu" ở trên!</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    for (const b of backups) {
+                        const mb = (b.size / (1024 * 1024)).toFixed(2);
+                        const sizeStr = mb >= 1.0 ? `${mb} MB` : `${(b.size / 1024).toFixed(1)} KB`;
+                        html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px;">
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${b.filename}</div>
+                                <div style="font-size: 11px; color: var(--text-sub);">${b.date_str} • ${b.file_count} files • ${sizeStr}</div>
+                            </div>
+                            <div style="display: flex; gap: 6px; align-items: center; margin-left: 10px;">
+                                <a href="/api/saves/download?file=${encodeURIComponent(b.filename)}" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>⬇️ Tải zip</a>
+                                <button class="btn btn-sm btn-green" style="font-size: 11px;" onclick="restoreSaveBackupWeb('${b.filename}')">Khôi phục</button>
+                                <button class="btn btn-sm btn-secondary" style="font-size: 11px; color: #ef4444;" onclick="deleteSaveBackupWeb('${b.filename}')">Xóa</button>
+                            </div>
+                        </div>`;
+                    }
+                    tableBox.innerHTML = html;
+                }
+            } catch (e) {
+                console.error('Error loading saves:', e);
+            }
+        }
+
+        async function createSaveBackupWeb() {
+            try {
+                showToast('Đang nén file sao lưu save game...');
+                const res = await fetch('/api/saves/backup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({note: 'Web Backup'})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã tạo bản sao lưu save thành công!');
+                    loadSavesData();
+                } else {
+                    alert('Lỗi: ' + (data.error || 'Không thể tạo sao lưu'));
+                }
+            } catch (e) {
+                alert('Lỗi mạng: ' + e);
+            }
+        }
+
+        async function restoreSaveBackupWeb(filename) {
+            if (!confirm(`Bạn có chắc muốn khôi phục bản sao lưu "${filename}" về thẻ nhớ?`)) return;
+            try {
+                showToast('Đang khôi phục save game...');
+                const res = await fetch('/api/saves/restore', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: filename})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Đã khôi phục save thành công!');
+                } else {
+                    alert('Lỗi: ' + (data.error || 'Không thể khôi phục'));
+                }
+            } catch (e) {
+                alert('Lỗi mạng: ' + e);
+            }
+        }
+
+        async function deleteSaveBackupWeb(filename) {
+            if (!confirm(`Xóa bản sao lưu "${filename}"?`)) return;
+            try {
+                const res = await fetch('/api/saves/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: filename})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã xóa bản sao lưu');
+                    loadSavesData();
+                }
+            } catch (e) {
+                alert('Lỗi mạng: ' + e);
+            }
+        }
+
+        async function loadCheatsData() {
+            try {
+                const res = await fetch('/api/cheats/status');
+                const data = await res.json();
+                if (data.ok) {
+                    const st = data.status || {};
+                    const runner = data.runner || {};
+                    const btn = document.getElementById('btn-cheats-action');
+                    const progBox = document.getElementById('cheats-progress-box');
+
+                    if (st.installed) {
+                        document.getElementById('cheats-status-text').innerText = `Đã cài đặt: ${st.count} mã Cheat (.cht) trong RetroArch.`;
+                        btn.innerText = '⟲ Cập nhật / Tải lại Cheat';
+                    } else {
+                        document.getElementById('cheats-status-text').innerText = 'Chưa có mã Cheat nào trên máy.';
+                        btn.innerText = '⚡ Tải trọn bộ Cheat (~37MB)';
+                    }
+
+                    if (runner.running) {
+                        progBox.style.display = 'block';
+                        document.getElementById('cheats-prog-pct').innerText = `${runner.progress_pct}%`;
+                        document.getElementById('cheats-prog-fill').style.width = `${runner.progress_pct}%`;
+                        document.getElementById('cheats-prog-status').innerText = runner.status_msg || 'Đang tải...';
+
+                        if (!cheatsPollTimer) {
+                            cheatsPollTimer = setInterval(loadCheatsData, 1000);
+                        }
+                    } else {
+                        progBox.style.display = 'none';
+                        if (cheatsPollTimer) {
+                            clearInterval(cheatsPollTimer);
+                            cheatsPollTimer = null;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading cheats:', e);
+            }
+        }
+
+        async function startCheatsDownloadWeb() {
+            try {
+                const res = await fetch('/api/cheats/download', {method: 'POST'});
+                const data = await res.json();
+                showToast(data.message || 'Bắt đầu tải kho Cheat...');
+                loadCheatsData();
+            } catch (e) {
+                alert('Lỗi: ' + e);
+            }
+        }
+
+        async function stopCheatsDownloadWeb() {
+            try {
+                await fetch('/api/cheats/stop', {method: 'POST'});
+                showToast('Đã dừng tải Cheat');
+                loadCheatsData();
+            } catch (e) {
+                alert('Lỗi: ' + e);
+            }
+        }
+
+        async function loadLogsData() {
+            try {
+                const res = await fetch('/api/logs/status');
+                const data = await res.json();
+                if (data.ok) {
+                    const devEl = document.getElementById('web-log-device-id');
+                    const sizeEl = document.getElementById('web-log-size');
+                    const badgeEl = document.getElementById('web-log-status-badge');
+                    const btnToggle = document.getElementById('btn-toggle-log-web');
+
+                    if (devEl) devEl.innerText = data.device_id || 'RH-0000';
+                    if (sizeEl) sizeEl.innerText = data.log_size || '0 B';
+
+                    if (data.enable_logging) {
+                        if (badgeEl) {
+                            badgeEl.innerText = 'ĐANG BẬT';
+                            badgeEl.style.color = '#10b981';
+                        }
+                        if (btnToggle) {
+                            btnToggle.innerText = 'Tắt ghi log';
+                            btnToggle.className = 'btn btn-sm btn-secondary';
+                        }
+                    } else {
+                        if (badgeEl) {
+                            badgeEl.innerText = 'ĐÃ TẮT';
+                            badgeEl.style.color = '#ef4444';
+                        }
+                        if (btnToggle) {
+                            btnToggle.innerText = 'Bật ghi log';
+                            btnToggle.className = 'btn btn-sm btn-green';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading logs data:', e);
+            }
+        }
+
+        async function toggleLoggingWeb() {
+            try {
+                const res = await fetch('/api/logs/toggle', {method: 'POST'});
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Đã thay đổi trạng thái ghi log');
+                    loadLogsData();
+                }
+            } catch (e) {
+                alert('Lỗi: ' + e);
+            }
+        }
+
+        async function clearLogWeb() {
+            if (!confirm('Bạn có chắc muốn làm sạch toàn bộ tệp nhật ký trên máy?')) return;
+            try {
+                const res = await fetch('/api/logs/clear', {method: 'POST'});
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã làm sạch nhật ký thành công!');
+                    loadLogsData();
+                }
+            } catch (e) {
+                alert('Lỗi: ' + e);
+            }
+        }
+
+        async function sendLogTelegramWeb() {
+            const btn = document.getElementById('btn-send-log-tg');
+            const statusBox = document.getElementById('log-send-status-box');
+            const noteInput = document.getElementById('log-user-note');
+            const note = (noteInput ? noteInput.value : '').trim();
+
+            btn.disabled = true;
+            btn.innerText = '⏳ Đang gửi nhật ký...';
+            statusBox.style.display = 'block';
+            statusBox.style.background = '#1e293b';
+            statusBox.style.color = '#38bdf8';
+            statusBox.style.border = '1px solid #0284c7';
+            statusBox.innerText = 'Đang đóng gói dữ liệu chẩn đoán và tải lên Telegram bot... Vui lòng đợi vài giây.';
+
+            try {
+                const res = await fetch('/api/logs/send-telegram', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({note: note})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    statusBox.style.background = '#064e3b';
+                    statusBox.style.color = '#34d399';
+                    statusBox.style.border = '1px solid #059669';
+                    statusBox.innerText = '✔ ' + (data.message || 'Đã gửi nhật ký thành công!');
+                    showToast('Gửi log lên Telegram thành công!');
+                } else {
+                    statusBox.style.background = '#450a0a';
+                    statusBox.style.color = '#f87171';
+                    statusBox.style.border = '1px solid #dc2626';
+                    statusBox.innerText = '✖ Lỗi: ' + (data.error || 'Không thể gửi log');
+                }
+            } catch (err) {
+                statusBox.style.background = '#450a0a';
+                statusBox.style.color = '#f87171';
+                statusBox.style.border = '1px solid #dc2626';
+                statusBox.innerText = '✖ Lỗi kết nối máy chủ: ' + err;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '✈️ Gửi Log vào Telegram tác giả';
             }
         }
 

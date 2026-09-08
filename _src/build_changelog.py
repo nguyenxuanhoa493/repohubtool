@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.92", "2026-09-08",
+     ("Settings & Web: Save Backup/Restore, Libretro Cheats, Boxart Scraper, and Telegram Diagnostic Logging with Device ID",
+      "Cài đặt & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy"),
+     [("Save Game Backup & Restore: 1-click compress all .srm, .sav, and .state files into timestamped ZIP archives with manifest. Easily restore, manage, or download saves directly to PC/Phone via Web Manager.",
+       "Sao lưu & Khôi phục Save Game: Nén toàn bộ file save (.srm, .sav) và state (.state) thành file ZIP an toàn có dấu mốc thời gian. Hỗ trợ khôi phục chuẩn xác 1 chạm trên máy và tải file save về PC/điện thoại qua Web."),
+      ("Auto Libretro Cheat Codes Downloader: Instantly downloads official Libretro Cheat bundle (~37MB) and extracts thousands of .cht files directly into RetroArch with in-game activation guidance.",
+       "Tải trọn bộ Cheat Code Libretro: Tự động tải kho Cheat chính thức (~37MB) từ Libretro CDN và giải nén hàng ngàn file .cht vào RetroArch, kèm hướng dẫn bật mã cheat trực tiếp trong game."),
+      ("On-Device Auto Boxart Scraper: Scans all local games lacking boxarts and downloads high-quality covers via SQLite Catalog DB (~1ms) and Libretro CDN (~2ms) with 4 background workers and live progress modal.",
+       "Tự động cào Box Art trên máy: Quét toàn bộ game chưa có ảnh bìa và tự động tải từ Catalog DB (~1ms) cùng Libretro CDN (~2ms), hỗ trợ 4 luồng song song chạy ngầm mượt mà kèm modal tiến độ trực quan."),
+      ("Configurable System Logging & Random Device ID: Toggle logging in Settings; when enabled, offers 1-click Clean Log and Send Diagnostic Log to Telegram. Each device generates a persistent unique Device ID for easy remote debugging via handheld and Web Manager.",
+       "Tùy biến Ghi nhật ký & Mã máy ngẫu nhiên: Bật/tắt ghi log trong Cài đặt; khi bật, hiển thị 2 thao tác Làm sạch nhật ký và Gửi log qua Telegram. Mỗi máy tự cấp 1 Mã thiết bị (Device ID) ngẫu nhiên duy nhất giúp tác giả dễ dàng tra cứu và chẩn đoán sự cố từ xa.")]),
+
     ("1.91", "2026-09-08",
      ("Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback",
       "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu"),
