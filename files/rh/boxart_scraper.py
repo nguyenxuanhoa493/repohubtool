@@ -9,7 +9,6 @@ import re
 import ssl
 import json
 import time
-import sqlite3
 import subprocess
 import threading
 import urllib.request
@@ -115,13 +114,38 @@ def clean_rom_title(filename):
     return re.sub(r'\s+', ' ', base).strip()
 
 
+def _get_sqlite_conn(db_path):
+    """Mở kết nối SQLite an toàn: tự động fallback sang CTypes SQLite nếu thiếu C-extension _sqlite3."""
+    if not db_path or not os.path.isfile(db_path):
+        return None
+    try:
+        import sqlite3
+        return sqlite3.connect(db_path, timeout=5)
+    except Exception:
+        pass
+    try:
+        import sys
+        _app_d = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if _app_d not in sys.path:
+            sys.path.insert(0, _app_d)
+        import db
+        if hasattr(db, "CTypesSQLiteConnection"):
+            return db.CTypesSQLiteConnection(db_path)
+    except Exception:
+        pass
+    return None
+
+
 def search_catalog_db(sys_code, query, max_results=1):
     """Tra cứu nhanh ảnh bìa trong Catalog DB SQLite (~1ms)."""
     db_p = get_catalog_db_path()
     if not db_p:
         return []
+    conn = None
     try:
-        conn = sqlite3.connect(db_p, timeout=5)
+        conn = _get_sqlite_conn(db_p)
+        if not conn:
+            return []
         cur = conn.cursor()
 
         sys_aliases = [sys_code.upper()]
@@ -139,7 +163,8 @@ def search_catalog_db(sys_code, query, max_results=1):
         if not words:
             words = [w.lower() for w in query.strip().split() if w]
         if not words:
-            conn.close()
+            if conn and hasattr(conn, "close"):
+                conn.close()
             return []
 
         placeholders = ",".join("?" * len(sys_aliases))
@@ -160,7 +185,11 @@ def search_catalog_db(sys_code, query, max_results=1):
             if sig_words and sig_words != words:
                 rows = execute_query(sig_words)
 
-        conn.close()
+        if conn and hasattr(conn, "close"):
+            try:
+                conn.close()
+            except Exception:
+                pass
         results = []
         for title, img_url in rows:
             results.append({
@@ -170,6 +199,11 @@ def search_catalog_db(sys_code, query, max_results=1):
             })
         return results
     except Exception:
+        if conn and hasattr(conn, "close"):
+            try:
+                conn.close()
+            except Exception:
+                pass
         return []
 
 

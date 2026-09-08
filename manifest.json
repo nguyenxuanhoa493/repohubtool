@@ -2,7 +2,7 @@
   "version": "1.92",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T00:45:50+0700",
+  "built": "2026-09-09T00:57:16+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Tiện ích & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
@@ -399,8 +399,8 @@
     },
     {
       "path": "rh/boxart_scraper.py",
-      "size": 18891,
-      "sha256": "fca6fa9642139f480d9eacd83c07fc7d754d7b7a0534842cd1201f9506eec274"
+      "size": 19933,
+      "sha256": "e93ac3a6c6b66283e5ff32d1bccc5dc00f2ed70bf17999d664b50d457d8803cd"
     },
     {
       "path": "rh/catalog.py",
