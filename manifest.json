@@ -2,7 +2,7 @@
   "version": "1.94",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T02:34:09+0700",
+  "built": "2026-09-09T02:40:09+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Kho Cheat: Tải trực tiếp mã Cheat theo game từ CDN siêu nhẹ (~150KB), không cần tải file zip 37MB",
@@ -199,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 338990,
-      "sha256": "74f140315ef20136c014fa9703678fb10710ce84c9274db932307512d24330d6"
+      "size": 339561,
+      "sha256": "17a273e964430273ae904cb8a22aa50304b43cf5524846ff05a96a419eefb97e"
     },
     {
       "path": "assets/fallback.ttf",
@@ -354,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 172153,
-      "sha256": "154ae48fc19a3975ab486cb3fe6135760a88ce75ff1847756e92da26ef110206"
+      "size": 171957,
+      "sha256": "c359eea93c637e1a1f068bf00a318ea1a33bd5b45bf660eaecaf6f4588d8a260"
     },
     {
       "path": "icon.png",
@@ -409,8 +409,8 @@
     },
     {
       "path": "rh/cheat_manager.py",
-      "size": 26149,
-      "sha256": "d3cae58a38f99af43be36641301573f621a81464ceaf97c6aa8baff554812e7a"
+      "size": 21085,
+      "sha256": "34efdbd3875ae323b076d8a7767cc44721306f24e77929a0fa565e51f504e03f"
     },
     {
       "path": "rh/cheats_index.json.gz",
@@ -439,8 +439,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 42933,
-      "sha256": "c3a52f6c9155926d5f305e3b87d7025dbc28a3132ec969d9142ea1a8948183ed"
+      "size": 42796,
+      "sha256": "fe2357145c455692b13d3a20418fe4aeda593af7fbba9857e885fb49e4a37ece"
     },
     {
       "path": "rh/j2me.py",

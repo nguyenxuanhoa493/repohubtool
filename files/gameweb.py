@@ -2043,9 +2043,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
                             <div style="font-size: 14px; font-weight: 700; color: #fff;">Kho Cheat Code Libretro Official</div>
                             <div style="font-size: 12px; color: #38bdf8; margin-top: 3px;" id="cheats-status-text">Đang kiểm tra trạng thái...</div>
                         </div>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button id="btn-cheats-installed" class="btn btn-sm btn-green" onclick="startCheatsDownloadWeb('installed')">Tải cho game đang có (Khuyên dùng)</button>
-                            <button id="btn-cheats-all" class="btn btn-sm btn-batch" onclick="startCheatsDownloadWeb('all')">Tải toàn bộ kho (~37MB)</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-cheats-installed" class="btn btn-sm btn-green" onclick="startCheatsDownloadWeb()">Tải mã Cheat cho game trên máy</button>
                         </div>
                     </div>
 

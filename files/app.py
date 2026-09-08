@@ -2679,11 +2679,12 @@ def main():
                     cheat_runner.request_stop()
                     toast_msg = "Đang dừng tải Cheat Code..."
                     toast_timer = time.time()
+            elif cheat_runner.done:
+                if btn_a or btn_b or btn_start or btn_x or btn_y:
+                    cheat_modal["active"] = False
             else:
                 if btn_a:
                     cheat_runner.start(mode="installed")
-                elif btn_y:
-                    cheat_runner.start(mode="all")
                 elif btn_b or btn_start or btn_x:
                     cheat_modal["active"] = False
         elif save_modal["active"]:
@@ -5612,29 +5613,38 @@ def main():
 
             # Action button
             if cheat_runner.is_running():
-                btn_w = 260
-                btn_h = 52
+                btn_w = 220
+                btn_h = 44
                 bx = mx + (mw - btn_w) // 2
-                by = my + mh - 75
+                by = my + mh - 70
                 fill_rect(bx, by, btn_w, btn_h, 160, 45, 45, 255)
                 draw_rect(bx, by, btn_w, btn_h, 255, 80, 80, 255, thickness=2)
                 draw_text(f"[B] {tr('cheat_btn_stop')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            elif cheat_runner.done:
+                btn_w = 220
+                btn_h = 44
+                bx = mx + (mw - btn_w) // 2
+                by = my + mh - 70
+                fill_rect(bx, by, btn_w, btn_h, 24, 60, 100, 255)
+                draw_rect(bx, by, btn_w, btn_h, 50, 140, 220, 255, thickness=2)
+                draw_text(f"[B] {tr('cheat_btn_close')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
             else:
-                btn_w = 300
-                btn_h = 48
+                btn_w1 = 220
+                btn_w2 = 160
+                btn_h = 44
                 gap = 20
-                total_w = btn_w * 2 + gap
+                total_w = btn_w1 + btn_w2 + gap
                 b1_x = mx + (mw - total_w) // 2
-                b2_x = b1_x + btn_w + gap
-                by = my + mh - 75
+                b2_x = b1_x + btn_w1 + gap
+                by = my + mh - 70
 
-                fill_rect(b1_x, by, btn_w, btn_h, 0, 160, 100, 255)
-                draw_rect(b1_x, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
-                draw_text(f"[A] {tr('cheat_btn_download_installed')}", font_badge, b1_x + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+                fill_rect(b1_x, by, btn_w1, btn_h, 0, 160, 100, 255)
+                draw_rect(b1_x, by, btn_w1, btn_h, 0, 255, 160, 255, thickness=2)
+                draw_text(f"[A] {tr('cheat_btn_download_installed')}", font_badge, b1_x + btn_w1 // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                fill_rect(b2_x, by, btn_w, btn_h, 24, 60, 100, 255)
-                draw_rect(b2_x, by, btn_w, btn_h, 50, 140, 220, 255, thickness=2)
-                draw_text(f"[Y] {tr('cheat_btn_download_all')}", font_badge, b2_x + btn_w // 2, by + btn_h // 2, 220, 240, 255, center_x=True, center_y=True)
+                fill_rect(b2_x, by, btn_w2, btn_h, 30, 42, 60, 255)
+                draw_rect(b2_x, by, btn_w2, btn_h, 60, 80, 110, 255, thickness=1)
+                draw_text(f"[B] {tr('cheat_btn_close')}", font_badge, b2_x + btn_w2 // 2, by + btn_h // 2, 210, 220, 240, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
         # 5.4. SEND DIAGNOSTIC LOG TO TELEGRAM MODAL
