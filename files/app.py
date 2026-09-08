@@ -5574,14 +5574,18 @@ def main():
             if c_st["running"]:
                 if c_st["phase"] == "scanning":
                     info_line = "Đang quét danh sách game trên thẻ nhớ..." if state.current_lang == "VI" else "Scanning installed games on SD card..."
+                elif c_st["phase"] == "matching":
+                    info_line = "Đang đối chiếu danh mục Cheat..." if state.current_lang == "VI" else "Matching cheats database..."
                 elif c_st["phase"] == "downloading":
                     speed_kbs = c_st["speed_bps"] / 1024
-                    info_line = f"Đang tải: {pct}%   |   Tốc độ: {speed_kbs:.0f} KB/s   |   Dung lượng: ~37 MB" if state.current_lang == "VI" else f"Downloading: {pct}%   |   Speed: {speed_kbs:.0f} KB/s   |   Size: ~37 MB"
-                else:
                     if c_st.get("mode") == "installed":
-                        info_line = f"Đang trích xuất: {c_st['extracted_count']} mã Cheat cho {c_st.get('matched_games_count', 0)} game..." if state.current_lang == "VI" else f"Extracting: {c_st['extracted_count']} cheats for {c_st.get('matched_games_count', 0)} games..."
+                        d_cnt = c_st.get("downloaded_count", 0)
+                        t_cnt = c_st.get("total_to_download", 0)
+                        info_line = f"Đang tải: {pct}% ({d_cnt}/{t_cnt} game)   |   Tốc độ: {speed_kbs:.0f} KB/s" if state.current_lang == "VI" else f"Downloading: {pct}% ({d_cnt}/{t_cnt} games)   |   Speed: {speed_kbs:.0f} KB/s"
                     else:
-                        info_line = f"Đang giải nén: {c_st['extracted_count']} mã Cheat vào RetroArch..." if state.current_lang == "VI" else f"Extracting: {c_st['extracted_count']} cheats into RetroArch..."
+                        info_line = f"Đang tải toàn bộ kho: {pct}%   |   Tốc độ: {speed_kbs:.0f} KB/s   |   Dung lượng: ~37 MB" if state.current_lang == "VI" else f"Downloading: {pct}%   |   Speed: {speed_kbs:.0f} KB/s   |   Size: ~37 MB"
+                else:
+                    info_line = f"Đang giải nén: {c_st['extracted_count']} mã Cheat vào RetroArch..." if state.current_lang == "VI" else f"Extracting: {c_st['extracted_count']} cheats into RetroArch..."
             else:
                 info_line = f"Tổng số Cheat hiện có trong máy: {count_cheats()} file .cht" if state.current_lang == "VI" else f"Total Cheats installed on device: {count_cheats()} .cht files"
 

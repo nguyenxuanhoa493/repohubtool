@@ -1,12 +1,12 @@
 {
-  "version": "1.93",
+  "version": "1.94",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T02:14:10+0700",
+  "built": "2026-09-09T02:34:09+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Kho Cheat: Tải mã Cheat thông minh theo game đang có, RetroArch Auto-Load và nút Cheat trên Web Manager",
-    "en": "Cheats: Smart selective cheat downloader for installed games, RetroArch auto-load, and Web Manager cheat buttons"
+    "vi": "Kho Cheat: Tải trực tiếp mã Cheat theo game từ CDN siêu nhẹ (~150KB), không cần tải file zip 37MB",
+    "en": "Cheats: Direct on-demand cheat downloader from CDN (~150KB), eliminates 37MB archive download"
   },
   "remove": [
     "app.pyc",
@@ -199,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 338696,
-      "sha256": "b064665aef9fa3ae33da704da9eec7bd1df3007f931e9b788a01fa25d7627749"
+      "size": 338990,
+      "sha256": "74f140315ef20136c014fa9703678fb10710ce84c9274db932307512d24330d6"
     },
     {
       "path": "assets/fallback.ttf",
@@ -409,8 +409,13 @@
     },
     {
       "path": "rh/cheat_manager.py",
-      "size": 20199,
-      "sha256": "990ce25efa75a12ea0d846fd89d465bc36fd7f37dcf97232aedec20c1ac4f520"
+      "size": 26149,
+      "sha256": "d3cae58a38f99af43be36641301573f621a81464ceaf97c6aa8baff554812e7a"
+    },
+    {
+      "path": "rh/cheats_index.json.gz",
+      "size": 268664,
+      "sha256": "bc49edf69ff9847bf167bf6e00960eb91b3317b7d396b3b70ac4999fd4b30dc7"
     },
     {
       "path": "rh/corepicker.py",
@@ -535,7 +540,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "15f313020f8e4d7473731c20068a22a6d5c1d1ccc39cd1e360e310178090da2d"
+      "sha256": "6c76b882caab7ac6c01de58807554cad29a6c3f25c8de940a83d6bbf8f66d375"
     },
     {
       "path": "rh/yt.py",
