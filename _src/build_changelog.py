@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.95", "2026-09-09",
+     ("Roms Directory Clean: Boxart scraper saves strictly to Imgs, auto-cleans rogue images and .media from ROMs",
+      "Khắc phục loạn danh sách game: Cào ảnh chuẩn vào Imgs, tự động dọn dẹp triệt để file ảnh và .media khỏi thư mục ROMs"),
+     [("Strict Image Isolation: Scraper and downloader save boxart strictly to /mnt/SDCARD/Imgs/[SYSTEM]/ and never write into ROM directories or create .media subfolders.",
+       "Cách ly ảnh tuyệt đối: Bộ cào ảnh và tải game chỉ lưu ảnh bìa vào /mnt/SDCARD/Imgs/[SYSTEM]/, không lưu đè hay tạo thư mục .media trong thư mục chứa game ROMs."),
+      ("Automated ROM Directory Cleanup: Automatically moves misplaced image files (.png, .jpg, .media) from Roms/ to Imgs/ and deletes them from Roms/ (skipping PICO-8 cartridges), restoring clean game lists in TrimUI.",
+       "Tự động dọn dẹp sạch sẽ thư mục ROMs: Tự động di chuyển các file ảnh (.png, .jpg, .media) vô tình nằm trong Roms/ sang Imgs/ và xóa sạch khỏi Roms/ (ngoại trừ game thẻ PICO-8), giúp danh sách game trên TrimUI trở lại gọn gàng và chính xác."),
+      ("Refined ROM Extensions: Removed .png from generic valid ROM extensions across catalog and web manager, restricting .png exclusively to PICO-8.",
+       "Chuẩn hóa định dạng ROM: Loại bỏ đuôi .png khỏi danh sách ROM chung trên toàn bộ ứng dụng và Web Manager, chỉ cho phép nhận diện .png là game trên hệ máy PICO-8.")]),
+
     ("1.94", "2026-09-09",
      ("Direct On-Demand Cheat Download: Download only matching cheats directly from Libretro CDN without fetching the 37MB archive",
       "Tải Cheat trực tiếp siêu nhẹ: Chỉ tải đúng mã Cheat của game đang có từ CDN Libretro, không còn tải file zip 37MB"),

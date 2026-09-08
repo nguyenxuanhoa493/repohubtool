@@ -124,7 +124,8 @@ from rh.catalog import (VALID_EXTS, alpha_index, get_java_category_list,
 from rh.downloader import (cancel_active_download, clear_download_queue, dl_state,
     download_state_for, enqueue_download, pop_notification, queued_items,
     start_next_queued)
-from rh.boxart_scraper import scraper_runner, scan_missing_boxarts, count_missing_boxarts
+from rh.boxart_scraper import (scraper_runner, scan_missing_boxarts, count_missing_boxarts,
+    cleanup_rom_directory_images)
 from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
     list_save_backups, restore_save_backup, delete_save_backup)
 from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner
@@ -842,6 +843,9 @@ def main():
     # Khởi chạy giải nén và nạp trước yt-dlp vào bộ nhớ RAM ngầm
     import rh.yt_player as yt_player
     threading.Thread(target=yt_player.ensure_ytdlp_ready, daemon=True).start()
+
+    # Dọn dẹp ngầm toàn bộ các file ảnh/thư mục .media vô tình nằm trong Roms/ trên thẻ nhớ
+    threading.Thread(target=cleanup_rom_directory_images, daemon=True).start()
 
     # Restore session state when returning from video playback
     _resume_file = "/tmp/retrohub_resume.json"

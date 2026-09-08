@@ -393,8 +393,82 @@ def find_best_boxart(sys_code, clean_title, fast_only=True):
     return None, None
 
 
+def cleanup_rom_directory_images(base_sd=None):
+    """
+    Dọn dẹp sạch sẽ toàn bộ các file ảnh (.png, .jpg, .jpeg, .bmp, .webp) và thư mục .media
+    đang vô tình nằm trong các thư mục ROMs (/mnt/SDCARD/Roms/).
+    Tránh tình trạng trình quản lý game nhận nhầm file ảnh thành ROM game làm loạn danh sách.
+    """
+    sd = base_sd or SDCARD_PATH
+    roms_dir = os.path.join(sd, "Roms")
+    imgs_dir = os.path.join(sd, "Imgs")
+    if not os.path.isdir(roms_dir):
+        return 0
+
+    cleaned_count = 0
+    img_exts = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
+
+    try:
+        for sys_entry in os.listdir(roms_dir):
+            sys_path = os.path.join(roms_dir, sys_entry)
+            if not os.path.isdir(sys_path) or sys_entry.startswith("."):
+                continue
+
+            sys_code = sys_entry.upper()
+            if "(" in sys_entry and sys_entry.endswith(")"):
+                sys_code = sys_entry[sys_entry.rfind("(") + 1:-1].strip().upper()
+
+            # PICO-8 sử dụng file .p8.png hoặc .png làm cart game, không dọn dẹp hệ này
+            if sys_code == "PICO8":
+                continue
+
+            target_sys_imgs = os.path.join(imgs_dir, sys_entry)
+            if not os.path.isdir(target_sys_imgs) and os.path.isdir(os.path.join(imgs_dir, sys_code)):
+                target_sys_imgs = os.path.join(imgs_dir, sys_code)
+
+            # Quét đệ quy toàn bộ thư mục của hệ máy này từ dưới lên
+            for root, dirs, files in os.walk(sys_path, topdown=False):
+                # 1. Dọn dẹp các file ảnh lạc trong thư mục ROM
+                for f in files:
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in img_exts:
+                        full_p = os.path.join(root, f)
+                        if not os.path.isdir(target_sys_imgs):
+                            try:
+                                os.makedirs(target_sys_imgs, exist_ok=True)
+                            except Exception:
+                                pass
+                        dest_img = os.path.join(target_sys_imgs, f)
+                        # Nếu trong Imgs chưa có ảnh này, copy sang trước khi xóa ở Roms
+                        if not os.path.isfile(dest_img):
+                            try:
+                                shutil.copyfile(full_p, dest_img)
+                            except Exception:
+                                pass
+                        try:
+                            os.remove(full_p)
+                            cleaned_count += 1
+                        except Exception:
+                            pass
+
+                # 2. Xóa các thư mục .media nếu có
+                for d in list(dirs):
+                    if d == ".media":
+                        media_dir = os.path.join(root, d)
+                        try:
+                            shutil.rmtree(media_dir, ignore_errors=True)
+                            cleaned_count += 1
+                        except Exception:
+                            pass
+    except Exception:
+        pass
+
+    return cleaned_count
+
+
 def scan_missing_boxarts():
     """Quét toàn bộ game trên thẻ nhớ và trả về danh sách các game CHƯA có ảnh bìa."""
+    cleanup_rom_directory_images()
     all_games = scan_all_downloaded_games()
     missing = []
     for g in all_games:
@@ -502,6 +576,16 @@ class BoxartScraperRunner:
 
         if best_url:
             target_img_dir = os.path.join(SDCARD_PATH, "Imgs", sys_code)
+            if rom_path:
+                parts = rom_path.replace("\\", "/").split("/")
+                if "Roms" in parts:
+                    idx = parts.index("Roms")
+                    if idx + 1 < len(parts):
+                        sys_folder = parts[idx + 1]
+                        candidate = os.path.join(SDCARD_PATH, "Imgs", sys_folder)
+                        if os.path.isdir(candidate) or not os.path.isdir(target_img_dir):
+                            target_img_dir = candidate
+
             os.makedirs(target_img_dir, exist_ok=True)
             target_art = os.path.join(target_img_dir, f"{base_name}.png")
 
@@ -517,16 +601,6 @@ class BoxartScraperRunner:
             ok, _ = download_image_to_file(best_url, target_art, timeout=10)
             if ok:
                 success = True
-                # Lưu đồng bộ vào .media/ cho NextUI nếu tồn tại
-                if rom_path and os.path.isfile(rom_path):
-                    rom_dir = os.path.dirname(rom_path)
-                    media_dir = os.path.join(rom_dir, ".media")
-                    if os.path.isdir(media_dir) or is_nextui():
-                        try:
-                            os.makedirs(media_dir, exist_ok=True)
-                            shutil.copyfile(target_art, os.path.join(media_dir, f"{base_name}.png"))
-                        except Exception:
-                            pass
 
         with self._lock:
             self.completed += 1
