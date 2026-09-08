@@ -1,12 +1,12 @@
 {
-  "version": "1.90",
+  "version": "1.91",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-08T03:26:22+0700",
+  "built": "2026-09-08T18:10:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Quản lý Game qua Web: Cào ảnh hàng loạt trực tiếp trên danh sách (không modal), biểu tượng SVG vector cho từng hệ máy và hiển thị trọn vẹn 100% ảnh bìa",
-    "en": "Web Game Manager: Inline batch scraping with real-time card updates, SVG vector system icons, and full uncropped boxart view"
+    "vi": "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu",
+    "en": "Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback"
   },
   "remove": [
     "app.pyc",
@@ -350,8 +350,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 128729,
-      "sha256": "1fd33531cca030ab0c5a84cd1e9d730efc71350eb988666426bb099acc77d188"
+      "size": 136431,
+      "sha256": "5b674a7c3ac4b76ac8a1b961268ae3e66ee9fa5bdc1468476363462b93ed6950"
     },
     {
       "path": "icon.png",
@@ -511,7 +511,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "b215602d80ba83bb0c064c967105a39abd07c8b85815996c5ecf64344a31772d"
+      "sha256": "5971100c28dd38e6109a5e3bd3e6e1bce7725d9111fe4c7786b64c608313cf1d"
     },
     {
       "path": "rh/yt.py",
@@ -909,6 +909,6 @@
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
     }
   ],
-  "notes": "Cào ảnh hàng loạt trực tiếp trên danh sách (không modal), biểu tượng SVG vector cho từng hệ máy và hiển thị trọn vẹn 100% ảnh bìa.",
-  "notes_en": "Inline batch scraping with real-time card updates, SVG vector system icons, and full uncropped boxart view."
+  "notes": "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu.",
+  "notes_en": "Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback."
 }
