@@ -1765,8 +1765,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
         </div>
         <div class="header-stats">
             <div class="stat-badge" id="storage-stat">Bộ nhớ: <strong>Đang đọc...</strong></div>
-            <button class="btn btn-sm btn-secondary" onclick="openSavesCheatsModal('saves')">💾 Save & Cheats</button>
-            <button class="btn btn-sm btn-secondary" onclick="loadSystems(true)">⟲ Nạp lại</button>
+            <button class="btn btn-sm btn-secondary" onclick="openSavesCheatsModal('saves')">Save & Cheats</button>
+            <button class="btn btn-sm btn-secondary" onclick="loadSystems(true)">Nạp lại</button>
         </div>
     </header>
 
@@ -1779,12 +1779,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <main>
             <div class="toolbar">
                 <div class="search-box">
-                    <span class="search-icon">🔍</span>
+                    <span class="search-icon"></span>
                     <input type="text" id="search-input" placeholder="Tìm game trong hệ..." oninput="filterGames()">
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <input type="file" id="rom-file-input-direct" multiple style="display:none" onchange="handleDirectRomFiles(event)">
-                    <button id="btn-batch-scrape-top" class="btn btn-batch" style="display:none;" onclick="toggleDirectBatchScrape()">⚡ Cào toàn bộ ảnh</button>
+                    <button id="btn-batch-scrape-top" class="btn btn-batch" style="display:none;" onclick="toggleDirectBatchScrape()">Cào toàn bộ ảnh</button>
                     <button class="btn btn-green" onclick="handleUploadRomClick()">+ Tải ROM lên</button>
                 </div>
             </div>
@@ -1792,19 +1792,19 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <div id="batch-inline-bar" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                 <div style="flex:1; min-width:0;">
                     <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
-                        <span id="batch-inline-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">⚡ Đang tự động cào ảnh...</span>
+                        <span id="batch-inline-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Đang tự động cào ảnh...</span>
                         <span id="batch-inline-pct" style="color:#10b981; font-weight:700;">0%</span>
                     </div>
                     <div class="progress-bar-bg" style="height: 8px;">
                         <div id="batch-inline-fill" class="progress-bar-fill" style="width:0%;"></div>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-secondary" onclick="stopDirectBatchScrape()">⏹️ Dừng cào</button>
+                <button class="btn btn-sm btn-secondary" onclick="stopDirectBatchScrape()">Dừng cào</button>
             </div>
 
             <div id="games-container" class="games-grid"></div>
             <div id="empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
-                <div style="font-size: 40px; margin-bottom: 12px;">📂</div>
+                <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">(Trống)</div>
                 <p>Không có game nào trong hệ máy này hoặc chưa tìm thấy tệp phù hợp.</p>
             </div>
         </main>
@@ -1860,30 +1860,30 @@ HTML_PAGE = r"""<!DOCTYPE html>
             </div>
             <div style="display: flex; gap: 8px;">
                 <input type="text" id="scrape-query" style="flex:1; background:#0f172a; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:6px; font-size:14px;" placeholder="Nhập từ khóa tìm kiếm ảnh..." onkeydown="if(event.key==='Enter') executeScrapeSearch()">
-                <button class="btn btn-sm" onclick="executeScrapeSearch()">🔍 Tìm ảnh</button>
+                <button class="btn btn-sm" onclick="executeScrapeSearch()">Tìm ảnh</button>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-sub); margin-top: 2px;">
                 <span>Nguồn: RetroHub Catalog DB & Libretro Thumbnails CDN</span>
-                <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="openGoogleImageSearch()">🌐 Mở Google Images</button>
+                <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="openGoogleImageSearch()">Mở Google Images</button>
             </div>
             
             <div id="scrape-results" class="scrape-candidates"></div>
 
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 6px; padding: 10px; margin-top: 6px;">
-                <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;">📋 Dán ảnh trực tiếp từ Clipboard (Ctrl+V) hoặc dán link:</div>
+                <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;">Dán ảnh trực tiếp từ Clipboard (Ctrl+V) hoặc dán link:</div>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="scrape-direct-url" style="flex:1; background:#0b0f19; border:1px solid var(--border); color:#fff; padding:6px 10px; border-radius:6px; font-size:12px;" placeholder="Nhấn Ctrl+V để dán ảnh đã copy, hoặc dán link https://..." onkeydown="if(event.key==='Enter') submitDirectArtUrl()">
                     <button class="btn btn-sm btn-green" onclick="submitDirectArtUrl()">Gán link</button>
-                    <button class="btn btn-sm btn-secondary" onclick="pasteAndApplyArt()" title="Dán ảnh hoặc link từ Clipboard">📋 Dán từ Clipboard</button>
+                    <button class="btn btn-sm btn-secondary" onclick="pasteAndApplyArt()" title="Dán ảnh hoặc link từ Clipboard">Dán từ Clipboard</button>
                 </div>
                 <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
-                    💡 <em>Bạn có thể click chuột phải vào bất kỳ ảnh nào chọn <strong>"Sao chép hình ảnh" (Copy Image)</strong> hoặc chụp màn hình rồi bấm <strong>Ctrl+V</strong> vào đây để gán ngay!</em>
+                    <em>Bạn có thể click chuột phải vào bất kỳ ảnh nào chọn <strong>"Sao chép hình ảnh" (Copy Image)</strong> hoặc chụp màn hình rồi bấm <strong>Ctrl+V</strong> vào đây để gán ngay!</em>
                 </div>
             </div>
 
             <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
                 <label class="btn btn-sm btn-secondary" style="margin:0; cursor:pointer;">
-                    📁 Tải ảnh từ máy
+                    Tải ảnh từ máy
                     <input type="file" id="art-file-input" accept="image/*" style="display:none" onchange="uploadCustomArt(event)">
                 </label>
                 <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-scrape')">Đóng</button>
@@ -1903,7 +1903,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
                 <button class="btn btn-secondary" onclick="closeModal('modal-select-upload-sys')">Hủy</button>
-                <button class="btn btn-green" onclick="confirmSystemAndBrowseFiles()">Chọn tệp ROM ➔</button>
+                <button class="btn btn-green" onclick="confirmSystemAndBrowseFiles()">Chọn tệp ROM -></button>
             </div>
         </div>
     </div>
@@ -1911,7 +1911,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <div class="modal-backdrop" id="modal-upload-progress">
         <div class="modal-box" style="max-width: 560px; width: 92vw;">
             <div class="modal-header">
-                <h3 id="upload-prog-title">📤 Đang tải ROM lên thiết bị</h3>
+                <h3 id="upload-prog-title">Đang tải ROM lên thiết bị</h3>
                 <button class="modal-close" onclick="cancelOrCloseUpload()">&times;</button>
             </div>
 
@@ -1981,9 +1981,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
             <!-- Tabs -->
             <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; padding-bottom: 8px;">
-                <button id="tab-btn-saves" class="btn btn-sm" onclick="switchSavesCheatsTab('saves')">💾 Sao lưu & Khôi phục Save</button>
-                <button id="tab-btn-cheats" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('cheats')">⚡ Kho Cheat Code (Libretro)</button>
-                <button id="tab-btn-logs" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('logs')">📡 Gửi Log & Chẩn đoán</button>
+                <button id="tab-btn-saves" class="btn btn-sm" onclick="switchSavesCheatsTab('saves')">Sao lưu & Khôi phục Save</button>
+                <button id="tab-btn-cheats" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('cheats')">Kho Cheat Code (Libretro)</button>
+                <button id="tab-btn-logs" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('logs')">Gửi Log & Chẩn đoán</button>
             </div>
 
             <!-- Tab 1: Saves -->
@@ -2008,7 +2008,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                             <div style="font-size: 14px; font-weight: 700; color: #fff;">Kho Cheat Code Libretro Official</div>
                             <div style="font-size: 12px; color: #38bdf8; margin-top: 3px;" id="cheats-status-text">Đang kiểm tra trạng thái...</div>
                         </div>
-                        <button id="btn-cheats-action" class="btn btn-sm btn-batch" onclick="startCheatsDownloadWeb()">⚡ Tải trọn bộ Cheat (~37MB)</button>
+                        <button id="btn-cheats-action" class="btn btn-sm btn-batch" onclick="startCheatsDownloadWeb()">Tải trọn bộ Cheat (~37MB)</button>
                     </div>
 
                     <div id="cheats-progress-box" style="display:none; margin-top: 14px;">
@@ -2026,10 +2026,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 </div>
 
                 <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 8px; padding: 12px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">📖 Hướng dẫn bật Cheat khi đang chơi game:</div>
+                    <div style="font-size: 12px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">Hướng dẫn bật Cheat khi đang chơi game:</div>
                     <ul style="font-size: 11px; color: #cbd5e1; line-height: 1.8; margin-left: 20px;">
                         <li>Khi đang trong game, bấm nút <strong>Menu</strong> (hoặc tổ hợp <strong>Select + X</strong>) để mở Quick Menu của RetroArch.</li>
-                        <li>Vào mục <strong>Cheats</strong> ➔ Chọn <strong>Load Cheat File (Replace)</strong>.</li>
+                        <li>Vào mục <strong>Cheats</strong> -> Chọn <strong>Load Cheat File (Replace)</strong>.</li>
                         <li>Chọn hệ máy tương ứng và chọn tệp Cheat của game đang chơi.</li>
                         <li>Bật <em>(Enabled)</em> các mã muốn dùng (Bất tử máu, Max Tiền, Đi xuyên tường...) rồi chọn <strong>Apply Changes</strong>.</li>
                     </ul>
@@ -2041,7 +2041,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 <div style="background: #0f172a; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                         <div>
-                            <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">📡 Nhật ký & Chẩn đoán Hệ thống</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">Nhật ký & Chẩn đoán Hệ thống</div>
                             <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">Tự động thu thập thông số phần cứng & lỗi crash để hỗ trợ kỹ thuật</div>
                         </div>
                         <div style="background: #1e293b; border: 1px solid #0284c7; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #38bdf8;">
@@ -2061,7 +2061,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button id="btn-toggle-log-web" class="btn btn-sm btn-secondary" onclick="toggleLoggingWeb()">Tắt ghi log</button>
-                            <button id="btn-clear-log-web" class="btn btn-sm btn-secondary" style="color: #f87171;" onclick="clearLogWeb()">🗑️ Làm sạch log</button>
+                            <button id="btn-clear-log-web" class="btn btn-sm btn-secondary" style="color: #f87171;" onclick="clearLogWeb()">Làm sạch log</button>
                         </div>
                     </div>
 
@@ -2071,15 +2071,15 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     </div>
 
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button id="btn-send-log-tg" class="btn btn-sm btn-batch" onclick="sendLogTelegramWeb()">✈️ Gửi Log vào Telegram tác giả</button>
-                        <a href="/api/logs/download" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>📥 Tải file báo cáo (.txt) về máy</a>
+                        <button id="btn-send-log-tg" class="btn btn-sm btn-batch" onclick="sendLogTelegramWeb()">Gửi Log vào Telegram tác giả</button>
+                        <a href="/api/logs/download" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>Tải file báo cáo (.txt) về máy</a>
                     </div>
 
                     <div id="log-send-status-box" style="display: none; margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 12px;"></div>
                 </div>
 
                 <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 8px; padding: 12px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #34d399; margin-bottom: 4px;">🔒 Bảo mật & Riêng tư:</div>
+                    <div style="font-size: 12px; font-weight: 700; color: #34d399; margin-bottom: 4px;">Bảo mật & Riêng tư:</div>
                     <div style="font-size: 11px; color: #94a3b8; line-height: 1.6;">
                         Báo cáo này cũng được tự động lưu dự phòng tại <code>/mnt/SDCARD/RetroHub_Debug_Report.txt</code>. Nhật ký hoàn toàn KHÔNG chứa mật khẩu Wi-Fi hoặc thông tin cá nhân của bạn.
                     </div>
@@ -2264,7 +2264,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 if (currentSystem === '__no_art__') {
                     if (noArtTotalCount > 0) {
                         topBtn.style.display = "inline-flex";
-                        topBtn.innerText = `⚡ Cào toàn bộ (${noArtTotalCount})`;
+                        topBtn.innerText = `Cào toàn bộ (${noArtTotalCount})`;
                         topBtn.className = "btn btn-batch";
                     } else {
                         topBtn.style.display = "none";
@@ -2273,7 +2273,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     const remainingInSys = currentGames.filter(g => !g.has_art).length;
                     if (remainingInSys > 0) {
                         topBtn.style.display = "inline-flex";
-                        topBtn.innerText = `⚡ Cào toàn bộ (${remainingInSys})`;
+                        topBtn.innerText = `Cào toàn bộ (${remainingInSys})`;
                         topBtn.className = "btn btn-batch";
                     } else {
                         topBtn.style.display = "none";
@@ -2308,7 +2308,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             const listEl = document.getElementById("systems-list");
             let html = `
                 <div class="sys-item sys-item-special ${currentSystem === '__no_art__' ? 'active' : ''}" onclick="selectSystem('__no_art__')">
-                    <span>⚠️ Chưa có Boxart</span>
+                    <span>Chưa có Boxart</span>
                     <span id="no-art-count-badge" class="count ${noArtTotalCount > 0 ? 'count-warn' : ''}">${noArtTotalCount}</span>
                 </div>
             `;
@@ -2715,7 +2715,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             if (!q) return;
             const targetSys = selectedGameSystem || currentSystem;
             const resBox = document.getElementById("scrape-results");
-            resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--text-sub);">⏳ Đang tìm ảnh trong kho dữ liệu...</div>`;
+            resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--text-sub);">Đang tìm ảnh trong kho dữ liệu...</div>`;
 
             try {
                 const res = await fetch(`/api/scrape/search?system=${encodeURIComponent(targetSys)}&query=${encodeURIComponent(q)}`);
@@ -2731,7 +2731,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 } else {
                     resBox.innerHTML = `
                         <div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--text-sub);">
-                            <div style="margin-bottom:8px; font-size:13px;">⚠️ Chưa tìm thấy ảnh phù hợp với từ khóa này.</div>
+                            <div style="margin-bottom:8px; font-size:13px;">Chưa tìm thấy ảnh phù hợp với từ khóa này.</div>
                             <div style="font-size:12px;">Bạn có thể chỉnh từ khóa ngắn gọn hơn, bấm <strong>"Mở Google Images"</strong> hoặc <strong>"Tải ảnh từ máy"</strong>!</div>
                         </div>
                     `;
@@ -2832,7 +2832,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             if (isBatchScraping) {
                 stopBatchRequested = true;
                 const statusEl = document.getElementById("batch-inline-status");
-                if (statusEl) statusEl.innerText = "⏸️ Đang dừng cào...";
+                if (statusEl) statusEl.innerText = "Đang dừng cào...";
                 const topBtn = document.getElementById("btn-batch-scrape-top");
                 if (topBtn) topBtn.innerText = "Đang dừng...";
             }
@@ -2899,7 +2899,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             const topBtn = document.getElementById("btn-batch-scrape-top");
 
             if (topBtn) {
-                topBtn.innerText = `⏹️ Dừng cào (${targets.length})`;
+                topBtn.innerText = `Dừng cào (${targets.length})`;
                 topBtn.className = "btn btn-danger";
             }
 
@@ -2912,9 +2912,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 pctText.innerText = `${pct}%`;
                 fillBar.style.width = `${pct}%`;
                 if (titleName) {
-                    statusText.innerHTML = `⚡ [${completedCount}/${total}] Đang xử lý: <strong>${titleName}</strong> (${gSysName}) &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
+                    statusText.innerHTML = `[${completedCount}/${total}] Đang xử lý: <strong>${titleName}</strong> (${gSysName}) &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
                 } else {
-                    statusText.innerHTML = `⚡ [${completedCount}/${total}] Đang xử lý... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
+                    statusText.innerHTML = `[${completedCount}/${total}] Đang xử lý... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
                 }
             }
 
@@ -2971,7 +2971,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
             // Giai đoạn 2: Web Search cho các game còn lại chưa tìm thấy
             if (!stopBatchRequested && notFoundList.length > 0) {
-                statusText.innerHTML = `🔍 Tìm kiếm Web sâu cho ${notFoundList.length} game còn lại... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
+                statusText.innerHTML = `Tìm kiếm Web sâu cho ${notFoundList.length} game còn lại... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
                 const deepQueue = [...notFoundList];
                 notFoundList.length = 0;
 
@@ -2984,7 +2984,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                         const cleanTitle = cleanGameQuery(g.filename);
 
                         setCardArtScraping(idx, "Đang tìm Web...");
-                        statusText.innerHTML = `🌐 Tìm Web: <strong>${g.name}</strong> (${gSysName})... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
+                        statusText.innerHTML = `Tìm Web: <strong>${g.name}</strong> (${gSysName})... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
 
                         try {
                             const res = await fetch("/api/scrape/auto", {
@@ -3028,15 +3028,15 @@ HTML_PAGE = r"""<!DOCTYPE html>
             isBatchScraping = false;
 
             if (topBtn) {
-                topBtn.innerText = "⚡ Cào toàn bộ ảnh";
+                topBtn.innerText = "Cào toàn bộ ảnh";
                 topBtn.className = "btn btn-batch";
             }
 
             if (stopBatchRequested) {
-                statusText.innerText = `⏸️ Đã dừng. Cập nhật thành công ${successCount}/${total} ảnh bìa.`;
+                statusText.innerText = `Đã dừng. Cập nhật thành công ${successCount}/${total} ảnh bìa.`;
                 showToast(`Đã dừng: Cập nhật thành công ${successCount} ảnh!`);
             } else {
-                statusText.innerText = `✅ Hoàn tất! Đã cập nhật ${successCount}/${total} ảnh bìa vào danh sách.`;
+                statusText.innerText = `Hoàn tất! Đã cập nhật ${successCount}/${total} ảnh bìa vào danh sách.`;
                 showToast(`Hoàn tất: Đã cào xong ${successCount}/${total} ảnh bìa!`);
             }
 
@@ -3155,7 +3155,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
             // Mở modal hiển thị tiến độ
             document.getElementById("upload-target-name").innerText = `${sysName} (${targetSys})`;
-            document.getElementById("upload-prog-title").innerText = `📤 Đang tải ${files.length} ROM lên thiết bị`;
+            document.getElementById("upload-prog-title").innerText = `Đang tải ${files.length} ROM lên thiết bị`;
             document.getElementById("btn-upload-cancel").innerText = "Hủy bỏ";
             document.getElementById("btn-upload-cancel").className = "btn btn-secondary";
             document.getElementById("upload-status-footer").innerText = "Vui lòng không tắt trình duyệt khi đang tải file lớn.";
@@ -3173,7 +3173,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             const fileListEl = document.getElementById("upload-file-list");
             fileListEl.innerHTML = files.map((f, i) => `
                 <div id="upload-item-${i}" class="batch-log-item">
-                    <span id="upload-item-icon-${i}" style="width:20px; text-align:center;">⚪</span>
+                    <span id="upload-item-icon-${i}" style="width:20px; text-align:center;">[ ]</span>
                     <span style="color:#e2e8f0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${f.name}">${f.name}</span>
                     <span style="color:var(--text-sub); font-size:10px;">${formatBytes(f.size)}</span>
                     <span id="upload-item-status-${i}" style="color:var(--text-sub); font-size:10px; width:65px; text-align:right;">Chờ...</span>
@@ -3197,7 +3197,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
                 const itemIcon = document.getElementById(`upload-item-icon-${i}`);
                 const itemStatus = document.getElementById(`upload-item-status-${i}`);
-                if (itemIcon) itemIcon.innerText = "⏳";
+                if (itemIcon) itemIcon.innerText = "...";
                 if (itemStatus) {
                     itemStatus.innerText = "0%";
                     itemStatus.style.color = "#38bdf8";
@@ -3213,13 +3213,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     });
 
                     successCount++;
-                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#10b981; font-weight:bold;">✓</span>`;
+                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#10b981; font-weight:bold;">OK</span>`;
                     if (itemStatus) {
                         itemStatus.innerText = "Xong";
                         itemStatus.style.color = "#10b981";
                     }
                 } catch (err) {
-                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#ef4444; font-weight:bold;">✗</span>`;
+                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#ef4444; font-weight:bold;">ERR</span>`;
                     if (itemStatus) {
                         itemStatus.innerText = "Lỗi";
                         itemStatus.style.color = "#ef4444";
@@ -3238,7 +3238,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             document.getElementById("upload-file-progress-bar").style.width = "100%";
             document.getElementById("btn-upload-cancel").innerText = "Đóng";
             document.getElementById("btn-upload-cancel").className = "btn btn-green";
-            document.getElementById("upload-prog-title").innerText = `✅ Hoàn tất tải lên (${successCount}/${files.length} ROM)`;
+            document.getElementById("upload-prog-title").innerText = `Hoàn tất tải lên (${successCount}/${files.length} ROM)`;
             document.getElementById("upload-status-footer").innerText = `Đã tải lên ${successCount} tệp thành công vào hệ máy ${sysName}.`;
             showToast(`Đã tải lên ${successCount} tệp ROM thành công!`);
 
@@ -3312,7 +3312,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                                 <div style="font-size: 11px; color: var(--text-sub);">${b.date_str} • ${b.file_count} files • ${sizeStr}</div>
                             </div>
                             <div style="display: flex; gap: 6px; align-items: center; margin-left: 10px;">
-                                <a href="/api/saves/download?file=${encodeURIComponent(b.filename)}" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>⬇️ Tải zip</a>
+                                <a href="/api/saves/download?file=${encodeURIComponent(b.filename)}" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>Tải zip</a>
                                 <button class="btn btn-sm btn-green" style="font-size: 11px;" onclick="restoreSaveBackupWeb('${b.filename}')">Khôi phục</button>
                                 <button class="btn btn-sm btn-secondary" style="font-size: 11px; color: #ef4444;" onclick="deleteSaveBackupWeb('${b.filename}')">Xóa</button>
                             </div>
@@ -3395,10 +3395,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
                     if (st.installed) {
                         document.getElementById('cheats-status-text').innerText = `Đã cài đặt: ${st.count} mã Cheat (.cht) trong RetroArch.`;
-                        btn.innerText = '⟲ Cập nhật / Tải lại Cheat';
+                        btn.innerText = 'Cập nhật / Tải lại Cheat';
                     } else {
                         document.getElementById('cheats-status-text').innerText = 'Chưa có mã Cheat nào trên máy.';
-                        btn.innerText = '⚡ Tải trọn bộ Cheat (~37MB)';
+                        btn.innerText = 'Tải trọn bộ Cheat (~37MB)';
                     }
 
                     if (runner.running) {
@@ -3516,7 +3516,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             const note = (noteInput ? noteInput.value : '').trim();
 
             btn.disabled = true;
-            btn.innerText = '⏳ Đang gửi nhật ký...';
+            btn.innerText = 'Đang gửi nhật ký...';
             statusBox.style.display = 'block';
             statusBox.style.background = '#1e293b';
             statusBox.style.color = '#38bdf8';
@@ -3534,22 +3534,22 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     statusBox.style.background = '#064e3b';
                     statusBox.style.color = '#34d399';
                     statusBox.style.border = '1px solid #059669';
-                    statusBox.innerText = '✔ ' + (data.message || 'Đã gửi nhật ký thành công!');
+                    statusBox.innerText = (data.message || 'Đã gửi nhật ký thành công!');
                     showToast('Gửi log lên Telegram thành công!');
                 } else {
                     statusBox.style.background = '#450a0a';
                     statusBox.style.color = '#f87171';
                     statusBox.style.border = '1px solid #dc2626';
-                    statusBox.innerText = '✖ Lỗi: ' + (data.error || 'Không thể gửi log');
+                    statusBox.innerText = 'Lỗi: ' + (data.error || 'Không thể gửi log');
                 }
             } catch (err) {
                 statusBox.style.background = '#450a0a';
                 statusBox.style.color = '#f87171';
                 statusBox.style.border = '1px solid #dc2626';
-                statusBox.innerText = '✖ Lỗi kết nối máy chủ: ' + err;
+                statusBox.innerText = 'Lỗi kết nối máy chủ: ' + err;
             } finally {
                 btn.disabled = false;
-                btn.innerText = '✈️ Gửi Log vào Telegram tác giả';
+                btn.innerText = 'Gửi Log vào Telegram tác giả';
             }
         }
 

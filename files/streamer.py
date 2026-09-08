@@ -256,7 +256,7 @@ HTML_PAGE = """<!DOCTYPE html>
 <body>
     <!-- 1. Minimal Header -->
     <div class="top-bar" id="top-bar">
-        <div class="top-title">🎮 TrimUI Live</div>
+        <div class="top-title">TrimUI Live</div>
         <div class="top-status">
             <span class="dot"></span>
             <span id="stat-res-fps">720p • 30 FPS</span>
@@ -276,24 +276,24 @@ HTML_PAGE = """<!DOCTYPE html>
 
     <!-- 3. Minimal Main Toolbar with 1.5x Button -->
     <div class="toolbar">
-        <button class="btn" onclick="takeSnapshot()">📷 Chụp ảnh</button>
-        <button class="btn btn-rec" id="btn-rec" onclick="toggleRecord()">⏺ Quay video</button>
-        <button class="btn active" id="btn-scale" onclick="cycleScale()">🔍 Size: 1.5x</button>
-        <button class="btn" onclick="toggleFullscreen()">⛶ Toàn màn hình</button>
-        <button class="btn" id="btn-settings" onclick="toggleSettings()">⚙️ Tùy chỉnh</button>
+        <button class="btn" onclick="takeSnapshot()">Chụp ảnh</button>
+        <button class="btn btn-rec" id="btn-rec" onclick="toggleRecord()">Quay video</button>
+        <button class="btn active" id="btn-scale" onclick="cycleScale()">Size: 1.5x</button>
+        <button class="btn" onclick="toggleFullscreen()">Toàn màn hình</button>
+        <button class="btn" id="btn-settings" onclick="toggleSettings()">Tùy chỉnh</button>
     </div>
 
     <!-- 4. Collapsible Settings Drawer -->
     <div class="settings-panel" id="settings-panel">
         <div class="opt-row">
             <span class="opt-title">Kích thước khung:</span>
-            <button class="pill-btn active" id="scale-btn-15" onclick="setScale('1.5x')">🔍 Phóng to 1.5x</button>
+            <button class="pill-btn active" id="scale-btn-15" onclick="setScale('1.5x')">Phóng to 1.5x</button>
             <button class="pill-btn" id="scale-btn-10" onclick="setScale('1.0x')">1.0x (Gốc)</button>
             <button class="pill-btn" id="scale-btn-fit" onclick="setScale('fit')">Vừa màn hình (Fit)</button>
         </div>
         <div class="opt-row">
             <span class="opt-title">Độ phân giải:</span>
-            <button class="pill-btn active" id="res-720" onclick="setRes('720')">⚡ 720p (Mặc định - Nét nhất)</button>
+            <button class="pill-btn active" id="res-720" onclick="setRes('720')">720p (Mặc định - Nét nhất)</button>
             <button class="pill-btn" id="res-480" onclick="setRes('480')">480p (Cân bằng)</button>
             <button class="pill-btn" id="res-360" onclick="setRes('360')">360p (Cực nhẹ)</button>
         </div>
@@ -391,18 +391,18 @@ HTML_PAGE = """<!DOCTYPE html>
                 wrap.classList.add('scale-150');
                 topBar.classList.add('scale-150');
                 document.getElementById('scale-btn-15').classList.add('active');
-                document.getElementById('btn-scale').textContent = '🔍 Size: 1.5x';
+                document.getElementById('btn-scale').textContent = 'Size: 1.5x';
                 document.getElementById('btn-scale').classList.add('active');
                 document.getElementById('stat-scale').textContent = '1.5x';
             } else if (scale === '1.0x') {
                 wrap.classList.add('scale-100');
                 document.getElementById('scale-btn-10').classList.add('active');
-                document.getElementById('btn-scale').textContent = '🔍 Size: 1.0x';
+                document.getElementById('btn-scale').textContent = 'Size: 1.0x';
                 document.getElementById('btn-scale').classList.remove('active');
                 document.getElementById('stat-scale').textContent = '1.0x';
             } else { // fit
                 document.getElementById('scale-btn-fit').classList.add('active');
-                document.getElementById('btn-scale').textContent = '🔍 Size: Fit';
+                document.getElementById('btn-scale').textContent = 'Size: Fit';
                 document.getElementById('btn-scale').classList.remove('active');
                 document.getElementById('stat-scale').textContent = 'Fit';
             }
@@ -492,12 +492,12 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 mediaRecorder.start();
                 isRecording = true;
-                btn.textContent = '⏹ Dừng quay';
+                btn.textContent = 'Dừng quay';
                 btn.classList.add('recording');
             } else {
                 mediaRecorder.stop();
                 isRecording = false;
-                btn.textContent = '⏺ Quay video';
+                btn.textContent = 'Quay video';
                 btn.classList.remove('recording');
             }
         }

@@ -765,7 +765,7 @@ def main():
             draw_rect(mx, my, mw, mh, 0, 230, 255, 255, thickness=2)
 
             fill_rect(mx + 28, my + 22, 140, 26, 230, 33, 23, 255)
-            draw_text("▶ YouTube Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
+            draw_text("YouTube Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
 
             t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
             ty = my + 64
@@ -1875,7 +1875,7 @@ def main():
                               "title": f"• {p}", "label": tr("j2me_qc_delete_lbl")})
             if not qc_list:
                 items.append({"id": "qc_empty", "title": tr("j2me_qc_empty"), "sub": True})
-            items.append({"id": "qc_reset", "title": tr("j2me_qc_reset"), "label": "⟲"})
+            items.append({"id": "qc_reset", "title": tr("j2me_qc_reset"), "label": tr("reload")})
             items.append({"id": "j2me_qc_note", "title": tr("j2me_qc_note"), "sub": True})
             items.append({"id": "back", "title": tr("back_home")})
 
@@ -3430,7 +3430,7 @@ def main():
                                 else:
                                     selected_idx = min(selected_idx, len(yt_favorites_list) - 1)
                                     selected_indices["yt_grid"] = selected_idx
-                            toast_msg = ("Đã thêm vào Yêu thích ❤️" if is_added else "Đã xóa khỏi Yêu thích") if state.current_lang == "VI" else ("Added to Favorites ❤️" if is_added else "Removed from Favorites")
+                            toast_msg = ("Đã thêm vào Yêu thích" if is_added else "Đã xóa khỏi Yêu thích") if state.current_lang == "VI" else ("Added to Favorites" if is_added else "Removed from Favorites")
                             toast_timer = time.time()
 
                 elif btn_f1: # Press SELECT to delete search keyword
@@ -4511,7 +4511,7 @@ def main():
                                 load_txt = f"Đang tải{dots}" if state.current_lang == "VI" else f"Loading{dots}"
                                 draw_text(load_txt, font_sub, tx + tw // 2, ty + th // 2, 0, 246, 246, center_x=True, center_y=True)
                             else:
-                                draw_text("▶▶", font_title, tx + tw // 2, ty + th // 2 - 12, 0, 230, 255, center_x=True, center_y=True)
+                                draw_text(">>", font_title, tx + tw // 2, ty + th // 2 - 12, 0, 230, 255, center_x=True, center_y=True)
                                 more_lbl = "TẢI THÊM" if state.current_lang == "VI" else "LOAD MORE"
                                 draw_text(more_lbl, font_badge, tx + tw // 2, ty + th // 2 + 18, 200, 225, 245, center_x=True, center_y=True)
 
@@ -4550,17 +4550,17 @@ def main():
                                 px = tx + (tw - pw) // 2
                                 py = ty + (th - ph) // 2
                                 fill_rect(px, py, pw, ph, 230, 33, 23, 255)
-                                draw_text("▶", font_badge, px + pw // 2, py + ph // 2, 255, 255, 255, center_x=True, center_y=True)
+                                draw_text(">", font_badge, px + pw // 2, py + ph // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                            # Favorite badge ❤️ at top-right of thumbnail
+                            # Favorite badge at top-right of thumbnail
                             if yt.is_favorite(v_id, yt_favorites_list):
-                                fw = 24
+                                fw = 28
                                 fh = 20
                                 fx_pos = tx + tw - fw - 4
                                 fy_pos = ty + 4
                                 fill_rect(fx_pos, fy_pos, fw, fh, 220, 30, 50, 230)
                                 draw_rect(fx_pos, fy_pos, fw, fh, 255, 120, 140, 255, thickness=1)
-                                draw_text("♥", font_badge, fx_pos + fw // 2, fy_pos + fh // 2, 255, 255, 255, center_x=True, center_y=True)
+                                draw_text("FAV", font_badge, fx_pos + fw // 2, fy_pos + fh // 2, 255, 255, 255, center_x=True, center_y=True)
 
                             # Duration badge in bottom-right of thumbnail
                             dur_str = v_data.get("duration", "")
@@ -5269,7 +5269,7 @@ def main():
             q_name = yt_loading_state.get("query", "")
             num_dots = int(now * 3.5) % 4
             dots = "." * num_dots
-            hud_txt = f"⏳ ĐANG TẢI DỮ LIỆU: \"{q_name}\"{dots}  (Mới nhất)" if state.current_lang == "VI" else f"⏳ LOADING: \"{q_name}\"{dots}  (Latest)"
+            hud_txt = f"ĐANG TẢI DỮ LIỆU: \"{q_name}\"{dots}  (Mới nhất)" if state.current_lang == "VI" else f"LOADING: \"{q_name}\"{dots}  (Latest)"
             draw_text(hud_txt, font_badge, hud_x + 20, hud_y + hud_h // 2 - 1, 0, 246, 246, center_y=True)
 
             wait_txt = "Đang kết nối..." if state.current_lang == "VI" else "Connecting..."
@@ -5670,7 +5670,7 @@ def main():
             elif status == "done":
                 fill_rect(mx + 45, my + 110, mw - 90, 150, 20, 45, 35, 255)
                 draw_rect(mx + 45, my + 110, mw - 90, 150, 0, 230, 130, 255, thickness=2)
-                draw_text("✔ GỬI NHẬT KÝ THÀNH CÔNG!", font_item, mx + mw // 2, my + 150, 0, 246, 160, center_x=True, center_y=True)
+                draw_text("GỬI NHẬT KÝ THÀNH CÔNG!", font_item, mx + mw // 2, my + 150, 0, 246, 160, center_x=True, center_y=True)
                 draw_text(send_log_modal.get("msg") or tr("log_success"), font_sub, mx + mw // 2, my + 195, 220, 240, 220, center_x=True, center_y=True)
                 draw_text(tr("log_saved_sd"), font_sub, mx + mw // 2, my + 230, 160, 210, 180, center_x=True, center_y=True)
 
@@ -5685,7 +5685,7 @@ def main():
             elif status == "error":
                 fill_rect(mx + 45, my + 110, mw - 90, 150, 50, 25, 25, 255)
                 draw_rect(mx + 45, my + 110, mw - 90, 150, 240, 70, 70, 255, thickness=2)
-                draw_text("✖ KHÔNG THỂ GỬI LOG!", font_item, mx + mw // 2, my + 150, 255, 100, 100, center_x=True, center_y=True)
+                draw_text("KHÔNG THỂ GỬI LOG!", font_item, mx + mw // 2, my + 150, 255, 100, 100, center_x=True, center_y=True)
                 err_msg = send_log_modal.get("msg") or "Lỗi kết nối mạng"
                 draw_text(err_msg, font_sub, mx + mw // 2, my + 195, 240, 180, 180, center_x=True, center_y=True)
                 draw_text(tr("log_saved_sd"), font_sub, mx + mw // 2, my + 230, 220, 200, 160, center_x=True, center_y=True)
@@ -6450,7 +6450,7 @@ def main():
             bc_g = int(180 + 60 * anim_pulse)
             draw_rect(mx, my, mw, mh, 0, bc_g, 255, 255, thickness=2)
             fill_rect(mx + 28, my + 22, 140, 26, 230, 33, 23, 255)
-            draw_text("▶ YouTube Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
+            draw_text("YouTube Stream", font_badge, mx + 28 + 70, my + 22 + 13, 255, 255, 255, center_x=True, center_y=True)
             v_title = yt_launch_state.get("title") or "Video YouTube"
             t_lines = wrap_text_to_width(v_title, font_sub, mw - 60, max_lines=2)
             ty = my + 64
