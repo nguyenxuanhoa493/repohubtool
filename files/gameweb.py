@@ -833,7 +833,7 @@ class GameWebHandler(BaseHTTPRequestHandler):
             dev_id = getattr(state, "device_id", "") or get_device_id()
             self.send_json({
                 "ok": True,
-                "enable_logging": getattr(state, "enable_logging", True),
+                "enable_logging": getattr(state, "enable_logging", False),
                 "device_id": dev_id,
                 "log_size": get_log_size_str()
             })
@@ -1029,7 +1029,7 @@ class GameWebHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/logs/toggle":
-            state.enable_logging = not getattr(state, "enable_logging", True)
+            state.enable_logging = not getattr(state, "enable_logging", False)
             state.save_settings()
             self.send_json({
                 "ok": True,

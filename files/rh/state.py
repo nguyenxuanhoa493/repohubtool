@@ -36,8 +36,8 @@ catalog_sha = ""
 # restart, doc va xoa o lan khoi dong ke tiep - khong the hien ngay vi
 # request_restart() ket thuc vong lap chinh chi mot nhip sau do.
 pending_catalog_notice = ""
-# Cho phep ghi nhat ky he thong
-enable_logging = True
+# Cho phep ghi nhat ky he thong (mac dinh: Tat)
+enable_logging = False
 # Random Device ID duy nhat cho tung may (vi du: RH-8D3F)
 device_id = ""
 
@@ -50,7 +50,7 @@ if os.path.exists(SETTINGS_FILE):
             downloaded_view_mode = cfg.get("view_mode", "grid")
             wifi_awake = cfg.get("wifi_awake", False)
             auto_update = cfg.get("auto_update", True)
-            enable_logging = cfg.get("enable_logging", True)
+            enable_logging = cfg.get("enable_logging", False)
             device_id = cfg.get("device_id", "")
             skipped_versions = cfg.get("skipped_versions", []) or []
             update_url = cfg.get("update_url", "") or ""

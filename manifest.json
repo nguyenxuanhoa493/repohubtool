@@ -2,7 +2,7 @@
   "version": "1.92",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T01:05:00+0700",
+  "built": "2026-09-09T01:36:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Tiện ích & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
@@ -354,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 168931,
-      "sha256": "0896120974a04c0bbbcc12075cc3ad151ebdad30fc4df035ad136a668ba8002c"
+      "size": 168933,
+      "sha256": "276e4c29c775bcc3314f33799f4932d1cb5566954c050305d2070a42bc4dec0c"
     },
     {
       "path": "icon.png",
@@ -474,8 +474,8 @@
     },
     {
       "path": "rh/logger.py",
-      "size": 14197,
-      "sha256": "bbb3e3a18a6eac1a4a829a045cefa222cce220d7dfb219d45119274e31b3f6d3"
+      "size": 14198,
+      "sha256": "0dff746d275e9496cd57ed9cdd10c2043e47075bdf70db247316c8944bb7d9e4"
     },
     {
       "path": "rh/media.py",
@@ -514,8 +514,8 @@
     },
     {
       "path": "rh/state.py",
-      "size": 4878,
-      "sha256": "7287c36f544b90fbe3b297a964d8e8fbe5fa0898a35833d78e3321ea75a377a1"
+      "size": 4896,
+      "sha256": "f667f80b618e4701090b23c894bf90a2d49559f6eb3a82966e099bd105911128"
     },
     {
       "path": "rh/storage.py",
