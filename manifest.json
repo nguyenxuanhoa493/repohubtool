@@ -1,12 +1,12 @@
 {
-  "version": "1.94",
+  "version": "1.95",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T02:40:09+0700",
+  "built": "2026-09-09T02:56:05+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Kho Cheat: Tải trực tiếp mã Cheat theo game từ CDN siêu nhẹ (~150KB), không cần tải file zip 37MB",
-    "en": "Cheats: Direct on-demand cheat downloader from CDN (~150KB), eliminates 37MB archive download"
+    "vi": "Dọn sạch thư mục ROMs: Cào ảnh chuẩn vào Imgs, xóa ảnh và .media khỏi ROMs tránh nhận nhầm làm game",
+    "en": "Clean ROMs: Scraper saves boxart to Imgs and cleans rogue images from ROMs directory"
   },
   "remove": [
     "app.pyc",
@@ -199,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 339561,
-      "sha256": "17a273e964430273ae904cb8a22aa50304b43cf5524846ff05a96a419eefb97e"
+      "size": 339793,
+      "sha256": "78ba6d9aa5570dde5a2559f9575932ca85099abbff93ee58aa29237d381779f1"
     },
     {
       "path": "assets/fallback.ttf",
@@ -354,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 171957,
-      "sha256": "c359eea93c637e1a1f068bf00a318ea1a33bd5b45bf660eaecaf6f4588d8a260"
+      "size": 173039,
+      "sha256": "00d4da217d0bdffe8438294d05b93b083afe6234959d6063abc2177ba26483de"
     },
     {
       "path": "icon.png",
@@ -399,13 +399,13 @@
     },
     {
       "path": "rh/boxart_scraper.py",
-      "size": 19933,
-      "sha256": "e93ac3a6c6b66283e5ff32d1bccc5dc00f2ed70bf17999d664b50d457d8803cd"
+      "size": 23040,
+      "sha256": "9e9e69c984397eb81c5abfa4e9acf6f920315fb192c01f46754ceca3d1e22fd3"
     },
     {
       "path": "rh/catalog.py",
-      "size": 11250,
-      "sha256": "9c7362350a53be0aba37f69ce6af4efa82b1c3f0756ee1cabf210a5c1b0a87fb"
+      "size": 11540,
+      "sha256": "f46dd1ac99472da75a1cdb0dba33766193278d3e46f3897970797620e2a292ad"
     },
     {
       "path": "rh/cheat_manager.py",
@@ -424,8 +424,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 41551,
-      "sha256": "a1006c4d3f3a808037618c0629e1b40b8924aea081b221cd7f226879cd188f38"
+      "size": 41104,
+      "sha256": "479e299883831465cc8cd372425c4037934c1fa1d3ed4f5b946eee93a9f476d2"
     },
     {
       "path": "rh/emulators.py",
@@ -540,7 +540,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "6c76b882caab7ac6c01de58807554cad29a6c3f25c8de940a83d6bbf8f66d375"
+      "sha256": "0c9af80926b1abe9f4f49320ea9d65267f0ac399d8a3c88660b676d5d9e6468f"
     },
     {
       "path": "rh/yt.py",

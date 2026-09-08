@@ -738,13 +738,6 @@ def start_download_thread(sys_code, game_info, background=False):
                     with urllib.request.urlopen(img_req, context=ctx, timeout=15) as img_resp:
                         raw_img = img_resp.read()
                         save_boxart_png(raw_img, target_img)
-                        # Save copy for NextUI (.media subfolder inside ROM directory)
-                        try:
-                            nextui_media_dir = os.path.join(rom_dir, ".media")
-                            os.makedirs(nextui_media_dir, exist_ok=True)
-                            save_boxart_png(raw_img, os.path.join(nextui_media_dir, f"{rom_base}.png"))
-                        except Exception:
-                            pass
                 except Exception as ie:
                     print(f"Boxart download exception: {ie}")
 

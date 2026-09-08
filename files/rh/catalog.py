@@ -13,7 +13,7 @@ except Exception:
 
 VALID_EXTS = (
     ".gba", ".sfc", ".smc", ".nes", ".nds", ".md", ".gen", ".gb", ".gbc", ".gg", ".sms", 
-    ".p8", ".png", ".zip", ".7z", ".rar", ".jar", ".jad", ".iso", ".cso", ".chd", ".pbp", 
+    ".p8", ".zip", ".7z", ".rar", ".jar", ".jad", ".iso", ".cso", ".chd", ".pbp", 
     ".cue", ".bin", ".wsc", ".ws", ".ngp", ".ngc", ".pce", ".n64", ".z64", ".v64", ".cdi", 
     ".gdi", ".a26", ".a78", ".lnx", ".fig", ".smd"
 )
@@ -61,7 +61,13 @@ def scan_all_downloaded_games():
                         if not entry.is_file():
                             continue
                         name = entry.name
-                        if name.startswith(".") or not name.lower().endswith(VALID_EXTS):
+                        name_lower = name.lower()
+                        if name.startswith("."):
+                            continue
+                        is_valid = name_lower.endswith(VALID_EXTS)
+                        if not is_valid and actual_code == "PICO8" and name_lower.endswith(".png"):
+                            is_valid = True
+                        if not is_valid:
                             continue
 
                         try: sz = entry.stat().st_size

@@ -37,6 +37,7 @@ try:
     from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
     from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
         clear_log, get_log_size_str, get_device_id)
+    from rh.boxart_scraper import cleanup_rom_directory_images
 except ImportError:
     _cur_d = os.path.dirname(os.path.abspath(__file__))
     if _cur_d not in sys.path:
@@ -47,6 +48,7 @@ except ImportError:
     from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
     from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
         clear_log, get_log_size_str, get_device_id)
+    from rh.boxart_scraper import cleanup_rom_directory_images
 
 # Xác định đường dẫn thẻ nhớ
 SDCARD_PATH = os.environ.get("SDCARD_PATH") or ("/mnt/SDCARD" if os.path.isdir("/mnt/SDCARD") else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_mock_sdcard"))
@@ -479,8 +481,21 @@ VALID_EXTS = {
     ".zip", ".7z", ".rar", ".chd", ".iso", ".cue", ".bin", ".pbp",
     ".gba", ".gbc", ".gb", ".nes", ".sfc", ".smc", ".md", ".smd", ".gen",
     ".n64", ".z64", ".v64", ".nds", ".cso", ".pce", ".ws", ".wsc",
-    ".ngp", ".ngc", ".p8", ".png", ".jar", ".a26", ".a78", ".lnx"
+    ".ngp", ".ngc", ".p8", ".jar", ".a26", ".a78", ".lnx"
 }
+
+def is_valid_rom_file(fname, sys_dir=""):
+    """Kiểm tra file ROM hợp lệ. Chỉ chấp nhận đuôi .png đối với hệ máy PICO-8."""
+    name, ext = os.path.splitext(fname)
+    ext_l = ext.lower()
+    if ext_l in VALID_EXTS:
+        return True
+    if ext_l == ".png":
+        sys_code = sys_dir.upper()
+        if "(" in sys_code and sys_code.endswith(")"):
+            sys_code = sys_code[sys_code.rfind("(") + 1:-1].strip().upper()
+        return sys_code == "PICO8"
+    return False
 
 def download_image_to_file(img_url, target_path, timeout=15):
     """Tải file ảnh từ URL (HTTP/HTTPS), bỏ qua lỗi kiểm tra SSL trên hệ máy cầm tay.
@@ -574,7 +589,7 @@ def list_all_systems():
         count = 0
         if os.path.isdir(rom_path):
             try:
-                count = len([f for f in os.listdir(rom_path) if not f.startswith(".") and os.path.splitext(f)[1].lower() in VALID_EXTS])
+                count = len([f for f in os.listdir(rom_path) if not f.startswith(".") and is_valid_rom_file(f, matched_dir)])
             except OSError:
                 count = 0
 
@@ -591,7 +606,7 @@ def list_all_systems():
             rom_path = os.path.join(ROMS_DIR, d)
             cnt = 0
             try:
-                cnt = len([f for f in os.listdir(rom_path) if not f.startswith(".") and os.path.splitext(f)[1].lower() in VALID_EXTS])
+                cnt = len([f for f in os.listdir(rom_path) if not f.startswith(".") and is_valid_rom_file(f, d)])
             except OSError:
                 cnt = 0
             systems.append({
@@ -630,7 +645,7 @@ def list_system_games(sys_dir):
                 if not os.path.isfile(full_p):
                     continue
                 name, ext = os.path.splitext(fname)
-                if ext.lower() not in VALID_EXTS:
+                if not is_valid_rom_file(fname, sys_dir):
                     continue
                 
                 try:
@@ -671,6 +686,10 @@ def list_system_games(sys_dir):
 
 def list_all_missing_art_games():
     """Liệt kê toàn bộ các game trên thẻ nhớ chưa có ảnh bìa (boxart)."""
+    try:
+        cleanup_rom_directory_images()
+    except Exception:
+        pass
     os.makedirs(ROMS_DIR, exist_ok=True)
     os.makedirs(IMGS_DIR, exist_ok=True)
     missing = []
@@ -704,7 +723,7 @@ def list_all_missing_art_games():
                 if not os.path.isfile(full_p):
                     continue
                 name, ext = os.path.splitext(fname)
-                if ext.lower() not in VALID_EXTS:
+                if not is_valid_rom_file(fname, sys_d):
                     continue
 
                 if name.lower() not in art_bases:
@@ -1203,6 +1222,14 @@ class GameWebHandler(BaseHTTPRequestHandler):
                                 pass
 
                 self.send_json({"ok": True, "message": f"Đã xóa {fname}"})
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
+            return
+
+        if path == "/api/cleanup_rom_images":
+            try:
+                cleaned = cleanup_rom_directory_images()
+                self.send_json({"ok": True, "cleaned_count": cleaned, "message": f"Đã dọn dẹp {cleaned} tệp/thư mục ảnh trùng trong ROMs"})
             except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
             return
