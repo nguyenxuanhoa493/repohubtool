@@ -2147,7 +2147,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
     <!-- Modal Quản lý Save Game & Cheat Code -->
     <div class="modal-backdrop" id="modal-saves-cheats">
-        <div class="modal-box" style="max-width: 720px; width: 92vw;">
+        <div class="modal-box" style="max-width: 780px; width: 92vw;">
             <div class="modal-header">
                 <h3>Quản lý Save Game & Kho Cheat Code</h3>
                 <button class="modal-close" onclick="closeModal('modal-saves-cheats')">&times;</button>
@@ -2171,7 +2171,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 </div>
 
                 <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #38bdf8;">Các bản sao lưu đã tạo:</div>
-                <div id="backups-list-table" style="max-height: 240px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 6px;"></div>
+                <div id="backups-list-table" style="max-height: 320px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 6px;"></div>
             </div>
 
             <!-- Tab 2: Cheats -->
