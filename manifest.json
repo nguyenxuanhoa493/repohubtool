@@ -2,7 +2,7 @@
   "version": "1.92",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T01:43:40+0700",
+  "built": "2026-09-09T01:55:28+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Tiện ích & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
@@ -199,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 337424,
-      "sha256": "f3da3d96a22131d95c6698ac625d4ac1886aea0fe2348575a4ac38c7fad58072"
+      "size": 338696,
+      "sha256": "b064665aef9fa3ae33da704da9eec7bd1df3007f931e9b788a01fa25d7627749"
     },
     {
       "path": "assets/fallback.ttf",
@@ -354,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 168712,
-      "sha256": "2c161999b3281d945bb825eb596c645684a4019fecb5814bcb6f494506e42e2e"
+      "size": 172153,
+      "sha256": "154ae48fc19a3975ab486cb3fe6135760a88ce75ff1847756e92da26ef110206"
     },
     {
       "path": "icon.png",
@@ -409,8 +409,8 @@
     },
     {
       "path": "rh/cheat_manager.py",
-      "size": 9844,
-      "sha256": "bb0a1c0cc3b247f65731c5b080b90f97ee1ca26932427bb90aa24a04776d41fc"
+      "size": 20199,
+      "sha256": "990ce25efa75a12ea0d846fd89d465bc36fd7f37dcf97232aedec20c1ac4f520"
     },
     {
       "path": "rh/corepicker.py",
@@ -434,8 +434,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 42678,
-      "sha256": "c886dba9978e8702b40b8d1db5308ee3f4a964819356f479a91251fcd353733f"
+      "size": 42933,
+      "sha256": "c3a52f6c9155926d5f305e3b87d7025dbc28a3132ec969d9142ea1a8948183ed"
     },
     {
       "path": "rh/j2me.py",

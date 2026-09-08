@@ -34,7 +34,7 @@ try:
     from rh import state
     from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
         list_save_backups, restore_save_backup, delete_save_backup)
-    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner
+    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
     from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
         clear_log, get_log_size_str, get_device_id)
 except ImportError:
@@ -44,7 +44,7 @@ except ImportError:
     from rh import state
     from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
         list_save_backups, restore_save_backup, delete_save_backup)
-    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner
+    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
     from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
         clear_log, get_log_size_str, get_device_id)
 
@@ -998,11 +998,46 @@ class GameWebHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/cheats/download":
+            mode = "installed"
+            if "mode" in query:
+                mode = query.get("mode", ["installed"])[0]
+            elif content_len > 0:
+                try:
+                    payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+                    mode = payload.get("mode", "installed")
+                except Exception:
+                    pass
+            if mode not in ("installed", "all"):
+                mode = "installed"
+
             if cheat_runner.is_running():
-                self.send_json({"ok": True, "message": "Đang tải kho Cheat..."})
+                self.send_json({"ok": True, "message": "Đang xử lý tải kho Cheat..."})
             else:
-                cheat_runner.start()
-                self.send_json({"ok": True, "message": "Đã bắt đầu tải kho Cheat Libretro!"})
+                cheat_runner.start(mode=mode)
+                if mode == "installed":
+                    msg = "Đã bắt đầu tải Cheat cho các game đang có trên thẻ nhớ!"
+                else:
+                    msg = "Đã bắt đầu tải toàn bộ kho Cheat Libretro (~37MB)!"
+                self.send_json({"ok": True, "message": msg})
+            return
+
+        if path == "/api/cheats/single":
+            try:
+                payload = {}
+                if content_len > 0:
+                    try:
+                        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+                    except Exception:
+                        payload = {}
+                system = payload.get("system") or query.get("system", [""])[0]
+                filename = payload.get("filename") or query.get("filename", [""])[0]
+                if not system or not filename:
+                    self.send_json({"ok": False, "error": "Thiếu thông tin system hoặc filename"}, 400)
+                    return
+                res = check_or_download_single_cheat(system, filename)
+                self.send_json({"ok": res.get("ok", False), "result": res, "message": res.get("message", "")})
+            except Exception as e:
+                self.send_json({"ok": False, "error": str(e)}, 500)
             return
 
         if path == "/api/cheats/stop":
@@ -2003,12 +2038,15 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <!-- Tab 2: Cheats -->
             <div id="tab-content-cheats" style="display: none;">
                 <div style="background: #0f172a; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div>
                             <div style="font-size: 14px; font-weight: 700; color: #fff;">Kho Cheat Code Libretro Official</div>
                             <div style="font-size: 12px; color: #38bdf8; margin-top: 3px;" id="cheats-status-text">Đang kiểm tra trạng thái...</div>
                         </div>
-                        <button id="btn-cheats-action" class="btn btn-sm btn-batch" onclick="startCheatsDownloadWeb()">Tải trọn bộ Cheat (~37MB)</button>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button id="btn-cheats-installed" class="btn btn-sm btn-green" onclick="startCheatsDownloadWeb('installed')">Tải cho game đang có (Khuyên dùng)</button>
+                            <button id="btn-cheats-all" class="btn btn-sm btn-batch" onclick="startCheatsDownloadWeb('all')">Tải toàn bộ kho (~37MB)</button>
+                        </div>
                     </div>
 
                     <div id="cheats-progress-box" style="display:none; margin-top: 14px;">
@@ -2108,6 +2146,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             edit: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
             move: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><polyline points="9 14 12 11 15 14"></polyline></svg>`,
             trash: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+            zap: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
             spinner: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="scrape-spinner"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`,
             alert: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
         };
@@ -2391,6 +2430,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                         <div class="game-actions">
                             <button class="btn btn-secondary btn-sm btn-action-icon" style="flex:1" onclick="openRenameModal('${escapeJs(g.filename)}', '${gSys}')">${ICONS.edit} <span>Sửa</span></button>
                             <button class="btn btn-secondary btn-sm btn-action-icon" style="flex:1" onclick="openMoveModal('${escapeJs(g.filename)}', '${gSys}')">${ICONS.move} <span>Chuyển</span></button>
+                            <button class="btn btn-secondary btn-sm btn-action-icon" onclick="downloadGameCheat('${escapeJs(g.filename)}', '${gSys}')" title="Mã Cheat">${ICONS.zap}</button>
                             <button class="btn btn-danger btn-sm btn-action-icon" onclick="deleteGame('${escapeJs(g.filename)}', '${gSys}')" title="Xóa game">${ICONS.trash}</button>
                         </div>
                     </div>
@@ -3390,22 +3430,20 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 if (data.ok) {
                     const st = data.status || {};
                     const runner = data.runner || {};
-                    const btn = document.getElementById('btn-cheats-action');
+                    const statusEl = document.getElementById('cheats-status-text');
                     const progBox = document.getElementById('cheats-progress-box');
 
                     if (st.installed) {
-                        document.getElementById('cheats-status-text').innerText = `Đã cài đặt: ${st.count} mã Cheat (.cht) trong RetroArch.`;
-                        btn.innerText = 'Cập nhật / Tải lại Cheat';
+                        statusEl.innerText = `Đã cài đặt: ${st.count} mã Cheat (.cht) trong RetroArch.`;
                     } else {
-                        document.getElementById('cheats-status-text').innerText = 'Chưa có mã Cheat nào trên máy.';
-                        btn.innerText = 'Tải trọn bộ Cheat (~37MB)';
+                        statusEl.innerText = 'Chưa có mã Cheat nào trên máy.';
                     }
 
                     if (runner.running) {
                         progBox.style.display = 'block';
                         document.getElementById('cheats-prog-pct').innerText = `${runner.progress_pct}%`;
                         document.getElementById('cheats-prog-fill').style.width = `${runner.progress_pct}%`;
-                        document.getElementById('cheats-prog-status').innerText = runner.status_msg || 'Đang tải...';
+                        document.getElementById('cheats-prog-status').innerText = runner.status_msg || 'Đang xử lý...';
 
                         if (!cheatsPollTimer) {
                             cheatsPollTimer = setInterval(loadCheatsData, 1000);
@@ -3423,12 +3461,37 @@ HTML_PAGE = r"""<!DOCTYPE html>
             }
         }
 
-        async function startCheatsDownloadWeb() {
+        async function startCheatsDownloadWeb(mode = 'installed') {
             try {
-                const res = await fetch('/api/cheats/download', {method: 'POST'});
+                const res = await fetch(`/api/cheats/download?mode=${encodeURIComponent(mode)}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({mode: mode})
+                });
                 const data = await res.json();
                 showToast(data.message || 'Bắt đầu tải kho Cheat...');
                 loadCheatsData();
+            } catch (e) {
+                alert('Lỗi: ' + e);
+            }
+        }
+
+        async function downloadGameCheat(filename, sys) {
+            showToast('Đang kiểm tra Cheat cho ' + filename + '...');
+            try {
+                const res = await fetch('/api/cheats/single', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: filename, system: sys})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Game đã có file Cheat sẵn sàng!');
+                } else {
+                    if (confirm((data.message || 'Chưa có file Cheat.') + '\n\nBạn có muốn tải Cheat thông minh cho các game đang có ngay không?')) {
+                        startCheatsDownloadWeb('installed');
+                    }
+                }
             } catch (e) {
                 alert('Lỗi: ' + e);
             }
