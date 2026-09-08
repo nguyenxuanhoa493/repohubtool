@@ -6,6 +6,7 @@ and uploads diagnostic bundles directly to Telegram Bot.
 
 import os
 import sys
+import ssl
 import time
 import json
 import socket
@@ -17,6 +18,13 @@ import urllib.request
 import urllib.parse
 import uuid
 from datetime import datetime
+
+try:
+    _SSL_CONTEXT = ssl.create_default_context()
+    _SSL_CONTEXT.check_hostname = False
+    _SSL_CONTEXT.verify_mode = ssl.CERT_NONE
+except Exception:
+    _SSL_CONTEXT = None
 
 from .paths import SDCARD_PATH, is_nextui
 
@@ -388,7 +396,10 @@ def upload_log_to_telegram(note=""):
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        urlopen_kw = {"timeout": 25}
+        if _SSL_CONTEXT is not None:
+            urlopen_kw["context"] = _SSL_CONTEXT
+        with urllib.request.urlopen(req, **urlopen_kw) as resp:
             resp_data = json.loads(resp.read().decode("utf-8"))
             if resp_data.get("ok"):
                 log_info(f"Gui bao cao loi len Telegram thanh cong: {filename}")
@@ -398,8 +409,9 @@ def upload_log_to_telegram(note=""):
                 log_error(f"Loi Telegram API: {err_desc}")
                 return False, f"Telegram từ chối: {err_desc}"
     except urllib.error.URLError as e:
-        log_error(f"Loi ket noi khi gui Telegram: {str(e)}")
-        return False, "Không thể kết nối Internet! Vui lòng kiểm tra Wi-Fi trên máy."
+        reason = getattr(e, "reason", str(e))
+        log_error(f"Loi ket noi khi gui Telegram: {reason}")
+        return False, f"Lỗi kết nối: {reason}"
     except Exception as e:
         log_error(f"Loi ngoai le khi gui Telegram: {str(e)}")
         return False, f"Lỗi gửi báo cáo: {str(e)}"

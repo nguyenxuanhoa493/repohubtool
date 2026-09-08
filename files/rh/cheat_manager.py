@@ -5,11 +5,19 @@ and extracts them directly into RetroArch's cheats directory.
 """
 
 import os
+import ssl
 import time
 import zipfile
 import threading
 import urllib.request
 from .paths import SDCARD_PATH
+
+try:
+    _SSL_CONTEXT = ssl.create_default_context()
+    _SSL_CONTEXT.check_hostname = False
+    _SSL_CONTEXT.verify_mode = ssl.CERT_NONE
+except Exception:
+    _SSL_CONTEXT = None
 
 LIBRETRO_CHEATS_URL = "http://buildbot.libretro.com/assets/frontend/cheats.zip"
 
@@ -146,7 +154,10 @@ class CheatDownloaderRunner:
                 headers={"User-Agent": "RetroHub-TrimUI/1.92"}
             )
 
-            with urllib.request.urlopen(req, timeout=20) as resp, open(tmp_zip, "wb") as out_f:
+            urlopen_kw = {"timeout": 20}
+            if _SSL_CONTEXT is not None:
+                urlopen_kw["context"] = _SSL_CONTEXT
+            with urllib.request.urlopen(req, **urlopen_kw) as resp, open(tmp_zip, "wb") as out_f:
                 tot_header = resp.getheader("Content-Length")
                 total_len = int(tot_header) if tot_header and tot_header.isdigit() else 37157000
                 with self._lock:
