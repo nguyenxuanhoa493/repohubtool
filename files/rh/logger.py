@@ -344,16 +344,16 @@ def upload_log_to_telegram(note=""):
     filename = f"RetroHub_Log_{dev_id}_{device_tag}_{timestamp_tag}.txt"
 
     caption_lines = [
-        "🚨 *[Báo cáo lỗi từ RetroHub]*",
-        f"🆔 *Mã máy:* `{dev_id}`",
-        f"📱 *Thiết bị:* {diag['device_model']}",
-        f"📦 *Phiên bản:* v{diag['app_version']}",
-        f"🌐 *IP:* `{diag['ip_address']}`",
-        f"💾 *RAM trống:* {diag['ram_avail_mb']} MB / {diag['ram_total_mb']} MB",
-        f"🕒 *Thời gian:* {diag['timestamp']}",
+        "*[Báo cáo lỗi từ RetroHub]*",
+        f"*Mã máy:* `{dev_id}`",
+        f"*Thiết bị:* {diag['device_model']}",
+        f"*Phiên bản:* v{diag['app_version']}",
+        f"*IP:* `{diag['ip_address']}`",
+        f"*RAM trống:* {diag['ram_avail_mb']} MB / {diag['ram_total_mb']} MB",
+        f"*Thời gian:* {diag['timestamp']}",
     ]
     if note:
-        caption_lines.append(f"💬 *Ghi chú:* {note}")
+        caption_lines.append(f"*Ghi chú:* {note}")
 
     caption = "\n".join(caption_lines)
 

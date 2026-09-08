@@ -244,7 +244,7 @@ RELEASES = [
      [("New default topic presets: changed default keywords to Music (default), KPOP, USUK, Tiktok, preserving natural YouTube ranking without artificial year or age sorting.",
        "Bộ từ khóa mặc định mới: chuyển từ khóa sang Music (mặc định), KPOP, USUK, Tiktok, giữ nguyên thứ hạng tự nhiên từ YouTube, bỏ hoàn toàn logic nối năm và lọc ngày."),
       ("Favorites management: press [Y] on any video to add/remove from Favorites with heart badge indicator. When favorite videos exist, YouTube opens directly to the Favorites tab by default.",
-       "Quản lý danh sách Yêu thích: bấm [Y] trên video bất kỳ để thêm/bỏ Yêu thích (có huy hiệu tim đỏ ♥). Nếu có dữ liệu, app sẽ tự động hiển thị tab Yêu thích đầu tiên khi mở menu YouTube."),
+       "Quản lý danh sách Yêu thích: bấm [Y] trên video bất kỳ để thêm/bỏ Yêu thích (có huy hiệu FAV). Nếu có dữ liệu, app sẽ tự động hiển thị tab Yêu thích đầu tiên khi mở menu YouTube."),
       ("Delete custom keywords: press SELECT [SL] while browsing custom search keywords to easily remove unwanted history queries from the pill navigation bar.",
        "Nút xóa từ khóa tìm kiếm: bấm phím SELECT [SL] khi đang ở tab từ khóa tùy chỉnh để xóa bỏ từ khóa khỏi lịch sử tìm kiếm nhanh chóng."),
       ("Responsive compact thumbnails: reduced card and thumbnail dimensions to fit both TrimUI Brick (1024x768) and Smart Pro (1280x720) perfectly without horizontal overflow or screen clipping.",

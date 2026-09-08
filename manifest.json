@@ -2,7 +2,7 @@
   "version": "1.92",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T01:36:00+0700",
+  "built": "2026-09-09T01:43:40+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Tiện ích & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
@@ -199,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 337468,
-      "sha256": "148ccb186e846a3b38f12082731c26f24c12051212df36707e13002f4d264b54"
+      "size": 337424,
+      "sha256": "f3da3d96a22131d95c6698ac625d4ac1886aea0fe2348575a4ac38c7fad58072"
     },
     {
       "path": "assets/fallback.ttf",
@@ -354,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 168933,
-      "sha256": "276e4c29c775bcc3314f33799f4932d1cb5566954c050305d2070a42bc4dec0c"
+      "size": 168712,
+      "sha256": "2c161999b3281d945bb825eb596c645684a4019fecb5814bcb6f494506e42e2e"
     },
     {
       "path": "icon.png",
@@ -434,8 +434,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 42696,
-      "sha256": "d658fa3c207871b3ea5514d986c6d3a467b89fbb0cb3d7f5caec30891b1befc7"
+      "size": 42678,
+      "sha256": "c886dba9978e8702b40b8d1db5308ee3f4a964819356f479a91251fcd353733f"
     },
     {
       "path": "rh/j2me.py",
@@ -474,8 +474,8 @@
     },
     {
       "path": "rh/logger.py",
-      "size": 14198,
-      "sha256": "0dff746d275e9496cd57ed9cdd10c2043e47075bdf70db247316c8944bb7d9e4"
+      "size": 14158,
+      "sha256": "87ba74304f33844b78859d26328370deb17af79f4ae16ef3ed68e3331554fe6e"
     },
     {
       "path": "rh/media.py",
@@ -549,8 +549,8 @@
     },
     {
       "path": "streamer.py",
-      "size": 30925,
-      "sha256": "bcd188fd4b10dd3f365871a73abe7adb641b0a14ded592e3060949c77907a6ed"
+      "size": 30863,
+      "sha256": "44d064c982bfe7bf60927c092531a98f7779299d32e411771f65f334211c2ea8"
     },
     {
       "path": "vendor/sdl2/COPYING.txt",
