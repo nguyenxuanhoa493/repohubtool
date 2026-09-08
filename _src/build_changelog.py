@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.93", "2026-09-09",
+     ("Smart Libretro Cheat Downloader: Selective cheat extraction for installed games, RetroArch auto-load aliases, and Web Manager single-game cheat fetching",
+      "Tải Cheat Code Libretro thông minh: Tự động trích xuất mã cheat cho game đang có, tạo alias Auto-Load cho RetroArch và tải cheat lẻ trên Web"),
+     [("Smart On-Device Cheat Extraction: Automatically scans installed ROMs across 45 systems and selectively extracts matching .cht files instead of unpacking all 30,000 files. Prevents SD card clutter and finishes in seconds.",
+       "Trích xuất Cheat thông minh theo game: Tự động quét game trên thẻ nhớ thuộc 45 hệ máy và chỉ giải nén các file .cht tương ứng thay vì giải nén 30.000 file. Tránh nghẽn bộ nhớ thẻ và hoàn tất chỉ trong vài giây."),
+      ("RetroArch Auto-Load Support: Generates [rom_name].cht aliases alongside original cheats, allowing RetroArch to automatically detect and activate cheat codes when starting games.",
+       "Hỗ trợ Auto-Load trên RetroArch: Tạo bản sao tệp cheat theo đúng tên file ROM ([rom_name].cht), giúp RetroArch tự động nhận diện và nạp mã cheat ngay khi vào game."),
+      ("Dual Modes & Web Manager Integration: Choose between 'For Installed Games' (Recommended) or 'Download All' (~37MB). Web Game Manager features quick Cheat buttons directly on game cards.",
+       "Hai chế độ linh hoạt & Tích hợp Web Manager: Lựa chọn giữa 'Tải cho game đang có (Khuyên dùng)' hoặc 'Tải toàn bộ kho (~37MB)'. Web Game Manager tích hợp thêm nút Cheat nhanh trực tiếp trên từng thẻ game.")]),
+
     ("1.92", "2026-09-08",
      ("Settings & Web: Save Backup/Restore, Libretro Cheats, Boxart Scraper, and Telegram Diagnostic Logging with Device ID",
       "Cài đặt & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy"),

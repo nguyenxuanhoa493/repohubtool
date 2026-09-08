@@ -1,12 +1,12 @@
 {
-  "version": "1.92",
+  "version": "1.93",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T01:55:28+0700",
+  "built": "2026-09-09T02:14:10+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tiện ích & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
-    "en": "Utilities & Web: Save Backup/Restore, Libretro Cheats, Boxart Scraper, and Telegram Diagnostics with Device ID"
+    "vi": "Kho Cheat: Tải mã Cheat thông minh theo game đang có, RetroArch Auto-Load và nút Cheat trên Web Manager",
+    "en": "Cheats: Smart selective cheat downloader for installed games, RetroArch auto-load, and Web Manager cheat buttons"
   },
   "remove": [
     "app.pyc",
@@ -535,7 +535,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "075cb10e6e2f56a915ac8ec8f71ea9c8a8e4ac4a5e0607309fae256c93a32eb8"
+      "sha256": "15f313020f8e4d7473731c20068a22a6d5c1d1ccc39cd1e360e310178090da2d"
     },
     {
       "path": "rh/yt.py",
