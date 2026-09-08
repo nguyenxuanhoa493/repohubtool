@@ -1804,24 +1804,14 @@ def main():
             items.append({"id": "nav_splash", "title": tr("util_item_splash")})
 
             # Cào Box Art tự động (Boxart Scraper)
-            if scraper_runner.is_running():
-                scrape_badge = f"{scraper_runner.progress_pct}%"
-            else:
-                m_cnt = count_missing_boxarts()
-                scrape_badge = f"{m_cnt} GAME" if m_cnt > 0 else tr("have_badge")
+            scrape_badge = f"{scraper_runner.progress_pct}%" if scraper_runner.is_running() else tr("view")
             items.append({"id": "nav_auto_scrape", "title": tr("util_auto_scrape"), "label": scrape_badge})
-            
+
             # Sao lưu & Khôi phục Save Game
-            save_st = get_saves_stats()
-            save_badge = f"{save_st['total_files']} FILE" if save_st['total_files'] > 0 else tr("have_badge")
-            items.append({"id": "nav_save_manager", "title": tr("util_save_manager"), "label": save_badge})
+            items.append({"id": "nav_save_manager", "title": tr("util_save_manager"), "label": tr("view")})
 
             # Tải kho Cheat Code Libretro
-            if cheat_runner.is_running():
-                cheat_badge = f"{cheat_runner.progress_pct}%"
-            else:
-                c_st = get_cheats_status()
-                cheat_badge = f"{c_st['count']} CHT" if c_st["installed"] else tr("cheat_not_installed_badge")
+            cheat_badge = f"{cheat_runner.progress_pct}%" if cheat_runner.is_running() else tr("view")
             items.append({"id": "nav_cheats", "title": tr("util_cheat_title"), "label": cheat_badge})
             
             is_j2me_installed = is_j2me_runtime_ready()
@@ -3924,8 +3914,10 @@ def main():
                     save_modal["mode"] = "menu"
                     save_modal["selected_idx"] = 0
                     save_modal["confirm_restore"] = None
+                    save_modal["stats"] = get_saves_stats()
                 elif item_id == "nav_cheats":
                     cheat_modal["active"] = True
+                    cheat_modal["count"] = count_cheats()
                     if not cheat_runner.is_running() and not cheat_runner.done:
                         cheat_runner.start(mode="installed")
                 elif item_id == "nav_send_log":
@@ -5485,8 +5477,8 @@ def main():
         elif save_modal["active"]:
             fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
 
-            mw = min(920, state.SCREEN_W - 60)
-            mh = 420
+            mw = min(960, state.SCREEN_W - 60)
+            mh = min(490, state.SCREEN_H - 60)
             mx = (state.SCREEN_W - mw) // 2
             my = (state.SCREEN_H - mh) // 2
 
@@ -5494,66 +5486,82 @@ def main():
             draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
 
             # Header band
-            fill_rect(mx + 3, my + 3, mw - 6, 68, 24, 34, 58, 255)
-            draw_text(tr("save_menu_title"), font_item, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+            fill_rect(mx + 3, my + 3, mw - 6, 64, 24, 34, 58, 255)
+            draw_text(tr("save_menu_title"), font_item, mx + mw // 2, my + 32, 0, 246, 246, center_x=True, center_y=True)
 
             if save_modal["mode"] == "menu":
-                save_st = get_saves_stats()
-                tot_f = save_st["total_files"]
-                tot_mb = save_st["total_bytes"] / (1024 * 1024)
+                save_st = save_modal.get("stats")
+                if not save_st:
+                    save_st = get_saves_stats()
+                    save_modal["stats"] = save_st
+                tot_f = save_st.get("total_files", 0)
+                tot_mb = save_st.get("total_bytes", 0) / (1024 * 1024)
                 sub_info = f"Tìm thấy {tot_f} file save ({tot_mb:.2f} MB) trên thẻ nhớ" if state.current_lang == "VI" else f"Found {tot_f} save files ({tot_mb:.2f} MB) on SD card"
-                draw_text(sub_info, font_sub, mx + 45, my + 95, 255, 215, 0)
+                draw_text(sub_info, font_sub, mx + 45, my + 88, 255, 215, 0)
 
                 opts = [
                     (tr("save_item_backup_now"), "Nén toàn bộ save (.srm, .state) thành 1 file ZIP an toàn" if state.current_lang == "VI" else "Compress all saves & states into a safe timestamped ZIP"),
                     (tr("save_item_list"), "Xem lại các bản sao lưu đã tạo, ngày giờ & khôi phục" if state.current_lang == "VI" else "View existing backup archives, dates & restore")
                 ]
 
-                opt_y = my + 135
+                opt_y = my + 130
+                card_w = mw - 90
+                card_h = 108
                 for idx, (title_t, desc_t) in enumerate(opts):
                     is_sel = (save_modal["selected_idx"] == idx)
-                    card_w = mw - 90
-                    card_h = 76
                     if is_sel:
                         fill_rect(mx + 45, opt_y, card_w, card_h, 30, 65, 110, 255)
                         draw_rect(mx + 45, opt_y, card_w, card_h, 0, 246, 246, 255, thickness=2)
-                        draw_text(f">  {title_t}", font_item, mx + 65, opt_y + 24, 0, 246, 246)
+                        draw_text(f">  {title_t}", font_item, mx + 65, opt_y + 18, 0, 246, 246)
                     else:
                         fill_rect(mx + 45, opt_y, card_w, card_h, 22, 32, 52, 255)
                         draw_rect(mx + 45, opt_y, card_w, card_h, 50, 70, 105, 255, thickness=1)
-                        draw_text(f"   {title_t}", font_item, mx + 65, opt_y + 24, 210, 220, 240)
-                    draw_text(desc_t, font_sub, mx + 85, opt_y + 54, 160, 180, 210)
-                    opt_y += 88
+                        draw_text(f"   {title_t}", font_item, mx + 65, opt_y + 18, 210, 220, 240)
+                    draw_text(desc_t, font_sub, mx + 85, opt_y + 64, 160, 185, 215)
+                    opt_y += 130
 
-                draw_text("[A] Chọn    |    [B] Đóng", font_badge, mx + mw // 2, my + mh - 35, 255, 255, 255, center_x=True, center_y=True)
+                draw_text("[A] Chọn    |    [B] Đóng", font_badge, mx + mw // 2, my + mh - 38, 255, 255, 255, center_x=True, center_y=True)
 
             elif save_modal["mode"] == "list":
                 backups = save_modal.get("backups", [])
-                draw_text(f"Danh sách bản sao lưu ({len(backups)} bản):", font_sub, mx + 45, my + 95, 255, 215, 0)
-
-                list_y = my + 130
+                nb = len(backups)
                 sel_idx = save_modal.get("selected_idx", 0)
-                card_w = mw - 90
-                card_h = 60
 
-                visible_backups = backups[:3]
-                for idx, b in enumerate(visible_backups):
-                    is_sel = (sel_idx == idx)
-                    mb_size = b["size"] / (1024 * 1024)
-                    size_txt = f"{mb_size:.2f} MB" if mb_size >= 1.0 else f"{b['size']/1024:.1f} KB"
-                    if is_sel:
-                        fill_rect(mx + 45, list_y, card_w, card_h, 30, 65, 110, 255)
-                        draw_rect(mx + 45, list_y, card_w, card_h, 0, 246, 246, 255, thickness=2)
-                        draw_text(f"> {b['filename']}", font_badge, mx + 65, list_y + 20, 0, 246, 246)
-                    else:
-                        fill_rect(mx + 45, list_y, card_w, card_h, 22, 32, 52, 255)
-                        draw_rect(mx + 45, list_y, card_w, card_h, 50, 70, 105, 255, thickness=1)
-                        draw_text(f"  {b['filename']}", font_badge, mx + 65, list_y + 20, 210, 220, 240)
-                    info_t = f"{b['date_str']}   |   {b['file_count']} files   |   {size_txt}"
-                    draw_text(info_t, font_sub, mx + 85, list_y + 44, 160, 180, 210)
-                    list_y += 70
+                if nb == 0:
+                    draw_text("Chưa có bản sao lưu nào trong máy!", font_item, mx + mw // 2, my + 180, 210, 220, 240, center_x=True, center_y=True)
+                    draw_text("Hãy chọn 'Tạo bản sao lưu mới' ở menu trước để bắt đầu.", font_sub, mx + mw // 2, my + 235, 160, 185, 215, center_x=True, center_y=True)
+                else:
+                    draw_text(f"Danh sách bản sao lưu ({nb} bản):", font_sub, mx + 45, my + 88, 255, 215, 0)
+                    if nb > 3:
+                        draw_text(f"[{sel_idx + 1}/{nb}]", font_badge, mx + mw - 70, my + 88, 160, 180, 210, center_x=True)
 
-                draw_text("[A] Khôi phục    |    [X] Xóa bản này    |    [B] Quay lại", font_badge, mx + mw // 2, my + mh - 35, 255, 255, 255, center_x=True, center_y=True)
+                    list_y = my + 125
+                    card_w = mw - 90
+                    card_h = 80
+                    gap = 14
+
+                    visible_count = 3
+                    scroll_top = max(0, min(sel_idx - 1, nb - visible_count))
+                    visible_slice = backups[scroll_top : scroll_top + visible_count]
+
+                    for idx, b in enumerate(visible_slice):
+                        real_idx = scroll_top + idx
+                        is_sel = (sel_idx == real_idx)
+                        mb_size = b["size"] / (1024 * 1024)
+                        size_txt = f"{mb_size:.2f} MB" if mb_size >= 1.0 else f"{b['size']/1024:.1f} KB"
+                        if is_sel:
+                            fill_rect(mx + 45, list_y, card_w, card_h, 30, 65, 110, 255)
+                            draw_rect(mx + 45, list_y, card_w, card_h, 0, 246, 246, 255, thickness=2)
+                            draw_text(f">  {b['filename']}", font_badge, mx + 65, list_y + 14, 0, 246, 246)
+                        else:
+                            fill_rect(mx + 45, list_y, card_w, card_h, 22, 32, 52, 255)
+                            draw_rect(mx + 45, list_y, card_w, card_h, 50, 70, 105, 255, thickness=1)
+                            draw_text(f"   {b['filename']}", font_badge, mx + 65, list_y + 14, 210, 220, 240)
+                        info_t = f"Ngày: {b['date_str']}    |    {b['file_count']} files    |    {size_txt}"
+                        draw_text(info_t, font_sub, mx + 85, list_y + 44, 160, 185, 215)
+                        list_y += card_h + gap
+
+                draw_text("[A] Khôi phục    |    [X] Xóa bản này    |    [B] Quay lại", font_badge, mx + mw // 2, my + mh - 38, 255, 255, 255, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
         # 5.3. LIBRETRO CHEATS DOWNLOADER MODAL
@@ -5561,8 +5569,8 @@ def main():
         elif cheat_modal["active"]:
             fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
 
-            mw = min(920, state.SCREEN_W - 60)
-            mh = 420
+            mw = min(960, state.SCREEN_W - 60)
+            mh = min(460, state.SCREEN_H - 70)
             mx = (state.SCREEN_W - mw) // 2
             my = (state.SCREEN_H - mh) // 2
 
@@ -5592,7 +5600,11 @@ def main():
                 else:
                     info_line = f"Đang giải nén: {c_st['extracted_count']} mã Cheat vào RetroArch..." if state.current_lang == "VI" else f"Extracting: {c_st['extracted_count']} cheats into RetroArch..."
             else:
-                info_line = f"Tổng số Cheat hiện có trong máy: {count_cheats()} file .cht" if state.current_lang == "VI" else f"Total Cheats installed on device: {count_cheats()} .cht files"
+                c_cnt = cheat_modal.get("count")
+                if c_cnt is None:
+                    c_cnt = count_cheats()
+                    cheat_modal["count"] = c_cnt
+                info_line = f"Tổng số Cheat hiện có trong máy: {c_cnt} file .cht" if state.current_lang == "VI" else f"Total Cheats installed on device: {c_cnt} .cht files"
 
             draw_text(info_line, font_sub, mx + 45, my + 105, 255, 215, 0)
 

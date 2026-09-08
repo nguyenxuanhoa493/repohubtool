@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.97", "2026-09-09",
+     ("Utilities & Save Backup Optimization: Instant 0ms menu entry, enlarged save modal with clean typography and scrolling",
+      "Tối ưu menu Tiện ích và giao diện Sao lưu: Mở menu tức thì 0ms, mở rộng modal và sửa lỗi tràn chữ menu Sao lưu"),
+     [("Instant Utilities Menu: Completely eliminated synchronous disk crawling (full ROM scan, saves scan, cheats check) from the main UI render loop, making menu entry and scrolling 100% instantaneous at 60 FPS.",
+       "Mở menu Tiện ích tức thì: Loại bỏ hoàn toàn các tác vụ quét đĩa nặng nề (quét toàn bộ ROM, file save, cheat code) trong vòng lặp dựng hình giao diện, giúp mở và cuộn menu Tiện ích mượt mà 60 FPS không còn giật lag."),
+      ("Enlarged Save Backup Modal: Expanded modal bounds and increased card height to 108px with balanced spacing, eliminating font overlaps and card border cutoffs. Added smooth list scrolling for backup archives.",
+       "Nâng cấp giao diện Sao lưu Save: Mở rộng kích thước modal, tăng chiều cao thẻ tùy chọn lên 108px với khoảng cách thoáng đãng, khắc phục triệt để lỗi chữ tràn viền và đè lên nhau. Bổ sung cơ chế cuộn mượt mà danh sách bản sao lưu.")]),
+
     ("1.96", "2026-09-09",
      ("Boxart Scraper Upgrade: 100% match rate for numbered scene ROMs and Arcade short names with Web fallback",
       "Nâng cấp bộ cào Box Art: Nhận diện chính xác 100% ROM số hiệu, game Arcade và bổ sung tìm kiếm ảnh Web"),

@@ -1,12 +1,12 @@
 {
-  "version": "1.96",
+  "version": "1.97",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T03:26:13+0700",
+  "built": "2026-09-09T03:36:19+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Nâng cấp cào Box Art: Nhận diện chính xác 100% ROM số hiệu, Arcade, Java và tìm ảnh Web dự phòng",
-    "en": "Boxart Upgrade: 100% match rate for numbered scene ROMs, Arcade, Java, and Web search fallback"
+    "vi": "Tối ưu menu Tiện ích và giao diện Sao lưu: Mở menu tức thì 0ms, mở rộng modal và sửa lỗi tràn chữ",
+    "en": "Utilities & Save Backup: Instant 0ms menu entry, enlarged save modal with clean typography"
   },
   "remove": [
     "app.pyc",
@@ -199,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 339793,
-      "sha256": "78ba6d9aa5570dde5a2559f9575932ca85099abbff93ee58aa29237d381779f1"
+      "size": 340695,
+      "sha256": "9efaa84e6fb57ac26330d6d37dc15e39738ef8ee6d27d914cf72f6723495a73c"
     },
     {
       "path": "assets/fallback.ttf",
@@ -355,7 +355,7 @@
     {
       "path": "gameweb.py",
       "size": 178711,
-      "sha256": "adcf7f9e5e580d34789c06ed472f0b8b43f718c43fa7e3c90db5cdd0cc46753d"
+      "sha256": "407f6a3b235522f235cde6afa75ff7e7e303915addf4f0216bbeaa176d16c257"
     },
     {
       "path": "icon.png",
@@ -540,7 +540,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "f18bd13f3946da1eaed54432f209efbd5905e7cc740cae7c7d081534cf1c8fb7"
+      "sha256": "d8e1e64d1b0d773077e868cbd61a6132b4bfc1e6db25f7e59f0962f520fb71c2"
     },
     {
       "path": "rh/yt.py",
