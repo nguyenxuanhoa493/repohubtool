@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.94", "2026-09-09",
+     ("Direct On-Demand Cheat Download: Download only matching cheats directly from Libretro CDN without fetching the 37MB archive",
+      "Tải Cheat trực tiếp siêu nhẹ: Chỉ tải đúng mã Cheat của game đang có từ CDN Libretro, không còn tải file zip 37MB"),
+     [("Direct CDN Stream: Completely eliminates the 37MB zip download. Individual cheat files (.cht) are downloaded directly from jsdelivr/GitHub CDN in parallel.",
+       "Tải trực tiếp từ CDN: Loại bỏ hoàn toàn việc phải tải file zip 37MB. Từng file cheat (.cht) được tải trực tiếp song song từ mạng CDN tốc độ cao."),
+      ("Ultralight Data Usage (~150KB): Downloads only a few KB per game, completing the entire installed library cheat setup in 3-5 seconds.",
+       "Siêu tiết kiệm dung lượng (~150KB): Mỗi game chỉ tốn 1-3 KB dữ liệu, hoàn tất tải toàn bộ mã cheat cho các game trên máy chỉ trong 3-5 giây.")]),
+
     ("1.93", "2026-09-09",
      ("Smart Libretro Cheat Downloader: Selective cheat extraction for installed games, RetroArch auto-load aliases, and Web Manager single-game cheat fetching",
       "Tải Cheat Code Libretro thông minh: Tự động trích xuất mã cheat cho game đang có, tạo alias Auto-Load cho RetroArch và tải cheat lẻ trên Web"),
