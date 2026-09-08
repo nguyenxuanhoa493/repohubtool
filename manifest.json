@@ -1,12 +1,12 @@
 {
-  "version": "1.95",
+  "version": "1.96",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T02:56:05+0700",
+  "built": "2026-09-09T03:26:13+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Dọn sạch thư mục ROMs: Cào ảnh chuẩn vào Imgs, xóa ảnh và .media khỏi ROMs tránh nhận nhầm làm game",
-    "en": "Clean ROMs: Scraper saves boxart to Imgs and cleans rogue images from ROMs directory"
+    "vi": "Nâng cấp cào Box Art: Nhận diện chính xác 100% ROM số hiệu, Arcade, Java và tìm ảnh Web dự phòng",
+    "en": "Boxart Upgrade: 100% match rate for numbered scene ROMs, Arcade, Java, and Web search fallback"
   },
   "remove": [
     "app.pyc",
@@ -354,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 173039,
-      "sha256": "00d4da217d0bdffe8438294d05b93b083afe6234959d6063abc2177ba26483de"
+      "size": 178711,
+      "sha256": "adcf7f9e5e580d34789c06ed472f0b8b43f718c43fa7e3c90db5cdd0cc46753d"
     },
     {
       "path": "icon.png",
@@ -399,8 +399,8 @@
     },
     {
       "path": "rh/boxart_scraper.py",
-      "size": 23040,
-      "sha256": "9e9e69c984397eb81c5abfa4e9acf6f920315fb192c01f46754ceca3d1e22fd3"
+      "size": 30017,
+      "sha256": "99e91a765d5b67bb4972b5b6fa1ed48d6fd1cda55c91890832a6474cf328b2a3"
     },
     {
       "path": "rh/catalog.py",
@@ -484,8 +484,8 @@
     },
     {
       "path": "rh/media.py",
-      "size": 2721,
-      "sha256": "6905dfa352f22d714b6eb160b129e5e5229f97c37d4299da443c2e5b55e3c9b3"
+      "size": 3280,
+      "sha256": "60d0c9129e8019eebeddd76d0de9f4c21facac6c772274bc8c435b12e8530c0f"
     },
     {
       "path": "rh/neterrors.py",
@@ -540,7 +540,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "0c9af80926b1abe9f4f49320ea9d65267f0ac399d8a3c88660b676d5d9e6468f"
+      "sha256": "f18bd13f3946da1eaed54432f209efbd5905e7cc740cae7c7d081534cf1c8fb7"
     },
     {
       "path": "rh/yt.py",
