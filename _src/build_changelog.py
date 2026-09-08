@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.91", "2026-09-08",
+     ("Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback",
+      "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu"),
+     [("Ultra-Fast 1-Step Auto Scrape: Replaced multi-roundtrip scrape with a 1-step backend pipeline prioritizing SQLite Catalog DB (~1ms) and cached Libretro CDN index (~2ms) before web fallback.",
+       "Cào ảnh tự động siêu tốc 1 bước: Gom tìm kiếm và tải ảnh thành 1 request duy nhất, ưu tiên kho Catalog DB (~1ms) và Libretro CDN index cache (~2ms), giảm thời gian xử lý xuống hàng mili-giây."),
+      ("Browser Concurrency Pool (4 Workers): Frontend coordinates 4 parallel workers for concurrent scraping, updating game cards and progress live with seamless stop handling.",
+       "Điều phối 4 luồng song song từ trình duyệt: Trình duyệt chạy đồng thời 4 workers cào ảnh song song, hiển thị ảnh bìa thật ngay khi xong từng game, thanh tiến độ live mượt mà và nút dừng phản hồi tức thì.")]),
+
     ("1.90", "2026-09-08",
      ("Web Game Manager: Inline batch scraping with real-time card updates, SVG vector system icons, and full uncropped boxart view",
       "Quản lý Game qua Web: Cào ảnh hàng loạt trực tiếp trên danh sách (không popup modal), biểu tượng SVG vector cho từng hệ máy và hiển thị trọn vẹn 100% ảnh bìa"),

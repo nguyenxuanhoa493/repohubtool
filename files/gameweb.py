@@ -319,7 +319,8 @@ def search_libretro_boxarts(sys_code, query, max_results=12, allow_fetch=True):
                 candidates.append({
                     "title": m[:-4],
                     "type": f"Libretro {cat_label}",
-                    "url": boxart_url
+                    "url": boxart_url,
+                    "verified": True
                 })
             if candidates:
                 break
@@ -332,7 +333,8 @@ def search_libretro_boxarts(sys_code, query, max_results=12, allow_fetch=True):
             candidates.append({
                 "title": f"{clean_name}{suffix}",
                 "type": "Libretro Boxart",
-                "url": boxart_url
+                "url": boxart_url,
+                "verified": False
             })
 
     return candidates
@@ -404,6 +406,56 @@ def search_web_images(query, max_results=8):
         print(f"Error in search_web_images: {e}")
         return []
 
+def clean_rom_title(filename):
+    """Làm sạch tên file ROM để tối ưu từ khóa tìm kiếm ảnh bìa."""
+    base = os.path.splitext(filename)[0]
+    base = re.sub(r'[_\.\+]+', ' ', base)
+    base = re.sub(r'\s*[\(\[][^\)\]]*[\)\]]\s*', ' ', base)
+    base = re.sub(r'\b(EUR|USA|JAP|JPN|PAL|NTSC|MULTi\d*|Goomba|Razor1911|Dump)\b', ' ', base, flags=re.IGNORECASE)
+    base = re.sub(r'\b(PSP|PS1|PS2|GBA|NDS|SNES|NES|MD|GENESIS)\b', ' ', base, flags=re.IGNORECASE)
+    base = re.sub(r'[-–—]+', ' ', base)
+    return re.sub(r'\s+', ' ', base).strip()
+
+def find_best_boxart(sys_code, clean_title, fast_only=False):
+    """Tìm ảnh bìa phù hợp nhất theo thứ tự ưu tiên tốc độ:
+    1. SQLite Catalog DB (siêu nhanh ~1ms, ảnh chất lượng cao / Việt hóa)
+    2. Libretro CDN index cache (~5ms, ảnh chính thức từ thumbnails.libretro.com)
+    3. Web Images (Bing) nếu 2 nguồn trên không có và fast_only=False (~1-3s)
+    """
+    # 1. SQLite Catalog DB
+    try:
+        db_res = search_catalog_db(sys_code, clean_title, max_results=1)
+        if db_res and db_res[0].get("url"):
+            return db_res[0]["url"], "Catalog DB"
+    except Exception as e:
+        print(f"find_best_boxart db error: {e}")
+
+    # 2. Libretro CDN index cache
+    try:
+        lr_res = search_libretro_boxarts(sys_code, clean_title, max_results=3, allow_fetch=True)
+        for it in lr_res:
+            u = it.get("url")
+            if not u:
+                continue
+            if it.get("verified"):
+                return u, it.get("type", "Libretro")
+            elif is_url_alive(u, timeout=1.0):
+                return u, it.get("type", "Libretro")
+    except Exception as e:
+        print(f"find_best_boxart libretro error: {e}")
+
+    # 3. Web Images Search (Bing)
+    if not fast_only:
+        try:
+            web_q = f"{clean_title} {sys_code} boxart cover"
+            web_res = search_web_images(web_q, max_results=2)
+            if web_res and web_res[0].get("url"):
+                return web_res[0]["url"], "Web Search"
+        except Exception as e:
+            print(f"find_best_boxart web error: {e}")
+
+    return None, None
+
 # Đuôi file ROM hợp lệ thường gặp
 VALID_EXTS = {
     ".zip", ".7z", ".rar", ".chd", ".iso", ".cue", ".bin", ".pbp",
@@ -415,6 +467,9 @@ VALID_EXTS = {
 def download_image_to_file(img_url, target_path, timeout=15):
     """Tải file ảnh từ URL (HTTP/HTTPS), bỏ qua lỗi kiểm tra SSL trên hệ máy cầm tay.
     Thử urllib với unverified SSL trước, nếu gặp lỗi thì fallback sang curl -k."""
+    if img_url.startswith("//"):
+        img_url = "https:" + img_url
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
@@ -752,6 +807,7 @@ class GameWebHandler(BaseHTTPRequestHandler):
         if path == "/api/scrape/search":
             sys_code = query.get("system", [""])[0].upper()
             q_name = query.get("query", [""])[0].strip()
+            fast_mode = query.get("fast", ["0"])[0] in ("1", "true", "yes")
             if not q_name:
                 self.send_json({"ok": False, "error": "Query required"}, 400)
                 return
@@ -759,28 +815,29 @@ class GameWebHandler(BaseHTTPRequestHandler):
             candidates = []
             seen_urls = set()
 
-            # 1. Ưu tiên hàng đầu: Tìm kiếm trên Web Images với từ khóa boxart
-            web_q = f"{q_name} {sys_code} boxart box art cover"
-            web_results = search_web_images(web_q, max_results=8)
-            for item in web_results:
-                if item["url"] not in seen_urls:
-                    candidates.append(item)
-                    seen_urls.add(item["url"])
-
-            # 2. Tìm trong SQLite Catalog DB (ảnh bìa chất lượng cao / Việt hóa)
+            # 1. Tìm trong SQLite Catalog DB (ảnh bìa chất lượng cao / Việt hóa) (~1ms)
             db_results = search_catalog_db(sys_code, q_name, max_results=6)
             for item in db_results:
                 if item["url"] not in seen_urls:
                     candidates.append(item)
                     seen_urls.add(item["url"])
 
-            # 3. Tìm trong Libretro Thumbnails CDN chính thức
+            # 2. Tìm trong Libretro Thumbnails CDN chính thức (~5ms)
             allow_fetch = len(candidates) < 6
             libretro_results = search_libretro_boxarts(sys_code, q_name, max_results=8, allow_fetch=allow_fetch)
             for item in libretro_results:
                 if item["url"] not in seen_urls:
                     candidates.append(item)
                     seen_urls.add(item["url"])
+
+            # 3. Tìm kiếm Web Images (Bing) nếu không bật fast_mode hoặc DB/Libretro chưa có ảnh
+            if not fast_mode or len(candidates) == 0:
+                web_q = f"{q_name} {sys_code} boxart box art cover"
+                web_results = search_web_images(web_q, max_results=8)
+                for item in web_results:
+                    if item["url"] not in seen_urls:
+                        candidates.append(item)
+                        seen_urls.add(item["url"])
 
             self.send_json({
                 "ok": True,
@@ -923,6 +980,61 @@ class GameWebHandler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, "message": f"Đã xóa {fname}"})
             except Exception as e:
                 self.send_json({"ok": False, "error": str(e)}, 500)
+            return
+
+        if path == "/api/scrape/auto":
+            try:
+                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+                sys_dir = payload.get("system", "").strip()
+                fname = payload.get("filename", "").strip()
+                query_str = payload.get("query", "").strip()
+                fast_only = payload.get("fast", True)
+
+                if not sys_dir or not fname:
+                    self.send_json({"ok": False, "error": "Thiếu dữ liệu cào ảnh (system hoặc filename)"}, 400)
+                    return
+
+                if not query_str:
+                    query_str = clean_rom_title(fname)
+
+                best_url, src_type = find_best_boxart(sys_dir, query_str, fast_only=fast_only)
+                if not best_url:
+                    self.send_json({"ok": False, "error": "Không tìm thấy ảnh bìa phù hợp", "not_found": True}, 404)
+                    return
+
+                base_name = os.path.splitext(fname)[0]
+                target_img_dir = os.path.join(IMGS_DIR, sys_dir)
+                os.makedirs(target_img_dir, exist_ok=True)
+                target_art = os.path.join(target_img_dir, base_name + ".png")
+
+                # Xóa các file ảnh định dạng cũ (.jpg, .jpeg, .webp, .bmp) nếu có
+                for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
+                    old_f = os.path.join(target_img_dir, base_name + old_ext)
+                    if os.path.isfile(old_f):
+                        try:
+                            os.remove(old_f)
+                        except Exception:
+                            pass
+
+                success, err_msg = download_image_to_file(best_url, target_art, timeout=12)
+                if success:
+                    try:
+                        os.utime(target_art, None)
+                    except Exception:
+                        pass
+                    now_ts = int(time.time())
+                    self.send_json({
+                        "ok": True,
+                        "source": src_type,
+                        "image_url": best_url,
+                        "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
+                    })
+                    return
+                else:
+                    self.send_json({"ok": False, "error": f"Lỗi tải ảnh: {err_msg}"}, 500)
+                    return
+            except Exception as e:
+                self.send_json({"ok": False, "error": f"Lỗi xử lý cào ảnh tự động: {e}"}, 500)
             return
 
         if path == "/api/scrape/apply":
@@ -2414,6 +2526,43 @@ HTML_PAGE = r"""<!DOCTYPE html>
             }
         }
 
+        function updateCardArtFailure(idx, filename, gSys, reason="Không tìm thấy") {
+            if (idx === null || idx === undefined) return;
+            const cardEl = document.getElementById(`game-card-${idx}`);
+            const artBoxEl = document.getElementById(`art-box-${idx}`);
+            if (cardEl) {
+                cardEl.classList.remove("is-scraping");
+            }
+            if (artBoxEl) {
+                artBoxEl.innerHTML = `
+                    <div class="art-placeholder" onclick="openScrapeModal('${escapeJs(filename)}', '${gSys}', ${idx})" title="Nhấp để cào ảnh">
+                        ${ICONS.alert}
+                        <span style="font-size:11px; color:#f59e0b;">${reason}</span>
+                    </div>
+                    <div class="art-btn-overlay">
+                        <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
+                    </div>
+                `;
+            }
+        }
+
+        function setCardArtScraping(idx, label="Đang cào ảnh...") {
+            if (idx === null || idx === undefined) return;
+            const cardEl = document.getElementById(`game-card-${idx}`);
+            const artBoxEl = document.getElementById(`art-box-${idx}`);
+            if (cardEl) {
+                cardEl.classList.add("is-scraping");
+            }
+            if (artBoxEl) {
+                artBoxEl.innerHTML = `
+                    <div class="art-placeholder" style="color:#38bdf8;">
+                        ${ICONS.spinner}
+                        <span style="font-size:11px;">${label}</span>
+                    </div>
+                `;
+            }
+        }
+
         async function startDirectBatchScrape() {
             const targets = [];
             for (let i = 0; i < currentGames.length; i++) {
@@ -2442,103 +2591,123 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 topBtn.className = "btn btn-danger";
             }
 
-            let successCount = 0;
             const total = targets.length;
+            let completedCount = 0;
+            let successCount = 0;
 
-            for (let t = 0; t < total; t++) {
-                if (stopBatchRequested) break;
-
-                const { game: g, index: idx } = targets[t];
-                const gSys = g.system || currentSystem;
-                const gSysName = g.system_name || gSys;
-                const cleanTitle = cleanGameQuery(g.filename);
-
-                // Update tiến độ inline bar
-                const pct = Math.round((t / total) * 100);
+            function renderProgress(titleName, gSysName) {
+                const pct = Math.round((completedCount / total) * 100);
                 pctText.innerText = `${pct}%`;
                 fillBar.style.width = `${pct}%`;
-                statusText.innerHTML = `⚡ [${t + 1}/${total}] Đang tìm ảnh: <strong>${g.name}</strong> (${gSysName})...`;
-
-                // Highlight thẻ game tương ứng trên màn hình
-                const cardEl = document.getElementById(`game-card-${idx}`);
-                const artBoxEl = document.getElementById(`art-box-${idx}`);
-                if (cardEl) {
-                    cardEl.classList.add("is-scraping");
-                    cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                if (titleName) {
+                    statusText.innerHTML = `⚡ [${completedCount}/${total}] Đang xử lý: <strong>${titleName}</strong> (${gSysName}) &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
+                } else {
+                    statusText.innerHTML = `⚡ [${completedCount}/${total}] Đang xử lý... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
                 }
-                if (artBoxEl) {
-                    artBoxEl.innerHTML = `
-                        <div class="art-placeholder" style="color:#38bdf8;">
-                            ${ICONS.spinner}
-                            <span style="font-size:11px;">Đang tìm ảnh...</span>
-                        </div>
-                    `;
-                }
+            }
 
-                let found = false;
-                try {
-                    const sRes = await fetch(`/api/scrape/search?system=${encodeURIComponent(gSys)}&query=${encodeURIComponent(cleanTitle)}`);
-                    const sData = await sRes.json();
-                    if (sData.ok && sData.candidates && sData.candidates.length > 0) {
-                        const best = sData.candidates[0]; // Ưu tiên ảnh đầu tiên
-                        const aRes = await fetch("/api/scrape/apply", {
+            // Giai đoạn 1: Tốc độ cao (Catalog DB & CDN Libretro) - 4 workers song song
+            const fastQueue = [...targets];
+            const notFoundList = [];
+            const CONCURRENCY = 4;
+
+            async function fastWorker() {
+                while (fastQueue.length > 0 && !stopBatchRequested) {
+                    const item = fastQueue.shift();
+                    const { game: g, index: idx } = item;
+                    const gSys = g.system || currentSystem;
+                    const gSysName = g.system_name || gSys;
+                    const cleanTitle = cleanGameQuery(g.filename);
+
+                    setCardArtScraping(idx, "Đang cào nhanh...");
+                    renderProgress(g.name, gSysName);
+
+                    try {
+                        const res = await fetch("/api/scrape/auto", {
                             method: "POST",
-                            headers: {"Content-Type": "application/json"},
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 system: gSys,
                                 filename: g.filename,
-                                image_url: best.url
+                                query: cleanTitle,
+                                fast: true
                             })
                         });
-                        const aData = await aRes.json();
-                        if (aData.ok) {
-                            found = true;
+                        const data = await res.json();
+                        if (data.ok && data.art_url) {
                             successCount++;
-                            const newArtUrl = `/art/${encodeURIComponent(gSys)}/${encodeURIComponent(g.name + '.png')}?v=${Date.now()}`;
-                            g.has_art = true;
-                            g.art_url = newArtUrl;
+                            updateCardArtSuccess(idx, g.filename, gSys, data.art_url);
+                        } else {
+                            notFoundList.push(item);
+                        }
+                    } catch (err) {
+                        console.error("Fast worker error:", err);
+                        notFoundList.push(item);
+                    }
 
-                            // Cập nhật TRỰC TIẾP thẻ game vào list hiện tại!
-                            if (artBoxEl) {
-                                artBoxEl.innerHTML = `
-                                    <img class="art-img" src="${newArtUrl}" loading="lazy" alt="${g.name}" onclick="openArtPreview('${newArtUrl}', '${escapeJs(g.name)}')" title="Nhấp để xem ảnh đầy đủ">
-                                    <div class="art-btn-overlay">
-                                        <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
-                                    </div>
-                                `;
+                    completedCount++;
+                    renderProgress(g.name, gSysName);
+                }
+            }
+
+            const fastWorkers = [];
+            const numWorkers = Math.min(CONCURRENCY, fastQueue.length);
+            for (let w = 0; w < numWorkers; w++) {
+                fastWorkers.push(fastWorker());
+            }
+            await Promise.all(fastWorkers);
+
+            // Giai đoạn 2: Web Search cho các game còn lại chưa tìm thấy
+            if (!stopBatchRequested && notFoundList.length > 0) {
+                statusText.innerHTML = `🔍 Tìm kiếm Web sâu cho ${notFoundList.length} game còn lại... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
+                const deepQueue = [...notFoundList];
+                notFoundList.length = 0;
+
+                async function deepWorker() {
+                    while (deepQueue.length > 0 && !stopBatchRequested) {
+                        const item = deepQueue.shift();
+                        const { game: g, index: idx } = item;
+                        const gSys = g.system || currentSystem;
+                        const gSysName = g.system_name || gSys;
+                        const cleanTitle = cleanGameQuery(g.filename);
+
+                        setCardArtScraping(idx, "Đang tìm Web...");
+                        statusText.innerHTML = `🌐 Tìm Web: <strong>${g.name}</strong> (${gSysName})... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
+
+                        try {
+                            const res = await fetch("/api/scrape/auto", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    system: gSys,
+                                    filename: g.filename,
+                                    query: cleanTitle,
+                                    fast: false
+                                })
+                            });
+                            const data = await res.json();
+                            if (data.ok && data.art_url) {
+                                successCount++;
+                                updateCardArtSuccess(idx, g.filename, gSys, data.art_url);
+                            } else {
+                                updateCardArtFailure(idx, g.filename, gSys, "Không tìm thấy");
                             }
-                            if (cardEl) {
-                                cardEl.classList.remove("is-scraping");
-                                cardEl.classList.add("is-success");
-                            }
-                            if (noArtTotalCount > 0) {
-                                noArtTotalCount--;
-                                updateNoArtBadge();
-                            }
+                        } catch (err) {
+                            updateCardArtFailure(idx, g.filename, gSys, "Lỗi cào ảnh");
                         }
                     }
-                } catch (err) {
-                    console.error("Scrape error:", err);
                 }
 
-                if (!found) {
-                    if (cardEl) cardEl.classList.remove("is-scraping");
-                    if (artBoxEl) {
-                        artBoxEl.innerHTML = `
-                            <div class="art-placeholder" onclick="openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})" title="Nhấp để cào ảnh">
-                                ${ICONS.alert}
-                                <span style="font-size:11px; color:#f59e0b;">Không tìm thấy</span>
-                            </div>
-                            <div class="art-btn-overlay">
-                                <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
-                            </div>
-                        `;
-                    }
+                const deepWorkers = [];
+                const numDeepWorkers = Math.min(2, deepQueue.length);
+                for (let w = 0; w < numDeepWorkers; w++) {
+                    deepWorkers.push(deepWorker());
                 }
-
-                // Nghỉ ngắn giữa các lượt cào
-                if (!stopBatchRequested && t < total - 1) {
-                    await new Promise(r => setTimeout(r, 350));
+                await Promise.all(deepWorkers);
+            } else if (notFoundList.length > 0) {
+                for (const item of notFoundList) {
+                    const gSys = item.game.system || currentSystem;
+                    updateCardArtFailure(item.index, item.game.filename, gSys, "Chưa có ảnh");
                 }
             }
 
@@ -2546,8 +2715,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
             pctText.innerText = "100%";
             isBatchScraping = false;
 
+            if (topBtn) {
+                topBtn.innerText = "⚡ Cào toàn bộ ảnh";
+                topBtn.className = "btn btn-batch";
+            }
+
             if (stopBatchRequested) {
-                statusText.innerText = `⏸️ Đã dừng. Đã cập nhật thành công ${successCount}/${total} ảnh bìa.`;
+                statusText.innerText = `⏸️ Đã dừng. Cập nhật thành công ${successCount}/${total} ảnh bìa.`;
                 showToast(`Đã dừng: Cập nhật thành công ${successCount} ảnh!`);
             } else {
                 statusText.innerText = `✅ Hoàn tất! Đã cập nhật ${successCount}/${total} ảnh bìa vào danh sách.`;
@@ -2560,7 +2734,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 if (!isBatchScraping) {
                     inlineBar.style.display = "none";
                 }
-            }, 4000);
+            }, 5000);
         }
 
         // ==========================================
