@@ -18,6 +18,7 @@ import shutil
 from .paths import SDCARD_PATH, APP_DIR, is_nextui
 from .catalog import scan_all_downloaded_games, VALID_EXTS
 from .boxart import is_real_boxart_url
+from .media import save_boxart_png
 
 try:
     _SSL_CONTEXT = ssl.create_default_context()
@@ -105,13 +106,68 @@ def get_catalog_db_path():
 
 def clean_rom_title(filename):
     """Làm sạch tên file ROM để tối ưu từ khóa tìm kiếm ảnh bìa."""
-    base = os.path.splitext(filename)[0]
+    base = os.path.splitext(filename)[0] if "." in filename else filename
+    # Loại bỏ số thứ tự đánh dấu release ở đầu: ví dụ "0032 - ", "0247 - ", "4. "
+    base = re.sub(r'^\s*\d{1,4}\s*[\.\-]+\s*', '', base)
+    # Loại bỏ các tag đóng mở ngoặc: (USA), [!], (E)(Eurasia), (Topo shop), [Gamefall21]
+    base = re.sub(r'\[.*?\]|\(.*?\)', ' ', base)
+    # Chuẩn hóa dấu phân cách thành dấu cách trước khi lọc từ khóa
     base = re.sub(r'[_\.\+]+', ' ', base)
-    base = re.sub(r'\s*[\(\[][^\)\]]*[\)\]]\s*', ' ', base)
-    base = re.sub(r'\b(EUR|USA|JAP|JPN|PAL|NTSC|MULTi\d*|Goomba|Razor1911|Dump)\b', ' ', base, flags=re.IGNORECASE)
-    base = re.sub(r'\b(PSP|PS1|PS2|GBA|NDS|SNES|NES|MD|GENESIS)\b', ' ', base, flags=re.IGNORECASE)
     base = re.sub(r'[-–—]+', ' ', base)
+    # Loại bỏ các mã ID game PSP/PSX: ví dụ UCUS98653, ULES12345, SLUS, SLES, SCUS, NPUB, NPUZ...
+    base = re.sub(r'\b[A-Za-z]{3,4}\d{4,5}\b', ' ', base)
+    # Loại bỏ các mã CRC/hash 8 ký tự hex: ví dụ 7F746677, 864E835C
+    base = re.sub(r'\b[0-9A-Fa-f]{8}\b', ' ', base)
+    # Loại bỏ các tag nhóm dịch / scene / hack
+    base = re.sub(r'\b(viet[\s\-_]*hoa|vh|vie|aowvn|gamefall\d*|topo[\s\-_]*shop|4fun|eur|usa|jap|jpn|pal|ntsc|multi\d*|goomba|razor1911|dump)\b', ' ', base, flags=re.IGNORECASE)
+    # Tách các từ viết dính liền phổ biến
+    base = re.sub(r'\bGodofWar\b', 'God of War', base, flags=re.IGNORECASE)
+    base = re.sub(r'\bChainsofOlympus\b', 'Chains of Olympus', base, flags=re.IGNORECASE)
+    base = re.sub(r'\bGhostofSparta\b', 'Ghost of Sparta', base, flags=re.IGNORECASE)
+    base = re.sub(r'\bPrinceofPersia\b', 'Prince of Persia', base, flags=re.IGNORECASE)
+    base = re.sub(r'\bMetalSlug\b', 'Metal Slug', base, flags=re.IGNORECASE)
+    base = re.sub(r'\b(PSP|PS1|PS2|GBA|NDS|SNES|NES|MD|GENESIS)\b', ' ', base, flags=re.IGNORECASE)
     return re.sub(r'\s+', ' ', base).strip()
+
+
+def extract_jar_icon(jar_path, target_png):
+    """Trích xuất icon gốc từ file .jar của game Java J2ME."""
+    if not jar_path or not os.path.isfile(jar_path):
+        return False
+    try:
+        import zipfile
+        with zipfile.ZipFile(jar_path, 'r') as z:
+            icon_name = None
+            if 'META-INF/MANIFEST.MF' in z.namelist():
+                try:
+                    mf = z.read('META-INF/MANIFEST.MF').decode('utf-8', errors='ignore')
+                    for line in mf.splitlines():
+                        if 'MIDlet-' in line and '.png' in line.lower():
+                            parts = [p.strip().lstrip('/') for p in line.split(',') if '.png' in p.lower()]
+                            if parts and parts[0] in z.namelist():
+                                icon_name = parts[0]
+                                break
+                except Exception:
+                    pass
+            if not icon_name:
+                for n in ('icon.png', 'i.png', 'res/icon.png', 'icons/icon.png'):
+                    if n in z.namelist():
+                        icon_name = n
+                        break
+            if not icon_name:
+                for n in z.namelist():
+                    if 'icon' in n.lower() and n.lower().endswith('.png'):
+                        icon_name = n
+                        break
+            if icon_name:
+                raw_bytes = z.read(icon_name)
+                if raw_bytes and len(raw_bytes) > 32:
+                    os.makedirs(os.path.dirname(target_png), exist_ok=True)
+                    save_boxart_png(raw_bytes, target_png)
+                    return True
+    except Exception:
+        pass
+    return False
 
 
 def _get_sqlite_conn(db_path):
@@ -136,8 +192,12 @@ def _get_sqlite_conn(db_path):
     return None
 
 
-def search_catalog_db(sys_code, query, max_results=1):
-    """Tra cứu nhanh ảnh bìa trong Catalog DB SQLite (~1ms)."""
+def search_catalog_db(sys_code, query, filename="", max_results=1):
+    """Tra cứu nhanh ảnh bìa trong Catalog DB SQLite (~1ms).
+    Ưu tiên 1: Tìm kiếm chính xác theo filename trong bảng game_sources (cực kỳ hiệu quả cho game Arcade/MAME/NEOGEO/DC).
+    Ưu tiên 2: Tìm kiếm tiêu đề theo sys_code và các từ khóa trong games table.
+    Ưu tiên 3: Tìm kiếm xuyên hệ máy cho các hệ liên quan (Arcade/MAME/FBNeo/NEOGEO).
+    """
     db_p = get_catalog_db_path()
     if not db_p:
         return []
@@ -148,6 +208,24 @@ def search_catalog_db(sys_code, query, max_results=1):
             return []
         cur = conn.cursor()
 
+        # 1. Tra cứu trực tiếp theo tên file ROM trong game_sources
+        if filename:
+            try:
+                cur.execute(
+                    "SELECT g.title, g.img_url FROM game_sources s "
+                    "JOIN games g ON s.game_id = g.id "
+                    "WHERE s.filename = ? AND g.img_url IS NOT NULL AND g.img_url != '' LIMIT 1",
+                    (filename,)
+                )
+                r = cur.fetchone()
+                if r and r[1] and "no-image" not in r[1].lower():
+                    if conn and hasattr(conn, "close"):
+                        try: conn.close()
+                        except Exception: pass
+                    return [{"title": r[0], "type": "Catalog DB", "url": r[1]}]
+            except Exception:
+                pass
+
         sys_aliases = [sys_code.upper()]
         if sys_code.upper() in ("NES", "FC"):
             sys_aliases = ["FC", "NES"]
@@ -157,6 +235,8 @@ def search_catalog_db(sys_code, query, max_results=1):
             sys_aliases = ["MD", "GENESIS"]
         elif sys_code.upper() in ("PS1", "PS"):
             sys_aliases = ["PS", "PS1"]
+        elif sys_code.upper() in ("MAME", "ARCADE", "FBNEO", "NEOGEO", "CPS1", "CPS2", "CPS3"):
+            sys_aliases = ["MAME", "FBNEO", "ARCADE", "NEOGEO", "CPS1", "CPS2", "CPS3"]
 
         clean_q = re.sub(r'\(.*?\)|\[.*?\]', '', query).strip()
         words = [w.lower() for w in clean_q.split() if w]
@@ -167,35 +247,46 @@ def search_catalog_db(sys_code, query, max_results=1):
                 conn.close()
             return []
 
+        sig_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
+        if not sig_words:
+            sig_words = words
+
         placeholders = ",".join("?" * len(sys_aliases))
 
-        def execute_query(w_list):
-            sql = f"SELECT title, img_url FROM games WHERE sys_code IN ({placeholders}) AND img_url IS NOT NULL AND img_url != ''"
-            params = list(sys_aliases)
-            for w in w_list:
+        def execute_query(w_list, use_sys=True):
+            if use_sys:
+                sql = f"SELECT title, img_url FROM games WHERE sys_code IN ({placeholders}) AND img_url IS NOT NULL AND img_url != ''"
+                params = list(sys_aliases)
+            else:
+                sql = "SELECT title, img_url FROM games WHERE img_url IS NOT NULL AND img_url != ''"
+                params = []
+            for w in w_list[:4]:
                 sql += " AND lower(title) LIKE ?"
                 params.append(f"%{w}%")
             sql += f" LIMIT {max_results}"
             cur.execute(sql, params)
             return [r for r in cur.fetchall() if r[1] and "no-image" not in r[1].lower()]
 
-        rows = execute_query(words)
-        if not rows and len(words) > 1:
-            sig_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
-            if sig_words and sig_words != words:
-                rows = execute_query(sig_words)
+        rows = execute_query(sig_words, use_sys=True)
+        if not rows and len(sig_words) > 1:
+            rows = execute_query(sig_words[:2], use_sys=True)
+
+        # Thử tìm xuyên hệ máy nếu là game Arcade
+        if not rows and sys_code.upper() in ("MAME", "ARCADE", "FBNEO", "NEOGEO", "CPS1", "CPS2", "CPS3", "DC"):
+            rows = execute_query(sig_words[:2], use_sys=False)
 
         if conn and hasattr(conn, "close"):
             try:
                 conn.close()
             except Exception:
                 pass
+
         results = []
-        for title, img_url in rows:
+        for r in rows:
             results.append({
-                "title": title,
+                "title": r[0],
                 "type": "Catalog DB",
-                "url": img_url
+                "url": r[1]
             })
         return results
     except Exception:
@@ -234,7 +325,7 @@ def get_libretro_file_list(sys_folder, category="Named_Boxarts", allow_fetch=Tru
     url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/{category}/"
     html = ""
     try:
-        res = subprocess.run(["curl", "-s", "--max-time", "6", url], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=7)
+        res = subprocess.run(["curl", "-s", "-k", "--max-time", "15", url], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=16)
         if res.returncode == 0 and res.stdout:
             html = res.stdout.decode("utf-8", errors="ignore")
     except Exception:
@@ -243,7 +334,7 @@ def get_libretro_file_list(sys_folder, category="Named_Boxarts", allow_fetch=Tru
     if not html:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"})
-            kwargs = {"timeout": 5}
+            kwargs = {"timeout": 15}
             if _SSL_CONTEXT:
                 kwargs["context"] = _SSL_CONTEXT
             with urllib.request.urlopen(req, **kwargs) as resp:
@@ -299,7 +390,7 @@ def search_libretro_boxarts(sys_code, query, max_results=3, allow_fetch=True):
         return pts
 
     candidates = []
-    for cat in ["Named_Boxarts", "Named_Snaps", "Named_Titles"]:
+    for cat in ["Named_Boxarts", "Named_Titles"]:
         files = get_libretro_file_list(sys_folder, category=cat, allow_fetch=allow_fetch)
         if not files:
             continue
@@ -310,7 +401,7 @@ def search_libretro_boxarts(sys_code, query, max_results=3, allow_fetch=True):
 
         if matches:
             matches.sort(key=score)
-            cat_label = "Boxart" if cat == "Named_Boxarts" else ("Snap" if cat == "Named_Snaps" else "Title")
+            cat_label = "Boxart" if cat == "Named_Boxarts" else "Title"
             for m in matches[:max_results]:
                 boxart_url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/{cat}/{urllib.parse.quote(m)}"
                 candidates.append({
@@ -325,8 +416,32 @@ def search_libretro_boxarts(sys_code, query, max_results=3, allow_fetch=True):
     return candidates
 
 
+def search_web_bing(query):
+    """Tìm kiếm ảnh bìa trực tiếp từ Bing Images (không bị chặn Captcha, timeout 5s)."""
+    try:
+        url = "https://www.bing.com/images/search?q=" + urllib.parse.quote(query)
+        cmd = [
+            "curl", "-k", "-s", "--max-time", "5",
+            "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            url
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=6)
+        if res.returncode == 0 and res.stdout:
+            html = res.stdout.decode("utf-8", errors="ignore")
+            matches = re.findall(r'&quot;murl&quot;:&quot;(https?://[^&]+)&quot;', html)
+            for m in matches:
+                m_clean = m.split("?")[0].lower()
+                if m_clean.endswith((".png", ".jpg", ".jpeg", ".webp")):
+                    return m
+            if matches:
+                return matches[0]
+    except Exception:
+        pass
+    return None
+
+
 def download_image_to_file(img_url, target_path, timeout=12):
-    """Tải file ảnh từ URL về đường dẫn target_path."""
+    """Tải file ảnh từ URL về target_path và chuyển đổi chuẩn sang PNG."""
     if not img_url:
         return False, "Empty URL"
     if img_url.startswith("//"):
@@ -338,6 +453,7 @@ def download_image_to_file(img_url, target_path, timeout=12):
         "Referer": img_url,
     }
 
+    raw_data = None
     try:
         req = urllib.request.Request(img_url, headers=headers)
         kwargs = {"timeout": timeout}
@@ -347,40 +463,55 @@ def download_image_to_file(img_url, target_path, timeout=12):
             if resp.status in (200, 206):
                 data = resp.read()
                 if len(data) > 32:
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                    with open(target_path, "wb") as f:
-                        f.write(data)
-                    return True, None
+                    raw_data = data
     except Exception:
         pass
 
-    try:
-        os.makedirs(os.path.dirname(target_path), exist_ok=True)
-        cmd = [
-            "curl", "-k", "-s", "-L",
-            "--max-time", str(timeout),
-            "-A", headers["User-Agent"],
-            "-o", target_path,
-            img_url
-        ]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout + 2)
-        if res.returncode == 0 and os.path.isfile(target_path) and os.path.getsize(target_path) > 32:
+    if not raw_data:
+        try:
+            cmd = [
+                "curl", "-k", "-s", "-L",
+                "--max-time", str(timeout),
+                "-A", headers["User-Agent"],
+                img_url
+            ]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout + 2)
+            if res.returncode == 0 and res.stdout and len(res.stdout) > 32:
+                raw_data = res.stdout
+        except Exception:
+            pass
+
+    if raw_data:
+        try:
+            save_boxart_png(raw_data, target_path)
             return True, None
-    except Exception:
-        pass
+        except Exception:
+            try:
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                with open(target_path, "wb") as f:
+                    f.write(raw_data)
+                return True, None
+            except Exception as e:
+                return False, str(e)
 
     return False, "Download failed"
 
 
-def find_best_boxart(sys_code, clean_title, fast_only=True):
-    """Tìm ảnh bìa phù hợp nhất theo thứ tự tốc độ."""
+def find_best_boxart(sys_code, clean_title, filename="", fast_only=False):
+    """Tìm ảnh bìa phù hợp nhất theo thứ tự tốc độ:
+    1. SQLite Catalog DB: tra theo tên file ROM và tiêu đề đã làm sạch (~1ms)
+    2. Libretro CDN index cache (~2ms)
+    3. Bing Web Image Search nếu 2 nguồn trên không có (~0.5s)
+    """
+    # 1. Tra cứu Catalog DB
     try:
-        db_res = search_catalog_db(sys_code, clean_title, max_results=1)
+        db_res = search_catalog_db(sys_code, clean_title, filename=filename, max_results=1)
         if db_res and db_res[0].get("url"):
             return db_res[0]["url"], "Catalog DB"
     except Exception:
         pass
 
+    # 2. Tra cứu Libretro CDN
     try:
         lr_res = search_libretro_boxarts(sys_code, clean_title, max_results=3, allow_fetch=True)
         for it in lr_res:
@@ -389,6 +520,16 @@ def find_best_boxart(sys_code, clean_title, fast_only=True):
                 return u, it.get("type", "Libretro")
     except Exception:
         pass
+
+    # 3. Tra cứu Bing Web Image Search (fallback cho bản dịch tiếng Việt, ROM hack, homebrew)
+    if not fast_only:
+        try:
+            q = f"{clean_title} {sys_code} boxart cover"
+            web_url = search_web_bing(q)
+            if web_url:
+                return web_url, "Web Search"
+        except Exception:
+            pass
 
     return None, None
 
@@ -571,36 +712,42 @@ class BoxartScraperRunner:
             self.current_sys = sys_code
             self.status_msg = f"Đang tìm: {base_name} [{sys_code}]"
 
-        best_url, src_type = find_best_boxart(sys_code, clean_title, fast_only=True)
         success = False
+        target_img_dir = os.path.join(SDCARD_PATH, "Imgs", sys_code)
+        if rom_path:
+            parts = rom_path.replace("\\", "/").split("/")
+            if "Roms" in parts:
+                idx = parts.index("Roms")
+                if idx + 1 < len(parts):
+                    sys_folder = parts[idx + 1]
+                    candidate = os.path.join(SDCARD_PATH, "Imgs", sys_folder)
+                    if os.path.isdir(candidate) or not os.path.isdir(target_img_dir):
+                        target_img_dir = candidate
 
-        if best_url:
-            target_img_dir = os.path.join(SDCARD_PATH, "Imgs", sys_code)
-            if rom_path:
-                parts = rom_path.replace("\\", "/").split("/")
-                if "Roms" in parts:
-                    idx = parts.index("Roms")
-                    if idx + 1 < len(parts):
-                        sys_folder = parts[idx + 1]
-                        candidate = os.path.join(SDCARD_PATH, "Imgs", sys_folder)
-                        if os.path.isdir(candidate) or not os.path.isdir(target_img_dir):
-                            target_img_dir = candidate
+        os.makedirs(target_img_dir, exist_ok=True)
+        target_art = os.path.join(target_img_dir, f"{base_name}.png")
 
-            os.makedirs(target_img_dir, exist_ok=True)
-            target_art = os.path.join(target_img_dir, f"{base_name}.png")
-
-            # Xóa các file ảnh định dạng cũ
-            for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
-                old_f = os.path.join(target_img_dir, f"{base_name}{old_ext}")
-                if os.path.isfile(old_f):
-                    try:
-                        os.remove(old_f)
-                    except Exception:
-                        pass
-
-            ok, _ = download_image_to_file(best_url, target_art, timeout=10)
-            if ok:
+        # 1. Trích xuất trực tiếp icon từ file .jar nếu là game Java J2ME
+        if ((rom_path and rom_path.lower().endswith(".jar")) or sys_code.upper() == "JAVA") and rom_path:
+            if extract_jar_icon(rom_path, target_art):
                 success = True
+
+        # 2. Nếu chưa có, tìm ảnh bìa online
+        if not success:
+            best_url, src_type = find_best_boxart(sys_code, clean_title, filename=fname, fast_only=False)
+            if best_url:
+                # Xóa các file ảnh định dạng cũ
+                for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
+                    old_f = os.path.join(target_img_dir, f"{base_name}{old_ext}")
+                    if os.path.isfile(old_f):
+                        try:
+                            os.remove(old_f)
+                        except Exception:
+                            pass
+
+                ok, _ = download_image_to_file(best_url, target_art, timeout=10)
+                if ok:
+                    success = True
 
         with self._lock:
             self.completed += 1

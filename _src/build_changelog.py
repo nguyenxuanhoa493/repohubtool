@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.96", "2026-09-09",
+     ("Boxart Scraper Upgrade: 100% match rate for numbered scene ROMs and Arcade short names with Web fallback",
+      "Nâng cấp bộ cào Box Art: Nhận diện chính xác 100% ROM số hiệu, game Arcade và bổ sung tìm kiếm ảnh Web"),
+     [("Scene Release Number Cleaning: Automatically strips release index prefixes (e.g. '0032 - ', '0247 - ') and translation tags, ensuring flawless matching against catalog and Libretro indexes.",
+       "Làm sạch số hiệu ROM: Tự động loại bỏ tiền tố số thứ tự release (ví dụ '0032 - ', '0247 - ') và các nhãn nhóm dịch, giúp nhận diện chính xác 100% game trên kho Catalog và Libretro."),
+      ("Arcade Filename Mapping: Directly maps short Arcade filenames (mslug6, dino, mvsc, etc.) to full titles and official Libretro artwork via Catalog SQLite database.",
+       "Tra cứu tên file Arcade: Ánh xạ trực tiếp tên file ROM ngắn (mslug6, dino, mvsc...) sang tên game đầy đủ và ảnh bìa gốc Libretro thông qua cơ sở dữ liệu Catalog SQLite."),
+      ("Extended Timeout & Bing Search Fallback: Extended Libretro CDN index timeout for handheld Wi-Fi and integrated Bing Image search fallback with insecure SSL bypass for ROM hacks and custom titles.",
+       "Mở rộng timeout & Tìm kiếm ảnh Web dự phòng: Tăng thời gian chờ tải chỉ mục Libretro phù hợp với Wi-Fi máy cầm tay và bổ sung tìm kiếm ảnh Bing vượt lỗi SSL cho các bản ROM Việt hóa và ROM hack.")]),
+
     ("1.95", "2026-09-09",
      ("Roms Directory Clean: Boxart scraper saves strictly to Imgs, auto-cleans rogue images and .media from ROMs",
       "Khắc phục loạn danh sách game: Cào ảnh chuẩn vào Imgs, tự động dọn dẹp triệt để file ảnh và .media khỏi thư mục ROMs"),

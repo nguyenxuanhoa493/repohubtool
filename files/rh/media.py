@@ -4,8 +4,21 @@
 import os
 import subprocess
 
-import sdl2
-import sdl2.sdlimage as sdlimage
+try:
+    import sdl2
+    import sdl2.sdlimage as sdlimage
+except ImportError:
+    import sys
+    _app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _vendor = os.path.join(_app_dir, "vendor")
+    if os.path.isdir(_vendor) and _vendor not in sys.path:
+        sys.path.insert(0, _vendor)
+    try:
+        import sdl2
+        import sdl2.sdlimage as sdlimage
+    except Exception:
+        sdl2 = None
+        sdlimage = None
 
 from .paths import TEMP_DOWNLOAD_DIR
 
@@ -54,16 +67,20 @@ def save_boxart_png(raw, target_png):
         gm_bin = "/mnt/SDCARD/System/bin/gm"
         if os.path.exists(gm_bin):
             cmd = ('export LD_LIBRARY_PATH=/mnt/SDCARD/System/lib:$LD_LIBRARY_PATH; '
-                   '"%s" convert "%s[0]" "%s"' % (gm_bin, tmp_img, target_png))
+                   '"%s" convert "%s[0]" "%s" 2>/dev/null' % (gm_bin, tmp_img, target_png))
             if subprocess.call(cmd, shell=True) == 0 and os.path.exists(target_png) and os.path.getsize(target_png) > 100:
                 return True
 
-        surf = sdlimage.IMG_Load(tmp_img.encode('utf-8'))
-        if surf:
-            sdlimage.IMG_SavePNG(surf, target_png.encode('utf-8'))
-            sdl2.SDL_FreeSurface(surf)
-            if os.path.exists(target_png) and os.path.getsize(target_png) > 100:
-                return True
+        if sdlimage and sdl2:
+            try:
+                surf = sdlimage.IMG_Load(tmp_img.encode('utf-8'))
+                if surf:
+                    sdlimage.IMG_SavePNG(surf, target_png.encode('utf-8'))
+                    sdl2.SDL_FreeSurface(surf)
+                    if os.path.exists(target_png) and os.path.getsize(target_png) > 100:
+                        return True
+            except Exception:
+                pass
 
         # Last resort: keep the raw bytes under the .png name. SDL_image sniffs content,
         # so RetroHub's own grid still renders it even if the stock browser will not.
