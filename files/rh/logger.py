@@ -179,7 +179,7 @@ def log(msg, level="INFO"):
     """Ghi một dòng nhật ký vào file và bộ nhớ đệm RAM nếu chức năng ghi log đang BẬT."""
     try:
         from . import state
-        if not getattr(state, "enable_logging", True):
+        if not getattr(state, "enable_logging", False):
             return
     except Exception:
         pass
