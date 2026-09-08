@@ -1,12 +1,12 @@
 {
-  "version": "1.91",
+  "version": "1.92",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-08T18:10:00+0700",
+  "built": "2026-09-09T00:45:50+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu",
-    "en": "Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback"
+    "vi": "Tiện ích & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
+    "en": "Utilities & Web: Save Backup/Restore, Libretro Cheats, Boxart Scraper, and Telegram Diagnostics with Device ID"
   },
   "remove": [
     "app.pyc",
@@ -17,7 +17,9 @@
     "rh/arcade_routing.pyc",
     "rh/archive.pyc",
     "rh/boxart.pyc",
+    "rh/boxart_scraper.pyc",
     "rh/catalog.pyc",
+    "rh/cheat_manager.pyc",
     "rh/corepicker.pyc",
     "rh/downloader.pyc",
     "rh/emulators.pyc",
@@ -30,10 +32,12 @@
     "rh/leddaemon.pyc",
     "rh/ledfx.pyc",
     "rh/ledthemes.pyc",
+    "rh/logger.pyc",
     "rh/media.pyc",
     "rh/neterrors.pyc",
     "rh/paths.pyc",
     "rh/romfiles.pyc",
+    "rh/save_manager.pyc",
     "rh/services.pyc",
     "rh/splash.pyc",
     "rh/state.pyc",
@@ -195,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 311022,
-      "sha256": "4c0264d03b12a88c86af664f638063b3aaf5c627c5f0f2fd5cad128d8c0572c7"
+      "size": 337468,
+      "sha256": "148ccb186e846a3b38f12082731c26f24c12051212df36707e13002f4d264b54"
     },
     {
       "path": "assets/fallback.ttf",
@@ -350,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 136431,
-      "sha256": "5b674a7c3ac4b76ac8a1b961268ae3e66ee9fa5bdc1468476363462b93ed6950"
+      "size": 168931,
+      "sha256": "0896120974a04c0bbbcc12075cc3ad151ebdad30fc4df035ad136a668ba8002c"
     },
     {
       "path": "icon.png",
@@ -394,9 +398,19 @@
       "sha256": "8c56849409a2a36c1c5265bf682a4cb1e3beb6d3c5d59823b501e2c3c9c9fd78"
     },
     {
+      "path": "rh/boxart_scraper.py",
+      "size": 18891,
+      "sha256": "fca6fa9642139f480d9eacd83c07fc7d754d7b7a0534842cd1201f9506eec274"
+    },
+    {
       "path": "rh/catalog.py",
       "size": 11250,
       "sha256": "9c7362350a53be0aba37f69ce6af4efa82b1c3f0756ee1cabf210a5c1b0a87fb"
+    },
+    {
+      "path": "rh/cheat_manager.py",
+      "size": 9515,
+      "sha256": "315d894ebc2f093f23d237d53769463620b7d2bf69a2b6015aa60dd7e0705040"
     },
     {
       "path": "rh/corepicker.py",
@@ -420,8 +434,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 37772,
-      "sha256": "8af93b4ad23abb6d1b3254df4e1410e071091971bd436d1da9218146b76b38b0"
+      "size": 42696,
+      "sha256": "d658fa3c207871b3ea5514d986c6d3a467b89fbb0cb3d7f5caec30891b1befc7"
     },
     {
       "path": "rh/j2me.py",
@@ -459,6 +473,11 @@
       "sha256": "dc12665aeaf8a26f69f472fcb43fcb0cd841a9a3e4e0f6bb78dee0d18e84d239"
     },
     {
+      "path": "rh/logger.py",
+      "size": 13879,
+      "sha256": "2f358d7d6cea0dd23407129b3cddee8a343c3410e240de5db77ba04fdfef8154"
+    },
+    {
       "path": "rh/media.py",
       "size": 2721,
       "sha256": "6905dfa352f22d714b6eb160b129e5e5229f97c37d4299da443c2e5b55e3c9b3"
@@ -479,6 +498,11 @@
       "sha256": "ae5b2cc187056e96c225144499ac675f2a2a77f25c8b5e35dd504d2f2a55c1f4"
     },
     {
+      "path": "rh/save_manager.py",
+      "size": 10676,
+      "sha256": "48c8517ca4cbe6b465c5ab8c4ffa506440ab7a4384c04ce1cd0eef4e82d3e45a"
+    },
+    {
       "path": "rh/services.py",
       "size": 11136,
       "sha256": "b9a810c74c072c8d9292155e924de4bff8c317d5e4d548d093fa8cb1503c0de4"
@@ -490,8 +514,8 @@
     },
     {
       "path": "rh/state.py",
-      "size": 4343,
-      "sha256": "7a35ef70574c0d5fb1550d2c2b12ff250b59b3e0933b6135f48f8672e03198db"
+      "size": 4878,
+      "sha256": "7287c36f544b90fbe3b297a964d8e8fbe5fa0898a35833d78e3321ea75a377a1"
     },
     {
       "path": "rh/storage.py",
@@ -511,7 +535,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "5971100c28dd38e6109a5e3bd3e6e1bce7725d9111fe4c7786b64c608313cf1d"
+      "sha256": "075cb10e6e2f56a915ac8ec8f71ea9c8a8e4ac4a5e0607309fae256c93a32eb8"
     },
     {
       "path": "rh/yt.py",

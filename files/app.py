@@ -124,6 +124,12 @@ from rh.catalog import (VALID_EXTS, alpha_index, get_java_category_list,
 from rh.downloader import (cancel_active_download, clear_download_queue, dl_state,
     download_state_for, enqueue_download, pop_notification, queued_items,
     start_next_queued)
+from rh.boxart_scraper import scraper_runner, scan_missing_boxarts, count_missing_boxarts
+from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
+    list_save_backups, restore_save_backup, delete_save_backup)
+from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner
+from rh.logger import (init_logger, log_info, log_error, upload_log_to_telegram,
+    generate_debug_report, LOG_FILE, clear_log, get_log_size_str, get_device_id)
 
 # Range-resume budget for a single part of a parallel download.
 
@@ -363,6 +369,7 @@ def auto_check_and_supplement_environment():
 # MAIN GUI
 # ==============================================================================
 def main():
+    init_logger()
     sdl2.SDL_SetHint(b"SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", b"1")
     sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK | sdl2.SDL_INIT_GAMECONTROLLER)
     sdlttf.TTF_Init()
@@ -1052,6 +1059,10 @@ def main():
     # (code, label, right_text); "current" is the value shown with a filled dot.
     pick_modal = {"active": False, "title": "", "rows": [], "selected_idx": 0,
                   "target": "", "current": ""}
+    scrape_modal = {"active": False}
+    cheat_modal = {"active": False}
+    save_modal = {"active": False, "mode": "menu", "selected_idx": 0, "backups": [], "confirm_restore": None}
+    send_log_modal = {"active": False, "status": "idle", "msg": "", "in_progress": False}
     img_texture_cache = {}
     missing_img_cache = set()
     MAX_IMG_CACHE = 80
@@ -1787,6 +1798,27 @@ def main():
         elif current_screen == "utilities":
             header_title = tr("util_title")
             items.append({"id": "nav_splash", "title": tr("util_item_splash")})
+
+            # Cào Box Art tự động (Boxart Scraper)
+            if scraper_runner.is_running():
+                scrape_badge = f"{scraper_runner.progress_pct}%"
+            else:
+                m_cnt = count_missing_boxarts()
+                scrape_badge = f"{m_cnt} GAME" if m_cnt > 0 else tr("have_badge")
+            items.append({"id": "nav_auto_scrape", "title": tr("util_auto_scrape"), "label": scrape_badge})
+            
+            # Sao lưu & Khôi phục Save Game
+            save_st = get_saves_stats()
+            save_badge = f"{save_st['total_files']} FILE" if save_st['total_files'] > 0 else tr("have_badge")
+            items.append({"id": "nav_save_manager", "title": tr("util_save_manager"), "label": save_badge})
+
+            # Tải kho Cheat Code Libretro
+            if cheat_runner.is_running():
+                cheat_badge = f"{cheat_runner.progress_pct}%"
+            else:
+                c_st = get_cheats_status()
+                cheat_badge = f"{c_st['count']} CHT" if c_st["installed"] else tr("cheat_not_installed_badge")
+            items.append({"id": "nav_cheats", "title": tr("util_cheat_title"), "label": cheat_badge})
             
             is_j2me_installed = is_j2me_runtime_ready()
             j2me_label = "ĐÃ CÓ" if is_j2me_installed else "TỰ CÀI"
@@ -1935,6 +1967,15 @@ def main():
                           "label": tr("lang_badge"), "is_lang": True})
             items.append({"id": "toggle_autoupdate", "title": tr("set_autoupdate"),
                           "type": "toggle", "state": state.auto_update})
+            items.append({"id": "toggle_logging", "title": tr("set_logging"),
+                          "type": "toggle", "state": state.enable_logging})
+            if state.enable_logging:
+                log_sz = get_log_size_str()
+                items.append({"id": "action_clear_log", "title": tr("set_clear_log"),
+                              "label": log_sz})
+                dev_id = getattr(state, "device_id", "") or get_device_id()
+                items.append({"id": "nav_send_log", "title": tr("set_send_log"),
+                              "label": dev_id})
             # Read-only: the quickest way to confirm an update actually landed.
             items.append({"id": "app_version", "title": tr("set_version"),
                           "label": tr("upd_checking") if update_modal["checking"]
@@ -2619,6 +2660,112 @@ def main():
                     if start_next_queued():
                         toast_msg = tr("dl_queue_next")
                         toast_timer = time.time()
+        elif scrape_modal["active"]:
+            if scraper_runner.is_running():
+                if btn_b or btn_x:
+                    scraper_runner.request_stop()
+                    toast_msg = "Đang dừng cào ảnh..."
+                    toast_timer = time.time()
+            else:
+                if btn_a or btn_b or btn_start or btn_x or btn_y:
+                    scrape_modal["active"] = False
+                    downloaded_games_list = scan_all_downloaded_games()
+                    rom_games_items_cache = None
+                    toast_msg = tr("scrape_done_toast")
+                    toast_timer = time.time()
+        elif cheat_modal["active"]:
+            if cheat_runner.is_running():
+                if btn_b or btn_x:
+                    cheat_runner.request_stop()
+                    toast_msg = "Đang dừng tải Cheat Code..."
+                    toast_timer = time.time()
+            else:
+                if btn_a or btn_b or btn_start or btn_x or btn_y:
+                    cheat_modal["active"] = False
+        elif save_modal["active"]:
+            if save_modal["mode"] == "menu":
+                if btn_up:
+                    save_modal["selected_idx"] = (save_modal["selected_idx"] - 1) % 2
+                elif btn_down:
+                    save_modal["selected_idx"] = (save_modal["selected_idx"] + 1) % 2
+                elif btn_b:
+                    save_modal["active"] = False
+                elif btn_a:
+                    if save_modal["selected_idx"] == 0:
+                        # Tao ban sao luu moi
+                        ok, zip_p, st = create_save_backup()
+                        if ok:
+                            toast_msg = tr("save_backup_success")
+                            save_modal["active"] = False
+                        else:
+                            toast_msg = zip_p
+                        toast_timer = time.time()
+                    else:
+                        # Xem danh sach ban sao luu
+                        b_list = list_save_backups()
+                        if not b_list:
+                            toast_msg = tr("save_no_backups")
+                            toast_timer = time.time()
+                        else:
+                            save_modal["backups"] = b_list
+                            save_modal["mode"] = "list"
+                            save_modal["selected_idx"] = 0
+            elif save_modal["mode"] == "list":
+                nb = len(save_modal["backups"])
+                if nb > 0:
+                    if btn_up:
+                        save_modal["selected_idx"] = (save_modal["selected_idx"] - 1) % nb
+                    elif btn_down:
+                        save_modal["selected_idx"] = (save_modal["selected_idx"] + 1) % nb
+                    elif btn_a:
+                        # Khoi phuc ban sao luu da chon
+                        sel_b = save_modal["backups"][save_modal["selected_idx"]]
+                        ok, r_cnt, err = restore_save_backup(sel_b["filepath"])
+                        if ok:
+                            toast_msg = f"{tr('save_restore_success')} ({r_cnt} files)"
+                            save_modal["active"] = False
+                        else:
+                            toast_msg = err
+                        toast_timer = time.time()
+                    elif btn_x:
+                        # Xoa ban sao luu
+                        sel_b = save_modal["backups"][save_modal["selected_idx"]]
+                        delete_save_backup(sel_b["filepath"])
+                        save_modal["backups"] = list_save_backups()
+                        if not save_modal["backups"]:
+                            save_modal["mode"] = "menu"
+                            save_modal["selected_idx"] = 0
+                        else:
+                            save_modal["selected_idx"] = min(save_modal["selected_idx"], len(save_modal["backups"]) - 1)
+                        toast_msg = "Đã xóa bản sao lưu!"
+                        toast_timer = time.time()
+                if btn_b:
+                    save_modal["mode"] = "menu"
+                    save_modal["selected_idx"] = 1
+        elif send_log_modal["active"]:
+            if send_log_modal["status"] == "idle":
+                if btn_b:
+                    send_log_modal["active"] = False
+                elif btn_a:
+                    send_log_modal["status"] = "uploading"
+                    send_log_modal["in_progress"] = True
+                    send_log_modal["msg"] = tr("log_sending")
+
+                    def _do_send_log():
+                        ok, res = upload_log_to_telegram(note="Gửi từ máy cầm tay TrimUI")
+                        send_log_modal["in_progress"] = False
+                        if ok:
+                            send_log_modal["status"] = "done"
+                            send_log_modal["msg"] = tr("log_success")
+                        else:
+                            send_log_modal["status"] = "error"
+                            send_log_modal["msg"] = str(res)
+
+                    t = threading.Thread(target=_do_send_log, daemon=True)
+                    t.start()
+            elif send_log_modal["status"] in ("done", "error"):
+                if btn_a or btn_b or btn_start or btn_x or btn_y:
+                    send_log_modal["active"] = False
         elif qr_modal["active"]:
             _np = len(qr_modal["pages"])
             if (btn_l1 or btn_left) and _np > 1:
@@ -3739,10 +3886,46 @@ def main():
                 elif item_id == "toggle_autoupdate":
                     state.auto_update = not state.auto_update
                     state.save_settings()
+                elif item_id == "toggle_logging":
+                    state.enable_logging = not state.enable_logging
+                    state.save_settings()
+                    toast_msg = tr("log_logging_on") if state.enable_logging else tr("log_logging_off")
+                    toast_timer = time.time()
+                elif item_id == "action_clear_log":
+                    clear_log()
+                    toast_msg = tr("log_cleared_toast")
+                    toast_timer = time.time()
                 elif item_id == "nav_splash":
                     splash_images_list = scan_splash_images()
                     selected_indices["splash_manager"] = 0
                     screen_stack.append("splash_manager")
+                elif item_id == "nav_auto_scrape":
+                    if scraper_runner.is_running():
+                        scrape_modal["active"] = True
+                    else:
+                        missing = scan_missing_boxarts()
+                        if not missing:
+                            toast_msg = tr("scrape_no_missing")
+                            toast_timer = time.time()
+                        else:
+                            scraper_runner.start(missing)
+                            scrape_modal["active"] = True
+                elif item_id == "nav_save_manager":
+                    save_modal["active"] = True
+                    save_modal["mode"] = "menu"
+                    save_modal["selected_idx"] = 0
+                    save_modal["confirm_restore"] = None
+                elif item_id == "nav_cheats":
+                    if cheat_runner.is_running():
+                        cheat_modal["active"] = True
+                    else:
+                        cheat_runner.start()
+                        cheat_modal["active"] = True
+                elif item_id == "nav_send_log":
+                    send_log_modal["active"] = True
+                    send_log_modal["status"] = "idle"
+                    send_log_modal["msg"] = ""
+                    send_log_modal["in_progress"] = False
                 elif current_screen == "splash_preview":
                     ok, msg = apply_splash_update(SPLASH_TEMP_PREVIEW)
                     toast_msg = msg
@@ -5219,7 +5402,304 @@ def main():
                 draw_text(f"[B] {tr('act_close_title').capitalize()}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
-        # 5.2. QR MODAL (donation transfer details, chat group invite)
+        # 5.1. AUTO SCRAPE BOXARTS MODAL
+        # ----------------------------------------------------------------------
+        elif scrape_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            mw = min(920, state.SCREEN_W - 60)
+            mh = 400
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header band
+            fill_rect(mx + 3, my + 3, mw - 6, 68, 24, 34, 58, 255)
+            draw_text(tr("scrape_modal_title"), font_item, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+
+            tot = scraper_runner.total
+            comp = scraper_runner.completed
+            succ = scraper_runner.success_count
+            pct = scraper_runner.progress_pct
+
+            if state.current_lang == "VI":
+                info_line = f"Tiến độ: [{comp}/{tot}]   |   Thành công: {succ} ảnh   |   4 luồng song song"
+            else:
+                info_line = f"Progress: [{comp}/{tot}]   |   Success: {succ} arts   |   4 concurrent workers"
+            draw_text(info_line, font_sub, mx + 45, my + 105, 255, 215, 0)
+
+            # Progress bar track
+            pb_x = mx + 45
+            pb_y = my + 145
+            pb_w = mw - 90
+            pb_h = 36
+            fill_rect(pb_x, pb_y, pb_w, pb_h, 24, 34, 56, 255)
+            draw_rect(pb_x, pb_y, pb_w, pb_h, 60, 85, 130, 255, thickness=1)
+            fill_w = int(pb_w * (pct / 100.0))
+            if fill_w > 0:
+                fill_rect(pb_x + 2, pb_y + 2, fill_w - 4, pb_h - 4, 0, 230, 150, 255)
+
+            draw_text(f"{pct}%", font_badge, pb_x + pb_w // 2, pb_y + pb_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            # Current status text
+            cur_t = scraper_runner.current_title
+            cur_s = scraper_runner.current_sys
+            if scraper_runner.is_running() and cur_t:
+                status_txt = f"Đang cào: [{cur_s}] {cur_t}"
+            else:
+                status_txt = scraper_runner.status_msg
+
+            lines = wrap_text_to_width(status_txt, font_sub, mw - 90, max_lines=2)
+            line_y = my + 210
+            for l in lines:
+                draw_text(l, font_sub, mx + 45, line_y, 220, 230, 245)
+                line_y += 32
+
+            # Action button
+            btn_w = 260
+            btn_h = 52
+            bx = mx + (mw - btn_w) // 2
+            by = my + mh - 75
+
+            if scraper_runner.is_running():
+                fill_rect(bx, by, btn_w, btn_h, 160, 45, 45, 255)
+                draw_rect(bx, by, btn_w, btn_h, 255, 80, 80, 255, thickness=2)
+                draw_text(f"[B] {tr('scrape_btn_stop')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            else:
+                fill_rect(bx, by, btn_w, btn_h, 0, 180, 110, 255)
+                draw_rect(bx, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
+                draw_text(f"[A] {tr('scrape_btn_close')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.2. SAVE GAME BACKUP & RESTORE MODAL
+        # ----------------------------------------------------------------------
+        elif save_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            mw = min(920, state.SCREEN_W - 60)
+            mh = 420
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header band
+            fill_rect(mx + 3, my + 3, mw - 6, 68, 24, 34, 58, 255)
+            draw_text(tr("save_menu_title"), font_item, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+
+            if save_modal["mode"] == "menu":
+                save_st = get_saves_stats()
+                tot_f = save_st["total_files"]
+                tot_mb = save_st["total_bytes"] / (1024 * 1024)
+                sub_info = f"Tìm thấy {tot_f} file save ({tot_mb:.2f} MB) trên thẻ nhớ" if state.current_lang == "VI" else f"Found {tot_f} save files ({tot_mb:.2f} MB) on SD card"
+                draw_text(sub_info, font_sub, mx + 45, my + 95, 255, 215, 0)
+
+                opts = [
+                    (tr("save_item_backup_now"), "Nén toàn bộ save (.srm, .state) thành 1 file ZIP an toàn" if state.current_lang == "VI" else "Compress all saves & states into a safe timestamped ZIP"),
+                    (tr("save_item_list"), "Xem lại các bản sao lưu đã tạo, ngày giờ & khôi phục" if state.current_lang == "VI" else "View existing backup archives, dates & restore")
+                ]
+
+                opt_y = my + 135
+                for idx, (title_t, desc_t) in enumerate(opts):
+                    is_sel = (save_modal["selected_idx"] == idx)
+                    card_w = mw - 90
+                    card_h = 76
+                    if is_sel:
+                        fill_rect(mx + 45, opt_y, card_w, card_h, 30, 65, 110, 255)
+                        draw_rect(mx + 45, opt_y, card_w, card_h, 0, 246, 246, 255, thickness=2)
+                        draw_text(f">  {title_t}", font_item, mx + 65, opt_y + 24, 0, 246, 246)
+                    else:
+                        fill_rect(mx + 45, opt_y, card_w, card_h, 22, 32, 52, 255)
+                        draw_rect(mx + 45, opt_y, card_w, card_h, 50, 70, 105, 255, thickness=1)
+                        draw_text(f"   {title_t}", font_item, mx + 65, opt_y + 24, 210, 220, 240)
+                    draw_text(desc_t, font_sub, mx + 85, opt_y + 54, 160, 180, 210)
+                    opt_y += 88
+
+                draw_text("[A] Chọn    |    [B] Đóng", font_badge, mx + mw // 2, my + mh - 35, 255, 255, 255, center_x=True, center_y=True)
+
+            elif save_modal["mode"] == "list":
+                backups = save_modal.get("backups", [])
+                draw_text(f"Danh sách bản sao lưu ({len(backups)} bản):", font_sub, mx + 45, my + 95, 255, 215, 0)
+
+                list_y = my + 130
+                sel_idx = save_modal.get("selected_idx", 0)
+                card_w = mw - 90
+                card_h = 60
+
+                visible_backups = backups[:3]
+                for idx, b in enumerate(visible_backups):
+                    is_sel = (sel_idx == idx)
+                    mb_size = b["size"] / (1024 * 1024)
+                    size_txt = f"{mb_size:.2f} MB" if mb_size >= 1.0 else f"{b['size']/1024:.1f} KB"
+                    if is_sel:
+                        fill_rect(mx + 45, list_y, card_w, card_h, 30, 65, 110, 255)
+                        draw_rect(mx + 45, list_y, card_w, card_h, 0, 246, 246, 255, thickness=2)
+                        draw_text(f"> {b['filename']}", font_badge, mx + 65, list_y + 20, 0, 246, 246)
+                    else:
+                        fill_rect(mx + 45, list_y, card_w, card_h, 22, 32, 52, 255)
+                        draw_rect(mx + 45, list_y, card_w, card_h, 50, 70, 105, 255, thickness=1)
+                        draw_text(f"  {b['filename']}", font_badge, mx + 65, list_y + 20, 210, 220, 240)
+                    info_t = f"{b['date_str']}   |   {b['file_count']} files   |   {size_txt}"
+                    draw_text(info_t, font_sub, mx + 85, list_y + 44, 160, 180, 210)
+                    list_y += 70
+
+                draw_text("[A] Khôi phục    |    [X] Xóa bản này    |    [B] Quay lại", font_badge, mx + mw // 2, my + mh - 35, 255, 255, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.3. LIBRETRO CHEATS DOWNLOADER MODAL
+        # ----------------------------------------------------------------------
+        elif cheat_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            mw = min(920, state.SCREEN_W - 60)
+            mh = 420
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header band
+            fill_rect(mx + 3, my + 3, mw - 6, 68, 24, 34, 58, 255)
+            draw_text(tr("cheat_modal_title"), font_item, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+
+            c_st = cheat_runner.get_state()
+            pct = c_st["progress_pct"]
+
+            if c_st["running"]:
+                if c_st["phase"] == "downloading":
+                    speed_kbs = c_st["speed_bps"] / 1024
+                    info_line = f"Đang tải: {pct}%   |   Tốc độ: {speed_kbs:.0f} KB/s   |   Dung lượng: ~37 MB" if state.current_lang == "VI" else f"Downloading: {pct}%   |   Speed: {speed_kbs:.0f} KB/s   |   Size: ~37 MB"
+                else:
+                    info_line = f"Đang giải nén: {c_st['extracted_count']} mã Cheat vào RetroArch..." if state.current_lang == "VI" else f"Extracting: {c_st['extracted_count']} cheats into RetroArch..."
+            else:
+                info_line = f"Tổng số Cheat hiện có trong máy: {count_cheats()} file .cht" if state.current_lang == "VI" else f"Total Cheats installed on device: {count_cheats()} .cht files"
+
+            draw_text(info_line, font_sub, mx + 45, my + 105, 255, 215, 0)
+
+            # Progress bar
+            pb_x = mx + 45
+            pb_y = my + 145
+            pb_w = mw - 90
+            pb_h = 36
+            fill_rect(pb_x, pb_y, pb_w, pb_h, 24, 34, 56, 255)
+            draw_rect(pb_x, pb_y, pb_w, pb_h, 60, 85, 130, 255, thickness=1)
+            fill_w = int(pb_w * (pct / 100.0))
+            if fill_w > 0:
+                fill_rect(pb_x + 2, pb_y + 2, fill_w - 4, pb_h - 4, 0, 230, 150, 255)
+            draw_text(f"{pct}%", font_badge, pb_x + pb_w // 2, pb_y + pb_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            # Status and guide text
+            status_txt = c_st["status_msg"] or "Sẵn sàng"
+            draw_text(status_txt, font_sub, mx + 45, my + 205, 0, 246, 246)
+
+            draw_text(tr("cheat_guide_line1"), font_sub, mx + 45, my + 245, 210, 220, 240)
+            draw_text(tr("cheat_guide_line2"), font_sub, mx + 45, my + 278, 170, 190, 220)
+
+            # Action button
+            btn_w = 260
+            btn_h = 52
+            bx = mx + (mw - btn_w) // 2
+            by = my + mh - 75
+
+            if cheat_runner.is_running():
+                fill_rect(bx, by, btn_w, btn_h, 160, 45, 45, 255)
+                draw_rect(bx, by, btn_w, btn_h, 255, 80, 80, 255, thickness=2)
+                draw_text(f"[B] {tr('cheat_btn_stop')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            else:
+                fill_rect(bx, by, btn_w, btn_h, 0, 180, 110, 255)
+                draw_rect(bx, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
+                draw_text(f"[A] {tr('cheat_btn_close')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.4. SEND DIAGNOSTIC LOG TO TELEGRAM MODAL
+        # ----------------------------------------------------------------------
+        elif send_log_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+
+            mw = min(920, state.SCREEN_W - 60)
+            mh = 420
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 34, 158, 217, 255, thickness=3)
+
+            # Header band
+            fill_rect(mx + 3, my + 3, mw - 6, 68, 24, 34, 58, 255)
+            draw_text(tr("log_modal_title"), font_item, mx + mw // 2, my + 36, 34, 158, 217, center_x=True, center_y=True)
+
+            status = send_log_modal.get("status", "idle")
+            dev_id = getattr(state, "device_id", "") or get_device_id()
+
+            if status == "idle":
+                # Badge mã máy
+                fill_rect(mx + 45, my + 85, mw - 90, 42, 24, 40, 65, 255)
+                draw_rect(mx + 45, my + 85, mw - 90, 42, 0, 200, 255, 255, thickness=1)
+                draw_text(f"MÃ THIẾT BỊ (DEVICE ID):  {dev_id}", font_badge, mx + mw // 2, my + 106, 0, 246, 246, center_x=True, center_y=True)
+
+                draw_text(tr("log_modal_desc1"), font_sub, mx + 45, my + 142, 255, 215, 0)
+                draw_text(tr("log_modal_desc2"), font_sub, mx + 45, my + 172, 210, 220, 240)
+                draw_text(f"• File log: {LOG_FILE} ({get_log_size_str()})", font_sub, mx + 45, my + 207, 170, 190, 220)
+                draw_text("• Báo cáo hệ thống: /mnt/SDCARD/RetroHub_Debug_Report.txt", font_sub, mx + 45, my + 237, 170, 190, 220)
+                draw_text(tr("log_saved_sd"), font_sub, mx + 45, my + 267, 100, 220, 150)
+
+                # Nút [A] Gửi Log  |  [B] Đóng
+                btn_w = 260
+                btn_h = 52
+                bx1 = mx + (mw - (btn_w * 2 + 30)) // 2
+                bx2 = bx1 + btn_w + 30
+                by = my + mh - 75
+
+                fill_rect(bx1, by, btn_w, btn_h, 34, 158, 217, 255)
+                draw_rect(bx1, by, btn_w, btn_h, 100, 200, 255, 255, thickness=2)
+                draw_text(f"[A] {tr('log_btn_send')}", font_badge, bx1 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                fill_rect(bx2, by, btn_w, btn_h, 50, 60, 80, 255)
+                draw_rect(bx2, by, btn_w, btn_h, 120, 140, 170, 255, thickness=2)
+                draw_text(f"[B] {tr('act_close_title').capitalize()}", font_badge, bx2 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            elif status == "uploading":
+                draw_text(tr("log_sending"), font_item, mx + mw // 2, my + 140, 34, 158, 217, center_x=True, center_y=True)
+                draw_text(f"Mã thiết bị: {dev_id}", font_badge, mx + mw // 2, my + 185, 0, 246, 246, center_x=True, center_y=True)
+                draw_text("Vui lòng đợi vài giây... Quá trình đang diễn ra ngầm." if state.current_lang == "VI" else "Please wait a moment... Uploading in background.", font_sub, mx + mw // 2, my + 225, 200, 210, 230, center_x=True, center_y=True)
+
+            elif status == "done":
+                fill_rect(mx + 45, my + 110, mw - 90, 150, 20, 45, 35, 255)
+                draw_rect(mx + 45, my + 110, mw - 90, 150, 0, 230, 130, 255, thickness=2)
+                draw_text("✔ GỬI NHẬT KÝ THÀNH CÔNG!", font_item, mx + mw // 2, my + 150, 0, 246, 160, center_x=True, center_y=True)
+                draw_text(send_log_modal.get("msg") or tr("log_success"), font_sub, mx + mw // 2, my + 195, 220, 240, 220, center_x=True, center_y=True)
+                draw_text(tr("log_saved_sd"), font_sub, mx + mw // 2, my + 230, 160, 210, 180, center_x=True, center_y=True)
+
+                btn_w = 260
+                btn_h = 52
+                bx = mx + (mw - btn_w) // 2
+                by = my + mh - 75
+                fill_rect(bx, by, btn_w, btn_h, 0, 160, 100, 255)
+                draw_rect(bx, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
+                draw_text(f"[A/B] {tr('scrape_btn_close')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            elif status == "error":
+                fill_rect(mx + 45, my + 110, mw - 90, 150, 50, 25, 25, 255)
+                draw_rect(mx + 45, my + 110, mw - 90, 150, 240, 70, 70, 255, thickness=2)
+                draw_text("✖ KHÔNG THỂ GỬI LOG!", font_item, mx + mw // 2, my + 150, 255, 100, 100, center_x=True, center_y=True)
+                err_msg = send_log_modal.get("msg") or "Lỗi kết nối mạng"
+                draw_text(err_msg, font_sub, mx + mw // 2, my + 195, 240, 180, 180, center_x=True, center_y=True)
+                draw_text(tr("log_saved_sd"), font_sub, mx + mw // 2, my + 230, 220, 200, 160, center_x=True, center_y=True)
+
+                btn_w = 260
+                btn_h = 52
+                bx = mx + (mw - btn_w) // 2
+                by = my + mh - 75
+                fill_rect(bx, by, btn_w, btn_h, 160, 45, 45, 255)
+                draw_rect(bx, by, btn_w, btn_h, 255, 80, 80, 255, thickness=2)
+                draw_text(f"[A/B] {tr('scrape_btn_close')}", font_badge, bx + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 5.5. QR MODAL (donation transfer details, chat group invite)
         # ----------------------------------------------------------------------
         elif qr_modal["active"]:
             fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 225)

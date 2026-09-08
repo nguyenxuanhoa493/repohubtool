@@ -36,7 +36,12 @@ catalog_sha = ""
 # restart, doc va xoa o lan khoi dong ke tiep - khong the hien ngay vi
 # request_restart() ket thuc vong lap chinh chi mot nhip sau do.
 pending_catalog_notice = ""
+# Cho phep ghi nhat ky he thong
+enable_logging = True
+# Random Device ID duy nhat cho tung may (vi du: RH-8D3F)
+device_id = ""
 
+_needs_save_id = False
 if os.path.exists(SETTINGS_FILE):
     try:
         with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
@@ -45,6 +50,8 @@ if os.path.exists(SETTINGS_FILE):
             downloaded_view_mode = cfg.get("view_mode", "grid")
             wifi_awake = cfg.get("wifi_awake", False)
             auto_update = cfg.get("auto_update", True)
+            enable_logging = cfg.get("enable_logging", True)
+            device_id = cfg.get("device_id", "")
             skipped_versions = cfg.get("skipped_versions", []) or []
             update_url = cfg.get("update_url", "") or ""
             pending_update = cfg.get("pending_update", "") or ""
@@ -53,6 +60,12 @@ if os.path.exists(SETTINGS_FILE):
     except:
         current_lang = "EN"
         downloaded_view_mode = "grid"
+
+if not device_id:
+    import random
+    device_id = f"RH-{''.join(random.choices('0123456789ABCDEF', k=4))}"
+    _needs_save_id = True
+
 _save_lock = threading.Lock()
 
 
@@ -72,6 +85,8 @@ def save_settings():
                     "view_mode": downloaded_view_mode,
                     "wifi_awake": wifi_awake,
                     "auto_update": auto_update,
+                    "enable_logging": enable_logging,
+                    "device_id": device_id,
                     "skipped_versions": skipped_versions,
                     "update_url": update_url,
                     "pending_update": pending_update,
@@ -83,6 +98,9 @@ def save_settings():
             os.replace(tmp, SETTINGS_FILE)
         except OSError as e:
             print(f"Error saving settings: {e}")
+
+if _needs_save_id:
+    save_settings()
 # Load ROM Catalogs (5,833+ Games)
 catalogs = {}
 if os.path.exists(CATALOG_FILE):
