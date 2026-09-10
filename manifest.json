@@ -1,12 +1,12 @@
 {
-  "version": "1.99",
+  "version": "2.00",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-10T23:11:55+0700",
+  "built": "2026-09-11T00:23:34+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "C\u00e0i \u0111\u1eb7t profile ph\u00edm m\u1eb7c \u0111\u1ecbnh Java Nokia (N), b\u1ea3o to\u00e0n 100% save game khi n\u00e2ng c\u1ea5p v\u00e0 kh\u00f4i ph\u1ee5c keymap g\u1ed1c",
-    "en": "Java default Nokia (N) keypad profile, 100% safe save persistence across updates, and authentic keymap"
+    "vi": "Game Java J2ME: S\u1eeda l\u1ed7i s\u1eadp khi m\u1edf game do c\u1ea5u h\u00ecnh ph\u00edm & ch\u1ed1ng l\u1ed7i cache khi c\u1eadp nh\u1eadt OTA",
+    "en": "Java J2ME: Fix launch crash from keymap syntax & OTA updater CDN cache bypass"
   },
   "remove": [
     "app.pyc",
@@ -170,8 +170,8 @@
       {
         "path": "zulu17/bin/keymap.cfg",
         "url": "files/emus/JAVA/zulu17/bin/keymap.cfg",
-        "size": 123,
-        "sha256": "46325f3e1e8ffc2e5854c4217a2486f691f082b10f1dcfb91061e41df46dbfe1"
+        "size": 148,
+        "sha256": "b379574b43dc6b6c6c4c64cda60e63d702692de9d87c931ee3ab49d20190d25c"
       },
       {
         "path": "zulu17/bin/sdl_interface",
@@ -295,8 +295,8 @@
     },
     {
       "path": "emus/JAVA/zulu17/bin/keymap.cfg",
-      "size": 123,
-      "sha256": "46325f3e1e8ffc2e5854c4217a2486f691f082b10f1dcfb91061e41df46dbfe1"
+      "size": 148,
+      "sha256": "b379574b43dc6b6c6c4c64cda60e63d702692de9d87c931ee3ab49d20190d25c"
     },
     {
       "path": "emus/JAVA/zulu17/bin/sdl_interface",
@@ -440,8 +440,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 39335,
-      "sha256": "ff247140cf73ce5f6c70e15b47151f80d7eb7c1d8fdba62e2902f6464b0d104c"
+      "size": 39571,
+      "sha256": "02e5a7813db14fd099763bc4fe6f3ab55b7cfd582cd3f0e1839b2d6407e35407"
     },
     {
       "path": "rh/led.py",
@@ -530,13 +530,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 23321,
-      "sha256": "91026dafab1d06c0d2e3e3f31420641e2d15258747f3573b424c0dff7ccfeabb"
+      "size": 24533,
+      "sha256": "980a8b14a45e417e9b3c50ce3b198acceea6b76d5d7c3d14213781e6fea62561"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "27acdd80f6e2529c77c43d007090b5581f8b61c08450cae20ac032c2a89b3ae2"
+      "sha256": "1327134985324bc5e4c3b7ca25331b0df5fcee7a9b8d4b259018f29b292fb237"
     },
     {
       "path": "rh/yt.py",

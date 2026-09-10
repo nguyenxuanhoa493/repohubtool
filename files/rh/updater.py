@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 import ssl
+import time
 import urllib.error
 import urllib.request
 
@@ -90,7 +91,12 @@ def base_url():
 
 
 def _get(url, max_bytes):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    headers = {
+        "User-Agent": UA,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+    }
+    req = urllib.request.Request(url, headers=headers)
     ctx = ssl._create_unverified_context()
     with urllib.request.urlopen(req, context=ctx, timeout=TIMEOUT) as resp:
         data = resp.read(max_bytes + 1)
@@ -126,7 +132,8 @@ def sha256_of(path):
 def fetch_manifest():
     """Download and validate the published manifest. None when unavailable."""
     try:
-        raw = _get(base_url() + "/manifest.json", MAX_MANIFEST_BYTES)
+        manifest_url = "%s/manifest.json?_t=%d" % (base_url(), int(time.time()))
+        raw = _get(manifest_url, MAX_MANIFEST_BYTES)
         m = json.loads(raw.decode("utf-8"))
     except (urllib.error.URLError, OSError, ValueError, UnicodeDecodeError) as e:
         print("Update check failed: %s" % e)
@@ -274,8 +281,19 @@ def download_runtime(pending, progress=None):
         for i, f in enumerate(pending, 1):
             if progress:
                 progress(i, len(pending), f["path"])
-            blob = _get("%s/%s" % (base_url(), f["url"]), MAX_RUNTIME_BYTES)
-            if hashlib.sha256(blob).hexdigest() != f["sha256"]:
+            url = "%s/%s" % (base_url(), f["url"])
+            blob = None
+            for attempt in range(2):
+                try:
+                    fetch_url = url if attempt == 0 else ("%s?_t=%d" % (url, int(time.time())))
+                    blob = _get(fetch_url, MAX_RUNTIME_BYTES)
+                    if hashlib.sha256(blob).hexdigest() == f["sha256"]:
+                        break
+                except Exception:
+                    if attempt == 1:
+                        raise
+                time.sleep(1)
+            if not blob or hashlib.sha256(blob).hexdigest() != f["sha256"]:
                 raise RuntimeUpdateError(RUNTIME_BAD_HASH, f["path"])
             dst = os.path.join(RUNTIME_STAGING_DIR, f["path"])
             os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -372,11 +390,19 @@ def download_catalog(manifest, free_space=None, on_phase=None):
         gz_path = os.path.join(CATALOG_STAGING_DIR, "catalog.gz")
         out_path = os.path.join(CATALOG_STAGING_DIR, "catalog.sqlite3")
 
-        # _get nhan tran qua tham so, nen MAX_FILE_BYTES 32 MB chi rang buoc
-        # duong "files" chu khong rang buoc ham. 9,6 MB nam gon trong RAM cua
-        # may, doi lai khong phai viet rieng mot duong tai theo dong.
-        blob = _get("%s/%s" % (base_url(), c["url"]), MAX_CATALOG_BYTES)
-        if hashlib.sha256(blob).hexdigest() != c["sha256"]:
+        cat_url = "%s/%s" % (base_url(), c["url"])
+        blob = None
+        for attempt in range(2):
+            try:
+                fetch_url = cat_url if attempt == 0 else ("%s?_t=%d" % (cat_url, int(time.time())))
+                blob = _get(fetch_url, MAX_CATALOG_BYTES)
+                if hashlib.sha256(blob).hexdigest() == c["sha256"]:
+                    break
+            except Exception:
+                if attempt == 1:
+                    raise
+            time.sleep(1)
+        if not blob or hashlib.sha256(blob).hexdigest() != c["sha256"]:
             raise CatalogError(CATALOG_BAD_HASH, "ban nen")
         with open(gz_path, "wb") as f:
             f.write(blob)
@@ -488,12 +514,19 @@ def _stage_files(manifest, files, progress=None):
         if progress:
             progress(i, total, f["path"])
         url = "%s/files/%s" % (base_url(), f["path"])
-        try:
-            data = _get(url, MAX_FILE_BYTES)
-        except (urllib.error.URLError, OSError, ValueError) as e:
-            print("Update download failed for %s: %s" % (f["path"], e))
-            return False
-        if hashlib.sha256(data).hexdigest() != f["sha256"]:
+        data = None
+        for attempt in range(2):
+            try:
+                fetch_url = url if attempt == 0 else ("%s?_t=%d" % (url, int(time.time())))
+                data = _get(fetch_url, MAX_FILE_BYTES)
+                if hashlib.sha256(data).hexdigest() == f["sha256"]:
+                    break
+            except (urllib.error.URLError, OSError, ValueError) as e:
+                if attempt == 1:
+                    print("Update download failed for %s: %s" % (f["path"], e))
+                    return False
+            time.sleep(1)
+        if not data or hashlib.sha256(data).hexdigest() != f["sha256"]:
             print("Update hash mismatch for %s" % f["path"])
             return False
         dst = os.path.join(STAGING_DIR, f["path"])
