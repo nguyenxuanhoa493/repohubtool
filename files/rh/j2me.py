@@ -266,6 +266,10 @@ def sync_bundled_runtime_files():
                 try:
                     if os.path.getsize(src) != os.path.getsize(dst):
                         should_copy = True
+                    elif os.path.getsize(src) < 65536:
+                        with open(src, "rb") as f1, open(dst, "rb") as f2:
+                            if f1.read() != f2.read():
+                                should_copy = True
                 except OSError:
                     should_copy = True
             if should_copy:

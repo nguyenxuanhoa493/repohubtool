@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.00", "2026-09-11",
+     ("Java J2ME: Fix launch crash from keymap syntax & OTA updater CDN cache bypass",
+      "Game Java J2ME: Sửa lỗi sập khi mở game do cấu hình phím & chống lỗi cache khi cập nhật OTA"),
+     [("Fix Java Launch Crash: restored authentic Chinese softkey bindings ('左键'/'右键') in keymap.cfg alongside 'ML'/'MR'. Eliminates segmentation faults inside sdl_interface binary on startup and guarantees 100% launch stability.",
+       "Sửa triệt để lỗi sập khi mở game Java: khôi phục đầy đủ định danh phím softkey gốc ('左键'/'右键') trong keymap.cfg song song với 'ML'/'MR'. Khắc phục lỗi segmentation fault trong binary sdl_interface khi khởi động, đảm bảo mở game 100% ổn định."),
+      ("Automated Keymap & Runtime Sync: improved sync_bundled_runtime_files() to verify exact content hashes of configuration files against bundled versions, immediately repairing keymap.cfg upon app update without touching user RMS saves.",
+       "Tự động đồng bộ chuẩn hóa Keymap: nâng cấp cơ chế sync_bundled_runtime_files() so khớp nội dung tệp cấu hình với bản đóng gói, tự động sửa chữa keymap.cfg ngay khi cập nhật ứng dụng mà không ảnh hưởng tới dữ liệu save game RMS."),
+      ("OTA Updater CDN Cache-Buster & Auto-Retry: added anti-cache HTTP headers and timestamped cache-busting queries with automatic 1-second retry on hash mismatch, completely resolving update failure errors caused by stale GitHub CDN caches.",
+       "Chống cache CDN & Tự thử lại khi cập nhật OTA: bổ sung header chống cache HTTP và tham số thời gian thực bypass CDN Fastly/GitHub, tự động thử lại khi lệch mã băm hash, giải quyết dứt điểm lỗi báo 'cập nhật thất bại' do nhận file cache cũ.")]),
+
     ("1.99", "2026-09-10",
      ("Java J2ME: Default Nokia (N) keypad profile setting, 100% safe save persistence across updates, and restore original keymap",
       "Game Java J2ME: Thêm cài đặt phím mặc định Nokia (N), bảo toàn 100% save game khi nâng cấp và khôi phục keymap gốc"),
