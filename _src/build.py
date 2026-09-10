@@ -48,8 +48,10 @@ VERSION = _published_version()
 FULL_VERSION = _full_release_version()
 VER_FULL = "RetroHub-%s-full.zip" % FULL_VERSION
 VER_NEXTUI = "RetroHub-%s-NextUI.zip" % FULL_VERSION
+VER_SD_FULL = "trimui_brick_pro_tg4040_sd_base_20260824_retrohub_v1.97.zip"
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
        % FULL_VERSION)
+SD_FULL_URL = f"{REL}/{VER_SD_FULL}"
 
 # slug -> (title, description) per language. The slug is also the screenshot
 # filename, looked up under shots/<lang>/.
@@ -119,9 +121,9 @@ T = {
   "dl_trimui_sub": "95 MB · Java emulator included",
   "dl_nextui": "Download for NextUI (Pak)",
   "dl_nextui_sub": "192 MB · Ready for NextUI",
-  "dl_sd": "Stock ROMs + emulators",
-  "dl_sd_sub": "SD base package · by DTH-RetroHandheld",
-  "sd_url": "https://github.com/DTH-RetroHandheld/assets_brickpro/releases",
+  "dl_sd": "Full Package (Stock ROM + RetroHub)",
+  "dl_sd_sub": "1.05 GB · Pre-configured SD base ready to play",
+  "sd_url": SD_FULL_URL,
   "h_feat": "Highlights", "h_install": "How to install & update", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
   "steps": [
@@ -136,6 +138,8 @@ T = {
   "card_nextui_t": "NextUI (Tool Pak)",
   "card_nextui_s": "192 MB",
   "card_nextui_p": "Specially packaged Tool Pak for NextUI on TrimUI handhelds (tg5040 & tg5050). Unpack and copy the Tools folder directly to the root of your SD card.",
+  "nav_guide": "Beginner guide", "guide_url": "/guide/",
+  "btn_guide": "Beginner guide", "btn_guide_sub": "Full ROM & App setup from A to Z",
   "nav_java": "Java guide", "java_url": "/java/",
   "nav_changelog": "Changelog", "changelog_url": "/changelog/",
   "java_guide": ('Playing Java games? There is a separate guide for that: '
@@ -170,9 +174,9 @@ T = {
   "dl_trimui_sub": "95 MB · Kèm giả lập Java",
   "dl_nextui": "Tải bản NextUI (Pak)",
   "dl_nextui_sub": "192 MB · Dành riêng cho NextUI",
-  "dl_sd": "ROM stock + full giả lập",
-  "dl_sd_sub": "Bộ thẻ SD nền · của DTH-RetroHandheld",
-  "sd_url": "https://github.com/DTH-RetroHandheld/assets_brickpro/releases",
+  "dl_sd": "Bản Full (ROM + Giả lập + RetroHub)",
+  "dl_sd_sub": "1.05 GB · Trọn bộ thẻ nhớ cài sẵn chơi ngay",
+  "sd_url": SD_FULL_URL,
   "h_feat": "Tính năng nổi bật", "h_install": "Cách cài & cập nhật", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
   "steps": [
@@ -187,6 +191,8 @@ T = {
   "card_nextui_t": "Bản cho NextUI (Tool Pak)",
   "card_nextui_s": "192 MB",
   "card_nextui_p": "Gói ứng dụng Tool Pak đóng gói sẵn cho NextUI (tg5040 & tg5050). Giải nén và chép thư mục Tools trực tiếp vào thư mục gốc thẻ nhớ.",
+  "nav_guide": "Hướng dẫn người mới", "guide_url": "/vi/guide/",
+  "btn_guide": "Hướng dẫn người mới", "btn_guide_sub": "Cài ROM full & App từ A-Z",
   "nav_java": "Hướng dẫn JAVA", "java_url": "/vi/java/",
   "nav_changelog": "Nhật ký", "changelog_url": "/vi/changelog/",
   "java_guide": ('Định chơi game Java? Có hướng dẫn riêng: '
@@ -566,6 +572,7 @@ PAGE = """<!doctype html>
       <a class="btn" href="{REL}/{VER_FULL}">{dl_trimui}<small>{dl_trimui_sub}</small></a>
       <a class="btn" href="{REL}/{VER_NEXTUI}">{dl_nextui}<small>{dl_nextui_sub}</small></a>
       <a class="btn alt" href="{sd_url}">{dl_sd}<small>{dl_sd_sub}</small></a>
+      <a class="btn ghost" href="{guide_url}">{btn_guide}<small>{btn_guide_sub}</small></a>
     </div>
     <p class="dlcount" id="dlcount" hidden>{SVG_DL}<b>0</b><span>{dls}</span></p>
   </div>
@@ -664,10 +671,11 @@ PAGE = """<!doctype html>
 
 
 def navlinks_for(lang, page="home"):
-    """Top navigation menu shared across all pages: RetroHub | Java guide | Changelog."""
+    """Top navigation menu shared across all pages: RetroHub | Setup guide | Java guide | Changelog."""
     t = T[lang]
     links = [
         ("home", t["home"], t["nav_home"]),
+        ("guide", t["guide_url"], t["nav_guide"]),
         ("java", t["java_url"], t["nav_java"]),
         ("changelog", t["changelog_url"], t["nav_changelog"]),
     ]
