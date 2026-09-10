@@ -19,11 +19,7 @@ from build import (
 )
 
 SECTIONS = [
-    ("tong-quan", "Overview", "Tổng quan"),
-    ("buoc-1", "1. Download Full", "1. Tải bản Full"),
-    ("buoc-2", "2. Format exFAT", "2. Format thẻ"),
-    ("buoc-3", "3. Copy to SD", "3. Chép thẻ nhớ"),
-    ("buoc-4", "4. Done & Play", "4. Xong (Done!)"),
+    ("quy-trinh", "3-Step Setup", "Quy trình 3 bước"),
     ("cai-le", "Existing SD card?", "Dành cho thẻ cũ"),
     ("faq", "FAQ & Help", "Hỏi đáp & Lỗi"),
 ]
@@ -44,7 +40,6 @@ EXTRA_CSS = """
     transition:border-color .15s,color .15s,background .15s}
   .toc-nav a:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
 
-  .stepper{display:grid;gap:36px;margin:32px 0 0}
   .step-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;position:relative}
   .step-hdr{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
   .step-badge{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#0a8f96,#00f6f6);
@@ -58,16 +53,6 @@ EXTRA_CSS = """
 
   .step-desc{color:var(--muted);font-size:.96rem;line-height:1.65;margin:0 0 20px}
   .step-desc b{color:var(--text)}
-  .step-ol{padding-left:22px;margin:16px 0;color:var(--muted)}
-  .step-ol li{margin:10px 0;line-height:1.6}
-  .step-ol li b{color:var(--text)}
-
-  .tree-box{background:#070d18;border:1px solid var(--line);border-radius:12px;padding:18px 22px;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.87rem;
-    color:#d1e3f8;line-height:1.75;overflow-x:auto;margin:18px 0}
-  .tree-box .folder{color:var(--accent);font-weight:bold}
-  .tree-box .comment{color:#6b82a6;font-style:italic}
-  .tree-box .highlight{color:var(--gold);font-weight:bold}
 
   .callout{border-radius:12px;padding:16px 20px;margin:18px 0;font-size:.93rem;line-height:1.6}
   .callout.warn{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.35);color:#fca5a5}
@@ -77,15 +62,25 @@ EXTRA_CSS = """
   .callout.success{background:rgba(61,220,151,.08);border:1px solid rgba(61,220,151,.35);color:#c0f2dc}
   .callout.success b{color:var(--green)}
 
-  .choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin:22px 0}
-  .choice-card{background:#0d1629;border:1px solid var(--line);border-radius:14px;padding:22px;
+  .choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:20px;margin:22px 0}
+  .choice-card{background:#0d1629;border:1px solid var(--line);border-radius:14px;padding:24px;
     display:flex;flex-direction:column;transition:border-color .18s,transform .18s}
   .choice-card:hover{border-color:var(--accent-dim);transform:translateY(-2px)}
   .choice-card.highlight{border-color:rgba(0,246,246,.4)}
-  .choice-card h4{margin:0 0 6px;font-size:1.15rem;color:var(--text)}
-  .choice-card .subtag{font-size:.82rem;color:var(--gold);font-weight:600;margin-bottom:12px}
-  .choice-card p{color:var(--muted);font-size:.92rem;line-height:1.55;margin:0 0 18px;flex:1}
-  .choice-card .btn{display:block}
+  .choice-card h4{margin:0 0 10px;font-size:1.2rem;color:var(--text);letter-spacing:-.2px}
+  .choice-card .subtag{display:inline-block;font-size:.78rem;color:var(--accent);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .choice-card .subtag.gold{color:var(--gold)}
+  .choice-card .subtag.green{color:var(--green)}
+  .choice-card p{color:var(--muted);font-size:.93rem;line-height:1.6;margin:0 0 16px;flex:1}
+  .choice-card p b{color:var(--text)}
+  .choice-card .card-tip{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;font-size:.85rem;color:var(--muted);margin-top:auto;line-height:1.5}
+  .choice-card .card-tip b{color:var(--text)}
+  .choice-card .card-tip.warn{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);color:#fca5a5}
+  .choice-card .card-tip.warn b{color:#ff6b6b}
+  .choice-card .card-tip.success{background:rgba(61,220,151,.08);border:1px solid rgba(61,220,151,.25);color:#c0f2dc}
+  .choice-card .card-tip.success b{color:var(--green)}
+  .choice-card .card-tip.tip{background:rgba(0,246,246,.08);border:1px solid rgba(0,246,246,.25);color:#c4f4f4}
+  .choice-card .card-tip.tip b{color:var(--accent)}
 
   .faq-list{list-style:none;padding:0;margin:0;display:grid;gap:14px}
   .faq-item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px}
@@ -113,8 +108,8 @@ T = {
         "keywords": "cài retrohub, hướng dẫn trimui, cài rom trimui brick, sd base package trimui, retrohub cho người mới, rom full trimui, crossmix",
         "og_desc": "Hướng dẫn siêu tốc cho người mới: Tải bản Full tích hợp -> Format thẻ nhớ exFAT -> Chép sang thẻ -> Done!",
         "badge": "HƯỚNG DẪN SIÊU TỐC CHO NGƯỜI MỚI (ALL-IN-ONE)",
-        "h1": "Cài đặt thẻ nhớ hoàn chỉnh từ A đến Z",
-        "sub": "Chỉ đúng 3 bước: Tải gói Full tích hợp sẵn → Format thẻ nhớ exFAT → Chép vào thẻ nhớ là XONG (Done). Tích hợp sẵn ROM gốc, full giả lập, Java J2ME và RetroHub v1.97 mới nhất!",
+        "h1": "Quy trình 3 bước cho người mới",
+        "sub": "Đúng 3 thao tác đơn giản: Tải gói Full tích hợp → Format thẻ nhớ exFAT → Chép vào thẻ là XONG (Done). Đã có sẵn ROM gốc, full giả lập, Java J2ME và RetroHub v1.97 mới nhất!",
         "meta_time_k": "Thời gian thực hiện", "meta_time_v": "Khoảng 5 – 10 phút cực nhanh",
         "meta_sd_k": "Thẻ nhớ khuyến nghị", "meta_sd_v": "64GB – 256GB chính hãng (chuẩn exFAT)",
         "meta_os_k": "Thiết bị hỗ trợ", "meta_os_v": "TrimUI Brick, Brick Pro, Smart Pro",
@@ -132,7 +127,7 @@ T = {
         "keywords": "install retrohub, trimui beginner guide, trimui brick setup, sd base package, full rom trimui, retrohub all in one",
         "og_desc": "Superfast 3-step guide: Download full all-in-one package -> Format SD card as exFAT -> Copy to card -> Done!",
         "badge": "STREAMLINED BEGINNER SETUP GUIDE (ALL-IN-ONE)",
-        "h1": "Complete SD Card Setup From A to Z",
+        "h1": "3-Step Setup for Beginners",
         "sub": "Just 3 simple steps: Download All-in-One Package → Format SD as exFAT → Copy to SD Card → DONE! Pre-configured with stock ROM, full emulators, Java J2ME, and latest RetroHub v1.97.",
         "meta_time_k": "Estimated Time", "meta_time_v": "About 5 – 10 minutes",
         "meta_sd_k": "Recommended Card", "meta_sd_v": "64GB – 256GB genuine card (exFAT format)",
@@ -199,7 +194,7 @@ PAGE = """<!doctype html>
 
     <div class="cta">
       <a class="btn" href="{SD_FULL_URL}">{cta_main}</a>
-      <a class="btn alt" href="#buoc-1">{cta_start}</a>
+      <a class="btn alt" href="#quy-trinh">{cta_start}</a>
       <a class="btn ghost" href="#cai-le">{cta_alone}</a>
     </div>
 
@@ -247,493 +242,249 @@ PAGE = """<!doctype html>
 
 def render_content_vi():
     return f"""
-  <!-- SECTION: TỔNG QUAN -->
-  <section id="tong-quan" class="rise">
+  <!-- SECTION: QUY TRÌNH 3 BƯỚC SIÊU TỐC -->
+  <section id="quy-trinh" class="rise">
     <h2>Quy trình 3 bước siêu tốc cho người mới</h2>
     <div class="step-box">
-      <p class="step-desc" style="font-size:1.02rem;margin-bottom:16px">
-        Bạn mới mua máy TrimUI hoặc có thẻ nhớ trắng tinh và không biết bắt đầu từ đâu? <b>Không cần tải lắt nhắt 2-3 phần mềm riêng</b>, toàn bộ hệ điều hành, giả lập và RetroHub đã được gom thành <b>1 file ZIP duy nhất</b>:
+      <p class="step-desc" style="font-size:1.02rem;margin-bottom:20px">
+        Bạn mới mua máy TrimUI hoặc có thẻ nhớ trắng tinh và không biết bắt đầu từ đâu? <b>Không cần tải lắt nhắt nhiều phần mềm riêng</b>, toàn bộ hệ điều hành, giả lập và RetroHub đã được gom thành <b>1 file ZIP duy nhất</b>:
       </p>
       <div class="choice-grid">
         <div class="choice-card highlight">
           <span class="subtag">BƯỚC 1</span>
           <h4>1. Tải bản Full All-in-One</h4>
-          <p>Tải 1 gói ZIP hoàn chỉnh duy nhất (1.05 GB) tích hợp sẵn: ROM gốc, BIOS, core RetroArch, giả lập Java J2ME, Sega CD và RetroHub v{VERSION} mới nhất.</p>
-          <a class="btn" href="#buoc-1">Xem Bước 1 →</a>
+          <p>Tải 1 gói ZIP hoàn chỉnh duy nhất (1.05 GB) chứa trọn bộ: ROM nền hệ máy, BIOS, core RetroArch, giả lập Java J2ME, Sega CD và ứng dụng <b>RetroHub v{VERSION}</b> mới nhất.</p>
+          <div style="margin-bottom:14px">
+            <a class="btn" style="display:block;padding:12px 16px;font-size:.92rem" href="{SD_FULL_URL}">
+              Tải bản Full (1.05 GB) ⤓
+            </a>
+          </div>
+          <div class="card-tip tip">
+            <b>Đã tích hợp sẵn:</b> SD base tg4040, giả lập Java J2ME, 40.000 game catalog, tải trực tiếp từ GitHub Releases.
+          </div>
         </div>
+
         <div class="choice-card highlight">
-          <span class="subtag">BƯỚC 2</span>
+          <span class="subtag gold">BƯỚC 2</span>
           <h4>2. Format thẻ nhớ exFAT</h4>
-          <p>Định dạng thẻ nhớ MicroSD (64GB – 256GB) sang chuẩn <b>exFAT</b> chỉ trong 10 giây trên máy tính Windows hoặc macOS. Tuyệt đối không dùng FAT32.</p>
-          <a class="btn alt" href="#buoc-2">Xem Bước 2 →</a>
+          <p>Chuẩn bị thẻ nhớ MicroSD (64GB – 256GB). Cắm thẻ vào máy tính và định dạng sang chuẩn <b>exFAT</b>:
+            <br>• <b>Windows:</b> Chuột phải ổ thẻ nhớ → Chọn <i>Format...</i> → File system: <b>exFAT</b> → Bấm <i>Start</i>.
+            <br>• <b>macOS:</b> Mở <i>Disk Utility</i> → Chọn thẻ nhớ → Bấm <i>Erase</i> → Format: <b>ExFAT</b>.
+          </p>
+          <div class="card-tip warn">
+            <b>Bắt buộc chọn exFAT:</b> Tuyệt đối không dùng FAT32 để tránh lỗi không nhận thẻ và treo logo TrimUI lúc khởi động.
+          </div>
         </div>
+
         <div class="choice-card highlight">
-          <span class="subtag">BƯỚC 3</span>
+          <span class="subtag green">BƯỚC 3</span>
           <h4>3. Chép vào thẻ nhớ & Done!</h4>
-          <p>Giải nén file zip và copy toàn bộ các thư mục bên trong dán thẳng vào thẻ nhớ. Cắm vào máy cầm tay là máy sẵn sàng chiến game ngay lập tức!</p>
-          <a class="btn alt" href="#buoc-3">Xem Bước 3 →</a>
+          <p>Dùng 7-Zip hoặc WinRAR giải nén file ZIP vừa tải ở Bước 1. Copy toàn bộ các thư mục bên trong (<code>Apps</code>, <code>Emus</code>, <code>RetroArch</code>, <code>Roms</code>, <code>System</code>,...) dán thẳng vào thư mục gốc của thẻ nhớ SD.</p>
+          <div class="card-tip success">
+            <b>Xong (Done!):</b> Cắm thẻ vào máy TrimUI, bật nguồn là sẵn sàng chơi ngay! Vào <b>Apps → RetroHub</b> để tải thêm game qua Wi-Fi.
+          </div>
         </div>
       </div>
-      <div class="callout success">
+
+      <div class="callout success" style="margin-top:24px">
         <b>Đặc quyền tự động hoá:</b> Bạn chỉ cần làm qua máy tính đúng <b>một lần duy nhất</b> này. Từ nay về sau, khi có game mới hay tính năng mới, RetroHub tự động cập nhật online qua Wi-Fi ngay trên máy mà không bao giờ cần rút thẻ nhớ nữa!
       </div>
     </div>
   </section>
 
-  <div class="stepper">
-    <!-- STEP 1: DOWNLOAD FULL -->
-    <section id="buoc-1" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge">01</div>
-        <div class="step-titles">
-          <span class="tag">BƯỚC 1 TRONG 3</span>
-          <h3>Tải Gói Cài Đặt Full All-in-One (1.05 GB)</h3>
-        </div>
+  <!-- OPTIONAL: EXISTING SD CARD -->
+  <section id="cai-le" class="step-box rise" style="margin-top:36px">
+    <div class="step-hdr">
+      <div class="step-badge alt">+</div>
+      <div class="step-titles">
+        <span class="tag">TÙY CHỌN DÀNH CHO THẺ NHỚ CŨ</span>
+        <h3>Đã có sẵn thẻ nhớ? Chỉ cài lẻ RetroHub</h3>
+      </div>
+    </div>
+
+    <p class="step-desc">
+      Nếu máy bạn đã có sẵn thẻ nhớ đang dùng ổn định và bạn <b>chỉ muốn cài thêm ứng dụng RetroHub</b> mà không muốn format hay cài lại từ đầu:
+    </p>
+
+    <div class="choice-grid">
+      <div class="choice-card highlight">
+        <span class="subtag">TRIMUI HỆ GỐC & CROSSMIX</span>
+        <h4>Bản cho TrimUI (Stock OS)</h4>
+        <p>Giải nén và chép thư mục <code>RetroHub</code> vào <code>/Apps/</code> trên thẻ nhớ. Mở Apps → RetroHub.</p>
+        <a class="btn" href="{REL}/{VER_FULL}">Tải {VER_FULL} <small>95 MB · Kèm giả lập Java</small></a>
       </div>
 
-      <p class="step-desc">
-        Gói <b>Full All-in-One</b> đã tích hợp trọn gói: Bộ thẻ SD nền stock từ <b>DTH-RetroHandheld</b>, toàn bộ BIOS các hệ máy, core RetroArch tối ưu, giả lập Java J2ME (trong <code>Emus/JAVA/</code>), giả lập Sega CD và ứng dụng <b>RetroHub v{VERSION} mới nhất</b>.
-      </p>
-
-      <div class="action-row" style="margin-bottom:16px">
-        <a class="btn" href="{SD_FULL_URL}">
-          Tải Gói Full Tích Hợp Sẵn ({VER_SD_FULL}) <small>Dung lượng: 1.05 GB · Link GitHub Releases trực tiếp</small>
-        </a>
+      <div class="choice-card">
+        <span class="subtag">HỆ ĐIỀU HÀNH NEXTUI</span>
+        <h4>Bản cho NextUI (Tool Pak)</h4>
+        <p>Giải nén và chép thư mục <code>Tools</code> vào thư mục gốc của thẻ nhớ. Mở Tools → RetroHub.</p>
+        <a class="btn" href="{REL}/{VER_NEXTUI}">Tải {VER_NEXTUI} <small>192 MB · Chuẩn NextUI Pak</small></a>
       </div>
+    </div>
+  </section>
 
-      <div class="callout tip">
-        <b>Gói cài đặt này đã có sẵn những gì?</b>
-        <ul>
-          <li><b>Toàn bộ nhân giả lập:</b> Arcade, CPS1/2/3, FC/NES, SFC/SNES, GBA, GBC, GB, NDS, PS1, PSP, N64, MAME, Pico-8...</li>
-          <li><b>Giả lập Java J2ME:</b> Đã cài đặt sẵn trong <code>Emus/JAVA/</code> (kèm OpenJDK 17 và FreeJ2ME tinh chỉnh nút bấm).</li>
-          <li><b>Ứng dụng RetroHub v{VERSION}:</b> Kho gần 40.000 game, tự cào ảnh Box Art chuẩn, truyền file qua Wi-Fi (SFTP & Web Manager), tải cheat code...</li>
-          <li><b>Tiện ích hỗ trợ:</b> PortMaster, Reboot, File Manager từ CrossMix-OS.</li>
-        </ul>
+  <!-- FAQ -->
+  <section id="faq" class="step-box rise" style="margin-top:36px">
+    <div class="step-hdr">
+      <div class="step-badge alt">?</div>
+      <div class="step-titles">
+        <span class="tag">GIẢI ĐÁP THẮC MẮC</span>
+        <h3>Câu Hỏi Thường Gặp & Xử Lý Sự Cố</h3>
       </div>
-    </section>
+    </div>
 
-    <!-- STEP 2: FORMAT EXFAT -->
-    <section id="buoc-2" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge alt">02</div>
-        <div class="step-titles">
-          <span class="tag">BƯỚC 2 TRONG 3</span>
-          <h3>Format Thẻ Nhớ Sang Chuẩn exFAT</h3>
-        </div>
+    <ul class="faq-list">
+      <li class="faq-item">
+        <b>Tôi cắm thẻ vào máy nhưng bị treo ở logo TrimUI lúc khởi động?</b>
+        <p>Lỗi này 100% là do thẻ nhớ chưa được format chuẩn <b>exFAT</b> hoặc dùng thẻ nhớ kém chất lượng. Hãy format lại thẻ sang chuẩn exFAT (như Bước 2) và chép lại dữ liệu.</p>
+      </li>
+      <li class="faq-item">
+        <b>Bản Full này đã có sẵn game chưa hay phải tự tải?</b>
+        <p>Gói này đã cài đặt sẵn hệ thống, BIOS, core giả lập và ứng dụng RetroHub. Bạn chỉ cần mở RetroHub lên (khi có Wi-Fi) để tha hồ chọn và tải trực tiếp bất kỳ tựa game nào trong kho gần 40.000 game, hoặc dùng SFTP để chép ROM từ máy tính sang.</p>
+      </li>
+      <li class="faq-item">
+        <b>Muốn chép thêm ROM game có sẵn từ máy tính thì bỏ vào đâu?</b>
+        <p>Bỏ vào thư mục <code>/Roms/[TÊN_HỆ_MÁY]/</code> trên thẻ nhớ (ví dụ: game GBA bỏ vào <code>/Roms/GBA/</code>, PS1 bỏ vào <code>/Roms/PS/</code>). Sau đó trên màn hình máy cầm tay, bấm nút <b>Menu</b> và chọn <b>Refresh Roms</b>.</p>
+      </li>
+      <li class="faq-item">
+        <b>Sau này có bản cập nhật mới thì làm thế nào?</b>
+        <p><b>Hoàn toàn tự động!</b> Chỉ cần kết nối Wi-Fi trên máy TrimUI và mở RetroHub lên, ứng dụng sẽ báo cập nhật và tự động nâng cấp trực tiếp ngay trên máy trong vài giây.</p>
+      </li>
+    </ul>
+
+    <div class="callout tip" style="margin-top:24px">
+      <b>Cần hỗ trợ thêm hoặc giao lưu cùng cộng đồng?</b><br>
+      Tham gia nhóm Telegram cộng đồng RetroHub để được hỗ trợ giải đáp trực tiếp:
+      <div class="action-row">
+        <a class="btn" href="https://t.me/retrohubtool" target="_blank" rel="noopener noreferrer">Vào nhóm Telegram @retrohubtool</a>
+        <a class="btn ghost" href="https://t.me/xuanhoa493" target="_blank" rel="noopener noreferrer">Nhắn tin tác giả @xuanhoa493</a>
       </div>
-
-      <p class="step-desc">
-        Chuẩn bị thẻ nhớ MicroSD (khuyên dùng SanDisk, Samsung chính hãng dung lượng từ 64GB đến 256GB). Cắm thẻ nhớ vào máy tính qua đầu đọc thẻ để định dạng.
-      </p>
-
-      <div class="callout warn">
-        <b>BẮT BUỘC CHỌN ĐỊNH DẠNG exFAT — TUYỆT ĐỐI KHÔNG DÙNG FAT32:</b><br>
-        FAT32 chỉ nhận file dưới 4GB, không tương thích tốt với gói SD Base mới và rất dễ gây lỗi treo máy ở logo TrimUI lúc khởi động.
-      </div>
-
-      <ol class="step-ol">
-        <li>
-          <b>Trên máy tính Windows:</b>
-          <ul>
-            <li>Mở <code>This PC</code> → Nhấp chuột phải vào ổ đĩa thẻ nhớ SD → Chọn <b>Format...</b></li>
-            <li>Ở mục <b>File system</b>, chọn <b>exFAT</b> (Mục <i>Allocation unit size</i>: để Default).</li>
-            <li>Tích chọn <b>Quick Format</b> → Bấm nút <b>Start</b> và đợi vài giây hoàn tất.</li>
-          </ul>
-        </li>
-        <li>
-          <b>Trên máy tính macOS:</b>
-          <ul>
-            <li>Mở ứng dụng <b>Disk Utility (Tiện ích ổ đĩa)</b>.</li>
-            <li>Chọn thẻ nhớ ở thanh bên trái → Nhấp vào nút <b>Erase (Xoá)</b> ở thanh công cụ phía trên.</li>
-            <li>Ở mục <b>Format</b> chọn <b>ExFAT</b> (Scheme: Master Boot Record) → Bấm <b>Erase</b>.</li>
-          </ul>
-        </li>
-      </ol>
-    </section>
-
-    <!-- STEP 3: COPY TO SD -->
-    <section id="buoc-3" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge">03</div>
-        <div class="step-titles">
-          <span class="tag">BƯỚC 3 TRONG 3</span>
-          <h3>Giải Nén & Chép Toàn Bộ Vào Thẻ Nhớ</h3>
-        </div>
-      </div>
-
-      <p class="step-desc">
-        Dùng phần mềm <b>7-Zip</b> (trên Windows) hoặc <b>Keka / The Unarchiver</b> (trên macOS) để giải nén tệp zip vừa tải ở Bước 1.
-      </p>
-
-      <ol class="step-ol">
-        <li>Nhấp chuột phải vào file <code>{VER_SD_FULL}</code> → Chọn <b>Extract Here</b> (hoặc Giải nén tại đây).</li>
-        <li>Mở thư mục vừa giải nén ra (thư mục <code>trimui_brick_pro_tg4040_sd_base_20260824</code>), bạn sẽ thấy các thư mục: <code>Apps</code>, <code>Emus</code>, <code>RetroArch</code>, <code>Roms</code>, <code>System</code>, <code>Themes</code>...</li>
-        <li>Bôi đen chọn <b>toàn bộ các thư mục bên trong</b> đó, nhấn <b>Copy</b>.</li>
-        <li>Mở ổ đĩa thẻ nhớ SD vừa format, nhấn <b>Paste</b> thẳng vào thư mục gốc của thẻ.</li>
-      </ol>
-
-      <div class="callout tip">
-        <b>Kiểm tra cây thư mục chuẩn trên thẻ nhớ SD:</b> Mở thẻ nhớ ra, bạn phải thấy ngay các thư mục sau nằm ở cấp cao nhất của thẻ (không bị lồng trong thư mục cha nào):
-      </div>
-
-      <div class="tree-box">
-<span class="folder">Thẻ nhớ SD (Thư mục gốc SDCARD)/</span>
-├── <span class="folder">Apps/</span>
-│   ├── <span class="highlight">RetroHub/</span>    <span class="comment">← ĐÃ CÓ SẴN ỨNG DỤNG RETROHUB v{VERSION} MỚI NHẤT!</span>
-│   ├── <span class="folder">FileManager/</span>
-│   ├── <span class="folder">PortMaster/</span>
-│   └── <span class="folder">Reboot/</span>
-├── <span class="folder">Emus/</span>
-│   ├── <span class="highlight">JAVA/</span>        <span class="comment">← ĐÃ CÀI SẴN GIẢ LẬP JAVA J2ME (zulu17 + freej2me)!</span>
-│   ├── <span class="folder">GBA/</span>, <span class="folder">FC/</span>, <span class="folder">SFC/</span>, <span class="folder">PS/</span>, <span class="folder">SEGACD/</span>...
-├── <span class="folder">RetroArch/</span>       <span class="comment">← Đầy đủ nhân Core và BIOS hệ máy</span>
-├── <span class="folder">Roms/</span>            <span class="comment">← Thư mục chứa game các hệ</span>
-└── <span class="folder">System/</span>          <span class="comment">← Tệp cấu hình hệ thống TrimUI</span>
-      </div>
-    </section>
-
-    <!-- STEP 4: DONE -->
-    <section id="buoc-4" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge done">✓</div>
-        <div class="step-titles">
-          <span class="tag">HOÀN TẤT (DONE!)</span>
-          <h3>Cắm Thẻ Vào Máy & Thưởng Thức!</h3>
-        </div>
-      </div>
-
-      <p class="step-desc">
-        Chỉ với 3 bước trên, máy của bạn đã được thiết lập hoàn hảo từ A đến Z. Giờ bạn chỉ việc tận hưởng:
-      </p>
-
-      <ol class="step-ol">
-        <li><b>Lắp thẻ vào máy TrimUI:</b> Tháo an toàn thẻ nhớ khỏi máy tính, cắm vào khe cắm thẻ trên máy cầm tay và bật nguồn. Máy sẽ khởi động lên giao diện với đầy đủ icon các hệ máy!</li>
-        <li><b>Kết nối Wi-Fi trên máy:</b> Vào menu <b>Settings → Wi-Fi</b>, bật sang <b>ON</b> và kết nối với Wi-Fi nhà bạn (khuyên dùng Wi-Fi băng tần 2.4GHz để khoảng cách bắt sóng tốt nhất).</li>
-        <li><b>Mở RetroHub:</b> Vào menu <b>Apps → RetroHub</b>. Ứng dụng sẽ tự động kích hoạt chế độ cập nhật OTA, sẵn sàng cho bạn:
-          <ul>
-            <li><b>Duyệt và tải game trực tiếp:</b> Kho 40.000 game, tự động tải và cào Box Art chuẩn đẹp mắt vào máy.</li>
-            <li><b>Truyền file qua Wi-Fi (SFTP & Web Manager):</b> Bật SFTP trong Tiện ích, mở điện thoại hoặc máy tính gõ địa chỉ IP để chép ROM không dây cực nhanh.</li>
-            <li><b>Chơi game Java J2ME:</b> Giả lập đã cài sẵn, chỉ cần tải game là chơi được ngay!</li>
-            <li><b>Tự động cập nhật vĩnh viễn:</b> Mỗi khi có tính năng hay bản vá mới, RetroHub tự tải qua Wi-Fi, không bao giờ phải tháo thẻ nhớ ra nữa.</li>
-          </ul>
-        </li>
-      </ol>
-    </section>
-
-    <!-- OPTIONAL: EXISTING SD CARD -->
-    <section id="cai-le" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge alt">+</div>
-        <div class="step-titles">
-          <span class="tag">TÙY CHỌN DÀNH CHO THẺ NHỚ CŨ</span>
-          <h3>Đã có sẵn thẻ nhớ? Chỉ cài lẻ RetroHub</h3>
-        </div>
-      </div>
-
-      <p class="step-desc">
-        Nếu máy bạn đã có sẵn thẻ nhớ đang dùng ổn định và bạn <b>chỉ muốn cài thêm ứng dụng RetroHub</b> mà không muốn format hay cài lại từ đầu:
-      </p>
-
-      <div class="choice-grid">
-        <div class="choice-card highlight">
-          <span class="subtag">TRIMUI HỆ GỐC & CROSSMIX</span>
-          <h4>Bản cho TrimUI (Stock OS)</h4>
-          <p>Giải nén và chép thư mục <code>RetroHub</code> vào <code>/Apps/</code> trên thẻ nhớ. Mở Apps → RetroHub.</p>
-          <a class="btn" href="{REL}/{VER_FULL}">Tải {VER_FULL} <small>95 MB · Kèm giả lập Java</small></a>
-        </div>
-
-        <div class="choice-card">
-          <span class="subtag">HỆ ĐIỀU HÀNH NEXTUI</span>
-          <h4>Bản cho NextUI (Tool Pak)</h4>
-          <p>Giải nén và chép thư mục <code>Tools</code> vào thư mục gốc của thẻ nhớ. Mở Tools → RetroHub.</p>
-          <a class="btn" href="{REL}/{VER_NEXTUI}">Tải {VER_NEXTUI} <small>192 MB · Chuẩn NextUI Pak</small></a>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faq" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge alt">?</div>
-        <div class="step-titles">
-          <span class="tag">GIẢI ĐÁP THẮC MẮC</span>
-          <h3>Câu Hỏi Thường Gặp & Xử Lý Sự Cố</h3>
-        </div>
-      </div>
-
-      <ul class="faq-list">
-        <li class="faq-item">
-          <b>Tôi cắm thẻ vào máy nhưng bị treo ở logo TrimUI lúc khởi động?</b>
-          <p>Lỗi này 100% là do thẻ nhớ chưa được format chuẩn <b>exFAT</b> hoặc dùng thẻ nhớ kém chất lượng. Hãy format lại thẻ sang chuẩn exFAT (như Bước 2) và chép lại dữ liệu.</p>
-        </li>
-        <li class="faq-item">
-          <b>Bản Full này đã có sẵn game chưa hay phải tự tải?</b>
-          <p>Gói này đã cài đặt sẵn hệ thống, BIOS, core giả lập và ứng dụng RetroHub. Bạn chỉ cần mở RetroHub lên (khi có Wi-Fi) để tha hồ chọn và tải trực tiếp bất kỳ tựa game nào trong kho gần 40.000 game, hoặc dùng SFTP để chép ROM từ máy tính sang.</p>
-        </li>
-        <li class="faq-item">
-          <b>Muốn chép thêm ROM game có sẵn từ máy tính thì bỏ vào đâu?</b>
-          <p>Bỏ vào thư mục <code>/Roms/[TÊN_HỆ_MÁY]/</code> trên thẻ nhớ (ví dụ: game GBA bỏ vào <code>/Roms/GBA/</code>, PS1 bỏ vào <code>/Roms/PS/</code>). Sau đó trên màn hình máy cầm tay, bấm nút <b>Menu</b> và chọn <b>Refresh Roms</b>.</p>
-        </li>
-        <li class="faq-item">
-          <b>Sau này có bản cập nhật mới thì làm thế nào?</b>
-          <p><b>Hoàn toàn tự động!</b> Chỉ cần kết nối Wi-Fi trên máy TrimUI và mở RetroHub lên, ứng dụng sẽ báo cập nhật và tự động nâng cấp trực tiếp ngay trên máy trong vài giây.</p>
-        </li>
-      </ul>
-
-      <div class="callout tip" style="margin-top:24px">
-        <b>Cần hỗ trợ thêm hoặc giao lưu cùng cộng đồng?</b><br>
-        Tham gia nhóm Telegram cộng đồng RetroHub để được hỗ trợ giải đáp trực tiếp:
-        <div class="action-row">
-          <a class="btn" href="https://t.me/retrohubtool" target="_blank" rel="noopener noreferrer">Vào nhóm Telegram @retrohubtool</a>
-          <a class="btn ghost" href="https://t.me/xuanhoa493" target="_blank" rel="noopener noreferrer">Nhắn tin tác giả @xuanhoa493</a>
-        </div>
-      </div>
-    </section>
-  </div>
+    </div>
+  </section>
 """
 
 
 def render_content_en():
     return f"""
-  <!-- SECTION: OVERVIEW -->
-  <section id="tong-quan" class="rise">
+  <!-- SECTION: 3-STEP SETUP -->
+  <section id="quy-trinh" class="rise">
     <h2>Superfast 3-Step Setup for Beginners</h2>
     <div class="step-box">
-      <p class="step-desc" style="font-size:1.02rem;margin-bottom:16px">
-        Just got your TrimUI handheld or starting with a blank SD card? <b>No need to download multiple separate archives</b>. The complete system base, verified emulators, and RetroHub are bundled into <b>one single ZIP</b>:
+      <p class="step-desc" style="font-size:1.02rem;margin-bottom:20px">
+        Just got your TrimUI handheld or starting with a blank SD card? <b>No need to download multiple separate packages</b>. The complete system base, verified emulators, and RetroHub are bundled into <b>one single ZIP</b>:
       </p>
       <div class="choice-grid">
         <div class="choice-card highlight">
           <span class="subtag">STEP 1</span>
           <h4>1. Download All-in-One Package</h4>
-          <p>Download a single comprehensive ZIP (1.05 GB) containing: Stock OS skeleton, BIOS, RetroArch cores, Java J2ME, Sega CD, and latest RetroHub v{VERSION}.</p>
-          <a class="btn" href="#buoc-1">View Step 1 →</a>
+          <p>Download a single comprehensive ZIP (1.05 GB) containing: Stock OS base, full BIOS, RetroArch cores, Java J2ME, Sega CD, and latest <b>RetroHub v{VERSION}</b>.</p>
+          <div style="margin-bottom:14px">
+            <a class="btn" style="display:block;padding:12px 16px;font-size:.92rem" href="{SD_FULL_URL}">
+              Download All-in-One (1.05 GB) ⤓
+            </a>
+          </div>
+          <div class="card-tip tip">
+            <b>Pre-configured:</b> tg4040 SD base, Java J2ME runtime, 40,000 game catalog, direct GitHub Release download.
+          </div>
         </div>
+
         <div class="choice-card highlight">
-          <span class="subtag">STEP 2</span>
+          <span class="subtag gold">STEP 2</span>
           <h4>2. Format SD Card as exFAT</h4>
-          <p>Format your MicroSD card (64GB – 256GB) to <b>exFAT</b> in 10 seconds on Windows or macOS. Never use FAT32.</p>
-          <a class="btn alt" href="#buoc-2">View Step 2 →</a>
+          <p>Prepare a genuine MicroSD card (64GB – 256GB). Insert into your PC and format to <b>exFAT</b>:
+            <br>• <b>Windows:</b> Right-click SD drive → <i>Format...</i> → File system: <b>exFAT</b> → Click <i>Start</i>.
+            <br>• <b>macOS:</b> Open <i>Disk Utility</i> → Select SD → <i>Erase</i> → Format: <b>ExFAT</b>.
+          </p>
+          <div class="card-tip warn">
+            <b>Mandatory exFAT:</b> Never use FAT32 to avoid file size limits and TrimUI logo boot freeze.
+          </div>
         </div>
+
         <div class="choice-card highlight">
-          <span class="subtag">STEP 3</span>
+          <span class="subtag green">STEP 3</span>
           <h4>3. Copy to SD Card & Done!</h4>
-          <p>Extract the ZIP and copy all internal folders directly to your SD card root. Insert card into your console and enjoy gaming right away!</p>
-          <a class="btn alt" href="#buoc-3">View Step 3 →</a>
+          <p>Extract the downloaded ZIP using 7-Zip or WinRAR. Copy all internal folders (<code>Apps</code>, <code>Emus</code>, <code>RetroArch</code>, <code>Roms</code>, <code>System</code>,...) directly to the root of your SD card.</p>
+          <div class="card-tip success">
+            <b>Done & Ready:</b> Insert SD card into TrimUI, power on, and play! Open <b>Apps → RetroHub</b> to fetch games over Wi-Fi.
+          </div>
         </div>
       </div>
-      <div class="callout success">
-        <b>Automation Privilege:</b> You only need a computer <b>once</b>. From now on, whenever updates or games arrive, RetroHub self-updates over Wi-Fi on-device!
+
+      <div class="callout success" style="margin-top:24px">
+        <b>Wireless Automation:</b> You only need a computer <b>once</b>. Future updates and new game downloads are handled 100% wirelessly over Wi-Fi right on the console!
       </div>
     </div>
   </section>
 
-  <div class="stepper">
-    <!-- STEP 1: DOWNLOAD FULL -->
-    <section id="buoc-1" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge">01</div>
-        <div class="step-titles">
-          <span class="tag">STEP 1 OF 3</span>
-          <h3>Download All-in-One Full Package (1.05 GB)</h3>
-        </div>
+  <!-- OPTIONAL: EXISTING SD CARD -->
+  <section id="cai-le" class="step-box rise" style="margin-top:36px">
+    <div class="step-hdr">
+      <div class="step-badge alt">+</div>
+      <div class="step-titles">
+        <span class="tag">FOR EXISTING SD CARDS</span>
+        <h3>Already Have An SD Card? Install RetroHub Only</h3>
+      </div>
+    </div>
+
+    <p class="step-desc">
+      If you already have a working SD card with games and only want to add RetroHub without re-formatting:
+    </p>
+
+    <div class="choice-grid">
+      <div class="choice-card highlight">
+        <span class="subtag">TRIMUI STOCK OS & CROSSMIX</span>
+        <h4>TrimUI (Stock OS)</h4>
+        <p>Extract and copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card. Open Apps → RetroHub.</p>
+        <a class="btn" href="{REL}/{VER_FULL}">Download {VER_FULL} <small>95 MB · Java emulator included</small></a>
       </div>
 
-      <p class="step-desc">
-        The <b>All-in-One Package</b> contains the full SD base package from <b>DTH-RetroHandheld</b>, complete console BIOS packs, tuned RetroArch cores, pre-installed Java J2ME (in <code>Emus/JAVA/</code>), Sega CD config, and the <b>latest RetroHub v{VERSION}</b>.
-      </p>
-
-      <div class="action-row" style="margin-bottom:16px">
-        <a class="btn" href="{SD_FULL_URL}">
-          Download All-in-One Full Package ({VER_SD_FULL}) <small>Size: 1.05 GB · Direct GitHub Releases Download</small>
-        </a>
+      <div class="choice-card">
+        <span class="subtag">NEXTUI FIRMWARE</span>
+        <h4>NextUI (Tool Pak)</h4>
+        <p>Extract and copy the <code>Tools</code> folder to your SD card root. Open Tools → RetroHub.</p>
+        <a class="btn" href="{REL}/{VER_NEXTUI}">Download {VER_NEXTUI} <small>192 MB · NextUI Pak</small></a>
       </div>
+    </div>
+  </section>
 
-      <div class="callout tip">
-        <b>What is included inside this package?</b>
-        <ul>
-          <li><b>All Emulator Engines:</b> Arcade, CPS1/2/3, FC/NES, SFC/SNES, GBA, GBC, GB, NDS, PS1, PSP, N64, MAME, Pico-8...</li>
-          <li><b>Java J2ME Runtime:</b> Pre-extracted into <code>Emus/JAVA/</code> (bundled OpenJDK 17 and FreeJ2ME).</li>
-          <li><b>RetroHub App v{VERSION}:</b> 40,000 game library, auto boxart scraping, wireless Wi-Fi transfer (SFTP & Web Manager), cheats...</li>
-          <li><b>System Utilities:</b> PortMaster, Reboot, File Manager from CrossMix-OS.</li>
-        </ul>
+  <!-- FAQ -->
+  <section id="faq" class="step-box rise" style="margin-top:36px">
+    <div class="step-hdr">
+      <div class="step-badge alt">?</div>
+      <div class="step-titles">
+        <span class="tag">FREQUENTLY ASKED QUESTIONS</span>
+        <h3>Troubleshooting & Tips</h3>
       </div>
-    </section>
+    </div>
 
-    <!-- STEP 2: FORMAT EXFAT -->
-    <section id="buoc-2" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge alt">02</div>
-        <div class="step-titles">
-          <span class="tag">STEP 2 OF 3</span>
-          <h3>Format SD Card as exFAT</h3>
-        </div>
+    <ul class="faq-list">
+      <li class="faq-item">
+        <b>My device is stuck at the TrimUI logo on boot?</b>
+        <p>This is almost always caused by formatting as <b>FAT32</b> or faulty partitions. Re-format your card as <b>exFAT</b> (Step 2) and copy the files again.</p>
+      </li>
+      <li class="faq-item">
+        <b>Does this Full package include games already?</b>
+        <p>It comes with the complete system base, BIOS, emulators, and RetroHub. Connect to Wi-Fi and open RetroHub to download from the 40,000 game library directly on device, or transfer ROMs from PC via SFTP.</p>
+      </li>
+      <li class="faq-item">
+        <b>Where do I copy ROMs from my PC?</b>
+        <p>Place them into <code>/Roms/[CONSOLE]/</code> on your SD card (e.g. GBA games into <code>/Roms/GBA/</code>). On your TrimUI home screen, press <b>Menu</b> and select <b>Refresh Roms</b>.</p>
+      </li>
+      <li class="faq-item">
+        <b>How do updates work in the future?</b>
+        <p><b>100% automated!</b> Connect your console to Wi-Fi and open RetroHub. It automatically detects and installs updates on-device in seconds.</p>
+      </li>
+    </ul>
+
+    <div class="callout tip" style="margin-top:24px">
+      <b>Need help or want to join the community?</b><br>
+      Join our Telegram group for friendly support from fellow players:
+      <div class="action-row">
+        <a class="btn" href="https://t.me/retrohubtool" target="_blank" rel="noopener noreferrer">Join Telegram @retrohubtool</a>
+        <a class="btn ghost" href="https://t.me/xuanhoa493" target="_blank" rel="noopener noreferrer">Message Author @xuanhoa493</a>
       </div>
-
-      <p class="step-desc">
-        Use a reliable MicroSD card (SanDisk, Samsung genuine 64GB – 256GB). Insert into your computer via an SD card reader.
-      </p>
-
-      <div class="callout warn">
-        <b>MANDATORY: FORMAT AS exFAT — DO NOT USE FAT32:</b><br>
-        FAT32 cannot store files larger than 4GB, lacks compatibility with modern packages, and frequently causes boot freezes on TrimUI hardware.
-      </div>
-
-      <ol class="step-ol">
-        <li>
-          <b>On Windows:</b>
-          <ul>
-            <li>Open <code>This PC</code> → Right-click your SD card drive → Select <b>Format...</b></li>
-            <li>Under <b>File system</b>, choose <b>exFAT</b> (Allocation unit size: Default).</li>
-            <li>Check <b>Quick Format</b> → Click <b>Start</b> and wait a few seconds.</li>
-          </ul>
-        </li>
-        <li>
-          <b>On macOS:</b>
-          <ul>
-            <li>Open the <b>Disk Utility</b> application.</li>
-            <li>Select the SD card on the left sidebar → Click <b>Erase</b> on the top toolbar.</li>
-            <li>Under <b>Format</b>, select <b>ExFAT</b> (Scheme: Master Boot Record) → Click <b>Erase</b>.</li>
-          </ul>
-        </li>
-      </ol>
-    </section>
-
-    <!-- STEP 3: COPY TO SD -->
-    <section id="buoc-3" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge">03</div>
-        <div class="step-titles">
-          <span class="tag">STEP 3 OF 3</span>
-          <h3>Extract & Copy All Folders to SD Card</h3>
-        </div>
-      </div>
-
-      <p class="step-desc">
-        Use <b>7-Zip</b> (Windows) or <b>Keka / The Unarchiver</b> (macOS) to extract the downloaded ZIP file.
-      </p>
-
-      <ol class="step-ol">
-        <li>Right-click <code>{VER_SD_FULL}</code> → Select <b>Extract Here</b>.</li>
-        <li>Open the extracted folder (named <code>trimui_brick_pro_tg4040_sd_base_20260824</code>) — you will see: <code>Apps</code>, <code>Emus</code>, <code>RetroArch</code>, <code>Roms</code>, <code>System</code>, <code>Themes</code>...</li>
-        <li>Select <b>all folders inside</b> and click <b>Copy</b>.</li>
-        <li>Open your formatted SD card root and click <b>Paste</b> directly into the top level of the card.</li>
-      </ol>
-
-      <div class="tree-box">
-<span class="folder">SD Card Root (SDCARD)/</span>
-├── <span class="folder">Apps/</span>
-│   ├── <span class="highlight">RetroHub/</span>    <span class="comment">← PRE-INSTALLED RETROHUB v{VERSION} APP!</span>
-│   ├── <span class="folder">FileManager/</span>
-│   ├── <span class="folder">PortMaster/</span>
-│   └── <span class="folder">Reboot/</span>
-├── <span class="folder">Emus/</span>
-│   ├── <span class="highlight">JAVA/</span>        <span class="comment">← PRE-CONFIGURED JAVA J2ME EMULATOR!</span>
-│   ├── <span class="folder">GBA/</span>, <span class="folder">FC/</span>, <span class="folder">SFC/</span>, <span class="folder">PS/</span>, <span class="folder">SEGACD/</span>...
-├── <span class="folder">RetroArch/</span>       <span class="comment">← Complete Libretro Cores and BIOS collections</span>
-├── <span class="folder">Roms/</span>            <span class="comment">← Game shelves per platform</span>
-└── <span class="folder">System/</span>          <span class="comment">← TrimUI operating system configuration</span>
-      </div>
-    </section>
-
-    <!-- STEP 4: DONE -->
-    <section id="buoc-4" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge done">✓</div>
-        <div class="step-titles">
-          <span class="tag">FINISHED (DONE!)</span>
-          <h3>Insert Card & Start Playing!</h3>
-        </div>
-      </div>
-
-      <p class="step-desc">
-        With just these 3 steps, your handheld is 100% configured. Simply boot up and enjoy:
-      </p>
-
-      <ol class="step-ol">
-        <li><b>Insert SD card:</b> Safely eject card from PC, insert into TrimUI console, and power on.</li>
-        <li><b>Connect to Wi-Fi:</b> Open <b>Settings → Wi-Fi</b>, switch to <b>ON</b>, and connect to your home Wi-Fi (2.4GHz recommended).</li>
-        <li><b>Launch RetroHub:</b> Go to <b>Apps → RetroHub</b>. Everything is activated:
-          <ul>
-            <li><b>Direct Game Downloads:</b> Browse 40,000 games and scrape verified boxart automatically.</li>
-            <li><b>Wi-Fi File Transfer:</b> Turn on SFTP in Utilities, open your PC/phone browser, and copy files wirelessly.</li>
-            <li><b>Java J2ME Games:</b> Pre-installed and configured for instant nostalgic gaming.</li>
-            <li><b>OTA Updates Forever:</b> RetroHub checks updates online — no SD card removal ever again.</li>
-          </ul>
-        </li>
-      </ol>
-    </section>
-
-    <!-- OPTIONAL: EXISTING SD CARD -->
-    <section id="cai-le" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge alt">+</div>
-        <div class="step-titles">
-          <span class="tag">FOR EXISTING SD CARDS</span>
-          <h3>Already Have An SD Card? Install RetroHub Only</h3>
-        </div>
-      </div>
-
-      <p class="step-desc">
-        If you already have a working SD card with games and only want to add RetroHub without re-formatting:
-      </p>
-
-      <div class="choice-grid">
-        <div class="choice-card highlight">
-          <span class="subtag">TRIMUI STOCK OS & CROSSMIX</span>
-          <h4>TrimUI (Stock OS)</h4>
-          <p>Extract and copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card. Open Apps → RetroHub.</p>
-          <a class="btn" href="{REL}/{VER_FULL}">Download {VER_FULL} <small>95 MB · Java emulator included</small></a>
-        </div>
-
-        <div class="choice-card">
-          <span class="subtag">NEXTUI FIRMWARE</span>
-          <h4>NextUI (Tool Pak)</h4>
-          <p>Extract and copy the <code>Tools</code> folder to your SD card root. Open Tools → RetroHub.</p>
-          <a class="btn" href="{REL}/{VER_NEXTUI}">Download {VER_NEXTUI} <small>192 MB · NextUI Pak</small></a>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faq" class="step-box rise">
-      <div class="step-hdr">
-        <div class="step-badge alt">?</div>
-        <div class="step-titles">
-          <span class="tag">FREQUENTLY ASKED QUESTIONS</span>
-          <h3>Troubleshooting & Tips</h3>
-        </div>
-      </div>
-
-      <ul class="faq-list">
-        <li class="faq-item">
-          <b>My device is stuck at the TrimUI logo on boot?</b>
-          <p>This is almost always caused by formatting as <b>FAT32</b> or faulty partitions. Re-format your card as <b>exFAT</b> (Step 2) and copy the files again.</p>
-        </li>
-        <li class="faq-item">
-          <b>Does this Full package include games already?</b>
-          <p>It comes with the complete system base, BIOS, emulators, and RetroHub. Connect to Wi-Fi and open RetroHub to download from the 40,000 game library directly on device, or transfer ROMs from PC via SFTP.</p>
-        </li>
-        <li class="faq-item">
-          <b>Where do I copy ROMs from my PC?</b>
-          <p>Place them into <code>/Roms/[CONSOLE]/</code> on your SD card (e.g. GBA games into <code>/Roms/GBA/</code>). On your TrimUI home screen, press <b>Menu</b> and select <b>Refresh Roms</b>.</p>
-        </li>
-        <li class="faq-item">
-          <b>How do updates work in the future?</b>
-          <p><b>100% automated!</b> Connect your console to Wi-Fi and open RetroHub. It automatically detects and installs updates on-device in seconds.</p>
-        </li>
-      </ul>
-
-      <div class="callout tip" style="margin-top:24px">
-        <b>Need help or want to join the community?</b><br>
-        Join our Telegram group for friendly support from fellow players:
-        <div class="action-row">
-          <a class="btn" href="https://t.me/retrohubtool" target="_blank" rel="noopener noreferrer">Join Telegram @retrohubtool</a>
-          <a class="btn ghost" href="https://t.me/xuanhoa493" target="_blank" rel="noopener noreferrer">Message Author @xuanhoa493</a>
-        </div>
-      </div>
-    </section>
-  </div>
+    </div>
+  </section>
 """
 
 
