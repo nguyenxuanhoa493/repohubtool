@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.98", "2026-09-10",
+     ("Game Crash & Diagnostics Engine: RetroArch runtime logs, Java J2ME stack traces, and recent game crash dump",
+      "Nâng cấp Chẩn đoán & Bắt lỗi văng game: Bắt lỗi runtime RetroArch, trích xuất log Java J2ME, Kernel dmesg và kiểm tra ROM"),
+     [("Auto RetroArch Log Sync: Automatically enables verbose file logging in RetroArch (retroarch.cfg) when logging is active, capturing fatal errors, missing BIOS, and crash causes directly into diagnostic reports.",
+       "Đồng bộ log RetroArch tự động: Tự động kích hoạt ghi log chi tiết trong cấu hình retroarch.cfg khi bật ghi nhật ký, ghi nhận chuẩn xác lỗi văng game, thiếu BIOS và xung đột cấu hình vào báo cáo chẩn đoán."),
+      ("Java J2ME & FreeJ2ME Diagnostics: Comprehensive runtime inspection of Zulu17 JDK, FreeJ2ME JAR, execution permissions on sdl_interface, and automatically parses RetroHub-java.log for JVM Exceptions, Errors, and OutOfMemory crashes.",
+       "Chẩn đoán toàn diện game Java J2ME: Kiểm tra môi trường chạy Zulu17, file freej2me-sdl.jar, quyền thực thi của sdl_interface, và tự động trích xuất các lỗi Exception, OutOfMemory từ RetroHub-java.log."),
+      ("Recent Game & Kernel Diagnostics: Inspects the most recently launched game, validates ROM and core file sizes (detecting corrupted/0-byte ROMs), displays active display aspect ratios, and extracts kernel dmesg crash dumps.",
+       "Chẩn đoán game gần nhất & Kernel dmesg: Kiểm tra chi tiết game vừa khởi chạy, phát hiện file ROM hoặc Core 0-byte bị lỗi, kiểm tra tỉ lệ màn hình hiển thị và trích xuất nhật ký lỗi Kernel dmesg."),
+      ("Synchronized Log Management: Clear Log and Log Size indicators across handheld UI and Web Manager now fully include and purge both RetroArch and Java J2ME log files.",
+       "Đồng bộ quản trị nhật ký: Các chức năng Xoá log và tính dung lượng log trên giao diện máy và Web Manager đã bao gồm và dọn dẹp sạch cả RetroArch log và Java log.")]),
+
     ("1.97", "2026-09-09",
      ("Utilities & Save Backup Optimization: Instant 0ms menu entry, enlarged save modal with clean typography and scrolling",
       "Tối ưu menu Tiện ích và giao diện Sao lưu: Mở menu tức thì 0ms, mở rộng modal và sửa lỗi tràn chữ menu Sao lưu"),

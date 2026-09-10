@@ -36,7 +36,7 @@ try:
         list_save_backups, restore_save_backup, delete_save_backup)
     from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
     from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
-        clear_log, get_log_size_str, get_device_id)
+        clear_log, get_log_size_str, get_device_id, sync_retroarch_logging)
     from rh.boxart_scraper import cleanup_rom_directory_images
     from rh.media import save_boxart_png
 except ImportError:
@@ -48,7 +48,7 @@ except ImportError:
         list_save_backups, restore_save_backup, delete_save_backup)
     from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
     from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
-        clear_log, get_log_size_str, get_device_id)
+        clear_log, get_log_size_str, get_device_id, sync_retroarch_logging)
     from rh.boxart_scraper import cleanup_rom_directory_images
     from rh.media import save_boxart_png
 
@@ -1178,6 +1178,10 @@ class GameWebHandler(BaseHTTPRequestHandler):
         if path == "/api/logs/toggle":
             state.enable_logging = not getattr(state, "enable_logging", False)
             state.save_settings()
+            try:
+                sync_retroarch_logging(state.enable_logging)
+            except Exception:
+                pass
             self.send_json({
                 "ok": True,
                 "enable_logging": state.enable_logging,

@@ -109,12 +109,12 @@ T = {
         "og_desc": "Hướng dẫn siêu tốc cho người mới: Tải bản Full tích hợp -> Format thẻ nhớ exFAT -> Chép sang thẻ -> Done!",
         "badge": "HƯỚNG DẪN SIÊU TỐC CHO NGƯỜI MỚI (ALL-IN-ONE)",
         "h1": "Quy trình 3 bước cho người mới",
-        "sub": "Đúng 3 thao tác đơn giản: Tải gói Full tích hợp → Format thẻ nhớ exFAT → Chép vào thẻ là XONG (Done). Đã có sẵn ROM gốc, full giả lập, Java J2ME và RetroHub v1.97 mới nhất!",
+        "sub": f"Đúng 3 thao tác đơn giản: Tải gói Full tích hợp → Format thẻ nhớ exFAT → Chép vào thẻ là XONG (Done). Đã có sẵn ROM gốc, full giả lập, Java J2ME và RetroHub v{VERSION} mới nhất!",
         "meta_time_k": "Thời gian thực hiện", "meta_time_v": "Khoảng 5 – 10 phút cực nhanh",
         "meta_sd_k": "Thẻ nhớ khuyến nghị", "meta_sd_v": "64GB – 256GB chính hãng (chuẩn exFAT)",
-        "meta_os_k": "Thiết bị hỗ trợ", "meta_os_v": "TrimUI Brick, Brick Pro, Smart Pro",
+        "meta_os_k": "Thiết bị hỗ trợ", "meta_os_v": "TrimUI Brick Pro (Bản Full) • Smart Pro (Cài lẻ)",
         "meta_ota_k": "Cập nhật sau này", "meta_ota_v": "Tự động 100% qua Wi-Fi (Không cần tháo thẻ)",
-        "cta_main": "Tải bản Full tích hợp (1.05 GB) ⤓",
+        "cta_main": "Tải bản Full Brick Pro (1.05 GB) ⤓",
         "cta_start": "Xem 3 bước cài đặt ↓",
         "cta_alone": "Cài lẻ vào thẻ cũ ↓",
     },
@@ -128,12 +128,12 @@ T = {
         "og_desc": "Superfast 3-step guide: Download full all-in-one package -> Format SD card as exFAT -> Copy to card -> Done!",
         "badge": "STREAMLINED BEGINNER SETUP GUIDE (ALL-IN-ONE)",
         "h1": "3-Step Setup for Beginners",
-        "sub": "Just 3 simple steps: Download All-in-One Package → Format SD as exFAT → Copy to SD Card → DONE! Pre-configured with stock ROM, full emulators, Java J2ME, and latest RetroHub v1.97.",
+        "sub": f"Just 3 simple steps: Download All-in-One Package → Format SD as exFAT → Copy to SD Card → DONE! Pre-configured with stock ROM, full emulators, Java J2ME, and latest RetroHub v{VERSION}.",
         "meta_time_k": "Estimated Time", "meta_time_v": "About 5 – 10 minutes",
         "meta_sd_k": "Recommended Card", "meta_sd_v": "64GB – 256GB genuine card (exFAT format)",
-        "meta_os_k": "Supported Consoles", "meta_os_v": "TrimUI Brick, Brick Pro, Smart Pro",
+        "meta_os_k": "Supported Consoles", "meta_os_v": "TrimUI Brick Pro (Full SD) • Smart Pro (Standalone)",
         "meta_ota_k": "Future Updates", "meta_ota_v": "100% automated over Wi-Fi (No card removal)",
-        "cta_main": "Download All-in-One (1.05 GB) ⤓",
+        "cta_main": "Download All-in-One for Brick Pro (1.05 GB) ⤓",
         "cta_start": "Follow 3 Steps ↓",
         "cta_alone": "Existing SD Card ↓",
     }
@@ -252,15 +252,15 @@ def render_content_vi():
       <div class="choice-grid">
         <div class="choice-card highlight">
           <span class="subtag">BƯỚC 1</span>
-          <h4>1. Tải bản Full All-in-One</h4>
+          <h4>1. Tải bản Full All-in-One (Chỉ cho Brick Pro)</h4>
           <p>Tải 1 gói ZIP hoàn chỉnh duy nhất (1.05 GB) chứa trọn bộ: ROM nền hệ máy, BIOS, core RetroArch, giả lập Java J2ME, Sega CD và ứng dụng <b>RetroHub v{VERSION}</b> mới nhất.</p>
           <div style="margin-bottom:14px">
             <a class="btn" style="display:block;padding:12px 16px;font-size:.92rem" href="{SD_FULL_URL}">
-              Tải bản Full (1.05 GB) ⤓
+              Tải bản Full Brick Pro (1.05 GB) ⤓
             </a>
           </div>
-          <div class="card-tip tip">
-            <b>Đã tích hợp sẵn:</b> SD base tg4040, giả lập Java J2ME, 40.000 game catalog, tải trực tiếp từ GitHub Releases.
+          <div class="card-tip warn">
+            <b>Lưu ý quan trọng:</b> Bản Full này được cấu hình riêng cho <b>TrimUI Brick Pro (TG4040)</b>. Nếu dùng <b>TrimUI Smart Pro</b>, bạn hãy tải và cài lẻ RetroHub ở mục bên dưới để tránh lệch tỷ lệ hiển thị và phím bấm.
           </div>
         </div>
 
@@ -376,15 +376,15 @@ def render_content_en():
       <div class="choice-grid">
         <div class="choice-card highlight">
           <span class="subtag">STEP 1</span>
-          <h4>1. Download All-in-One Package</h4>
+          <h4>1. Download All-in-One Package (Brick Pro only)</h4>
           <p>Download a single comprehensive ZIP (1.05 GB) containing: Stock OS base, full BIOS, RetroArch cores, Java J2ME, Sega CD, and latest <b>RetroHub v{VERSION}</b>.</p>
           <div style="margin-bottom:14px">
             <a class="btn" style="display:block;padding:12px 16px;font-size:.92rem" href="{SD_FULL_URL}">
-              Download All-in-One (1.05 GB) ⤓
+              Download All-in-One for Brick Pro (1.05 GB) ⤓
             </a>
           </div>
-          <div class="card-tip tip">
-            <b>Pre-configured:</b> tg4040 SD base, Java J2ME runtime, 40,000 game catalog, direct GitHub Release download.
+          <div class="card-tip warn">
+            <b>Important Note:</b> This package is pre-configured specifically for <b>TrimUI Brick Pro (TG4040)</b>. If you are using <b>TrimUI Smart Pro</b>, please use the standalone install below instead to avoid screen aspect ratio and key mapping mismatches.
           </div>
         </div>
 

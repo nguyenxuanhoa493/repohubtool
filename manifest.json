@@ -1,12 +1,12 @@
 {
-  "version": "1.97",
+  "version": "1.98",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-09T03:36:19+0700",
+  "built": "2026-09-10T22:54:54+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tối ưu menu Tiện ích và giao diện Sao lưu: Mở menu tức thì 0ms, mở rộng modal và sửa lỗi tràn chữ",
-    "en": "Utilities & Save Backup: Instant 0ms menu entry, enlarged save modal with clean typography"
+    "vi": "Nâng cấp Chẩn đoán & Bắt lỗi văng game: Bắt lỗi runtime RetroArch, trích xuất log Java J2ME, Kernel dmesg và kiểm tra ROM",
+    "en": "Diagnostics & Crash Engine: RetroArch runtime logs, Java J2ME stack traces, Kernel dmesg dump, and ROM integrity check"
   },
   "remove": [
     "app.pyc",
@@ -199,8 +199,8 @@
     },
     {
       "path": "app.py",
-      "size": 340695,
-      "sha256": "9efaa84e6fb57ac26330d6d37dc15e39738ef8ee6d27d914cf72f6723495a73c"
+      "size": 340884,
+      "sha256": "a9fbf22e77bf3543cd9a8a04544dea999a5d9441d7871a6e823b2bf816d399fd"
     },
     {
       "path": "assets/fallback.ttf",
@@ -354,8 +354,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 178711,
-      "sha256": "407f6a3b235522f235cde6afa75ff7e7e303915addf4f0216bbeaa176d16c257"
+      "size": 178888,
+      "sha256": "e27d4d361e8d7b05469848c8bd82ec7655b5fe30a611d529319a6639008ca3f9"
     },
     {
       "path": "icon.png",
@@ -479,8 +479,8 @@
     },
     {
       "path": "rh/logger.py",
-      "size": 14158,
-      "sha256": "87ba74304f33844b78859d26328370deb17af79f4ae16ef3ed68e3331554fe6e"
+      "size": 33726,
+      "sha256": "cab662730d1e20eb03d27f7a8deeeaf2d35e5adb1483d24e9cb259d46031897c"
     },
     {
       "path": "rh/media.py",
@@ -540,7 +540,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "d8e1e64d1b0d773077e868cbd61a6132b4bfc1e6db25f7e59f0962f520fb71c2"
+      "sha256": "fdf07442abc7d27b2fca1bd730976200f1a727f9acb661cde85ff909cc9fbf48"
     },
     {
       "path": "rh/yt.py",
