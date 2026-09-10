@@ -1,12 +1,12 @@
 {
-  "version": "1.98",
+  "version": "1.99",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-10T22:54:54+0700",
+  "built": "2026-09-10T23:11:55+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Nâng cấp Chẩn đoán & Bắt lỗi văng game: Bắt lỗi runtime RetroArch, trích xuất log Java J2ME, Kernel dmesg và kiểm tra ROM",
-    "en": "Diagnostics & Crash Engine: RetroArch runtime logs, Java J2ME stack traces, Kernel dmesg dump, and ROM integrity check"
+    "vi": "C\u00e0i \u0111\u1eb7t profile ph\u00edm m\u1eb7c \u0111\u1ecbnh Java Nokia (N), b\u1ea3o to\u00e0n 100% save game khi n\u00e2ng c\u1ea5p v\u00e0 kh\u00f4i ph\u1ee5c keymap g\u1ed1c",
+    "en": "Java default Nokia (N) keypad profile, 100% safe save persistence across updates, and authentic keymap"
   },
   "remove": [
     "app.pyc",
@@ -124,7 +124,8 @@
     "vendor/sdl2/touch.pyc",
     "vendor/sdl2/version.pyc",
     "vendor/sdl2/video.pyc",
-    "vendor/sdl2/vulkan.pyc"
+    "vendor/sdl2/vulkan.pyc",
+    "emus/JAVA/zulu17/bin/quickchat.txt"
   ],
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
@@ -151,8 +152,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 3053,
-        "sha256": "414126b5812b1c337bc7ef9bfe8becf39fdda291478a7e05ea6f16f816b7da2b"
+        "size": 4916,
+        "sha256": "b78ae8505371b1f26f2669681a76787d6029266322802f98cf2c8e9216ba4703"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -163,26 +164,26 @@
       {
         "path": "zulu17/bin/freej2me-sdl.jar",
         "url": "files/emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-        "size": 1526755,
-        "sha256": "4bcfd063c8f5a170d8a1a389f45be31b73cdafe681c4ad46f59d05fa6482fcac"
+        "size": 1483099,
+        "sha256": "2e7b013cc1fde687bbcab353ffcc8bb9891709a311e9278fd1486bb5fe7a3557"
       },
       {
         "path": "zulu17/bin/keymap.cfg",
         "url": "files/emus/JAVA/zulu17/bin/keymap.cfg",
-        "size": 141,
-        "sha256": "2ee1d46b8820c08f0500184ddb468c987106e0bd95c78d47923dcd5ca561d6bb"
+        "size": 123,
+        "sha256": "46325f3e1e8ffc2e5854c4217a2486f691f082b10f1dcfb91061e41df46dbfe1"
       },
       {
         "path": "zulu17/bin/sdl_interface",
         "url": "files/emus/JAVA/zulu17/bin/sdl_interface",
         "size": 450072,
-        "sha256": "c1d856f8d66d21e3b7ce607399b2ac9b1963117ff81feceeb14a1d7b52b00f89"
+        "sha256": "ea0282c5eaa0bc1d4c8325526c378a9863a91001c033f929cd35d37c8c05bf72"
       },
       {
-        "path": "zulu17/bin/quickchat.txt",
-        "url": "files/emus/JAVA/zulu17/bin/quickchat.txt",
-        "size": 89,
-        "sha256": "7ae145addf2537f5031cc269446d6814d7c2e6e568346dfa5a14c943991540b8"
+        "path": "default_phone.cfg",
+        "url": "files/emus/JAVA/default_phone.cfg",
+        "size": 2,
+        "sha256": "a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0"
       }
     ]
   },
@@ -199,8 +200,8 @@
     },
     {
       "path": "app.py",
-      "size": 340884,
-      "sha256": "a9fbf22e77bf3543cd9a8a04544dea999a5d9441d7871a6e823b2bf816d399fd"
+      "size": 335719,
+      "sha256": "d28cf33eab0366e4b47330b50a754d9351a6f27e1a8c65ddfac53ad4ff36b380"
     },
     {
       "path": "assets/fallback.ttf",
@@ -274,8 +275,8 @@
     },
     {
       "path": "emus/JAVA/launch.sh",
-      "size": 3053,
-      "sha256": "414126b5812b1c337bc7ef9bfe8becf39fdda291478a7e05ea6f16f816b7da2b"
+      "size": 4916,
+      "sha256": "b78ae8505371b1f26f2669681a76787d6029266322802f98cf2c8e9216ba4703"
     },
     {
       "path": "emus/JAVA/zulu17/bin/font.ttf",
@@ -284,8 +285,8 @@
     },
     {
       "path": "emus/JAVA/zulu17/bin/freej2me-sdl.jar",
-      "size": 1526755,
-      "sha256": "4bcfd063c8f5a170d8a1a389f45be31b73cdafe681c4ad46f59d05fa6482fcac"
+      "size": 1483099,
+      "sha256": "2e7b013cc1fde687bbcab353ffcc8bb9891709a311e9278fd1486bb5fe7a3557"
     },
     {
       "path": "emus/JAVA/zulu17/bin/graphics.cfg",
@@ -294,18 +295,13 @@
     },
     {
       "path": "emus/JAVA/zulu17/bin/keymap.cfg",
-      "size": 141,
-      "sha256": "2ee1d46b8820c08f0500184ddb468c987106e0bd95c78d47923dcd5ca561d6bb"
-    },
-    {
-      "path": "emus/JAVA/zulu17/bin/quickchat.txt",
-      "size": 89,
-      "sha256": "7ae145addf2537f5031cc269446d6814d7c2e6e568346dfa5a14c943991540b8"
+      "size": 123,
+      "sha256": "46325f3e1e8ffc2e5854c4217a2486f691f082b10f1dcfb91061e41df46dbfe1"
     },
     {
       "path": "emus/JAVA/zulu17/bin/sdl_interface",
       "size": 450072,
-      "sha256": "c1d856f8d66d21e3b7ce607399b2ac9b1963117ff81feceeb14a1d7b52b00f89"
+      "sha256": "ea0282c5eaa0bc1d4c8325526c378a9863a91001c033f929cd35d37c8c05bf72"
     },
     {
       "path": "emus/SEGACD/config.json",
@@ -439,13 +435,13 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 42796,
-      "sha256": "fe2357145c455692b13d3a20418fe4aeda593af7fbba9857e885fb49e4a37ece"
+      "size": 42818,
+      "sha256": "3dcb2257dc791de4837c2a70f855ca37b50bc4b96479a3c3036634293ebf0ed0"
     },
     {
       "path": "rh/j2me.py",
-      "size": 35309,
-      "sha256": "dca32facbd1f63bf2d05e241b326667025b8ec06b8923b084ddaafab9932583d"
+      "size": 39335,
+      "sha256": "ff247140cf73ce5f6c70e15b47151f80d7eb7c1d8fdba62e2902f6464b0d104c"
     },
     {
       "path": "rh/led.py",
@@ -504,8 +500,8 @@
     },
     {
       "path": "rh/save_manager.py",
-      "size": 10676,
-      "sha256": "48c8517ca4cbe6b465c5ab8c4ffa506440ab7a4384c04ce1cd0eef4e82d3e45a"
+      "size": 10965,
+      "sha256": "bc6c85e7b9904d20435638bb589927425ab9c643843216ab971ad044cbc23541"
     },
     {
       "path": "rh/services.py",
@@ -540,7 +536,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "fdf07442abc7d27b2fca1bd730976200f1a727f9acb661cde85ff909cc9fbf48"
+      "sha256": "27acdd80f6e2529c77c43d007090b5581f8b61c08450cae20ac032c2a89b3ae2"
     },
     {
       "path": "rh/yt.py",
@@ -936,8 +932,18 @@
       "path": "vendor/sdl2/vulkan.py",
       "size": 1666,
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
+    },
+    {
+      "path": "emus/JAVA/default_phone.cfg",
+      "size": 2,
+      "sha256": "a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0"
+    },
+    {
+      "path": "emus/JAVA/zulu17/bin/default_phone.cfg",
+      "size": 2,
+      "sha256": "a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0"
     }
   ],
-  "notes": "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu.",
+  "notes": "Qu\u1ea3n l\u00fd Game Web: T\u1ed1i \u01b0u c\u00e0o \u1ea3nh si\u00eau t\u1ed1c (Catalog DB & CDN Libretro), 4 lu\u1ed3ng song song tr\u00ean tr\u00ecnh duy\u1ec7t v\u00e0 t\u1ef1 \u0111\u1ed9ng t\u00ecm Web s\u00e2u.",
   "notes_en": "Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback."
 }

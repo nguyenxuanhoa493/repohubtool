@@ -12,7 +12,29 @@ echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/
 cd /mnt/SDCARD/Emus/JAVA/zulu17/bin || exit 1
 chmod +x ./sdl_interface ./java 2>/dev/null
 [ ! -e /usr/lib/libGLES_CM.so ] && [ -f /usr/lib/libGLESv1_CM.so ] && ln -sf /usr/lib/libGLESv1_CM.so /usr/lib/libGLES_CM.so 2>/dev/null
-mkdir -p ./rms ./config
+
+# Safe persistent user save & config directories outside JRE runtime directory
+SAFE_RMS="/mnt/SDCARD/Emus/JAVA/rms"
+SAFE_CONFIG="/mnt/SDCARD/Emus/JAVA/config"
+SAFE_BACKUP="/mnt/SDCARD/Emus/JAVA/saves_backup"
+mkdir -p "$SAFE_RMS" "$SAFE_CONFIG" "$SAFE_BACKUP" ./rms ./config
+
+# Recover any orphaned stash folders from previous crashes
+for orphan in /mnt/SDCARD/Emus/JAVA/.rh_j2me_*; do
+    if [ -d "$orphan/bin/rms" ]; then
+        echo "Recovering orphaned save data from $orphan..."
+        cp -ru "$orphan/bin/rms/"* "$SAFE_RMS/" 2>/dev/null
+        rm -rf "$orphan" 2>/dev/null
+    fi
+done
+
+# Sync persistent saves and config into runtime working directory before starting
+if [ -d "$SAFE_RMS" ]; then
+    cp -ru "$SAFE_RMS/"* ./rms/ 2>/dev/null
+fi
+if [ -d "$SAFE_CONFIG" ]; then
+    cp -ru "$SAFE_CONFIG/"* ./config/ 2>/dev/null
+fi
 
 JAVA_HOME='/mnt/SDCARD/Emus/JAVA/zulu17'
 export JAVA_HOME
@@ -30,7 +52,17 @@ chmod -R 755 ./.java 2>/dev/null
 TIMIDITY_CFG="/mnt/SDCARD/Emus/JAVA/timidity/timidity.cfg"
 export TIMIDITY_CFG
 
-JAVA_TOOL_OPTIONS='-Xverify:none -Xms64m -Xmx256m -Djava.util.prefs.systemRoot=./.java -Djava.util.prefs.userRoot=./.java/.userPrefs -Djava.awt.headless=true -Dsun.jnu.encoding=UTF-8 -Dfile.encoding=UTF-8 -Djava.library.path=/mnt/SDCARD/Emus/JAVA/zulu17/lib'
+# Read default phone keypad profile (N=Nokia default, P=Plain, E=SE, S=Siemens, M=Motorola)
+DEF_PHONE="n"
+if [ -f /mnt/SDCARD/Emus/JAVA/default_phone.cfg ]; then
+    DEF_PHONE=$(head -n 1 /mnt/SDCARD/Emus/JAVA/default_phone.cfg | tr -d '\r\n ' | tr '[:upper:]' '[:lower:]')
+elif [ -f ./default_phone.cfg ]; then
+    DEF_PHONE=$(head -n 1 ./default_phone.cfg | tr -d '\r\n ' | tr '[:upper:]' '[:lower:]')
+fi
+[ -z "$DEF_PHONE" ] && DEF_PHONE="n"
+echo "Default phone key profile: $DEF_PHONE"
+
+JAVA_TOOL_OPTIONS="-Xverify:none -Xms64m -Xmx256m -Dfreej2me.phone=$DEF_PHONE -Djava.util.prefs.systemRoot=./.java -Djava.util.prefs.userRoot=./.java/.userPrefs -Djava.awt.headless=true -Dsun.jnu.encoding=UTF-8 -Dfile.encoding=UTF-8 -Djava.library.path=/mnt/SDCARD/Emus/JAVA/zulu17/lib"
 export JAVA_TOOL_OPTIONS
 ROM_PATH="$*"
 if [ -z "$ROM_PATH" ]; then
@@ -84,4 +116,19 @@ case "$ROM_PATH" in
 esac
 
 echo "Executing FreeJ2ME: ./java -jar freej2me-sdl.jar \"$RUN_JAR\" $W $H 100"
-exec /mnt/SDCARD/Emus/JAVA/zulu17/bin/java -jar /mnt/SDCARD/Emus/JAVA/zulu17/bin/freej2me-sdl.jar "$RUN_JAR" "$W" "$H" 100
+/mnt/SDCARD/Emus/JAVA/zulu17/bin/java -jar /mnt/SDCARD/Emus/JAVA/zulu17/bin/freej2me-sdl.jar "$RUN_JAR" "$W" "$H" 100
+GAME_EXIT_CODE=$?
+
+# Post-game safe sync: write user saves and configs back to persistent storage and SD card
+echo "Game exited with code $GAME_EXIT_CODE. Performing safe save game persistence..."
+if [ -d ./rms ]; then
+    cp -ru ./rms/* "$SAFE_RMS/" 2>/dev/null
+    cp -ru ./rms/* "$SAFE_BACKUP/" 2>/dev/null
+fi
+if [ -d ./config ]; then
+    cp -ru ./config/* "$SAFE_CONFIG/" 2>/dev/null
+fi
+# Flush OS filesystem buffers to physical SD card flash immediately
+sync 2>/dev/null
+echo "Save game backup & sync complete."
+exit $GAME_EXIT_CODE

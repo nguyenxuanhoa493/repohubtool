@@ -15,7 +15,7 @@ from .paths import SDCARD_PATH
 
 SAVE_EXTS = {
     ".srm", ".sav", ".state", ".dsv", ".eep", ".nvram", ".mcr",
-    ".rtc", ".fs", ".ram", ".fla"
+    ".rtc", ".fs", ".ram", ".fla", ".rsh", ".rsr", ".db"
 }
 
 BACKUP_DIR = os.path.join(SDCARD_PATH, "RetroHub", "backups")
@@ -50,6 +50,12 @@ def get_save_directories(base_sd=None):
         os.path.join(sd, "PSP", "SAVEDATA"),
         os.path.join(sd, "Emus", "NDS", "backup"),
         os.path.join(sd, "Emus", "NDS", "savestates"),
+
+        # Java J2ME persistent saves and backups
+        os.path.join(sd, "Emus", "JAVA", "rms"),
+        os.path.join(sd, "Emus", "JAVA", "zulu17", "bin", "rms"),
+        os.path.join(sd, "Emus", "JAVA", "saves_backup"),
+        os.path.join(sd, "Saves", "JAVA"),
 
         # NextUI userdata
         os.path.join(sd, ".userdata"),

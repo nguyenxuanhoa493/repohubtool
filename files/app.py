@@ -98,12 +98,11 @@ from rh.splash import (apply_splash_update,
     restore_original_splash,
     scan_directory_for_images,
     scan_splash_images)
-from rh.j2me import (RENDER_MODES, RESOLUTIONS,
+from rh.j2me import (RENDER_MODES, RESOLUTIONS, PHONE_MODES, DEFAULT_PHONE_MODE,
     ensure_latest_j2me_installed, install_j2me_emulator, is_j2me_runtime_ready, j2me_missing_parts,
-    load_render_mode, move_to_resolution, pretty_resolution, resolution_of_path,
+    load_render_mode, load_default_phone_mode, move_to_resolution, pretty_resolution, resolution_of_path,
     repair_encrypted_jars, repair_unsafe_jar_names, rom_dir_for, runtime_is_stale,
-    runtime_supports_renderer, safe_jar_name, save_render_mode,
-    load_quickchat, save_quickchat, add_quickchat, delete_quickchat, reset_quickchat)
+    runtime_supports_renderer, safe_jar_name, save_render_mode, save_default_phone_mode)
 from rh.emulators import resolve as resolve_emulator
 from rh import led, ledconf, ledctl, ledthemes
 from rh.fonts import VIET_PROBE, font_candidates, pick_font
@@ -668,6 +667,7 @@ def main():
     # the static catalogs.json: the DB carries 29 systems where the JSON listed only
     # 13, so PS, PSP, DC, SS, N64 and friends were missing from the filter entirely.
     j2me_render_mode = None     # filled when the display screen is opened
+    j2me_phone_mode = None      # filled when the settings screen is opened
     core_sys_rows = []          # cac he doi core duoc, doc khi mo man hinh do
     core_sys_pick = None        # he dang chon, cho man hinh chon giai lap
     # DEN LED: doc mot lan luc khoi dong, sau do man hinh cai dat la nguon su
@@ -697,7 +697,6 @@ def main():
     kb_cursor = [1, 0]
     search_query = ""
     search_results_list = []
-    qc_input_text = ""
 
     # YouTube InnerTube & Favorites state
     yt_favorites_list = yt.load_favorites()
@@ -1847,31 +1846,19 @@ def main():
             number_items(items)
             items.append({"id": "back", "title": tr("back_home")})
 
-        # JAVA SETTINGS: render presets and quick chat keyword configuration.
+        # JAVA SETTINGS: default phone keypad mode and render preset.
         elif current_screen == "j2me_render":
-            header_title = tr("j2me_render_title")
+            header_title = tr("j2me_settings_title")
+            for pm in PHONE_MODES:
+                items.append({"id": f"j2mephone_{pm}", "phone_mode": pm,
+                              "title": tr(f"j2me_phone_{pm}"),
+                              "label": tr("j2me_render_cur") if pm == j2me_phone_mode else ""})
             for m in RENDER_MODES:
                 items.append({"id": f"j2merender_{m}", "render_mode": m,
                               "title": tr(f"j2me_render_{m}"),
                               "label": tr("j2me_render_cur") if m == j2me_render_mode else ""})
-            items.append({"id": "nav_j2me_quickchat", "title": tr("j2me_menu_quickchat"),
-                          "label": tr("view"), "sub": True})
-            items.append({"id": "j2me_render_note", "title": tr("j2me_render_note"), "sub": True})
-            items.append({"id": "j2me_qc_note", "title": tr("j2me_qc_note"), "sub": True})
-            items.append({"id": "back", "title": tr("back_home")})
-
-        # J2ME QUICKCHAT: manage quick phrases for the virtual keyboard
-        elif current_screen == "j2me_quickchat":
-            header_title = tr("j2me_qc_title")
-            items.append({"id": "qc_add", "title": tr("j2me_qc_add"), "label": tr("view")})
-            qc_list = load_quickchat()
-            for idx, p in enumerate(qc_list):
-                items.append({"id": f"qc_phrase_{idx}", "phrase": p,
-                              "title": f"• {p}", "label": tr("j2me_qc_delete_lbl")})
-            if not qc_list:
-                items.append({"id": "qc_empty", "title": tr("j2me_qc_empty"), "sub": True})
-            items.append({"id": "qc_reset", "title": tr("j2me_qc_reset"), "label": tr("reload")})
-            items.append({"id": "j2me_qc_note", "title": tr("j2me_qc_note"), "sub": True})
+            items.append({"id": "j2me_phone_note", "title": tr("j2me_phone_note"), "sub": True})
+            items.append({"id": "j2me_save_protected_note", "title": tr("j2me_save_protected_note"), "sub": True})
             items.append({"id": "back", "title": tr("back_home")})
 
         # DOI GIAI LAP: mot dong moi he, hien ten giai lap dang chay. Danh sach
@@ -2567,12 +2554,10 @@ def main():
                     btn_y = True
                 elif sym in [sdl2.SDLK_F1, sdl2.SDLK_m]:
                     btn_f1 = True
-                elif current_screen in ("search_input", "yt_search_input", "j2me_qc_input"):
+                elif current_screen in ("search_input", "yt_search_input"):
                     if sym == sdl2.SDLK_BACKSPACE:
                         if current_screen == "yt_search_input":
                             yt_input_text = yt_input_text[:-1]
-                        elif current_screen == "j2me_qc_input":
-                            qc_input_text = qc_input_text[:-1]
                         else:
                             search_query = search_query[:-1]
                     elif sym == sdl2.SDLK_RETURN:
@@ -3150,56 +3135,6 @@ def main():
                 else:
                     yt_input_text += key_val.lower()
 
-        # J2ME QUICKCHAT INPUT: PHYSICAL X = SPACE, PHYSICAL Y = DEL, START/A = SAVE
-        elif current_screen == "j2me_qc_input":
-            if btn_up:
-                r, c = kb_cursor
-                r = (r - 1) % len(kb_rows)
-                c = min(c, len(kb_rows[r]) - 1)
-                kb_cursor = [r, c]
-            elif btn_down:
-                r, c = kb_cursor
-                r = (r + 1) % len(kb_rows)
-                c = min(c, len(kb_rows[r]) - 1)
-                kb_cursor = [r, c]
-            elif btn_left:
-                r, c = kb_cursor
-                c = (c - 1) % len(kb_rows[r])
-                kb_cursor = [r, c]
-            elif btn_right:
-                r, c = kb_cursor
-                c = (c + 1) % len(kb_rows[r])
-                kb_cursor = [r, c]
-            elif btn_x: # Physical X = Space
-                qc_input_text += " "
-            elif btn_y: # Physical Y = Delete
-                qc_input_text = qc_input_text[:-1]
-            elif btn_b:
-                screen_stack.pop()
-            elif (btn_start or (btn_a and kb_rows[kb_cursor[0]][kb_cursor[1]] in ("SEARCH", "SAVE"))):
-                q_clean = qc_input_text.strip()
-                if q_clean:
-                    add_quickchat(q_clean)
-                    toast_msg = f"{tr('j2me_qc_added')}'{q_clean}'"
-                    toast_timer = time.time()
-                    screen_stack.pop()
-                else:
-                    toast_msg = "Vui lòng nhập từ khóa!" if state.current_lang == "VI" else "Please enter keyword!"
-                    toast_timer = time.time()
-            elif btn_a:
-                r, c = kb_cursor
-                key_val = kb_rows[r][c]
-                if key_val == "SPACE":
-                    qc_input_text += " "
-                elif key_val == "DEL":
-                    qc_input_text = qc_input_text[:-1]
-                elif key_val == "CLEAR":
-                    qc_input_text = ""
-                elif key_val in ("SEARCH", "SAVE"):
-                    pass
-                else:
-                    qc_input_text += key_val.lower()
-
         # YOUTUBE 3x2 GRID NAVIGATION: A=PLAY/MORE, B=BACK, X=SEARCH, Y=FAV, SL=DEL, LR=TABS
         elif current_screen == "yt_grid":
             if yt_mode == "favorites":
@@ -3531,15 +3466,6 @@ def main():
                     toast_msg = err_msg
                     toast_timer = time.time()
 
-            elif current_screen == "j2me_quickchat" and btn_y:
-                if items and selected_idx < len(items):
-                    row = items[selected_idx]
-                    phrase = row.get("phrase")
-                    if phrase:
-                        delete_quickchat(phrase)
-                        toast_msg = f"{tr('j2me_qc_deleted')}'{phrase}'"
-                        toast_timer = time.time()
-
             elif current_screen == "rom_games" and btn_x:
                 if current_source != "HITS":
                     state.rom_sort_mode = "alpha" if state.rom_sort_mode == "downloads" else "downloads"
@@ -3704,34 +3630,22 @@ def main():
                         toast_msg = tr("j2me_render_old_hint")
                         toast_timer = time.time()
                     else:
-                        # Read fresh: START+R3 on the device rewrites the same file,
-                        # so a value cached from an earlier visit shows the wrong row.
+                        # Read fresh values from disk
                         j2me_render_mode = load_render_mode()
+                        j2me_phone_mode = load_default_phone_mode()
                         selected_indices["j2me_render"] = 0
                         screen_stack.append("j2me_render")
+                elif item_id.startswith("j2mephone_"):
+                    pm = cur_item.get("phone_mode")
+                    if save_default_phone_mode(pm):
+                        j2me_phone_mode = pm
+                        toast_msg = tr("j2me_phone_saved")
+                        toast_timer = time.time()
                 elif item_id.startswith("j2merender_"):
                     m = cur_item.get("render_mode")
                     if save_render_mode(m):
                         j2me_render_mode = m
                         toast_msg = tr("j2me_render_saved")
-                        toast_timer = time.time()
-                elif item_id == "nav_j2me_quickchat":
-                    selected_indices["j2me_quickchat"] = 0
-                    scroll_offsets["j2me_quickchat"] = 0
-                    screen_stack.append("j2me_quickchat")
-                elif item_id == "qc_add":
-                    qc_input_text = ""
-                    kb_cursor = [1, 0]
-                    screen_stack.append("j2me_qc_input")
-                elif item_id == "qc_reset":
-                    reset_quickchat()
-                    toast_msg = tr("j2me_qc_reset_done")
-                    toast_timer = time.time()
-                elif item_id.startswith("qc_phrase_"):
-                    phrase = cur_item.get("phrase")
-                    if phrase:
-                        delete_quickchat(phrase)
-                        toast_msg = f"{tr('j2me_qc_deleted')}'{phrase}'"
                         toast_timer = time.time()
                 elif item_id == "nav_core_sys":
                     core_sys_rows = corepicker.list_systems()
@@ -3844,7 +3758,7 @@ def main():
                 elif item_id in ("core_note", "core_none"):
                     toast_msg = tr("core_note") if item_id == "core_note" else tr("core_none")
                     toast_timer = time.time()
-                elif item_id in ("j2me_render_note", "j2me_qc_note"):
+                elif item_id in ("j2me_render_note", "j2me_phone_note", "j2me_save_protected_note"):
                     toast_msg = tr(item_id)
                     toast_timer = time.time()
                 elif item_id == "nav_youtube":
@@ -4277,12 +4191,7 @@ def main():
         fill_rect(0, 0, state.SCREEN_W, header_h, 20, 28, 46, 255)
         fill_rect(0, header_h - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
 
-        _head_txt = (
-            tr("yt_search_title") if current_screen == "yt_search_input"
-            else (tr("j2me_qc_input_title") if current_screen == "j2me_qc_input"
-            else (tr("search_title") if current_screen == "search_input"
-            else header_title))
-        )
+        _head_txt = tr("yt_search_title") if current_screen == "yt_search_input" else (tr("search_title") if current_screen == "search_input" else header_title)
         draw_text(_head_txt, font_title, 40, header_h // 2, 255, 255, 255, center_y=True)
         # Version sits beside the app name on the home screen only. Measured
         # rather than placed at a guessed offset, because the title is translated
@@ -4296,9 +4205,9 @@ def main():
         # Battery still shows in Device Info.
 
         # ----------------------------------------------------------------------
-        # SCREEN: YOUTUBE SEARCH INPUT & J2ME QUICKCHAT INPUT & VIRTUAL KEYBOARD
+        # SCREEN: YOUTUBE SEARCH INPUT & VIRTUAL KEYBOARD
         # ----------------------------------------------------------------------
-        if current_screen in ("yt_search_input", "j2me_qc_input"):
+        if current_screen == "yt_search_input":
             box_x = 40
             box_y = 108
             box_w = state.SCREEN_W - 80
@@ -4307,12 +4216,8 @@ def main():
             draw_rect(box_x, box_y, box_w, box_h, 0, 230, 255, 255, thickness=2)
 
             cursor_str = "_" if int(time.time() * 2) % 2 == 0 else ""
-            if current_screen == "j2me_qc_input":
-                disp_query = qc_input_text + cursor_str if qc_input_text else tr("j2me_qc_input_prompt") + cursor_str
-                q_col = (255, 255, 255) if qc_input_text else (120, 140, 170)
-            else:
-                disp_query = yt_input_text + cursor_str if yt_input_text else tr("search_prompt") + cursor_str
-                q_col = (255, 255, 255) if yt_input_text else (120, 140, 170)
+            disp_query = yt_input_text + cursor_str if yt_input_text else tr("search_prompt") + cursor_str
+            q_col = (255, 255, 255) if yt_input_text else (120, 140, 170)
             draw_text(disp_query, font_item, box_x + 20, box_y + box_h // 2, q_col[0], q_col[1], q_col[2], center_y=True)
 
             kb_start_y = box_y + box_h + 16
@@ -4329,16 +4234,15 @@ def main():
                 for c_idx, key_str in enumerate(row):
                     kx = 40 + c_idx * (k_w + k_col_gap)
                     is_k_sel = (kb_cursor[0] == r_idx and kb_cursor[1] == c_idx)
-                    disp_key = "SAVE" if (current_screen == "j2me_qc_input" and key_str == "SEARCH") else key_str
 
                     if is_k_sel:
                         fill_rect(kx, ky, k_w, k_h, 0, 230, 255, 255)
                         draw_rect(kx, ky, k_w, k_h, 255, 255, 255, 255, thickness=2)
-                        draw_text(disp_key, font_kb, kx + k_w // 2, ky + k_h // 2, 0, 20, 40, center_x=True, center_y=True)
+                        draw_text(key_str, font_kb, kx + k_w // 2, ky + k_h // 2, 0, 20, 40, center_x=True, center_y=True)
                     else:
                         fill_rect(kx, ky, k_w, k_h, 24, 34, 56, 255)
                         draw_rect(kx, ky, k_w, k_h, 45, 65, 100, 255, thickness=1)
-                        draw_text(disp_key, font_kb, kx + k_w // 2, ky + k_h // 2, 220, 230, 245, center_x=True, center_y=True)
+                        draw_text(key_str, font_kb, kx + k_w // 2, ky + k_h // 2, 220, 230, 245, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
         # SCREEN: YOUTUBE 3x2 GRID VIEW
@@ -5192,14 +5096,6 @@ def main():
                 if cur_q and (cur_q != fav_label):
                     fx = draw_footer_btn(fx, "SL", "Xóa từ khóa", (240, 70, 70), is_dark_btn=False)
 
-            elif current_screen == "j2me_qc_input":
-                fx = draw_footer_btn(fx, "X", "Cách" if state.current_lang == "VI" else "Space", (0, 190, 255))
-                fx = draw_footer_btn(fx, "Y", "Xóa" if state.current_lang == "VI" else "Del", (255, 200, 0))
-                fx = draw_footer_btn(fx, "ST", "Lưu" if state.current_lang == "VI" else "Save", (255, 140, 0))
-
-            elif current_screen == "j2me_quickchat":
-                if items and selected_idx < len(items) and items[selected_idx].get("phrase"):
-                    fx = draw_footer_btn(fx, "Y", "Xóa" if state.current_lang == "VI" else "Delete", (255, 70, 70))
 
             elif current_screen == "yt_search_input":
                 fx = draw_footer_btn(fx, "X", "Cách", (0, 190, 255))

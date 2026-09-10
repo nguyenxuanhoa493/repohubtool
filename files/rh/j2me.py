@@ -62,12 +62,54 @@ RENDER_PRESETS = {
 }
 
 
-# The player's own data lives *inside* the runtime folder: rms/ holds J2ME game
-# saves and config/ holds the per-game settings the emulator writes. A repair
-# that wipes zulu17 to unpack a fresh copy would take both with it, so they are
-# moved aside first and put back afterwards.
+# Default keypad profile (phone mode): N (Nokia - recommended GameAction navigation),
+# P (Plain - 2/4/6/8/5), E (Sony Ericsson), S (Siemens), M (Motorola).
+PHONE_MODES = ["N", "P", "E", "S", "M"]
+DEFAULT_PHONE_MODE = "N"
+
+# The player's save and config data: stored safely in persistent folders outside
+# zulu17 runtime directory so JRE reinstalls or updates NEVER wipe saves.
+PERSISTENT_RMS = f"{EMU_DIR}/rms"
+PERSISTENT_CONFIG = f"{EMU_DIR}/config"
+BACKUP_DIR = f"{EMU_DIR}/saves_backup"
+
 USER_DATA_DIRS = ("bin/rms", "bin/config")
-USER_DATA_FILES = ("bin/quickchat.txt",)
+USER_DATA_FILES = ()
+
+
+def default_phone_cfg_path():
+    return f"{EMU_DIR}/default_phone.cfg"
+
+
+def load_default_phone_mode():
+    """Returns current default phone keypad profile ('N', 'P', 'E', 'S', 'M')."""
+    for p in (default_phone_cfg_path(), f"{RUNTIME_DIR}/bin/default_phone.cfg"):
+        try:
+            if os.path.isfile(p):
+                with open(p, "r", encoding="utf-8") as f:
+                    val = f.read().strip().upper()
+                    if val in PHONE_MODES:
+                        return val
+        except Exception:
+            pass
+    return DEFAULT_PHONE_MODE
+
+
+def save_default_phone_mode(mode):
+    """Saves default phone keypad profile. Returns True on success."""
+    if mode not in PHONE_MODES:
+        return False
+    val = mode.strip().lower()
+    success = False
+    for p in (default_phone_cfg_path(), f"{RUNTIME_DIR}/bin/default_phone.cfg"):
+        try:
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(val + "\n")
+            success = True
+        except Exception as e:
+            print(f"Error writing {p}: {e}")
+    return success
 
 
 def j2me_runtime_paths():
@@ -141,7 +183,7 @@ _VERSIONED = {"jar": "zulu17/bin/freej2me-sdl.jar",
 
 # Known target binary sizes for current release (FreeJ2ME v1.82+).
 CURRENT_RUNTIME_SIZES = {
-    "jar": 1526947,
+    "jar": 1483099,
     "sdl": 450072,
 }
 
@@ -210,7 +252,7 @@ def sync_bundled_runtime_files():
     for root, _, files in os.walk(bundled_root):
         for fname in files:
             # Skip user-customized files if they already exist
-            if fname in ("quickchat.txt", "graphics.cfg", "renderer.conf"):
+            if fname in ("graphics.cfg", "renderer.conf", "default_phone.cfg"):
                 dst = os.path.join(EMU_DIR, os.path.relpath(os.path.join(root, fname), bundled_root))
                 if os.path.exists(dst):
                     continue
@@ -249,6 +291,14 @@ def ensure_latest_j2me_installed():
     vi = state.current_lang == "VI"
     updated_files = []
 
+    # 0. Always safeguard, recover and sync user saves first
+    try:
+        recover_orphaned_saves()
+        sync_persistent_saves_to_runtime()
+        sync_user_saves_to_persistent()
+    except Exception as e:
+        print(f"Save sync warning: {e}")
+
     # 1. If Java JRE is missing and payload exists, unpack full JRE
     if not os.path.exists(f"{RUNTIME_DIR}/bin/java") and has_payload():
         ok, msg = install_j2me_emulator(force=False)
@@ -266,8 +316,8 @@ def ensure_latest_j2me_installed():
     ensure_rom_dirs()
     if not os.path.exists(renderer_conf_path()) and not os.path.exists(graphics_cfg_path()):
         save_render_mode(DEFAULT_RENDER_MODE)
-    if not os.path.exists(quickchat_path()):
-        reset_quickchat()
+    if not os.path.exists(default_phone_cfg_path()):
+        save_default_phone_mode(DEFAULT_PHONE_MODE)
 
     # 4. Ensure executable permissions
     for p in (f"{EMU_DIR}/launch.sh", f"{RUNTIME_DIR}/bin/sdl_interface", f"{RUNTIME_DIR}/bin/java"):
@@ -365,80 +415,6 @@ def save_render_mode(mode):
         print(f"Error saving J2ME renderer.conf: {e}")
         return False
 
-
-# ------------------------------------------------------------------ quick chat
-DEFAULT_QUICKCHAT = [
-    "taikhoan",
-    "matkhau",
-    "ok",
-    "pt di",
-    "doi xiu",
-    "giao dich",
-    "a",
-    "hs",
-    "td50",
-]
-
-
-def quickchat_path():
-    return f"{RUNTIME_DIR}/bin/quickchat.txt"
-
-
-def load_quickchat():
-    """Load quickchat phrases from quickchat.txt. Returns list of strings."""
-    path = quickchat_path()
-    if not os.path.exists(path):
-        return list(DEFAULT_QUICKCHAT)
-    try:
-        phrases = []
-        with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    phrases.append(line)
-        return phrases if phrases else list(DEFAULT_QUICKCHAT)
-    except Exception as e:
-        print(f"Error reading quickchat.txt: {e}")
-        return list(DEFAULT_QUICKCHAT)
-
-
-def save_quickchat(phrases):
-    """Write phrases list to quickchat.txt. Returns True when saved."""
-    path = quickchat_path()
-    try:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        lines = ["# Danh sach chuoi mau / Quick Chat"] + [p.strip() for p in phrases if p.strip()]
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines) + "\n")
-        return True
-    except Exception as e:
-        print(f"Error saving quickchat.txt: {e}")
-        return False
-
-
-def add_quickchat(phrase):
-    """Add a new phrase to quickchat.txt."""
-    phrase = phrase.strip()
-    if not phrase:
-        return False
-    phrases = load_quickchat()
-    if phrase not in phrases:
-        phrases.append(phrase)
-        return save_quickchat(phrases)
-    return True
-
-
-def delete_quickchat(phrase):
-    """Delete a phrase from quickchat.txt."""
-    phrase = phrase.strip()
-    phrases = load_quickchat()
-    new_phrases = [p for p in phrases if p != phrase]
-    return save_quickchat(new_phrases)
-
-
-def reset_quickchat():
-    """Restore quickchat.txt to default phrases."""
-    return save_quickchat(DEFAULT_QUICKCHAT)
 
 
 # ------------------------------------------------------------------ rom folders
@@ -701,9 +677,135 @@ def drop_rom_cache():
             pass
 
 
-# ------------------------------------------------------------------ launcher
+# ------------------------------------------------------------------ launcher & persistent save safeguards
+def recover_orphaned_saves():
+    """Scan and recover any saves left behind in .rh_j2me_* temporary folders from previous crashes."""
+    recovered = 0
+    if not os.path.isdir(EMU_DIR):
+        return 0
+    try:
+        for entry in os.listdir(EMU_DIR):
+            if entry.startswith(".rh_j2me_"):
+                stash_dir = os.path.join(EMU_DIR, entry)
+                if not os.path.isdir(stash_dir):
+                    continue
+                for sub in ("bin/rms", "rms"):
+                    src_rms = os.path.join(stash_dir, sub)
+                    if os.path.isdir(src_rms):
+                        os.makedirs(PERSISTENT_RMS, exist_ok=True)
+                        os.makedirs(os.path.join(RUNTIME_DIR, "bin", "rms"), exist_ok=True)
+                        for game_f in os.listdir(src_rms):
+                            s_p = os.path.join(src_rms, game_f)
+                            p_dst = os.path.join(PERSISTENT_RMS, game_f)
+                            r_dst = os.path.join(RUNTIME_DIR, "bin", "rms", game_f)
+                            try:
+                                if os.path.isdir(s_p):
+                                    if not os.path.exists(p_dst):
+                                        shutil.copytree(s_p, p_dst)
+                                    if not os.path.exists(r_dst):
+                                        shutil.copytree(s_p, r_dst)
+                                    recovered += 1
+                            except Exception as e:
+                                print(f"Error restoring orphaned save {s_p}: {e}")
+                shutil.rmtree(stash_dir, ignore_errors=True)
+    except Exception as e:
+        print(f"Error recovering orphaned saves: {e}")
+    return recovered
+
+
+def sync_user_saves_to_persistent():
+    """Deep-copy all user saves (RMS) and game configs to persistent directory outside zulu17."""
+    os.makedirs(PERSISTENT_RMS, exist_ok=True)
+    os.makedirs(PERSISTENT_CONFIG, exist_ok=True)
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    rt_rms = os.path.join(RUNTIME_DIR, "bin", "rms")
+    rt_cfg = os.path.join(RUNTIME_DIR, "bin", "config")
+    if os.path.isdir(rt_rms):
+        for g in os.listdir(rt_rms):
+            src = os.path.join(rt_rms, g)
+            dst1 = os.path.join(PERSISTENT_RMS, g)
+            dst2 = os.path.join(BACKUP_DIR, g)
+            try:
+                if os.path.isdir(src):
+                    if os.path.exists(dst1):
+                        shutil.rmtree(dst1, ignore_errors=True)
+                    shutil.copytree(src, dst1)
+                    if os.path.exists(dst2):
+                        shutil.rmtree(dst2, ignore_errors=True)
+                    shutil.copytree(src, dst2)
+            except Exception as e:
+                print(f"Error syncing {src} to persistent: {e}")
+    if os.path.isdir(rt_cfg):
+        for g in os.listdir(rt_cfg):
+            src = os.path.join(rt_cfg, g)
+            dst1 = os.path.join(PERSISTENT_CONFIG, g)
+            try:
+                if os.path.isdir(src):
+                    if os.path.exists(dst1):
+                        shutil.rmtree(dst1, ignore_errors=True)
+                    shutil.copytree(src, dst1)
+            except Exception as e:
+                print(f"Error syncing config {src}: {e}")
+
+
+def sync_persistent_saves_to_runtime():
+    """Copy persistent user saves and configs back to runtime working directory."""
+    rt_rms = os.path.join(RUNTIME_DIR, "bin", "rms")
+    rt_cfg = os.path.join(RUNTIME_DIR, "bin", "config")
+    os.makedirs(rt_rms, exist_ok=True)
+    os.makedirs(rt_cfg, exist_ok=True)
+    if os.path.isdir(PERSISTENT_RMS):
+        for g in os.listdir(PERSISTENT_RMS):
+            src = os.path.join(PERSISTENT_RMS, g)
+            dst = os.path.join(rt_rms, g)
+            try:
+                if os.path.isdir(src) and not os.path.exists(dst):
+                    shutil.copytree(src, dst)
+            except Exception as e:
+                print(f"Error copying {src} to runtime: {e}")
+    if os.path.isdir(PERSISTENT_CONFIG):
+        for g in os.listdir(PERSISTENT_CONFIG):
+            src = os.path.join(PERSISTENT_CONFIG, g)
+            dst = os.path.join(rt_cfg, g)
+            try:
+                if os.path.isdir(src) and not os.path.exists(dst):
+                    shutil.copytree(src, dst)
+            except Exception as e:
+                print(f"Error copying config {src}: {e}")
+
+
+def _safe_clean_runtime_dir():
+    """Wipe JRE runtime binaries without touching user saves (bin/rms) or configs (bin/config)."""
+    if not os.path.isdir(RUNTIME_DIR):
+        return
+    for sub in ("lib", "legal", "conf", "include", "man", ".java"):
+        p = os.path.join(RUNTIME_DIR, sub)
+        if os.path.isdir(p):
+            shutil.rmtree(p, ignore_errors=True)
+    for item in os.listdir(RUNTIME_DIR):
+        p = os.path.join(RUNTIME_DIR, item)
+        if os.path.isfile(p):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+    rt_bin = os.path.join(RUNTIME_DIR, "bin")
+    if os.path.isdir(rt_bin):
+        for item in os.listdir(rt_bin):
+            if item in ("rms", "config"):
+                continue
+            p = os.path.join(rt_bin, item)
+            try:
+                if os.path.isdir(p):
+                    shutil.rmtree(p, ignore_errors=True)
+                else:
+                    os.remove(p)
+            except OSError:
+                pass
+
+
 def _stash_user_data(stash):
-    """Move save data out of the runtime into `stash`. Returns what was moved."""
+    """Safely copy user data to stash. Uses copytree so source data is never destroyed prematurely."""
     moved = []
     for rel in USER_DATA_DIRS:
         src = os.path.join(RUNTIME_DIR, rel)
@@ -712,7 +814,7 @@ def _stash_user_data(stash):
         dst = os.path.join(stash, rel)
         try:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.move(src, dst)
+            shutil.copytree(src, dst)
             moved.append(rel)
         except Exception as e:
             print(f"stash {rel} failed: {e}")
@@ -731,12 +833,7 @@ def _stash_user_data(stash):
 
 
 def _restore_user_data(stash):
-    """Put stashed data back, merging over whatever the fresh runtime created.
-
-    The unpacked archive carries rms/ and config/ as empty folders, so this walks
-    the entries rather than moving the folder itself - a plain move would fail on
-    a destination that already exists.
-    """
+    """Put stashed data back, merging over whatever the fresh runtime created."""
     for rel in USER_DATA_DIRS:
         src = os.path.join(stash, rel)
         if not os.path.isdir(src):
@@ -746,11 +843,11 @@ def _restore_user_data(stash):
             os.makedirs(dst, exist_ok=True)
             for name in os.listdir(src):
                 s_path, d_path = os.path.join(src, name), os.path.join(dst, name)
-                if os.path.isdir(d_path):
-                    shutil.rmtree(d_path, ignore_errors=True)
-                elif os.path.exists(d_path):
-                    os.remove(d_path)
-                shutil.move(s_path, d_path)
+                if not os.path.exists(d_path):
+                    if os.path.isdir(s_path):
+                        shutil.copytree(s_path, d_path)
+                    else:
+                        shutil.copy2(s_path, d_path)
         except Exception as e:
             print(f"restore {rel} failed: {e}")
     for rel in USER_DATA_FILES:
@@ -768,29 +865,25 @@ def _restore_user_data(stash):
 def install_j2me_emulator(force=False):
     """Install the SDL runtime from the bundled payload and wire JAVA into the menu.
 
-    Returns (ok, message). The runtime ships inside the app so this works with no
-    network - the archive is ~65MB of JRE, which is why it is not re-downloaded.
-
-    force=True wipes the runtime first and unpacks it again, for repairing an
-    install that has gone bad. Game saves, per-game settings and the chosen
-    display preset all survive that: someone repairing a crash is not asking to
-    lose their progress.
-
-    A runtime older than the bundled archive is replaced the same way, without
-    being asked. Leaving it in place was the old behaviour and it stranded
-    people: the emulator they had still ran, so nothing looked broken, while
-    every feature the newer one added stayed permanently out of reach.
+    Returns (ok, message). Saves and configurations are guaranteed to persist.
     """
     vi = state.current_lang == "VI"
     stash = None
     upgraded = False
     try:
         saved_mode = load_render_mode() if force else None
-        # Only wipe RUNTIME_DIR if user explicitly requested full repair/reinstall
+        saved_phone = load_default_phone_mode() if force else None
+
+        # Safeguard user saves first
+        recover_orphaned_saves()
+        sync_user_saves_to_persistent()
+
+        # Only clean JRE runtime binaries if user explicitly requested full repair/reinstall
         if force and os.path.isdir(RUNTIME_DIR):
             stash = tempfile.mkdtemp(prefix=".rh_j2me_", dir=EMU_DIR)
             _stash_user_data(stash)
-            shutil.rmtree(RUNTIME_DIR, ignore_errors=True)
+            _safe_clean_runtime_dir()
+
         os.makedirs(EMU_DIR, exist_ok=True)
         os.makedirs(IMG_DIR, exist_ok=True)
         ensure_rom_dirs()
@@ -805,6 +898,9 @@ def install_j2me_emulator(force=False):
             upgraded = True
             _probe_cache.pop("runtime", None)
 
+        # Restore user saves from persistent backup into runtime working dir
+        sync_persistent_saves_to_runtime()
+
         # Always sync latest bundled files (freej2me-sdl.jar, sdl_interface, launch.sh, etc.)
         synced = sync_bundled_runtime_files()
         if synced:
@@ -816,11 +912,7 @@ def install_j2me_emulator(force=False):
             if os.path.exists(p):
                 os.chmod(p, 0o755)
 
-        # Restore any missing config file from the payload rather than generating
-        # one. These are the package's own, known-good files; hand-written
-        # replacements are what broke a working install before. control_cycle and
-        # control_profile decide the pad layout, so a missing one leaves the player
-        # with buttons that do not match what the emulator's guide describes.
+        # Restore any missing config file from the payload rather than generating one
         for member, dest in (("JAVA/config.json", f"{EMU_DIR}/config.json"),
                              ("JAVA/launch.sh", f"{EMU_DIR}/launch.sh"),
                              ("JAVA/zulu17/bin/renderer.conf", renderer_conf_path()),
@@ -842,19 +934,17 @@ def install_j2me_emulator(force=False):
         if os.path.exists(lp):
             os.chmod(lp, 0o755)
 
-        # A reinstall wipes zulu17, and renderer.conf lives inside it, so put the
-        # user's display preset back on top of the restored default.
         if saved_mode:
             save_render_mode(saved_mode)
         elif not os.path.exists(renderer_conf_path()) and not os.path.exists(graphics_cfg_path()):
             save_render_mode(DEFAULT_RENDER_MODE)
 
-        # Ensure quickchat.txt exists
-        if not os.path.exists(quickchat_path()):
-            reset_quickchat()
+        if saved_phone:
+            save_default_phone_mode(saved_phone)
+        elif not os.path.exists(default_phone_cfg_path()):
+            save_default_phone_mode(DEFAULT_PHONE_MODE)
 
-        # The stock menu caches its rom list; a stale cache would keep launching the
-        # old flat paths and never find games in the resolution folders.
+        # The stock menu caches its rom list; drop cache after setup
         drop_rom_cache()
 
         # Setup NextUI Emulator Pak for tg5040 and tg5050
@@ -887,17 +977,20 @@ def install_j2me_emulator(force=False):
                 "rom_dir": ROM_DIR, "img_dir": IMG_DIR, "games": [],
             }
         if upgraded:
-            return True, ("Đã nâng cấp giả lập Java J2ME lên bản mới"
-                          if vi else "Java J2ME emulator upgraded to the new build")
+            return True, ("Đã nâng cấp giả lập Java J2ME lên bản mới (Save game an toàn)"
+                          if vi else "Java J2ME emulator upgraded (Save games preserved)")
         if force:
-            return True, ("Đã cài lại giả lập Java J2ME" if vi else "Java J2ME emulator reinstalled")
+            return True, ("Đã cài lại giả lập Java J2ME (Save game an toàn)"
+                          if vi else "Java J2ME emulator reinstalled (Save games preserved)")
         return True, ("Đã cài giả lập Java J2ME" if vi else "Java J2ME emulator installed")
     except Exception as e:
         print(f"J2ME install error: {e}")
         return False, (f"Lỗi cài đặt: {e}" if vi else f"Install failed: {e}")
     finally:
-        # Even when the unpack blew up: the saves go back where they belong
-        # rather than staying in a hidden folder nobody will ever look in.
         if stash:
             _restore_user_data(stash)
             shutil.rmtree(stash, ignore_errors=True)
+        try:
+            sync_user_saves_to_persistent()
+        except Exception:
+            pass

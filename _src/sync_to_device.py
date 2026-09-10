@@ -25,7 +25,7 @@ TARGET_FILES = [
     ("../manifest.json", "manifest.json"),
     ("emus/JAVA/zulu17/bin/freej2me-sdl.jar", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/freej2me-sdl.jar"),
     ("emus/JAVA/zulu17/bin/sdl_interface", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/sdl_interface"),
-    ("emus/JAVA/zulu17/bin/quickchat.txt", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/quickchat.txt"),
+    ("emus/JAVA/zulu17/bin/keymap.cfg", "/mnt/SDCARD/Emus/JAVA/zulu17/bin/keymap.cfg"),
     ("emus/JAVA/launch.sh", "/mnt/SDCARD/Emus/JAVA/launch.sh"),
     ("emus/SEGACD/config.json", "/mnt/SDCARD/Emus/SEGACD/config.json"),
     ("emus/SEGACD/launch.sh", "/mnt/SDCARD/Emus/SEGACD/launch.sh"),
