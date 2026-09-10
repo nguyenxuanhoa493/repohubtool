@@ -130,7 +130,8 @@ from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup
     list_save_backups, restore_save_backup, delete_save_backup)
 from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner
 from rh.logger import (init_logger, log_info, log_error, upload_log_to_telegram,
-    generate_debug_report, LOG_FILE, clear_log, get_log_size_str, get_device_id)
+    generate_debug_report, LOG_FILE, clear_log, get_log_size_str, get_device_id,
+    sync_retroarch_logging)
 
 # Range-resume budget for a single part of a parallel download.
 
@@ -3888,6 +3889,10 @@ def main():
                 elif item_id == "toggle_logging":
                     state.enable_logging = not state.enable_logging
                     state.save_settings()
+                    try:
+                        sync_retroarch_logging(state.enable_logging)
+                    except Exception:
+                        pass
                     toast_msg = tr("log_logging_on") if state.enable_logging else tr("log_logging_off")
                     toast_timer = time.time()
                 elif item_id == "action_clear_log":

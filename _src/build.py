@@ -121,8 +121,9 @@ T = {
   "dl_trimui_sub": "95 MB · Java emulator included",
   "dl_nextui": "Download for NextUI (Pak)",
   "dl_nextui_sub": "192 MB · Ready for NextUI",
-  "dl_sd": "Full Package (Stock ROM + RetroHub)",
-  "dl_sd_sub": "1.05 GB · Pre-configured SD base ready to play",
+  "dl_sd": "Full Package (Brick Pro only)",
+  "dl_sd_sub": "1.05 GB · Pre-configured for Brick Pro (TG4040)",
+  "sd_warn": "⚠️ <b>Note:</b> The Full ROM Package (1.05 GB) is pre-configured specifically for <b>TrimUI Brick Pro (TG4040)</b>. If you use <b>TrimUI Smart Pro</b>, please download the standalone TrimUI (Stock) or NextUI package above.",
   "sd_url": SD_FULL_URL,
   "h_feat": "Highlights", "h_install": "How to install & update", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
@@ -174,8 +175,9 @@ T = {
   "dl_trimui_sub": "95 MB · Kèm giả lập Java",
   "dl_nextui": "Tải bản NextUI (Pak)",
   "dl_nextui_sub": "192 MB · Dành riêng cho NextUI",
-  "dl_sd": "Bản Full (ROM + Giả lập + RetroHub)",
-  "dl_sd_sub": "1.05 GB · Trọn bộ thẻ nhớ cài sẵn chơi ngay",
+  "dl_sd": "Bản Full (Chỉ cho Brick Pro)",
+  "dl_sd_sub": "1.05 GB · Cài sẵn cho Brick Pro (TG4040)",
+  "sd_warn": "⚠️ <b>Lưu ý:</b> Bản Full ROM (1.05 GB) được cấu hình riêng cho <b>TrimUI Brick Pro (TG4040)</b>. Người dùng <b>TrimUI Smart Pro</b> vui lòng tải bản TrimUI (Hệ gốc) hoặc NextUI ở trên.",
   "sd_url": SD_FULL_URL,
   "h_feat": "Tính năng nổi bật", "h_install": "Cách cài & cập nhật", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
@@ -274,6 +276,10 @@ CSS = """
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
+  .sd-warn{margin:18px auto 0;max-width:760px;font-size:.88rem;color:#f4e3b8;
+    background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
+    border-radius:10px;padding:10px 18px;line-height:1.5;text-align:center}
+  .sd-warn b{color:var(--gold)}
 
   .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
     padding:8px 18px 8px 14px;border-radius:999px;
@@ -574,6 +580,7 @@ PAGE = """<!doctype html>
       <a class="btn alt" href="{sd_url}">{dl_sd}<small>{dl_sd_sub}</small></a>
       <a class="btn ghost" href="{guide_url}">{btn_guide}<small>{btn_guide_sub}</small></a>
     </div>
+    <p class="sd-warn">{sd_warn}</p>
     <p class="dlcount" id="dlcount" hidden>{SVG_DL}<b>0</b><span>{dls}</span></p>
   </div>
 </header>
