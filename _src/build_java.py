@@ -300,25 +300,26 @@ T = {
                 "played yesterday and the one you opened today behave differently — each keeps "
                 "its own setting. To change it, hold <b>START</b> and tap <b>SELECT</b> until the "
                 "letter you want appears in the corner; it is saved for that game alone."),
-  "che_do_note": ("If a game's D-pad does nothing while its other buttons work, it is on <b>P</b>. "
-                  "Switch it to <b>N</b>."),
-  "s_nut": ("H, K and X are three physical pad layouts. Unlike the phone mode these are global — "
-            "one layout for every game. <b>H</b> is the default and is what the five phone modes "
-            "P/N/E/S/M all use; picking K or X switches the phone mode to N automatically."),
-  "nut_p2": ("Both analog sticks click, and those clicks are L3 and R3 — that is how you reach the "
-             "display shortcut. The stick dead zone is 8000 to press and 6000 to release; pushed "
-             "diagonally, the emulator takes whichever axis is further from centre so you do not "
-             "get two directions flickering."),
-  "s_hinh": "Three presets, switchable in the app or in-game.",
+  "che_do_note": ("Since RetroHub 1.99, the default keypad profile is set to <b>N (Nokia)</b> by default "
+                  "so D-pads navigate smoothly with authentic GameAction in new games. You can change the default "
+                  "profile in <b>Utilities → Java Settings</b>, or hold <b>START</b> and press <b>SELECT</b> in-game."),
+  "s_nut": ("H, K and X are the three physical pad layouts. Unlike the phone modes, these are system-wide — "
+            "one layout for every game. <b>H</b> is the default, and all five phone modes P/N/E/S/M use it; "
+            "picking K or X snaps the phone mode back to N."),
+  "nut_p2": ("Both analog sticks click down, and that click is L3 and R3 — the input for the visual "
+             "switch combo. The stick deadzone is 8000 for press and 6000 for release; pushed on a diagonal, "
+             "the emulator takes whichever axis is further off-centre, so you don't get twitching across "
+             "both directions."),
+  "s_hinh": "Three presets, switchable in the app or live in game.",
   "hinh_li": [
-    "<b>PIXEL</b> — nearest-neighbour, no colour blending between pixels, whole-number scale "
-    "factors. The one to try first for anything pixel-art.",
-    "<b>SMOOTH</b> — linear filtering, fits the largest area that keeps the proportions right. "
-    "Can look soft on pixel art.",
-    "<b>HQ</b> — asks SDL2 for its best quality. On this driver that is often identical to "
+    "<b>PIXEL</b> — nearest-neighbour, no blending between pixels, integer scaling. The one to try first "
+    "for pixel art.",
+    "<b>SMOOTH</b> — linear filtering, fits the largest area that keeps the aspect ratio. Can look soft "
+    "on pixel art.",
+    "<b>HQ</b> — asks SDL2 for its highest quality tier. On this driver it usually renders identically to "
     "SMOOTH, so treat it as experimental.",
   ],
-  "hinh_p2": ("In the app: <b>Utilities → Java display mode</b>, which writes a whole preset. "
+  "hinh_p2": ("In the app: <b>Utilities → Java Settings</b>, which writes a whole preset. "
               "In game: hold <b>START</b> and press <b>R3</b>, which toggles the filter mode and the "
               "integer-scaling flag and leaves the rest alone. Either way the choice lands in "
               "<code>renderer.conf</code> and is picked up on the next launch."),
@@ -328,11 +329,10 @@ T = {
   "toan_p2": ("The last two rows are the only ways to genuinely fill the panel without distortion, "
               "and both ask something of you: one asks you to hold the device sideways, the other "
               "only works on games that adapt to the canvas they are given."),
-  "s_luu": ("J2ME saves live in <code>Emus/JAVA/zulu17/bin/rms/</code>, one folder per game, and "
-            "per-game settings in <code>zulu17/bin/config/</code>."),
-  "luu_p2": ("Both sit inside the emulator folder, which is why reinstalling the emulator used to "
-             "delete them. Since RetroHub 1.42 they are moved aside before the folder is replaced "
-             "and put back afterwards — including when the install fails halfway."),
+  "s_luu": ("J2ME saves are safely stored at <code>Emus/JAVA/rms/</code> and <code>zulu17/bin/rms/</code>, "
+            "with automated snapshots in <code>Emus/JAVA/saves_backup/</code>."),
+  "luu_p2": ("Automated two-way pre/post launch sync and instant OS storage flushing ensure your game saves "
+             "and configurations persist permanently across emulator updates and OTA upgrades."),
   "th_button": "Button", "th_h": "Layout H", "th_k": "Layout K", "th_x": "Layout X",
   "th_mode": "Mode", "th_means": "What it means",
   "th_key": "Key", "th_values": "Values", "th_does": "What it does",
@@ -394,8 +394,9 @@ T = {
                 "và game mở hôm nay lại khác nhau — mỗi game giữ cài đặt của nó. Muốn đổi thì giữ "
                 "<b>START</b> rồi bấm <b>SELECT</b> tới khi góc màn hiện chữ mình muốn; nó chỉ lưu cho "
                 "riêng game đó."),
-  "che_do_note": ("Game nào D-pad không ăn gì mà các nút khác vẫn chạy thì nó đang ở <b>P</b>. "
-                  "Chuyển sang <b>N</b>."),
+  "che_do_note": ("Từ bản 1.99, chế độ phím mặc định toàn hệ thống được đặt là <b>N (Nokia)</b> "
+                  "giúp D-pad di chuyển chuẩn GameAction ngay khi mở game mới. Bạn có thể đổi chế độ mặc định này "
+                  "trong <b>Tiện ích → Cài đặt Java</b> hoặc giữ <b>START</b> bấm <b>SELECT</b> trong game để đổi nhanh."),
   "s_nut": ("H, K và X là ba bố trí nút vật lý. Khác với chế độ máy, ba cái này dùng chung — một bố trí "
             "cho mọi game. <b>H</b> là mặc định, và cả năm chế độ máy P/N/E/S/M đều dùng nó; chọn K hay X "
             "thì chế độ máy tự chuyển về N."),
@@ -410,7 +411,7 @@ T = {
     "<b>HQ</b> — xin SDL2 mức chất lượng tốt nhất. Trên driver này thường ra y hệt SMOOTH, nên coi như "
     "còn thử nghiệm.",
   ],
-  "hinh_p2": ("Trong app: <b>Tiện ích → Kiểu hiển thị game Java</b>, ghi trọn cả preset. Trong game: giữ "
+  "hinh_p2": ("Trong app: <b>Tiện ích → Cài đặt Java</b>, ghi trọn cả preset. Trong game: giữ "
               "<b>START</b> bấm <b>R3</b>, đổi kiểu hiển thị cùng cờ phóng nguyên và không đụng các khoá "
               "còn lại. Đằng nào lựa chọn cũng được ghi vào <code>renderer.conf</code> và dùng lại lần sau."),
   "s_toan": ("Game 240×320 là khổ dựng đứng; màn Brick Pro là 1024×768, nằm ngang. Hai tỉ lệ ngược nhau, "
@@ -419,11 +420,10 @@ T = {
   "toan_p2": ("Hai dòng cuối là hai cách duy nhất lấp kín màn mà không méo, và cả hai đều đòi hỏi thứ gì "
               "đó: một cái bắt cầm máy nằm ngang, một cái chỉ ăn với game biết tự co giãn theo khung được "
               "cấp."),
-  "s_luu": ("Save game J2ME nằm ở <code>Emus/JAVA/zulu17/bin/rms/</code>, mỗi game một thư mục, còn cấu "
-            "hình riêng từng game ở <code>zulu17/bin/config/</code>."),
-  "luu_p2": ("Cả hai nằm bên trong thư mục giả lập, nên trước đây cài lại giả lập là xoá mất. Từ RetroHub "
-             "1.42 chúng được cất ra chỗ khác trước khi thay thư mục rồi đặt lại — kể cả khi bản cài hỏng "
-             "giữa chừng."),
+  "s_luu": ("Save game J2ME được lưu trữ an toàn tại <code>Emus/JAVA/rms/</code> và <code>zulu17/bin/rms/</code>, "
+            "kèm bản sao lưu tự động tại <code>Emus/JAVA/saves_backup/</code>."),
+  "luu_p2": ("Hệ thống tự động đồng bộ 2 chiều trước và sau khi chơi, flush sync xuống thẻ nhớ tức thì. "
+             "Dù bạn có nâng cấp giả lập, cài lại Java hay cập nhật OTA, dữ liệu save game không bao giờ bị mất."),
   "th_button": "Nút", "th_h": "Bố trí H", "th_k": "Bố trí K", "th_x": "Bố trí X",
   "th_mode": "Chế độ", "th_means": "Nghĩa là gì",
   "th_key": "Khoá", "th_values": "Giá trị", "th_does": "Tác dụng",

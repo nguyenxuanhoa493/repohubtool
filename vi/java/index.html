@@ -98,6 +98,10 @@
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
+  .sd-warn{margin:18px auto 0;max-width:760px;font-size:.88rem;color:#f4e3b8;
+    background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
+    border-radius:10px;padding:10px 18px;line-height:1.5;text-align:center}
+  .sd-warn b{color:var(--gold)}
 
   .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
     padding:8px 18px 8px 14px;border-radius:999px;
@@ -330,7 +334,7 @@
       <tbody><tr><td>P</td><td>Bàn phím số phổ thông. D-pad gửi ra số 2/4/6/8, OK gửi số 5.</td></tr><tr><td>N</td><td>Nokia. D-pad và OK tới game dưới dạng GameAction — thứ đa số game chờ.</td></tr><tr><td>E</td><td>Sony Ericsson. Vài tựa chỉ chạy đúng ở chế độ này.</td></tr><tr><td>S</td><td>Siemens.</td></tr><tr><td>M</td><td>Motorola.</td></tr></tbody>
     </table></div>
     <p>Chế độ được nhớ <b>riêng cho từng game</b>, trong <code>zulu17/bin/config/&lt;tên game&gt;/game.conf</code>. Đó là lý do game chơi hôm qua và game mở hôm nay lại khác nhau — mỗi game giữ cài đặt của nó. Muốn đổi thì giữ <b>START</b> rồi bấm <b>SELECT</b> tới khi góc màn hiện chữ mình muốn; nó chỉ lưu cho riêng game đó.</p>
-    <p class="note">Game nào D-pad không ăn gì mà các nút khác vẫn chạy thì nó đang ở <b>P</b>. Chuyển sang <b>N</b>.</p>
+    <p class="note">Từ bản 1.99, chế độ phím mặc định toàn hệ thống được đặt là <b>N (Nokia)</b> giúp D-pad di chuyển chuẩn GameAction ngay khi mở game mới. Bạn có thể đổi chế độ mặc định này trong <b>Tiện ích → Cài đặt Java</b> hoặc giữ <b>START</b> bấm <b>SELECT</b> trong game để đổi nhanh.</p>
   </section>
 
   <section id="nut-bam" class="rise">
@@ -351,7 +355,7 @@
     <h2>Hình ảnh</h2>
     <p>Ba preset, đổi được trong app hoặc ngay trong game.</p>
     <ul><li><b>PIXEL</b> — nearest-neighbor, không trộn màu giữa hai pixel, hệ số phóng là số nguyên. Nên thử đầu tiên với game pixel-art.</li><li><b>SMOOTH</b> — lọc linear, lấp vùng lớn nhất mà vẫn giữ đúng tỉ lệ. Có thể hơi mềm với pixel-art.</li><li><b>HQ</b> — xin SDL2 mức chất lượng tốt nhất. Trên driver này thường ra y hệt SMOOTH, nên coi như còn thử nghiệm.</li></ul>
-    <p>Trong app: <b>Tiện ích → Kiểu hiển thị game Java</b>, ghi trọn cả preset. Trong game: giữ <b>START</b> bấm <b>R3</b>, đổi kiểu hiển thị cùng cờ phóng nguyên và không đụng các khoá còn lại. Đằng nào lựa chọn cũng được ghi vào <code>renderer.conf</code> và dùng lại lần sau.</p>
+    <p>Trong app: <b>Tiện ích → Cài đặt Java</b>, ghi trọn cả preset. Trong game: giữ <b>START</b> bấm <b>R3</b>, đổi kiểu hiển thị cùng cờ phóng nguyên và không đụng các khoá còn lại. Đằng nào lựa chọn cũng được ghi vào <code>renderer.conf</code> và dùng lại lần sau.</p>
     <div class="tw"><table>
       <thead><tr><th>Khoá</th><th>Giá trị</th><th>Tác dụng</th></tr></thead>
       <tbody><tr><td><code>render_mode</code></td><td>pixel, smooth, hq</td><td>Bộ lọc khi SDL phóng khung hình cuối.</td></tr><tr><td><code>integer_scaling</code></td><td>true, false</td><td>Làm tròn hệ số phóng xuống số nguyên khi đang phóng to.</td></tr><tr><td><code>keep_aspect</code></td><td>true, false</td><td>Giữ đúng tỉ lệ hình. Để false là kéo giãn cho đầy màn.</td></tr><tr><td><code>text_aa</code></td><td>true, false</td><td>Khử răng cưa chữ Java/AWT.</td></tr><tr><td><code>shape_aa</code></td><td>true, false</td><td>Khử răng cưa đường và vùng vector Java/AWT.</td></tr><tr><td><code>m3g_filter</code></td><td>auto, nearest, linear</td><td>Bộ lọc texture cho game 3D (M3G).</td></tr></tbody>
@@ -370,8 +374,8 @@
 
   <section id="luu-game" class="rise">
     <h2>Save game</h2>
-    <p>Save game J2ME nằm ở <code>Emus/JAVA/zulu17/bin/rms/</code>, mỗi game một thư mục, còn cấu hình riêng từng game ở <code>zulu17/bin/config/</code>.</p>
-    <p>Cả hai nằm bên trong thư mục giả lập, nên trước đây cài lại giả lập là xoá mất. Từ RetroHub 1.42 chúng được cất ra chỗ khác trước khi thay thư mục rồi đặt lại — kể cả khi bản cài hỏng giữa chừng.</p>
+    <p>Save game J2ME được lưu trữ an toàn tại <code>Emus/JAVA/rms/</code> và <code>zulu17/bin/rms/</code>, kèm bản sao lưu tự động tại <code>Emus/JAVA/saves_backup/</code>.</p>
+    <p>Hệ thống tự động đồng bộ 2 chiều trước và sau khi chơi, flush sync xuống thẻ nhớ tức thì. Dù bạn có nâng cấp giả lập, cài lại Java hay cập nhật OTA, dữ liệu save game không bao giờ bị mất.</p>
   </section>
 
   <section id="su-co" class="rise">

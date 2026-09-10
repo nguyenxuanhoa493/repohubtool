@@ -98,6 +98,10 @@
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
+  .sd-warn{margin:18px auto 0;max-width:760px;font-size:.88rem;color:#f4e3b8;
+    background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
+    border-radius:10px;padding:10px 18px;line-height:1.5;text-align:center}
+  .sd-warn b{color:var(--gold)}
 
   .dlcount{display:inline-flex;align-items:center;gap:9px;margin:24px 0 0;
     padding:8px 18px 8px 14px;border-radius:999px;
@@ -330,17 +334,17 @@
       <tbody><tr><td>P</td><td>Plain keypad. The D-pad sends the digits 2/4/6/8 and OK sends 5.</td></tr><tr><td>N</td><td>Nokia. The D-pad and OK arrive as GameAction — what most games expect.</td></tr><tr><td>E</td><td>Sony Ericsson. A handful of titles need this and nothing else works.</td></tr><tr><td>S</td><td>Siemens.</td></tr><tr><td>M</td><td>Motorola.</td></tr></tbody>
     </table></div>
     <p>The mode is remembered <b>per game</b>, in <code>zulu17/bin/config/&lt;game&gt;/game.conf</code>. That is why the game you played yesterday and the one you opened today behave differently — each keeps its own setting. To change it, hold <b>START</b> and tap <b>SELECT</b> until the letter you want appears in the corner; it is saved for that game alone.</p>
-    <p class="note">If a game's D-pad does nothing while its other buttons work, it is on <b>P</b>. Switch it to <b>N</b>.</p>
+    <p class="note">Since RetroHub 1.99, the default keypad profile is set to <b>N (Nokia)</b> by default so D-pads navigate smoothly with authentic GameAction in new games. You can change the default profile in <b>Utilities → Java Settings</b>, or hold <b>START</b> and press <b>SELECT</b> in-game.</p>
   </section>
 
   <section id="nut-bam" class="rise">
     <h2>Button layouts</h2>
-    <p>H, K and X are three physical pad layouts. Unlike the phone mode these are global — one layout for every game. <b>H</b> is the default and is what the five phone modes P/N/E/S/M all use; picking K or X switches the phone mode to N automatically.</p>
+    <p>H, K and X are the three physical pad layouts. Unlike the phone modes, these are system-wide — one layout for every game. <b>H</b> is the default, and all five phone modes P/N/E/S/M use it; picking K or X snaps the phone mode back to N.</p>
     <div class="tw"><table>
       <thead><tr><th>Button</th><th>Layout H</th><th>Layout K</th><th>Layout X</th></tr></thead>
       <tbody><tr><td>A</td><td>Right softkey</td><td>D-pad right</td><td>OK</td></tr><tr><td>B</td><td>Key 0</td><td>D-pad down</td><td>Right softkey</td></tr><tr><td>X</td><td>OK</td><td>D-pad up</td><td>Left softkey</td></tr><tr><td>Y</td><td>Left softkey</td><td>D-pad left</td><td>Key 0</td></tr><tr><td>D-pad up</td><td>D-pad up</td><td>Key 1</td><td>D-pad up</td></tr><tr><td>D-pad down</td><td>D-pad down</td><td>Key 3</td><td>D-pad down</td></tr><tr><td>D-pad left</td><td>D-pad left</td><td>Key 7</td><td>D-pad left</td></tr><tr><td>D-pad right</td><td>D-pad right</td><td>Key 9</td><td>D-pad right</td></tr><tr><td>L1</td><td>Key 1</td><td>*</td><td>Key 1</td></tr><tr><td>L2</td><td>Key 3</td><td>#</td><td>Key 3</td></tr><tr><td>R1</td><td>Key 9</td><td>Right softkey</td><td>Key 9</td></tr><tr><td>R2</td><td>Key 7</td><td>OK</td><td>Key 7</td></tr><tr><td>L3</td><td>*</td><td>Key 0</td><td>*</td></tr><tr><td>R3</td><td>#</td><td>Left softkey</td><td>#</td></tr><tr><td>Left stick</td><td>D-pad</td><td>D-pad</td><td>D-pad</td></tr><tr><td>Right stick</td><td>2 / 4 / 6 / 8</td><td>2 / 4 / 6 / 8</td><td>2 / 4 / 6 / 8</td></tr><tr><td>SELECT</td><td>Key 5</td><td>Key 5</td><td>Key 5</td></tr><tr><td>START</td><td>—</td><td>—</td><td>—</td></tr></tbody>
     </table></div>
-    <p>Both analog sticks click, and those clicks are L3 and R3 — that is how you reach the display shortcut. The stick dead zone is 8000 to press and 6000 to release; pushed diagonally, the emulator takes whichever axis is further from centre so you do not get two directions flickering.</p>
+    <p>Both analog sticks click down, and that click is L3 and R3 — the input for the visual switch combo. The stick deadzone is 8000 for press and 6000 for release; pushed on a diagonal, the emulator takes whichever axis is further off-centre, so you don't get twitching across both directions.</p>
     <h3>Shortcut summary</h3>
     <ul class="keys"><li><b>START + SELECT</b><span>Cycle P → N → E → S → M → H → K → X</span></li><li><b>START + R3</b><span>Cycle PIXEL → SMOOTH → HQ</span></li><li><b>START + B</b><span>Rotate the screen</span></li><li><b>START + Y</b><span>Mouse mode on/off (X clicks)</span></li><li><b>MENU</b><span>Ask whether to quit the game</span></li><li><b>SELECT on its own</b><span>Key 5</span></li></ul>
     <h3>Quitting a game</h3>
@@ -349,9 +353,9 @@
 
   <section id="hinh-anh" class="rise">
     <h2>Display</h2>
-    <p>Three presets, switchable in the app or in-game.</p>
-    <ul><li><b>PIXEL</b> — nearest-neighbour, no colour blending between pixels, whole-number scale factors. The one to try first for anything pixel-art.</li><li><b>SMOOTH</b> — linear filtering, fits the largest area that keeps the proportions right. Can look soft on pixel art.</li><li><b>HQ</b> — asks SDL2 for its best quality. On this driver that is often identical to SMOOTH, so treat it as experimental.</li></ul>
-    <p>In the app: <b>Utilities → Java display mode</b>, which writes a whole preset. In game: hold <b>START</b> and press <b>R3</b>, which toggles the filter mode and the integer-scaling flag and leaves the rest alone. Either way the choice lands in <code>renderer.conf</code> and is picked up on the next launch.</p>
+    <p>Three presets, switchable in the app or live in game.</p>
+    <ul><li><b>PIXEL</b> — nearest-neighbour, no blending between pixels, integer scaling. The one to try first for pixel art.</li><li><b>SMOOTH</b> — linear filtering, fits the largest area that keeps the aspect ratio. Can look soft on pixel art.</li><li><b>HQ</b> — asks SDL2 for its highest quality tier. On this driver it usually renders identically to SMOOTH, so treat it as experimental.</li></ul>
+    <p>In the app: <b>Utilities → Java Settings</b>, which writes a whole preset. In game: hold <b>START</b> and press <b>R3</b>, which toggles the filter mode and the integer-scaling flag and leaves the rest alone. Either way the choice lands in <code>renderer.conf</code> and is picked up on the next launch.</p>
     <div class="tw"><table>
       <thead><tr><th>Key</th><th>Values</th><th>What it does</th></tr></thead>
       <tbody><tr><td><code>render_mode</code></td><td>pixel, smooth, hq</td><td>Filter used when SDL scales the finished frame.</td></tr><tr><td><code>integer_scaling</code></td><td>true, false</td><td>Round the scale factor down to a whole number while magnifying.</td></tr><tr><td><code>keep_aspect</code></td><td>true, false</td><td>Keep the game's proportions. false stretches to fill the panel.</td></tr><tr><td><code>text_aa</code></td><td>true, false</td><td>Anti-alias Java/AWT text.</td></tr><tr><td><code>shape_aa</code></td><td>true, false</td><td>Anti-alias Java/AWT lines and shapes.</td></tr><tr><td><code>m3g_filter</code></td><td>auto, nearest, linear</td><td>Texture filter for 3D (M3G) games.</td></tr></tbody>
@@ -370,8 +374,8 @@
 
   <section id="luu-game" class="rise">
     <h2>Saves</h2>
-    <p>J2ME saves live in <code>Emus/JAVA/zulu17/bin/rms/</code>, one folder per game, and per-game settings in <code>zulu17/bin/config/</code>.</p>
-    <p>Both sit inside the emulator folder, which is why reinstalling the emulator used to delete them. Since RetroHub 1.42 they are moved aside before the folder is replaced and put back afterwards — including when the install fails halfway.</p>
+    <p>J2ME saves are safely stored at <code>Emus/JAVA/rms/</code> and <code>zulu17/bin/rms/</code>, with automated snapshots in <code>Emus/JAVA/saves_backup/</code>.</p>
+    <p>Automated two-way pre/post launch sync and instant OS storage flushing ensure your game saves and configurations persist permanently across emulator updates and OTA upgrades.</p>
   </section>
 
   <section id="su-co" class="rise">

@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("1.99", "2026-09-10",
+     ("Java J2ME: Default Nokia (N) keypad profile setting, 100% safe save persistence across updates, and restore original keymap",
+      "Game Java J2ME: Thêm cài đặt phím mặc định Nokia (N), bảo toàn 100% save game khi nâng cấp và khôi phục keymap gốc"),
+     [("Default Nokia (N) Keypad Profile: added configurable default phone keypad mode (Nokia [N] - Recommended, Plain [P], Sony Ericsson [E], Siemens [S], Motorola [M]). J2ME games launch with authentic D-pad GameAction by default without requiring manual switching.",
+       "Tùy chọn chế độ phím mặc định Nokia (N): bổ sung cài đặt profile bàn phím điện thoại mặc định (Nokia [N] - Khuyên dùng, Phổ thông [P], Sony Ericsson [E], Siemens [S], Motorola [M]). Mọi game Java khi mở lần đầu tự động nhận D-pad điều hướng GameAction chuẩn mà không cần bấm đổi thủ công."),
+      ("100% Safe Save Persistence Across Updates: relocated user RMS save data and configs to persistent storage outside the JRE runtime (Emus/JAVA/rms). Automated 2-way pre/post-launch synchronization, instant OS flash sync, and recovery of orphaned saves from previous crashes.",
+       "Bảo toàn 100% Save Game (RMS) khi nâng cấp: tách biệt và lưu trữ dữ liệu save game bền vững bên ngoài thư mục JRE (Emus/JAVA/rms). Tự động đồng bộ 2 chiều trước và sau khi chơi, flush sync ghi đĩa tức thì, và tự động quét cứu lại toàn bộ save game bị kẹt từ các lần cập nhật trước."),
+      ("Remove virtual keyboard & restore original FreeJ2ME: completely removed virtual keyboard mod, restored authentic sdl_interface binary and original keymap.cfg (A/B/X/Y, D-pad, START, SELECT, L1/R1/L2/R2) with zero latency.",
+       "Gỡ bàn phím ảo & khôi phục FreeJ2ME gốc: loại bỏ hoàn toàn mod bàn phím ảo, khôi phục tệp sdl_interface nguyên bản và keymap.cfg chuẩn (A/B/X/Y, D-pad, START, SELECT, L1/R1/L2/R2) với độ trễ 0ms.")]),
+
     ("1.98", "2026-09-10",
      ("Game Crash & Diagnostics Engine: RetroArch runtime logs, Java J2ME stack traces, and recent game crash dump",
       "Nâng cấp Chẩn đoán & Bắt lỗi văng game: Bắt lỗi runtime RetroArch, trích xuất log Java J2ME, Kernel dmesg và kiểm tra ROM"),
