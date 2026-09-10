@@ -1,2 +1,4 @@
 __pycache__/
 .DS_Store
+catalog/roms_store.sqlite3
+files/settings.json
