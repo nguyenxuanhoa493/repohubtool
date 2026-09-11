@@ -1,12 +1,12 @@
 {
-  "version": "2.03",
+  "version": "2.04",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-11T18:20:00+0700",
+  "built": "2026-09-12T05:28:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tối ưu kho Cheat Code: Tăng tốc đối chiếu 240x, hủy tải tức thì 50ms, bộ nhớ đệm chống đơ menu",
-    "en": "Optimize Cheat Manager: 240x faster matching, instant 50ms stop, and non-blocking count cache"
+    "vi": "Tích hợp SSH Internet: Mở cổng debug từ xa qua Pinggy, vượt mọi NAT/Firewall để truy cập thiết bị mọi nơi",
+    "en": "Integrate Remote SSH: Open public debug tunnel via Pinggy, bypass NAT/firewalls for remote device access"
   },
   "remove": [
     "app.pyc",
@@ -201,8 +201,8 @@
     },
     {
       "path": "app.py",
-      "size": 325504,
-      "sha256": "e294332817aca20e6d3d54559ddac415a84a38c7f9ccb396b981b8427819ecbb"
+      "size": 326781,
+      "sha256": "71946d5d9420245559346c7c2a5e1a3fa0c4eb207abac2d37d6f5c8ac140afdd"
     },
     {
       "path": "assets/fallback.ttf",
@@ -446,8 +446,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 42818,
-      "sha256": "3dcb2257dc791de4837c2a70f855ca37b50bc4b96479a3c3036634293ebf0ed0"
+      "size": 43215,
+      "sha256": "dea6000ebeb1644fded20944ad3e4f59f30b98dc0cb6a71dba9d4705d7823657"
     },
     {
       "path": "rh/inputs.py",
@@ -521,8 +521,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 11136,
-      "sha256": "b9a810c74c072c8d9292155e924de4bff8c317d5e4d548d093fa8cb1503c0de4"
+      "size": 16765,
+      "sha256": "a53de526b62f975da87cf5e139c111f882475666a630b48145abd855cc464842"
     },
     {
       "path": "rh/splash.py",
@@ -541,8 +541,8 @@
     },
     {
       "path": "rh/sysinfo.py",
-      "size": 13063,
-      "sha256": "7dfd87e4f94e52c5abf0752fb99e63664c5ea4de19f1387d69c56a335b90ae4d"
+      "size": 13424,
+      "sha256": "20b2c48d4bd86daacf314e6b2ec25eca6cfc0c09aee792a2d07828a5d6998391"
     },
     {
       "path": "rh/updater.py",
@@ -552,7 +552,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "558e23fc87b0dd839c82f041246dcb5278893bffdaff147b2c81a14db8a770d5"
+      "sha256": "be6758fc065e77790fb53e6d26465b50cfe89aef39e0fc414a2fe28f04bf74dd"
     },
     {
       "path": "rh/yt.py",
