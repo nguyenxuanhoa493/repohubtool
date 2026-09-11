@@ -201,8 +201,8 @@
     },
     {
       "path": "app.py",
-      "size": 326781,
-      "sha256": "71946d5d9420245559346c7c2a5e1a3fa0c4eb207abac2d37d6f5c8ac140afdd"
+      "size": 329628,
+      "sha256": "2cb87d869fb5f1f639916eb24069efd18c9f71ce6befbd7b45b12eb9ff6a6cc7"
     },
     {
       "path": "assets/fallback.ttf",
@@ -521,8 +521,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 18502,
-      "sha256": "25fc2ca1dded53afef983b8f588493b95232198ab44108317932e1979e4f9846"
+      "size": 21008,
+      "sha256": "248bc3dc006e63e607d9a045c99355dd7f53f8e2eac750fc1646e8539b09804f"
     },
     {
       "path": "rh/splash.py",
