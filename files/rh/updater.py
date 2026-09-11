@@ -27,6 +27,11 @@ from .version import APP_VERSION, is_newer
 # Where releases are published. Overridable from settings.json so a repo move
 # does not need a rebuild.
 UPDATE_BASE_URL = "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main"
+CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nguyenxuanhoa493/repohubtool@main"
+GHPROXY_BASE_URL = "https://ghproxy.net/" + UPDATE_BASE_URL
+
+# Nhung dinh dang jsDelivr chan (HTTP 403 Forbidden) thi bo qua khong goi CDN
+CDN_EXCLUDED_EXTS = (".jar", ".zip", ".exe")
 
 # Downloads land here first. It has to sit inside APP_DIR: os.replace cannot
 # rename across filesystems, and /tmp is a different one on this device.
@@ -38,7 +43,7 @@ STAGING_DIR = os.path.join(APP_DIR, ".update_staging")
 CATALOG_STAGING_DIR = os.path.join(APP_DIR, ".catalog_staging")
 
 UA = "RetroHub/%s" % APP_VERSION
-TIMEOUT = 20
+TIMEOUT = 15
 
 # Refuse a manifest that is implausibly large or names paths outside the app.
 MAX_MANIFEST_BYTES = 512 * 1024
@@ -90,7 +95,33 @@ def base_url():
     return (getattr(state, "update_url", "") or UPDATE_BASE_URL).rstrip("/")
 
 
-def _get(url, max_bytes):
+def candidate_base_urls(rel_path=""):
+    """Danh sach base URL de thu theo thu tu uu tien (jsDelivr CDN -> ghproxy -> GitHub Raw).
+
+    Neu rel_path thuoc cac kieu file bi CDN chan (nhu .jar, .zip), se bo qua jsDelivr
+    de tranh loi 403 va chuyen thang sang mirror ho tro file lon/nhi phan.
+    """
+    custom = (getattr(state, "update_url", "") or "").rstrip("/")
+    if custom:
+        candidates = []
+        if "raw.githubusercontent.com" in custom and not rel_path.lower().endswith(CDN_EXCLUDED_EXTS):
+            parts = custom.replace("https://raw.githubusercontent.com/", "").strip("/").split("/", 2)
+            if len(parts) == 3:
+                candidates.append("https://cdn.jsdelivr.net/gh/%s/%s@%s" % (parts[0], parts[1], parts[2]))
+        if "raw.githubusercontent.com" in custom:
+            candidates.append("https://ghproxy.net/" + custom)
+        candidates.append(custom)
+        return candidates
+
+    candidates = []
+    if not rel_path.lower().endswith(CDN_EXCLUDED_EXTS):
+        candidates.append(CDN_BASE_URL)
+    candidates.append(GHPROXY_BASE_URL)
+    candidates.append(UPDATE_BASE_URL)
+    return candidates
+
+
+def _get(url, max_bytes, timeout=TIMEOUT):
     headers = {
         "User-Agent": UA,
         "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -98,11 +129,39 @@ def _get(url, max_bytes):
     }
     req = urllib.request.Request(url, headers=headers)
     ctx = ssl._create_unverified_context()
-    with urllib.request.urlopen(req, context=ctx, timeout=TIMEOUT) as resp:
+    with urllib.request.urlopen(req, context=ctx, timeout=timeout) as resp:
         data = resp.read(max_bytes + 1)
     if len(data) > max_bytes:
         raise ValueError("response larger than %d bytes" % max_bytes)
     return data
+
+
+def _fetch_blob(rel_path, max_bytes, expected_sha=None):
+    """Tai du lieu tu cac candidate base URL (CDN mirror truoc, fallback ve proxy va GitHub).
+
+    Kiem tra ma bam sha256 neu duoc cung cap. Neu CDN tra ve ban cache cu
+    khong khop hash, se thu them query anti-cache truoc khi fallback.
+    """
+    last_err = None
+    for base in candidate_base_urls(rel_path):
+        url = "%s/%s" % (base, rel_path)
+        for attempt in range(2):
+            try:
+                fetch_url = url if attempt == 0 else ("%s?_t=%d" % (url, int(time.time())))
+                data = _get(fetch_url, max_bytes)
+                if expected_sha:
+                    if hashlib.sha256(data).hexdigest() == expected_sha:
+                        return data
+                    last_err = ValueError("hash mismatch for %s" % rel_path)
+                else:
+                    return data
+            except Exception as e:
+                last_err = e
+                # HTTP 403 Forbidden hoac 404 Not Found thi bo qua attempt 2, sang mirror tiep theo
+                if isinstance(e, urllib.error.HTTPError) and e.code in (403, 404):
+                    break
+            time.sleep(0.3)
+    raise last_err or RuntimeError("fetch failed for %s" % rel_path)
 
 
 def _safe_rel(rel):
@@ -131,21 +190,27 @@ def sha256_of(path):
 
 def fetch_manifest():
     """Download and validate the published manifest. None when unavailable."""
-    try:
-        manifest_url = "%s/manifest.json?_t=%d" % (base_url(), int(time.time()))
-        raw = _get(manifest_url, MAX_MANIFEST_BYTES)
-        m = json.loads(raw.decode("utf-8"))
-    except (urllib.error.URLError, OSError, ValueError, UnicodeDecodeError) as e:
-        print("Update check failed: %s" % e)
-        return None
+    m = None
+    for base in candidate_base_urls("manifest.json"):
+        try:
+            manifest_url = "%s/manifest.json?_t=%d" % (base, int(time.time()))
+            raw = _get(manifest_url, MAX_MANIFEST_BYTES)
+            parsed = json.loads(raw.decode("utf-8"))
+            if isinstance(parsed, dict) and parsed.get("version") and isinstance(parsed.get("files"), list):
+                valid = True
+                for f in parsed["files"]:
+                    if not isinstance(f, dict) or not _safe_rel(f.get("path", "")) or len(f.get("sha256", "")) != 64:
+                        valid = False
+                        break
+                if valid:
+                    m = parsed
+                    break
+        except (urllib.error.URLError, OSError, ValueError, UnicodeDecodeError) as e:
+            print("Update check failed from %s: %s" % (base, e))
+            continue
 
-    if not isinstance(m, dict) or not m.get("version") or not isinstance(m.get("files"), list):
-        print("Update check failed: malformed manifest")
+    if not m:
         return None
-    for f in m["files"]:
-        if not isinstance(f, dict) or not _safe_rel(f.get("path", "")) or len(f.get("sha256", "")) != 64:
-            print("Update check failed: bad entry %r" % (f.get("path") if isinstance(f, dict) else f))
-            return None
     return m
 
 
@@ -281,20 +346,12 @@ def download_runtime(pending, progress=None):
         for i, f in enumerate(pending, 1):
             if progress:
                 progress(i, len(pending), f["path"])
-            url = "%s/%s" % (base_url(), f["url"])
-            blob = None
-            for attempt in range(2):
-                try:
-                    fetch_url = url if attempt == 0 else ("%s?_t=%d" % (url, int(time.time())))
-                    blob = _get(fetch_url, MAX_RUNTIME_BYTES)
-                    if hashlib.sha256(blob).hexdigest() == f["sha256"]:
-                        break
-                except Exception:
-                    if attempt == 1:
-                        raise
-                time.sleep(1)
-            if not blob or hashlib.sha256(blob).hexdigest() != f["sha256"]:
+            try:
+                blob = _fetch_blob(f["url"], MAX_RUNTIME_BYTES, expected_sha=f["sha256"])
+            except ValueError:
                 raise RuntimeUpdateError(RUNTIME_BAD_HASH, f["path"])
+            except Exception as e:
+                raise RuntimeUpdateError(RUNTIME_FAILED, "%s: %s" % (f["path"], e))
             dst = os.path.join(RUNTIME_STAGING_DIR, f["path"])
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             with open(dst, "wb") as out:
@@ -390,20 +447,12 @@ def download_catalog(manifest, free_space=None, on_phase=None):
         gz_path = os.path.join(CATALOG_STAGING_DIR, "catalog.gz")
         out_path = os.path.join(CATALOG_STAGING_DIR, "catalog.sqlite3")
 
-        cat_url = "%s/%s" % (base_url(), c["url"])
-        blob = None
-        for attempt in range(2):
-            try:
-                fetch_url = cat_url if attempt == 0 else ("%s?_t=%d" % (cat_url, int(time.time())))
-                blob = _get(fetch_url, MAX_CATALOG_BYTES)
-                if hashlib.sha256(blob).hexdigest() == c["sha256"]:
-                    break
-            except Exception:
-                if attempt == 1:
-                    raise
-            time.sleep(1)
-        if not blob or hashlib.sha256(blob).hexdigest() != c["sha256"]:
+        try:
+            blob = _fetch_blob(c["url"], MAX_CATALOG_BYTES, expected_sha=c["sha256"])
+        except ValueError:
             raise CatalogError(CATALOG_BAD_HASH, "ban nen")
+        except Exception as e:
+            raise CatalogError(CATALOG_FAILED, str(e)[:40])
         with open(gz_path, "wb") as f:
             f.write(blob)
 
@@ -513,21 +562,14 @@ def _stage_files(manifest, files, progress=None):
     for i, f in enumerate(files):
         if progress:
             progress(i, total, f["path"])
-        url = "%s/files/%s" % (base_url(), f["path"])
-        data = None
-        for attempt in range(2):
-            try:
-                fetch_url = url if attempt == 0 else ("%s?_t=%d" % (url, int(time.time())))
-                data = _get(fetch_url, MAX_FILE_BYTES)
-                if hashlib.sha256(data).hexdigest() == f["sha256"]:
-                    break
-            except (urllib.error.URLError, OSError, ValueError) as e:
-                if attempt == 1:
-                    print("Update download failed for %s: %s" % (f["path"], e))
-                    return False
-            time.sleep(1)
-        if not data or hashlib.sha256(data).hexdigest() != f["sha256"]:
+        rel_path = "files/%s" % f["path"]
+        try:
+            data = _fetch_blob(rel_path, MAX_FILE_BYTES, expected_sha=f["sha256"])
+        except ValueError:
             print("Update hash mismatch for %s" % f["path"])
+            return False
+        except Exception as e:
+            print("Update download failed for %s: %s" % (f["path"], e))
             return False
         dst = os.path.join(STAGING_DIR, f["path"])
         try:
