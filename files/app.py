@@ -2474,6 +2474,7 @@ def main():
             if cheat_runner.is_running():
                 if btn_b or btn_x:
                     cheat_runner.request_stop()
+                    cheat_modal["active"] = False
                     toast_msg = "Đang dừng tải Cheat Code..."
                     toast_timer = time.time()
             elif cheat_runner.done:
@@ -3654,8 +3655,6 @@ def main():
                 elif item_id == "nav_cheats":
                     cheat_modal["active"] = True
                     cheat_modal["count"] = count_cheats()
-                    if not cheat_runner.is_running() and not cheat_runner.done:
-                        cheat_runner.start(mode="installed")
                 elif item_id == "nav_send_log":
                     send_log_modal["active"] = True
                     send_log_modal["status"] = "idle"
