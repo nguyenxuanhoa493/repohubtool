@@ -6,6 +6,7 @@ import sys
 import time
 import subprocess
 import shutil
+import json
 
 from .paths import EX_OPTIONS_FILE, STREAMER_SCRIPT, GAMEWEB_SCRIPT
 from . import state
@@ -434,7 +435,91 @@ def get_remote_tunnel_guide_rows():
         ("Lệnh SSH từ xa" if vi else "Remote SSH Command", f"ssh -p {port} root@{host}"),
         ("Mật khẩu" if vi else "Password", "root"),
         ("Chép file (SCP)" if vi else "File transfer (SCP)", f"scp -P {port} root@{host}:/mnt/SDCARD/... ./"),
-        ("Thời hạn phiên" if vi else "Session duration", "60 phút (tự tạo phiên mới khi bật lại)" if vi else "60 mins (auto refreshes on restart)"),
-        ("Mạng hỗ trợ" if vi else "Supported networks", "Mọi mạng (4G, Wi-Fi khác, bypass NAT)" if vi else "All networks (4G, separate Wi-Fi, NAT bypass)")
     ]
+
+def send_ssh_info_to_telegram():
+    """Send current Remote SSH tunnel connection details to user's Telegram."""
+    info = get_remote_tunnel_info()
+    vi = state.current_lang == "VI"
+    if not info:
+        return False, ("Chưa có phiên SSH Internet nào đang chạy!" if vi
+                       else "No active Remote SSH session found!")
+
+    host = info.get("host", "")
+    port = info.get("port", "")
+    if not host or not port:
+        return False, ("Thông tin kết nối chưa sẵn sàng!" if vi
+                       else "Connection details not ready!")
+
+    try:
+        from .logger import get_device_id
+        dev_id = get_device_id()
+    except Exception:
+        dev_id = "N/A"
+
+    from .sysinfo import get_ip, detect_device_platform
+    dev_ip = get_ip()
+    dev_model = detect_device_platform()
+
+    msg_lines = [
+        "🚀 *[RetroHub] Kết nối SSH Internet*",
+        f"📱 *Thiết bị:* {dev_model}",
+        f"🆔 *Mã máy:* `{dev_id}`",
+        f"🌐 *IP nội mạng:* `{dev_ip}`",
+        "",
+        "🔑 *Lệnh SSH:*",
+        f"`ssh -p {port} root@{host}`",
+        "",
+        "🔒 *Mật khẩu:*",
+        "`root`",
+        "",
+        "📁 *Lệnh SCP (Chép file / log):*",
+        f"`scp -P {port} root@{host}:/mnt/SDCARD/... ./`"
+    ]
+    text = "\n".join(msg_lines)
+
+    TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
+    TELEGRAM_CHAT_ID = "663642384"
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": text,
+        "parse_mode": "Markdown"
+    }
+
+    try:
+        import urllib.request
+        import ssl
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "RetroHub-Handheld"
+            }
+        )
+        try:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        except Exception:
+            ctx = None
+
+        kw = {"timeout": 12}
+        if ctx:
+            kw["context"] = ctx
+
+        with urllib.request.urlopen(req, **kw) as resp:
+            res_data = json.loads(resp.read().decode("utf-8"))
+            if res_data.get("ok"):
+                return True, ("Đã gửi thông tin SSH vào Telegram thành công!" if vi
+                              else "SSH info sent to Telegram successfully!")
+            else:
+                desc = res_data.get("description", "Lỗi Telegram")
+                return False, f"Telegram: {desc}"
+    except Exception as e:
+        return False, ("Lỗi kết nối khi gửi Telegram!" if vi else f"Telegram error: {e}")
+
 

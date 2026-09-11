@@ -78,6 +78,7 @@ from rh.sysinfo import (get_battery_info,
 from rh.services import (get_sftp_guide_rows,
     get_ssh_guide_rows,
     get_remote_tunnel_guide_rows,
+    send_ssh_info_to_telegram,
     get_stream_guide_rows,
     get_gameweb_guide_rows,
     is_adb_running,
@@ -1360,6 +1361,7 @@ def main():
     modal_style = None
     toast_msg = None
     toast_timer = 0
+    remote_ssh_state = {"sending": False, "notice": None}
 
     # Kiem tra neu co loi phat YouTube tu lan thoat truoc
     if os.path.exists("/tmp/yt_last_error.txt"):
@@ -2415,7 +2417,32 @@ def main():
         # ----------------------------------------------------------------------
         # PROCESS UI LOGIC
         # ----------------------------------------------------------------------
-        if dl_state["active"] and not dl_state.get("is_background", False):
+        if modal_rows is not None:
+            if modal_title == tr("remote_ssh_title"):
+                if btn_x or btn_y:
+                    if not remote_ssh_state.get("sending"):
+                        remote_ssh_state["sending"] = True
+                        toast_msg = "Đang gửi thông tin sang Telegram..." if state.current_lang == "VI" else "Sending info to Telegram..."
+                        toast_timer = time.time()
+                        def _worker_send_tg():
+                            try:
+                                ok, msg = send_ssh_info_to_telegram()
+                                remote_ssh_state["notice"] = msg
+                            except Exception as e:
+                                remote_ssh_state["notice"] = str(e)
+                            finally:
+                                remote_ssh_state["sending"] = False
+                        threading.Thread(target=_worker_send_tg, daemon=True).start()
+                elif btn_b or btn_a:
+                    modal_rows = None
+                    modal_title = None
+                    modal_style = None
+            else:
+                if btn_b or btn_a:
+                    modal_rows = None
+                    modal_title = None
+                    modal_style = None
+        elif dl_state["active"] and not dl_state.get("is_background", False):
             if dl_state["status"] in ("downloading", "extracting"):
                 if btn_b or btn_y:
                     dl_state["is_background"] = True
@@ -4012,6 +4039,11 @@ def main():
         if startup_notice.get("msg"):
             toast_msg = startup_notice["msg"]
             startup_notice["msg"] = None
+            toast_timer = time.time()
+
+        if remote_ssh_state.get("notice"):
+            toast_msg = remote_ssh_state["notice"]
+            remote_ssh_state["notice"] = None
             toast_timer = time.time()
 
         # ----------------------------------------------------------------------
@@ -6217,15 +6249,37 @@ def main():
                     val_col = (255, 215, 0) if val.startswith("http") else (225, 235, 248)
                     draw_text(val, font_modal_val, rx + 20, ry + 48, val_col[0], val_col[1], val_col[2], center_y=True)
 
-            # Close Button
-            btn_w = 260
-            btn_h = 46
-            bx = mx + (mw - btn_w) // 2
-            by = my + mh - 58
+            # Action / Close Buttons
+            if modal_title == tr("remote_ssh_title"):
+                btn_tg_w = 340
+                btn_close_w = 180
+                gap = 20
+                total_w = btn_tg_w + gap + btn_close_w
+                start_bx = mx + (mw - total_w) // 2
+                by = my + mh - 58
+                btn_h = 46
 
-            fill_rect(bx, by, btn_w, btn_h, 0, 200, 120, 255)
-            draw_rect(bx, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
-            draw_text("Đóng [Bấm A hoặc B]", font_badge, bx + btn_w // 2, by + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
+                # Telegram Button [X]
+                fill_rect(start_bx, by, btn_tg_w, btn_h, 0, 136, 204, 255)
+                draw_rect(start_bx, by, btn_tg_w, btn_h, 0, 210, 255, 255, thickness=2)
+                tg_btn_lbl = "[X] Gửi Telegram" if state.current_lang == "VI" else "[X] Send to Telegram"
+                draw_text(tg_btn_lbl, font_badge, start_bx + btn_tg_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+                # Close Button [B]
+                c_bx = start_bx + btn_tg_w + gap
+                fill_rect(c_bx, by, btn_close_w, btn_h, 45, 55, 75, 255)
+                draw_rect(c_bx, by, btn_close_w, btn_h, 90, 110, 140, 255, thickness=2)
+                close_btn_lbl = "[B] Đóng" if state.current_lang == "VI" else "[B] Close"
+                draw_text(close_btn_lbl, font_badge, c_bx + btn_close_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            else:
+                btn_w = 260
+                btn_h = 46
+                bx = mx + (mw - btn_w) // 2
+                by = my + mh - 58
+
+                fill_rect(bx, by, btn_w, btn_h, 0, 200, 120, 255)
+                draw_rect(bx, by, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
+                draw_text("Đóng [Bấm A hoặc B]", font_badge, bx + btn_w // 2, by + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
 
         # 8. YouTube Video Connecting Modal (Smooth, Flicker-Free)
         if current_screen == "yt_grid" and yt_launch_state.get("active"):
