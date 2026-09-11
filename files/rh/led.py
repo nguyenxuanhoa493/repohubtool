@@ -65,6 +65,11 @@ def detect_zones(root=SYSFS):
     return sorted(zones, key=lambda z: (zone_pos(z), z))
 
 
+def has_led(root=SYSFS):
+    """Check if the hardware actually has controllable LED zones."""
+    return len(detect_zones(root=root)) > 0
+
+
 def _write(path, text):
     # sysfs khong cho tao file moi bang open() - cac file thuoc tinh la co san
     # do kernel bay ra. Kiem tra ton tai truoc khi ghi de mo phong dung dieu

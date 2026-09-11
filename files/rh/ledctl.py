@@ -157,12 +157,19 @@ def _pid_is_ours(pid):
     return ledconf.pid_alive(pid)
 
 
+def is_supported():
+    """True if this hardware actually has controllable LED zones."""
+    return led.has_led()
+
+
 def is_running(pid_path=ledconf.PID_PATH):
     pid = ledconf.read_pid(pid_path)
     return pid is not None and _pid_is_ours(pid)
 
 
 def start():
+    if not is_supported():
+        return False
     if is_running():
         return True
     launcher = os.path.join(APP_DIR, "launch.sh")
@@ -254,6 +261,8 @@ def reconcile(cfg, path=ledconf.CONFIG_PATH):
     Tra ve cfg da sua. Ghi lai file neu co gi doi, va lang le neu ghi hong:
     day la buoc dong bo luc mo man hinh, khong phai mot hanh dong nguoi dung
     yeu cau, nen mot toast o day chi lam nguoi ta hoang mang."""
+    if not is_supported():
+        return {"enabled": False, "boot": False}
     cfg = dict(cfg or {})
     dirty = False
 
