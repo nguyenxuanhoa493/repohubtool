@@ -146,6 +146,17 @@ def set_core(code, launch_name, emus_root=None):
         with open(cfg_p, "w", encoding="utf-8") as f:
             json.dump(cfg, f, ensure_ascii=False, indent=4)
             f.write("\n")
+
+        # Dong thoi ghi vao launchers.cfg cua CrossMix-OS neu he co launchlist
+        opts = cfg.get("launchlist") or []
+        for opt in opts:
+            if isinstance(opt, dict) and opt.get("launch") == launch_name and opt.get("name"):
+                try:
+                    with open(os.path.join(d, "launchers.cfg"), "w", encoding="utf-8") as f_lcfg:
+                        f_lcfg.write(f"default_launcher={opt['name']}\n")
+                except Exception:
+                    pass
+                break
     except (OSError, ValueError) as e:
         print(f"Cannot set core for {code}: {e}")
         return False
@@ -187,7 +198,30 @@ def list_systems(emus_root=None, cores_dir=None):
             continue
 
         cur = cfg.get("launch") or "launch.sh"
-        cur_name = next((e["name"] for e in opts if e["launch"] == cur), cur)
+        cur_name = cur
+        if cur == "default.sh":
+            cfg_path = os.path.join(d, "launchers.cfg")
+            if os.path.isfile(cfg_path):
+                try:
+                    with open(cfg_path, "r", encoding="utf-8", errors="ignore") as f_lcfg:
+                        for line in f_lcfg:
+                            if "launcher=" in line:
+                                l_val = line.split("=", 1)[1].strip()
+                                if l_val:
+                                    cur_name = l_val
+                                    break
+                except Exception:
+                    pass
+        if cur_name == cur:
+            cur_name = next((e["name"] for e in opts if e["launch"] == cur), cur)
+        if cur_name == "default.sh" and opts:
+            for opt in opts:
+                if "vulkan" in opt.get("name", "").lower() or "vulkan" in opt.get("launch", "").lower():
+                    cur_name = opt["name"]
+                    break
+            else:
+                cur_name = opts[0]["name"]
+
         rows.append({"code": code, "label": cfg.get("label") or code,
                      "current": cur_name, "current_launch": cur, "options": opts})
     return rows

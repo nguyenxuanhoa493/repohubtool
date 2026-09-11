@@ -8,7 +8,7 @@ import subprocess
 import sdl2
 import sdl2.sdlimage as sdlimage
 
-from .paths import (SPLASH_BACKUP_DIR, SPLASH_BACKUP_FILE, SPLASH_DIR, SPLASH_SYS_FILE,
+from .paths import (SDCARD_PATH, SPLASH_BACKUP_DIR, SPLASH_BACKUP_FILE, SPLASH_DIR, SPLASH_SYS_FILE,
                     SPLASH_TEMP_PREVIEW, SPLASH_TEMP_BMP, BOOTLOGO_BACKUP_FILE)
 from . import state
 from .i18n import tr
@@ -33,7 +33,7 @@ def ensure_splash_backup():
 def scan_splash_images():
     ensure_splash_backup()
     images = []
-    scan_dirs = [SPLASH_DIR, "/mnt/SDCARD/Pictures", "/mnt/SDCARD/Screenshots"]
+    scan_dirs = [SPLASH_DIR, os.path.join(SDCARD_PATH, "Pictures"), os.path.join(SDCARD_PATH, "Screenshots")]
     valid_exts = (".png", ".jpg", ".jpeg", ".bmp", ".webp")
     seen = set()
     for sdir in scan_dirs:
@@ -53,7 +53,7 @@ def scan_splash_images():
                             })
     
     # Also include full wallpapers from Themes (must be >= 30KB and not UI button/list slices)
-    themes_dir = "/mnt/SDCARD/Themes"
+    themes_dir = os.path.join(SDCARD_PATH, "Themes")
     if os.path.exists(themes_dir):
         for root, _, files in os.walk(themes_dir):
             if "skin" in root.lower():
@@ -83,10 +83,11 @@ def convert_and_fit_splash(src_path, dst_path=SPLASH_TEMP_PREVIEW, width=1024, h
             os.remove(SPLASH_TEMP_BMP)
 
         # 1. Try GraphicsMagick first (highest quality bicubic downscale/fit)
-        gm_bin = "/mnt/SDCARD/System/bin/gm"
+        gm_bin = os.path.join(SDCARD_PATH, "System", "bin", "gm")
+        gm_lib = os.path.join(SDCARD_PATH, "System", "lib")
         if os.path.exists(gm_bin):
-            cmd_png = f'export LD_LIBRARY_PATH=/mnt/SDCARD/System/lib:$LD_LIBRARY_PATH; "{gm_bin}" convert "{src_path}" -resize {width}x{height} -gravity center -background black -extent {width}x{height} "{dst_path}"'
-            cmd_bmp = f'export LD_LIBRARY_PATH=/mnt/SDCARD/System/lib:$LD_LIBRARY_PATH; "{gm_bin}" convert "{src_path}" -resize {width}x{height} -gravity center -background black -extent {width}x{height} -type TrueColor "{SPLASH_TEMP_BMP}"'
+            cmd_png = f'export LD_LIBRARY_PATH="{gm_lib}:$LD_LIBRARY_PATH"; "{gm_bin}" convert "{src_path}" -resize {width}x{height} -gravity center -background black -extent {width}x{height} "{dst_path}"'
+            cmd_bmp = f'export LD_LIBRARY_PATH="{gm_lib}:$LD_LIBRARY_PATH"; "{gm_bin}" convert "{src_path}" -resize {width}x{height} -gravity center -background black -extent {width}x{height} -type TrueColor "{SPLASH_TEMP_BMP}"'
             res1 = subprocess.call(cmd_png, shell=True)
             res2 = subprocess.call(cmd_bmp, shell=True)
             if res1 == 0 and os.path.exists(dst_path) and os.path.getsize(dst_path) > 100:
@@ -174,16 +175,20 @@ def restore_original_splash():
     except Exception as e:
         return False, f"Lỗi: {e}"
 
-def scan_directory_for_images(dir_path="/mnt/SDCARD"):
+def scan_directory_for_images(dir_path=None):
+    if dir_path is None:
+        dir_path = SDCARD_PATH
     entries = []
     if not os.path.exists(dir_path):
         return entries
     
     # Parent directory
-    if dir_path.rstrip("/") != "/mnt/SDCARD" and dir_path.rstrip("/") != "":
-        parent_dir = os.path.dirname(dir_path.rstrip("/"))
+    norm_dir = os.path.normpath(dir_path)
+    norm_sd = os.path.normpath(SDCARD_PATH)
+    if norm_dir != norm_sd and norm_dir != "/":
+        parent_dir = os.path.dirname(norm_dir)
         if not parent_dir:
-            parent_dir = "/mnt/SDCARD"
+            parent_dir = SDCARD_PATH
         entries.append({
             "id": "fb_up",
             "type": "dir",

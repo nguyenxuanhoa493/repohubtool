@@ -13,9 +13,9 @@ thanh cai may co den chet."""
 import json
 import os
 
-from . import ledthemes
+from . import ledthemes, paths
 
-CONFIG_DIR = "/mnt/SDCARD/.retrohub"
+CONFIG_DIR = os.path.join(paths.SDCARD_PATH, ".retrohub")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "led.json")
 PID_PATH = os.path.join(CONFIG_DIR, "led.pid")
 PROC_ROOT = "/proc"

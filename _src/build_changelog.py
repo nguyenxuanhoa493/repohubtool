@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.01", "2026-09-11",
+     ("Fix PSP game launch (PPSSPP Vulkan/GL) on CrossMix-OS, unified InputManager, and enhanced diagnostics",
+      "Sửa lỗi khởi chạy game PSP (PPSSPP Vulkan/GL) trên CrossMix-OS, đồng bộ bộ điều khiển InputManager & nâng cấp báo cáo chẩn đoán"),
+     [("Fix PSP & Standalone Emulator Launch on CrossMix-OS: Automatically resolves real binary scripts from launchlist (prioritizing PPSSPP Vulkan/GL) instead of intermediate default.sh, bypassing BusyBox ash process substitution syntax errors and eliminating 1-second crash-on-launch.",
+       "Sửa lỗi khởi chạy game PSP trên CrossMix-OS: Tự động nhận diện và phân giải trực tiếp launcher từ launchlist (ưu tiên PPSSPP Vulkan/GL) thay vì chạy qua default.sh, loại bỏ hoàn toàn lỗi cú pháp shell BusyBox ash (< <(...)) và chấm dứt hiện tượng văng game sau 1 giây."),
+      ("Unified Input Architecture (InputManager): Extracted and centralized low-level SDL2 GameController, raw Joystick, and Keyboard events with smooth autorepeat scrolling into dedicated rh/inputs.py, reducing ~300 lines of redundant code.",
+       "Chuẩn hóa kiến trúc điều khiển (InputManager): Tách và quy tụ toàn bộ luồng xử lý phím GameController, Joystick thô và Bàn phím với cơ chế tự động lặp (autorepeat) mượt mà vào module rh/inputs.py, tinh giản gần 300 dòng mã thừa."),
+      ("Universal Handheld Path & Hardware Safety: Auto-detects user storage and SD card root via environment or mount points (SDCARD_PATH, Apps parent, mmc, userdata), dynamically scans /sys/class/power_supply for battery telemetry, and adds safe LED hardware guards.",
+       "Tương thích đa thiết bị & Tự động quét phần cứng: Tự động dò gốc thẻ nhớ qua biến môi trường hoặc điểm gắn kết (SDCARD_PATH, thư mục cha Apps, mmc, userdata), quét động cảm biến pin /sys/class/power_supply, và thêm cơ chế vô hiệu hóa LED an toàn trên máy không có đèn."),
+      ("Enhanced Game Crash & Standalone Diagnostics: Diagnostics Engine now tracks games launched from RetroHub (last_game.json), captures real-time stdout/stderr execution logs (/tmp/retrohub_game.log), and provides full visibility into standalone emulators outside RetroArch.",
+       "Nâng cấp Chẩn đoán & Bắt lỗi Giả lập Độc lập: Công cụ chẩn đoán tự động ghi nhận game mở từ RetroHub (last_game.json), bắt trực tiếp nhật ký lỗi runtime (/tmp/retrohub_game.log), giúp phát hiện chuẩn xác lỗi crash của các giả lập độc lập ngoài RetroArch.")]),
+
     ("2.00", "2026-09-11",
      ("Java J2ME: Fix launch crash from keymap syntax & OTA updater CDN cache bypass",
       "Game Java J2ME: Sửa lỗi sập khi mở game do cấu hình phím & chống lỗi cache khi cập nhật OTA"),

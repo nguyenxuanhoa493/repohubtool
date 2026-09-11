@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 
-from .paths import SDCARD_PATH
+from .paths import SDCARD_PATH, get_roms_root
 from . import state
 from .i18n import tr
 
@@ -105,13 +105,13 @@ def get_ram_info():
         return "N/A"
     
 def detect_device_platform():
-    if os.path.exists("/mnt/SDCARD"):
-        if os.path.exists("/usr/trimui") or os.path.exists("/mnt/SDCARD/trimui"):
-            return "TrimUI Handheld (Smart Pro / Brick)"
-        elif os.path.exists("/mnt/SDCARD/.tmp_update") or os.path.exists("/mnt/SDCARD/miyoo"):
-            return "Miyoo Handheld (Mini / Plus / A30)"
-        elif os.path.exists("/mnt/SDCARD/Anbernic"):
-            return "Anbernic Handheld (Linux OS)"
+    if os.path.exists("/usr/trimui") or os.path.isdir(os.path.join(SDCARD_PATH, "trimui")):
+        return "TrimUI Handheld (Smart Pro / Brick)"
+    elif os.path.isdir(os.path.join(SDCARD_PATH, ".tmp_update")) or os.path.isdir(os.path.join(SDCARD_PATH, "miyoo")):
+        return "Miyoo Handheld (Mini / Plus / A30)"
+    elif os.path.exists("/opt/muos") or os.path.isdir(os.path.join(SDCARD_PATH, "Anbernic")):
+        return "Anbernic Handheld (Linux OS)"
+    elif os.path.isdir(SDCARD_PATH):
         return "Universal Linux Retro Handheld"
     return "Universal Retro Handheld"
 
@@ -182,7 +182,7 @@ def get_storage_info_rows():
         pass
 
     # 2. Roms folder statistics
-    rom_dir = f"{SDCARD_PATH}/Roms"
+    rom_dir = get_roms_root()
     try:
         if os.path.exists(rom_dir):
             rom_systems = [d for d in os.listdir(rom_dir) if os.path.isdir(os.path.join(rom_dir, d)) and not d.startswith(".")]
@@ -266,17 +266,49 @@ def get_storage_info_rows():
 
     return rows
 def get_battery_info():
-    """Returns (capacity_percent, is_charging)."""
+    """Returns (capacity_percent, is_charging) with dynamic sysfs scan & fallback."""
     capacity = 100
     is_charging = False
+
+    ps_root = "/sys/class/power_supply"
+    if os.path.isdir(ps_root):
+        try:
+            for entry in sorted(os.listdir(ps_root)):
+                if "bat" in entry.lower():
+                    cap_f = os.path.join(ps_root, entry, "capacity")
+                    stat_f = os.path.join(ps_root, entry, "status")
+                    found = False
+                    if os.path.exists(cap_f):
+                        try:
+                            with open(cap_f, "r") as f:
+                                capacity = int(f.read().strip())
+                                found = True
+                        except Exception:
+                            pass
+                    if os.path.exists(stat_f):
+                        try:
+                            with open(stat_f, "r") as f:
+                                is_charging = "charging" in f.read().strip().lower()
+                        except Exception:
+                            pass
+                    if found:
+                        return capacity, is_charging
+        except Exception:
+            pass
+
     cap_paths = [
         "/sys/class/power_supply/battery/capacity",
         "/sys/class/power_supply/axp2202-battery/capacity",
-        "/sys/class/power_supply/axp-battery/capacity"
+        "/sys/class/power_supply/axp717-battery/capacity",
+        "/sys/class/power_supply/axp-battery/capacity",
+        "/sys/class/power_supply/rk-bat/capacity",
+        "/sys/class/power_supply/BAT0/capacity",
     ]
     stat_paths = [
         "/sys/class/power_supply/battery/status",
-        "/sys/class/power_supply/axp2202-battery/status"
+        "/sys/class/power_supply/axp2202-battery/status",
+        "/sys/class/power_supply/axp717-battery/status",
+        "/sys/class/power_supply/BAT0/status",
     ]
     for p in cap_paths:
         if os.path.exists(p):
@@ -286,7 +318,7 @@ def get_battery_info():
                     break
             except Exception:
                 pass
-                
+
     for p in stat_paths:
         if os.path.exists(p):
             try:
@@ -297,5 +329,5 @@ def get_battery_info():
                     break
             except Exception:
                 pass
-                
+
     return capacity, is_charging

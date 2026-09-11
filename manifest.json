@@ -1,16 +1,17 @@
 {
-  "version": "2.00",
+  "version": "2.01",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-11T00:23:34+0700",
+  "built": "2026-09-11T14:04:48+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Game Java J2ME: S\u1eeda l\u1ed7i s\u1eadp khi m\u1edf game do c\u1ea5u h\u00ecnh ph\u00edm & ch\u1ed1ng l\u1ed7i cache khi c\u1eadp nh\u1eadt OTA",
-    "en": "Java J2ME: Fix launch crash from keymap syntax & OTA updater CDN cache bypass"
+    "vi": "Sửa lỗi khởi chạy game PSP (PPSSPP Vulkan/GL) trên CrossMix-OS, đồng bộ bộ điều khiển InputManager & nâng cấp báo cáo chẩn đoán",
+    "en": "Fix PSP game launch (PPSSPP Vulkan/GL) on CrossMix-OS, unified InputManager, and enhanced diagnostics"
   },
   "remove": [
     "app.pyc",
     "db.pyc",
+    "emus/JAVA/zulu17/bin/quickchat.txt",
     "led_daemon.pyc",
     "rh/__init__.pyc",
     "rh/arcade_device_roms.pyc",
@@ -25,6 +26,7 @@
     "rh/emulators.pyc",
     "rh/fonts.pyc",
     "rh/i18n.pyc",
+    "rh/inputs.pyc",
     "rh/j2me.pyc",
     "rh/led.pyc",
     "rh/ledconf.pyc",
@@ -124,8 +126,7 @@
     "vendor/sdl2/touch.pyc",
     "vendor/sdl2/version.pyc",
     "vendor/sdl2/video.pyc",
-    "vendor/sdl2/vulkan.pyc",
-    "emus/JAVA/zulu17/bin/quickchat.txt"
+    "vendor/sdl2/vulkan.pyc"
   ],
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
@@ -200,8 +201,8 @@
     },
     {
       "path": "app.py",
-      "size": 335719,
-      "sha256": "d28cf33eab0366e4b47330b50a754d9351a6f27e1a8c65ddfac53ad4ff36b380"
+      "size": 325595,
+      "sha256": "6e946e24b9bddda50456140f4bf453a6f2cfc1b62caf9efe000fb8e6aca7e2ae"
     },
     {
       "path": "assets/fallback.ttf",
@@ -274,9 +275,19 @@
       "sha256": "88510b7895c9b4364c2ae2c17c099f6d2edc0c60e05f46fb168593757902ffb6"
     },
     {
+      "path": "emus/JAVA/default_phone.cfg",
+      "size": 2,
+      "sha256": "a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0"
+    },
+    {
       "path": "emus/JAVA/launch.sh",
       "size": 4916,
       "sha256": "b78ae8505371b1f26f2669681a76787d6029266322802f98cf2c8e9216ba4703"
+    },
+    {
+      "path": "emus/JAVA/zulu17/bin/default_phone.cfg",
+      "size": 2,
+      "sha256": "a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0"
     },
     {
       "path": "emus/JAVA/zulu17/bin/font.ttf",
@@ -415,8 +426,8 @@
     },
     {
       "path": "rh/corepicker.py",
-      "size": 7565,
-      "sha256": "bfb9a1967d684e4b8e4d83abae9f7bcf76b40b5ce9bbecc9fe4378b5ec8eb2f7"
+      "size": 9051,
+      "sha256": "ddfc50e0e800c2f1eb76adc62e779b0e6ed182b66dd66b285f16aa127bff4817"
     },
     {
       "path": "rh/downloader.py",
@@ -425,8 +436,8 @@
     },
     {
       "path": "rh/emulators.py",
-      "size": 3176,
-      "sha256": "b8ced5f9f15a2549bad61170a7b7760fa599282fcc2bbe30ff60185368f807df"
+      "size": 5611,
+      "sha256": "347c9843ca62ef915abd6c0fdaef38821edca2c4c86541e23e92fff22d37b9dc"
     },
     {
       "path": "rh/fonts.py",
@@ -439,24 +450,29 @@
       "sha256": "3dcb2257dc791de4837c2a70f855ca37b50bc4b96479a3c3036634293ebf0ed0"
     },
     {
+      "path": "rh/inputs.py",
+      "size": 12895,
+      "sha256": "12693dbf38cad20a0f285aa5c1295df3fb5599707ab8ab2230ec2938b7c6ba9c"
+    },
+    {
       "path": "rh/j2me.py",
       "size": 39571,
       "sha256": "02e5a7813db14fd099763bc4fe6f3ab55b7cfd582cd3f0e1839b2d6407e35407"
     },
     {
       "path": "rh/led.py",
-      "size": 6810,
-      "sha256": "44af5a0c52d1ea291bc5784fff59d184ccafb8d567e6397ea8cd446d4749b4ba"
+      "size": 6950,
+      "sha256": "36fcc4ff79240cf0104b10467c0a49f3a2acc15b9d68d88d2eb6de2334dfa61b"
     },
     {
       "path": "rh/ledconf.py",
-      "size": 5703,
-      "sha256": "00930786c4bf9cb1e4162e80a12c209f282b3135676be9080a10e061537a2baa"
+      "size": 5731,
+      "sha256": "a11bae7d67ee8dd788777c6062ed04ce0f8f6519356ddba62279e8863f9a8aa7"
     },
     {
       "path": "rh/ledctl.py",
-      "size": 10123,
-      "sha256": "deecce47e998202a779d49aec080381613c12a2427a6d44979f809e6b318003f"
+      "size": 10363,
+      "sha256": "83a73ae3ad8ec39d6e13ae3b6229fcdcb68d3dd30548aefb273230a2bdf58711"
     },
     {
       "path": "rh/leddaemon.py",
@@ -475,13 +491,13 @@
     },
     {
       "path": "rh/logger.py",
-      "size": 33726,
-      "sha256": "cab662730d1e20eb03d27f7a8deeeaf2d35e5adb1483d24e9cb259d46031897c"
+      "size": 35827,
+      "sha256": "e83f47d6568d35f2d976a2b7b88f6ec1b67ef20af30dbd5dc07f5a478903298f"
     },
     {
       "path": "rh/media.py",
-      "size": 3280,
-      "sha256": "60d0c9129e8019eebeddd76d0de9f4c21facac6c772274bc8c435b12e8530c0f"
+      "size": 3364,
+      "sha256": "128a717d8213eadd82863692d876facb401babb1de63ae4a0f13f4d9954c8eee"
     },
     {
       "path": "rh/neterrors.py",
@@ -490,8 +506,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 3275,
-      "sha256": "c14c795069da66895f0f8d4da24ede5f7ee36f62211d3e706fd8ac3d9775d088"
+      "size": 5168,
+      "sha256": "a92a701469bb78ac447f9332f5db6eb7d715f3acdffaec88ef5bf9268f181db9"
     },
     {
       "path": "rh/romfiles.py",
@@ -510,8 +526,8 @@
     },
     {
       "path": "rh/splash.py",
-      "size": 10703,
-      "sha256": "2eee2af88c6d7abb106faec4c91a6ecf0f8e283ec98f41958b35b47df34dbc99"
+      "size": 10908,
+      "sha256": "3d01bca62a79cd3542949236740cd1eb9e51c51c27ed68fa8276ee5f8194030d"
     },
     {
       "path": "rh/state.py",
@@ -525,8 +541,8 @@
     },
     {
       "path": "rh/sysinfo.py",
-      "size": 11635,
-      "sha256": "307fd1d2b5c32de84e9b9584676f5c539996062af639d2eadd2706f14bf94daa"
+      "size": 13063,
+      "sha256": "7dfd87e4f94e52c5abf0752fb99e63664c5ea4de19f1387d69c56a335b90ae4d"
     },
     {
       "path": "rh/updater.py",
@@ -536,7 +552,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "1327134985324bc5e4c3b7ca25331b0df5fcee7a9b8d4b259018f29b292fb237"
+      "sha256": "d65d38cf928f8b90725e8d73b75ea0a8c9ba41b87fd64626c417c7dc1394df09"
     },
     {
       "path": "rh/yt.py",
@@ -932,18 +948,8 @@
       "path": "vendor/sdl2/vulkan.py",
       "size": 1666,
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
-    },
-    {
-      "path": "emus/JAVA/default_phone.cfg",
-      "size": 2,
-      "sha256": "a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0"
-    },
-    {
-      "path": "emus/JAVA/zulu17/bin/default_phone.cfg",
-      "size": 2,
-      "sha256": "a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0"
     }
   ],
-  "notes": "Qu\u1ea3n l\u00fd Game Web: T\u1ed1i \u01b0u c\u00e0o \u1ea3nh si\u00eau t\u1ed1c (Catalog DB & CDN Libretro), 4 lu\u1ed3ng song song tr\u00ean tr\u00ecnh duy\u1ec7t v\u00e0 t\u1ef1 \u0111\u1ed9ng t\u00ecm Web s\u00e2u.",
+  "notes": "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu.",
   "notes_en": "Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback."
 }

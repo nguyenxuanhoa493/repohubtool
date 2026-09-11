@@ -41,6 +41,56 @@ def _config_of(emu_dir):
 def _script_in(emu_dir, cfg):
     """Duong dan script mo game, hoac None neu thu muc nay khong chay duoc gi."""
     named = str(cfg.get("launch") or "").strip()
+
+    # CrossMix-OS su dung default.sh lam script trung gian goi load_launcher.sh.
+    # Trong load_launcher.sh chua cu phap bash (< <(...)) se bi loi cu phap neu chay bang /bin/sh.
+    # Ta uu tien phan giai truc tiep script launcher con tu launchlist hoac launchers.cfg.
+    launchlist = cfg.get("launchlist")
+    if isinstance(launchlist, list) and launchlist:
+        # 1. Kiem tra xem may da co file cau hinh launchers.cfg hay chua (do CrossMix tao ra)
+        cfg_launcher_name = ""
+        cfg_path = os.path.join(emu_dir, "launchers.cfg")
+        if os.path.isfile(cfg_path):
+            try:
+                with open(cfg_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        if "launcher=" in line:
+                            cfg_launcher_name = line.split("=", 1)[1].strip()
+                            break
+            except Exception:
+                pass
+
+        if cfg_launcher_name:
+            for item in launchlist:
+                if isinstance(item, dict) and item.get("name") == cfg_launcher_name:
+                    sh_name = str(item.get("launch") or "").strip()
+                    if sh_name and sh_name != "default.sh":
+                        p = os.path.join(emu_dir, os.path.basename(sh_name))
+                        if os.path.isfile(p):
+                            return p
+
+        # 2. Neu chua co launchers.cfg hoac script khong hop le, tu chon tu launchlist
+        valid_scripts = []
+        for item in launchlist:
+            if isinstance(item, dict):
+                sh_name = str(item.get("launch") or "").strip()
+                if sh_name and sh_name != "default.sh":
+                    p = os.path.join(emu_dir, os.path.basename(sh_name))
+                    if os.path.isfile(p):
+                        valid_scripts.append((str(item.get("name") or ""), sh_name, p))
+
+        if valid_scripts:
+            # Uu tien Vulkan neu co (vi dụ PPSSPP Vulkan tren TrimUI Smart Pro cho FPS tot nhat)
+            for name, sh_name, p in valid_scripts:
+                if "vulkan" in sh_name.lower() or "vulkan" in name.lower():
+                    return p
+            # Tiep theo la OpenGL
+            for name, sh_name, p in valid_scripts:
+                if "gl" in sh_name.lower() or "opengl" in name.lower():
+                    return p
+            # Mac dinh lay script dau tien hop le
+            return valid_scripts[0][2]
+
     for name in (named, DEFAULT_SCRIPT):
         if not name:
             continue

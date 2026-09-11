@@ -352,6 +352,26 @@ def _get_recent_game_diagnostics():
         os.path.join(SDCARD_PATH, "System", "recent.json"),
     ]
     items = []
+    # 0. Uu tien doc game vua khoi chay tu RetroHub qua last_game.json
+    last_game_file = os.path.join(SDCARD_PATH, ".retrohub", "last_game.json")
+    if os.path.isfile(last_game_file):
+        try:
+            with open(last_game_file, "r", encoding="utf-8", errors="ignore") as f_lg:
+                lg_data = json.load(f_lg)
+                if isinstance(lg_data, dict) and lg_data.get("rom_path"):
+                    items.append({
+                        "path": lg_data.get("rom_path", ""),
+                        "label": os.path.basename(lg_data.get("rom_path", "")),
+                        "core_path": lg_data.get("emu_script", ""),
+                        "core_name": f"Launcher ({lg_data.get('sys_code', '')})",
+                        "emu_dir": lg_data.get("emu_dir", ""),
+                        "emu_script": lg_data.get("emu_script", ""),
+                        "time": lg_data.get("time", ""),
+                        "from_retrohub": True
+                    })
+        except Exception:
+            pass
+
     for fpath in candidates:
         if not os.path.isfile(fpath):
             continue
@@ -403,13 +423,15 @@ def _get_recent_game_diagnostics():
 
     if not items:
         return [
-            "Khong tim thay lich su game vua chay (chua co content_history.lpl tren the).",
+            "Khong tim thay lich su game vua chay (chua co content_history.lpl hoac last_game.json).",
             "Goi y: Mo 1 game bat ky tren may roi quay lai day de thu thap nhat ky chinh xac."
         ]
 
     res = []
     for idx, it in enumerate(items):
         title = f"Game #{idx + 1}: {it.get('label') or os.path.basename(it.get('path', ''))}"
+        if it.get("from_retrohub"):
+            title += " [KHOI CHAY QUA RETROHUB]"
         res.append(title)
         res.append("-" * len(title))
         rom_path = it.get("path", "")
@@ -446,9 +468,13 @@ def _get_recent_game_diagnostics():
 
         if sys_code:
             res.append(f"  • He may nhan dien : {sys_code}")
-            emu_dir = os.path.join(SDCARD_PATH, "Emus", sys_code)
+            emu_dir = it.get("emu_dir") or os.path.join(SDCARD_PATH, "Emus", sys_code)
+            if not os.path.isdir(emu_dir) and sys_code == "PSP":
+                cand_psp = os.path.join(SDCARD_PATH, "Emus", "PPSSPP")
+                if os.path.isdir(cand_psp):
+                    emu_dir = cand_psp
             cfg_path = os.path.join(emu_dir, "config.json")
-            launch_path = os.path.join(emu_dir, "launch.sh")
+            launch_path = it.get("emu_script") or os.path.join(emu_dir, "launch.sh")
 
             if os.path.isfile(cfg_path):
                 try:
@@ -464,11 +490,24 @@ def _get_recent_game_diagnostics():
                 try:
                     with open(launch_path, "r", encoding="utf-8", errors="ignore") as f_l:
                         l_lines = [line.strip() for line in f_l if line.strip() and not line.strip().startswith("#")]
-                        res.append(f"  • launch.sh lenh   : {' | '.join(l_lines[:4])}")
+                        res.append(f"  • Script mo game   : {os.path.basename(launch_path)} ({' | '.join(l_lines[:3])})")
                 except Exception as e_l:
-                    res.append(f"  • launch.sh        : Loi doc file ({e_l})")
+                    res.append(f"  • Script mo game   : Loi doc file ({e_l})")
             else:
-                res.append(f"  • launch.sh        : Khong ton tai ({launch_path})")
+                res.append(f"  • Script mo game   : Khong ton tai ({launch_path})")
+
+        # Trich xuat runtime log cua game neu co (/tmp/retrohub_game.log)
+        game_log = "/tmp/retrohub_game.log"
+        if os.path.isfile(game_log) and os.path.getsize(game_log) > 0:
+            try:
+                with open(game_log, "r", encoding="utf-8", errors="ignore") as f_gl:
+                    gl_lines = [l.rstrip() for l in f_gl.readlines() if l.strip()]
+                    if gl_lines:
+                        res.append(f"  • Nhat ky chay game (/tmp/retrohub_game.log - {len(gl_lines)} dong):")
+                        for gl in gl_lines[-12:]:
+                            res.append(f"      {gl}")
+            except Exception:
+                pass
 
         res.append("")
     return res

@@ -20,7 +20,7 @@ except ImportError:
         sdl2 = None
         sdlimage = None
 
-from .paths import TEMP_DOWNLOAD_DIR
+from .paths import SDCARD_PATH, TEMP_DOWNLOAD_DIR
 
 # Giu lai ten cu o day: rh/downloader.py va cac cho khac van import tu media.
 from .romfiles import (GENERIC_ROM_EXTS, ROM_EXT_PRIORITY,  # noqa: F401
@@ -64,10 +64,11 @@ def save_boxart_png(raw, target_png):
 
         # GraphicsMagick first, same binary the splash converter uses. [0] takes the
         # first frame so an animated GIF cannot expand into a numbered set of files.
-        gm_bin = "/mnt/SDCARD/System/bin/gm"
+        gm_bin = os.path.join(SDCARD_PATH, "System", "bin", "gm")
+        gm_lib = os.path.join(SDCARD_PATH, "System", "lib")
         if os.path.exists(gm_bin):
-            cmd = ('export LD_LIBRARY_PATH=/mnt/SDCARD/System/lib:$LD_LIBRARY_PATH; '
-                   '"%s" convert "%s[0]" "%s" 2>/dev/null' % (gm_bin, tmp_img, target_png))
+            cmd = ('export LD_LIBRARY_PATH="%s:$LD_LIBRARY_PATH"; '
+                   '"%s" convert "%s[0]" "%s" 2>/dev/null' % (gm_lib, gm_bin, tmp_img, target_png))
             if subprocess.call(cmd, shell=True) == 0 and os.path.exists(target_png) and os.path.getsize(target_png) > 100:
                 return True
 

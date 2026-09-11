@@ -25,7 +25,7 @@ except Exception:
 # already had PortMaster installed, and failed with a blank screen otherwise.
 # PortMaster's copy stays as a fallback, searched after the bundled one so
 # everybody exercises the same code.
-EXLIBS_PATH = "/mnt/SDCARD/Apps/PortMaster/PortMaster/exlibs"
+EXLIBS_PATH = os.path.join(os.environ.get("SDCARD_PATH", "/mnt/SDCARD"), "Apps", "PortMaster", "PortMaster", "exlibs")
 if os.path.exists(EXLIBS_PATH):
     sys.path.insert(0, EXLIBS_PATH)
 VENDOR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vendor")
@@ -68,8 +68,9 @@ except ImportError as _e:
 from rh import state
 from rh.paths import (FLAG_FILES, is_nextui, QR_BMC_FILE, QR_DONATE_FILE,
     QR_TELEGRAM_FILE, SDCARD_PATH, SPLASH_BACKUP_FILE, SPLASH_TEMP_PREVIEW,
-    YT_CACHE_DIR)
+    YT_CACHE_DIR, resolve_rom_dir)
 from rh import corepicker, yt
+from rh.inputs import InputManager
 from rh.i18n import tr, wrap_title_2lines
 from rh.sysinfo import (get_battery_info,
     get_device_info_rows,
@@ -1372,7 +1373,7 @@ def main():
     splash_images_list = []
     splash_preview_path = ""
     splash_preview_orig_name = ""
-    fb_current_path = "/mnt/SDCARD"
+    fb_current_path = SDCARD_PATH
     fb_items = []
     fb_scanned_path = None
 
@@ -1682,14 +1683,47 @@ def main():
             if not emu_script:
                 return False, f"Chưa cấu hình Giả lập {sys_c}!" if state.current_lang == "VI" else f"{sys_c} Emulator not configured!"
         
+        # Luu thong tin game khoi chay de ho tro chan doan loi
+        try:
+            last_dir = os.path.join(SDCARD_PATH, ".retrohub")
+            os.makedirs(last_dir, exist_ok=True)
+            with open(os.path.join(last_dir, "last_game.json"), "w", encoding="utf-8") as f_last:
+                json.dump({
+                    "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "sys_code": sys_c,
+                    "rom_path": rom_p,
+                    "emu_dir": emu_dir,
+                    "emu_script": emu_script,
+                }, f_last, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+        # Dam bao quyen thuc thi cho script khoi chay
+        try:
+            os.chmod(emu_script, 0o755)
+        except Exception:
+            pass
+
         # Write handoff script for launch.sh to execute cleanly after RetroHub releases all GPU/RAM resources
         try:
             with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
                 # shlex.quote, not plain double quotes: sh expands $ inside them,
                 # and three roms in the catalogue carry one - "Mega Microgame$!"
                 # would launch with $! replaced by a job id and the file missing.
-                f.write("cd %s\nexec sh %s %s\n" % (
-                    shlex.quote(emu_dir), shlex.quote(emu_script), shlex.quote(rom_p)))
+                # Uu tien thuc thi truc tiep script de ton trong shebang (bash/ash) cua he dieu hanh
+                # dong thoi chuyen huong stderr/stdout ra /tmp/retrohub_game.log de chan doan khi xay ra crash.
+                q_dir = shlex.quote(emu_dir)
+                q_script = shlex.quote(emu_script)
+                q_rom = shlex.quote(rom_p)
+                f.write(
+                    "cd %s\n"
+                    "chmod +x %s 2>/dev/null\n"
+                    "if [ -x %s ]; then\n"
+                    "    exec %s %s >/tmp/retrohub_game.log 2>&1\n"
+                    "else\n"
+                    "    exec sh %s %s >/tmp/retrohub_game.log 2>&1\n"
+                    "fi\n" % (q_dir, q_script, q_script, q_script, q_rom, q_script, q_rom)
+                )
             subprocess.call("chmod 755 /tmp/launch_game.sh 2>/dev/null", shell=True)
         except Exception as e:
             print(f"Error writing launch_game.sh: {e}")
@@ -1698,12 +1732,7 @@ def main():
         running = False
         return True, ""
 
-    key_held_state = {
-        "up": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0},
-        "down": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0},
-        "left": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0},
-        "right": {"pressed": False, "start_time": 0.0, "last_repeat": 0.0}
-    }
+    input_mgr = InputManager()
 
     service_states = {
         "sftp": False,
@@ -1837,8 +1866,9 @@ def main():
                 items.append({"id": "nav_core_sys", "title": tr("util_core_title"),
                               "label": tr("view")})
 
-            items.append({"id": "nav_led", "title": tr("util_item_led"),
-                          "label": tr("view")})
+            if led.has_led():
+                items.append({"id": "nav_led", "title": tr("util_item_led"),
+                              "label": tr("view")})
 
             # Hai muc chi-doc nam canh nhau: chung tra loi cung mot loai cau hoi.
             items.append({"id": "device_info", "title": tr("device_info"), "label": tr("view")})
@@ -2343,245 +2373,32 @@ def main():
         # ----------------------------------------------------------------------
         # EVENT HANDLING - PRECISE PHYSICAL BUTTON MAPPING
         # ----------------------------------------------------------------------
-        btn_up = False
-        btn_down = False
-        btn_left = False
-        btn_right = False
-        btn_l1 = False
-        btn_r1 = False
-        btn_a = False
-        btn_b = False
-        btn_x = False
-        btn_y = False
-        btn_start = False
-        btn_f1 = False
-
+        input_mgr.reset()
         event = sdl2.SDL_Event()
         while sdl2.SDL_PollEvent(event) != 0:
-            etype = event.type
-
-            if etype == sdl2.SDL_QUIT:
+            if event.type == sdl2.SDL_QUIT:
                 running = False
+            input_mgr.process_event(event, has_controller, now, current_screen=current_screen)
+            if input_mgr.backspace:
+                if current_screen == "yt_search_input":
+                    yt_input_text = yt_input_text[:-1]
+                elif current_screen == "search_input":
+                    search_query = search_query[:-1]
 
-            elif etype == sdl2.SDL_CONTROLLERBUTTONDOWN:
-                cbtn = event.cbutton.button
-                if cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_UP:
-                    btn_up = True
-                    key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-                    btn_down = True
-                    key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-                    btn_left = True
-                    key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-                    btn_right = True
-                    key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
-                    btn_l1 = True
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
-                    btn_r1 = True
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_B: # Physical A (East)
-                    btn_a = True
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_A: # Physical B (South)
-                    btn_b = True
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_Y: # Physical X (North)
-                    btn_x = True
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_X: # Physical Y (West)
-                    btn_y = True
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_START:
-                    btn_start = True
-                elif cbtn in [sdl2.SDL_CONTROLLER_BUTTON_BACK, sdl2.SDL_CONTROLLER_BUTTON_GUIDE]:
-                    btn_f1 = True
+        input_mgr.update_repeats(now)
 
-            elif etype == sdl2.SDL_CONTROLLERBUTTONUP:
-                cbtn = event.cbutton.button
-                if cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_UP: key_held_state["up"]["pressed"] = False
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_DOWN: key_held_state["down"]["pressed"] = False
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_LEFT: key_held_state["left"]["pressed"] = False
-                elif cbtn == sdl2.SDL_CONTROLLER_BUTTON_DPAD_RIGHT: key_held_state["right"]["pressed"] = False
-
-            elif etype == sdl2.SDL_CONTROLLERAXISMOTION:
-                val = event.caxis.value
-                if event.caxis.axis == sdl2.SDL_CONTROLLER_AXIS_LEFTY:
-                    if val < -15000:
-                        if not key_held_state["up"]["pressed"]:
-                            btn_up = True
-                            key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["down"]["pressed"] = False
-                    elif val > 15000:
-                        if not key_held_state["down"]["pressed"]:
-                            btn_down = True
-                            key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["up"]["pressed"] = False
-                    elif abs(val) <= 10000:
-                        key_held_state["up"]["pressed"] = False
-                        key_held_state["down"]["pressed"] = False
-
-                elif event.caxis.axis == sdl2.SDL_CONTROLLER_AXIS_LEFTX:
-                    if val < -15000:
-                        if not key_held_state["left"]["pressed"]:
-                            btn_left = True
-                            key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["right"]["pressed"] = False
-                    elif val > 15000:
-                        if not key_held_state["right"]["pressed"]:
-                            btn_right = True
-                            key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["left"]["pressed"] = False
-                    elif abs(val) <= 10000:
-                        key_held_state["left"]["pressed"] = False
-                        key_held_state["right"]["pressed"] = False
-
-            elif not has_controller and etype == sdl2.SDL_JOYBUTTONDOWN:
-                jbtn = event.jbutton.button
-                if jbtn == 1:
-                    btn_a = True
-                elif jbtn == 0:
-                    btn_b = True
-                elif jbtn in [8, 11, 13]:
-                    btn_up = True
-                    key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif jbtn in [9, 12, 14]:
-                    btn_down = True
-                    key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif jbtn in [4, 6]:
-                    btn_l1 = True
-                elif jbtn in [5, 7]:
-                    btn_r1 = True
-                elif jbtn == 3: # Physical X
-                    btn_x = True
-                elif jbtn == 2: # Physical Y
-                    btn_y = True
-                elif jbtn == 10:
-                    btn_f1 = True
-                elif jbtn == 9:
-                    btn_start = True
-
-            elif not has_controller and etype == sdl2.SDL_JOYBUTTONUP:
-                jbtn = event.jbutton.button
-                if jbtn in [8, 11, 13]: key_held_state["up"]["pressed"] = False
-                elif jbtn in [9, 12, 14]: key_held_state["down"]["pressed"] = False
-
-            elif etype == sdl2.SDL_JOYAXISMOTION:
-                j_axis = event.jaxis.axis
-                j_val = event.jaxis.value
-                if j_axis == 1: # Left Y axis
-                    if j_val < -15000:
-                        if not key_held_state["up"]["pressed"]:
-                            btn_up = True
-                            key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["down"]["pressed"] = False
-                    elif j_val > 15000:
-                        if not key_held_state["down"]["pressed"]:
-                            btn_down = True
-                            key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["up"]["pressed"] = False
-                    elif abs(j_val) <= 10000:
-                        key_held_state["up"]["pressed"] = False
-                        key_held_state["down"]["pressed"] = False
-
-                elif j_axis == 0: # Left X axis
-                    if j_val < -15000:
-                        if not key_held_state["left"]["pressed"]:
-                            btn_left = True
-                            key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["right"]["pressed"] = False
-                    elif j_val > 15000:
-                        if not key_held_state["right"]["pressed"]:
-                            btn_right = True
-                            key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                            key_held_state["left"]["pressed"] = False
-                    elif abs(j_val) <= 10000:
-                        key_held_state["left"]["pressed"] = False
-                        key_held_state["right"]["pressed"] = False
-
-            elif etype == sdl2.SDL_JOYHATMOTION:
-                hat_val = event.jhat.value
-                if hat_val & sdl2.SDL_HAT_UP:
-                    if not key_held_state["up"]["pressed"]:
-                        btn_up = True
-                        key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                else:
-                    key_held_state["up"]["pressed"] = False
-
-                if hat_val & sdl2.SDL_HAT_DOWN:
-                    if not key_held_state["down"]["pressed"]:
-                        btn_down = True
-                        key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                else:
-                    key_held_state["down"]["pressed"] = False
-
-                if hat_val & sdl2.SDL_HAT_LEFT:
-                    if not key_held_state["left"]["pressed"]:
-                        btn_left = True
-                        key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                else:
-                    key_held_state["left"]["pressed"] = False
-
-                if hat_val & sdl2.SDL_HAT_RIGHT:
-                    if not key_held_state["right"]["pressed"]:
-                        btn_right = True
-                        key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                else:
-                    key_held_state["right"]["pressed"] = False
-
-            elif etype == sdl2.SDL_KEYDOWN:
-                sym = event.key.keysym.sym
-                if sym in [sdl2.SDLK_UP, sdl2.SDLK_w]:
-                    btn_up = True
-                    key_held_state["up"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif sym in [sdl2.SDLK_DOWN, sdl2.SDLK_s]:
-                    btn_down = True
-                    key_held_state["down"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif sym in [sdl2.SDLK_LEFT, sdl2.SDLK_a]:
-                    btn_left = True
-                    key_held_state["left"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif sym in [sdl2.SDLK_RIGHT, sdl2.SDLK_d]:
-                    btn_right = True
-                    key_held_state["right"] = {"pressed": True, "start_time": now, "last_repeat": now}
-                elif sym in [sdl2.SDLK_PAGEUP, sdl2.SDLK_q]:
-                    btn_l1 = True
-                elif sym in [sdl2.SDLK_PAGEDOWN, sdl2.SDLK_e]:
-                    btn_r1 = True
-                elif sym in [sdl2.SDLK_RETURN, sdl2.SDLK_SPACE, sdl2.SDLK_z, sdl2.SDLK_j]:
-                    btn_a = True
-                elif sym in [sdl2.SDLK_ESCAPE, sdl2.SDLK_BACKSPACE, sdl2.SDLK_k]:
-                    btn_b = True
-                elif sym == sdl2.SDLK_x:
-                    btn_x = True
-                elif sym == sdl2.SDLK_y:
-                    btn_y = True
-                elif sym in [sdl2.SDLK_F1, sdl2.SDLK_m]:
-                    btn_f1 = True
-                elif current_screen in ("search_input", "yt_search_input"):
-                    if sym == sdl2.SDLK_BACKSPACE:
-                        if current_screen == "yt_search_input":
-                            yt_input_text = yt_input_text[:-1]
-                        else:
-                            search_query = search_query[:-1]
-                    elif sym == sdl2.SDLK_RETURN:
-                        btn_start = True
-
-            elif etype == sdl2.SDL_KEYUP:
-                sym = event.key.keysym.sym
-                if sym in [sdl2.SDLK_UP, sdl2.SDLK_w]: key_held_state["up"]["pressed"] = False
-                elif sym in [sdl2.SDLK_DOWN, sdl2.SDLK_s]: key_held_state["down"]["pressed"] = False
-                elif sym in [sdl2.SDLK_LEFT, sdl2.SDLK_a]: key_held_state["left"]["pressed"] = False
-                elif sym in [sdl2.SDLK_RIGHT, sdl2.SDLK_d]: key_held_state["right"]["pressed"] = False
-
-        # Smooth Hold-to-Scroll Autorepeat (Initial delay 260ms, repeat every 75ms)
-        HOLD_DELAY = 0.26
-        REPEAT_INTERVAL = 0.075
-        for k_dir, k_st in key_held_state.items():
-            if k_st["pressed"]:
-                if now - k_st["start_time"] > HOLD_DELAY:
-                    if now - k_st["last_repeat"] > REPEAT_INTERVAL:
-                        if k_dir == "up": btn_up = True
-                        elif k_dir == "down": btn_down = True
-                        elif k_dir == "left": btn_left = True
-                        elif k_dir == "right": btn_right = True
-                        k_st["last_repeat"] = now
+        btn_up = input_mgr.btn_up
+        btn_down = input_mgr.btn_down
+        btn_left = input_mgr.btn_left
+        btn_right = input_mgr.btn_right
+        btn_l1 = input_mgr.btn_l1
+        btn_r1 = input_mgr.btn_r1
+        btn_a = input_mgr.btn_a
+        btn_b = input_mgr.btn_b
+        btn_x = input_mgr.btn_x
+        btn_y = input_mgr.btn_y
+        btn_start = input_mgr.btn_start
+        btn_f1 = input_mgr.btn_f1
 
         if btn_up or btn_down or btn_left or btn_right or btn_a or btn_b or btn_x or btn_y or btn_start or btn_f1 or btn_l1 or btn_r1:
             last_user_activity_time = now
@@ -3239,8 +3056,8 @@ def main():
                         else:
                             v_id = cur_v.get("id")
                             if v_id:
-                                ra_bin = "/mnt/SDCARD/RetroArch/ra64.trimui"
-                                ff_core = "/mnt/SDCARD/Emus/FFMPEG/ffmpeg_libretro.so"
+                                ra_bin = os.path.join(SDCARD_PATH, "RetroArch", "ra64.trimui")
+                                ff_core = os.path.join(SDCARD_PATH, "Emus", "FFMPEG", "ffmpeg_libretro.so")
                                 if not (os.path.exists(ra_bin) and os.path.exists(ff_core)):
                                     toast_msg = tr("yt_no_player")
                                     toast_timer = time.time()
@@ -3592,9 +3409,9 @@ def main():
                     modal_title = None
                     modal_style = None
                 elif current_screen == "file_browser":
-                    if fb_current_path.rstrip("/") != "/mnt/SDCARD" and fb_current_path.rstrip("/") != "":
+                    if fb_current_path.rstrip("/") != SDCARD_PATH.rstrip("/") and fb_current_path.rstrip("/") != "":
                         parent = os.path.dirname(fb_current_path.rstrip("/"))
-                        fb_current_path = parent if parent else "/mnt/SDCARD"
+                        fb_current_path = parent if parent else SDCARD_PATH
                         selected_indices["file_browser"] = 0
                     else:
                         screen_stack.pop()
@@ -3855,7 +3672,7 @@ def main():
                         toast_msg = msg
                         toast_timer = time.time()
                     elif item_id == "splash_browse_sd":
-                        fb_current_path = "/mnt/SDCARD"
+                        fb_current_path = SDCARD_PATH
                         selected_indices["file_browser"] = 0
                         screen_stack.append("file_browser")
                     elif item_id == "back":
@@ -5972,7 +5789,7 @@ def main():
             # Destination directory. J2ME games are filed by handset resolution,
             # so name the subfolder the jar will actually land in.
             _dest = (rom_dir_for(fn_str) if sys_c in ("JAVA", "J2ME")
-                     else f"/mnt/SDCARD/Roms/{sys_c}")
+                     else resolve_rom_dir(sys_c))
             draw_text(f"{tr('pre_dl_lbl_dest')}{_dest}/", font_sub, dt_x, mid_y + 242, 140, 160, 190)
 
             # Bottom Action Buttons
@@ -6135,8 +5952,8 @@ def main():
             n_java = len([g for g in downloaded_games_list if g.get("sys_code") == "JAVA"])
             for r_i, (lbl, val) in enumerate((
                     (tr("j2me_row_games"), str(n_java)),
-                    (tr("j2me_row_emu"), "/mnt/SDCARD/Emus/JAVA/"),
-                    (tr("j2me_row_rom"), "/mnt/SDCARD/Roms/JAVA/"))):
+                    (tr("j2me_row_emu"), f"{SDCARD_PATH}/Emus/JAVA/"),
+                    (tr("j2me_row_rom"), f"{SDCARD_PATH}/Roms/JAVA/"))):
                 ry_j = jy + 150 + r_i * 42
                 draw_text(lbl, font_sub, jx + 44, ry_j, 150, 165, 195)
                 draw_text(val, font_sub, jx + 290, ry_j, 225, 235, 250)
@@ -6466,7 +6283,8 @@ if __name__ == "__main__":
         err_msg = traceback.format_exc()
         sys.stderr.write(f"\n[RetroHub Crash]\n{err_msg}\n")
         try:
-            with open("/mnt/SDCARD/RetroHub-loi.txt", "a", encoding="utf-8") as _ef:
+            _err_f = os.path.join(SDCARD_PATH, "RetroHub-loi.txt")
+            with open(_err_f, "a", encoding="utf-8") as _ef:
                 _ef.write(f"\n[RetroHub Crash at {time.strftime('%Y-%m-%d %H:%M:%S')}]\n{err_msg}\n")
         except Exception:
             pass
