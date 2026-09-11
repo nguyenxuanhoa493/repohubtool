@@ -94,8 +94,18 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     local_root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files")
 
+    # Tu dong gom toan bo cac file ma nguon trong files/rh/ de khong bao gio bi sot
+    all_targets = list(TARGET_FILES)
+    rh_dir = os.path.join(local_root, "rh")
+    if os.path.isdir(rh_dir):
+        for fname in os.listdir(rh_dir):
+            if fname.endswith(".py"):
+                entry = (f"rh/{fname}", f"rh/{fname}")
+                if entry not in all_targets:
+                    all_targets.append(entry)
+
     print("[*] Bắt đầu đồng bộ tệp...")
-    for rel_src, rel_dst in TARGET_FILES:
+    for rel_src, rel_dst in all_targets:
         src = os.path.normpath(os.path.join(local_root, rel_src))
         dst = rel_dst if rel_dst.startswith("/") else f"{app_dir}/{rel_dst}"
         dst_parent = os.path.dirname(dst)
