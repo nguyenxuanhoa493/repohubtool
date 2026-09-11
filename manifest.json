@@ -1,12 +1,12 @@
 {
-  "version": "2.01",
+  "version": "2.02",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-11T14:04:48+0700",
+  "built": "2026-09-11T15:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa lỗi khởi chạy game PSP (PPSSPP Vulkan/GL) trên CrossMix-OS, đồng bộ bộ điều khiển InputManager & nâng cấp báo cáo chẩn đoán",
-    "en": "Fix PSP game launch (PPSSPP Vulkan/GL) on CrossMix-OS, unified InputManager, and enhanced diagnostics"
+    "vi": "Nâng cấp cơ chế cập nhật OTA đa tầng: Tích hợp CDN jsDelivr & ghproxy tải siêu tốc chống nghẽn mạng",
+    "en": "Upgrade multi-tier OTA updater: Integrate jsDelivr CDN & ghproxy for high-speed updates"
   },
   "remove": [
     "app.pyc",
@@ -546,13 +546,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 24533,
-      "sha256": "980a8b14a45e417e9b3c50ce3b198acceea6b76d5d7c3d14213781e6fea62561"
+      "size": 26294,
+      "sha256": "e25c5410579e536604bf131c1120c213e3e5ed83d7caa99efafea930e67d03b6"
     },
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "d65d38cf928f8b90725e8d73b75ea0a8c9ba41b87fd64626c417c7dc1394df09"
+      "sha256": "0998a27fcd9b4bf2be8598f74bdd494c6d23d88f5b1ff16d7fcc1e810e73a2b2"
     },
     {
       "path": "rh/yt.py",
