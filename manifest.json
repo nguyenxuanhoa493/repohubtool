@@ -1,12 +1,12 @@
 {
-  "version": "2.02",
+  "version": "2.03",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-11T15:15:00+0700",
+  "built": "2026-09-11T18:20:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Nâng cấp cơ chế cập nhật OTA đa tầng: Tích hợp CDN jsDelivr & ghproxy tải siêu tốc chống nghẽn mạng",
-    "en": "Upgrade multi-tier OTA updater: Integrate jsDelivr CDN & ghproxy for high-speed updates"
+    "vi": "Tối ưu kho Cheat Code: Tăng tốc đối chiếu 240x, hủy tải tức thì 50ms, bộ nhớ đệm chống đơ menu",
+    "en": "Optimize Cheat Manager: 240x faster matching, instant 50ms stop, and non-blocking count cache"
   },
   "remove": [
     "app.pyc",
@@ -201,8 +201,8 @@
     },
     {
       "path": "app.py",
-      "size": 325595,
-      "sha256": "6e946e24b9bddda50456140f4bf453a6f2cfc1b62caf9efe000fb8e6aca7e2ae"
+      "size": 325504,
+      "sha256": "e294332817aca20e6d3d54559ddac415a84a38c7f9ccb396b981b8427819ecbb"
     },
     {
       "path": "assets/fallback.ttf",
@@ -416,8 +416,8 @@
     },
     {
       "path": "rh/cheat_manager.py",
-      "size": 21085,
-      "sha256": "34efdbd3875ae323b076d8a7767cc44721306f24e77929a0fa565e51f504e03f"
+      "size": 24263,
+      "sha256": "514a14c8c271e444964949c1f18c270008942f0f54d91392111c182f4db674b4"
     },
     {
       "path": "rh/cheats_index.json.gz",
@@ -552,7 +552,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "0998a27fcd9b4bf2be8598f74bdd494c6d23d88f5b1ff16d7fcc1e810e73a2b2"
+      "sha256": "558e23fc87b0dd839c82f041246dcb5278893bffdaff147b2c81a14db8a770d5"
     },
     {
       "path": "rh/yt.py",

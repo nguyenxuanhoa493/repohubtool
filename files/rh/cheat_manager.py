@@ -99,9 +99,19 @@ def get_cheats_dir(base_sd=None):
     return primary
 
 
-def count_cheats(base_sd=None):
+_CHEATS_COUNT_CACHE = None
+_CHEATS_COUNT_TIME = 0
+
+def count_cheats(base_sd=None, force=False):
+    global _CHEATS_COUNT_CACHE, _CHEATS_COUNT_TIME
+    now = time.time()
+    if not force and _CHEATS_COUNT_CACHE is not None and (now - _CHEATS_COUNT_TIME < 30):
+        return _CHEATS_COUNT_CACHE
+
     c_dir = get_cheats_dir(base_sd)
     if not os.path.isdir(c_dir):
+        _CHEATS_COUNT_CACHE = 0
+        _CHEATS_COUNT_TIME = now
         return 0
     cnt = 0
     try:
@@ -111,6 +121,8 @@ def count_cheats(base_sd=None):
                     cnt += 1
     except OSError:
         pass
+    _CHEATS_COUNT_CACHE = cnt
+    _CHEATS_COUNT_TIME = now
     return cnt
 
 
@@ -209,25 +221,54 @@ def get_cheats_index():
             except Exception:
                 pass
 
-    index_url = "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/files/rh/cheats_index.json.gz"
-    try:
-        req = urllib.request.Request(index_url, headers={"User-Agent": "RetroHub-TrimUI/1.94"})
-        urlopen_kw = {"timeout": 15}
-        if _SSL_CONTEXT is not None:
-            urlopen_kw["context"] = _SSL_CONTEXT
-        with urllib.request.urlopen(req, **urlopen_kw) as resp:
-            compressed = resp.read()
-            _CHEATS_INDEX_CACHE = json.loads(gzip.decompress(compressed).decode("utf-8"))
-            try:
-                with open(paths_to_check[0], "wb") as sf:
-                    sf.write(compressed)
-            except Exception:
-                pass
-            return _CHEATS_INDEX_CACHE
-    except Exception:
-        pass
+    index_urls = [
+        "https://cdn.jsdelivr.net/gh/nguyenxuanhoa493/repohubtool@main/files/rh/cheats_index.json.gz",
+        "https://ghproxy.net/https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/files/rh/cheats_index.json.gz",
+        "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/files/rh/cheats_index.json.gz",
+    ]
+    for index_url in index_urls:
+        try:
+            req = urllib.request.Request(index_url, headers={"User-Agent": "RetroHub-TrimUI/1.94"})
+            urlopen_kw = {"timeout": 6}
+            if _SSL_CONTEXT is not None:
+                urlopen_kw["context"] = _SSL_CONTEXT
+            with urllib.request.urlopen(req, **urlopen_kw) as resp:
+                compressed = resp.read()
+                _CHEATS_INDEX_CACHE = json.loads(gzip.decompress(compressed).decode("utf-8"))
+                try:
+                    with open(paths_to_check[0], "wb") as sf:
+                        sf.write(compressed)
+                except Exception:
+                    pass
+                return _CHEATS_INDEX_CACHE
+        except Exception:
+            continue
 
     return {}
+
+
+_CHEATS_INDEX_PROCESSED = None
+
+def get_processed_cheats_index():
+    """Tra ve danh muc cheat da duoc tien xu ly san tieu de va tap tu khoa.
+
+    Tiet kiem hang trieu phep tinh regex lap lai, giup giam thoi gian quet
+    tu ~12-40s xuong chi con ~0.5s.
+    """
+    global _CHEATS_INDEX_PROCESSED
+    if _CHEATS_INDEX_PROCESSED is not None:
+        return _CHEATS_INDEX_PROCESSED
+
+    raw_idx = get_cheats_index()
+    processed = {}
+    for l_sys, cht_list in raw_idx.items():
+        processed[l_sys] = []
+        for cht in cht_list:
+            c_clean = clean_game_title(cht)
+            c_words = set(w for w in c_clean.split() if len(w) > 1)
+            processed[l_sys].append((cht, c_clean, c_words))
+    _CHEATS_INDEX_PROCESSED = processed
+    return _CHEATS_INDEX_PROCESSED
 
 
 def match_cht_with_installed(cht_filename, installed_games_for_sys):
@@ -261,31 +302,47 @@ def match_rom_with_available_cheats(game_dict, available_cheats):
     r_clean = game_dict["clean_title"]
     r_words = game_dict["words"]
 
-    for cht in available_cheats:
-        if r_clean == clean_game_title(cht):
+    # Ho tro ca danh sach tuple da tien xu ly (cht, c_clean, c_words) lan danh sach chuoi tho
+    for item in available_cheats:
+        if isinstance(item, tuple):
+            cht, c_clean, _ = item
+        else:
+            cht = item
+            c_clean = clean_game_title(cht)
+        if r_clean == c_clean:
             return cht
 
     if len(r_clean) >= 4:
-        for cht in available_cheats:
-            c_clean = clean_game_title(cht)
+        for item in available_cheats:
+            if isinstance(item, tuple):
+                cht, c_clean, _ = item
+            else:
+                cht = item
+                c_clean = clean_game_title(cht)
             if len(c_clean) >= 4 and (r_clean in c_clean or c_clean in r_clean):
                 return cht
 
     if len(r_words) >= 2:
-        for cht in available_cheats:
-            c_clean = clean_game_title(cht)
-            c_words = set(w for w in c_clean.split() if len(w) > 1)
+        for item in available_cheats:
+            if isinstance(item, tuple):
+                cht, _, c_words = item
+            else:
+                cht = item
+                c_clean = clean_game_title(cht)
+                c_words = set(w for w in c_clean.split() if len(w) > 1)
             if r_words.issubset(c_words):
                 return cht
 
     return None
 
 
-def find_cheats_to_download(installed_map, index):
+def find_cheats_to_download(installed_map, index, stop_checker=None):
     tasks = []
     seen = set()
 
     for l_sys, games in installed_map.items():
+        if stop_checker and stop_checker():
+            break
         if l_sys not in index:
             continue
         cheats = index[l_sys]
@@ -293,6 +350,8 @@ def find_cheats_to_download(installed_map, index):
             continue
 
         for g in games:
+            if stop_checker and stop_checker():
+                break
             found = match_rom_with_available_cheats(g, cheats)
             if found and (l_sys, found) not in seen:
                 seen.add((l_sys, found))
@@ -306,9 +365,10 @@ def download_single_cht_content(sys_part, cht_file):
     enc_cht = urllib.parse.quote(cht_file)
     urls = [
         f"https://cdn.jsdelivr.net/gh/libretro/libretro-database@master/cht/{enc_sys}/{enc_cht}",
+        f"https://ghproxy.net/https://raw.githubusercontent.com/libretro/libretro-database/master/cht/{enc_sys}/{enc_cht}",
         f"https://raw.githubusercontent.com/libretro/libretro-database/master/cht/{enc_sys}/{enc_cht}",
     ]
-    urlopen_kw = {"timeout": 8}
+    urlopen_kw = {"timeout": 5}
     if _SSL_CONTEXT is not None:
         urlopen_kw["context"] = _SSL_CONTEXT
 
@@ -478,8 +538,22 @@ class CheatDownloaderRunner:
                 self.phase = "matching"
                 self.status_msg = f"Đang đối chiếu mã Cheat cho {total_roms} game..."
 
-            idx = get_cheats_index()
-            tasks = find_cheats_to_download(installed, idx)
+            if self.stop_requested:
+                with self._lock:
+                    self.done = True
+                    self.active = False
+                    self.status_msg = "Đã dừng."
+                return
+
+            proc_idx = get_processed_cheats_index()
+            tasks = find_cheats_to_download(installed, proc_idx, stop_checker=lambda: self.stop_requested)
+
+            if self.stop_requested:
+                with self._lock:
+                    self.done = True
+                    self.active = False
+                    self.status_msg = "Đã hủy tìm kiếm Cheat."
+                return
 
             if not tasks:
                 with self._lock:
@@ -506,7 +580,7 @@ class CheatDownloaderRunner:
                     return None
                 sys_part, cht_file, rom_base = task
                 content = download_single_cht_content(sys_part, cht_file)
-                if not content:
+                if not content or self.stop_requested:
                     return None
 
                 for base_dir in (primary_dir, secondary_dir):
@@ -526,10 +600,13 @@ class CheatDownloaderRunner:
                             pass
                 return (sys_part, rom_base, len(content))
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+            try:
                 futures = [executor.submit(fetch_and_save, t) for t in tasks]
                 for fut in concurrent.futures.as_completed(futures):
                     if self.stop_requested:
+                        for f in futures:
+                            f.cancel()
                         break
                     res = fut.result()
                     if res:
@@ -549,6 +626,11 @@ class CheatDownloaderRunner:
                         self.progress_pct = pct
                         self.speed_bps = speed
                         self.status_msg = f"Đang tải: {downloaded}/{len(tasks)} mã Cheat ({speed/1024:.0f} KB/s)..."
+            finally:
+                try:
+                    executor.shutdown(wait=False, cancel_futures=True)
+                except TypeError:
+                    executor.shutdown(wait=False)
 
             if self.stop_requested:
                 with self._lock:
@@ -558,6 +640,7 @@ class CheatDownloaderRunner:
                 return
 
             size_kb = downloaded_bytes / 1024
+            count_cheats(base_sd=sd, force=True)
             with self._lock:
                 self.done = True
                 self.active = False
