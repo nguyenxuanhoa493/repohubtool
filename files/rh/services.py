@@ -10,7 +10,7 @@ from .paths import EX_OPTIONS_FILE, STREAMER_SCRIPT, GAMEWEB_SCRIPT
 from . import state
 from .sysinfo import (get_ip, is_sftpgo_running, is_ssh_running,
                       is_adb_running, is_mtp_running, is_streamer_running,
-                      is_gameweb_running)
+                      is_gameweb_running, is_remote_tunnel_running)
 
 def save_options(sftpgo_val=None, ssh_val=None, adb_val=None, mtp_val=None):
     cur_sftp = sftpgo_val if sftpgo_val is not None else ("Y" if is_sftpgo_running() else "N")
@@ -222,3 +222,162 @@ def get_ssh_guide_rows():
          f"ssh root@{ip}"),
         ("Mật khẩu" if vi else "Password", "root"),
     ]
+
+REMOTE_SSH_INFO_FILE = "/tmp/remote_ssh.json"
+REMOTE_SSH_PID_FILE = "/tmp/remote_ssh.pid"
+REMOTE_SSH_LOG_FILE = "/tmp/remote_ssh.log"
+
+def get_remote_tunnel_info():
+    if not is_remote_tunnel_running():
+        return None
+    if os.path.exists(REMOTE_SSH_INFO_FILE):
+        try:
+            import json
+            with open(REMOTE_SSH_INFO_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return None
+
+def stop_remote_tunnel():
+    if os.path.exists(REMOTE_SSH_PID_FILE):
+        try:
+            with open(REMOTE_SSH_PID_FILE, "r") as f:
+                pid = int(f.read().strip())
+            os.kill(pid, 9)
+        except Exception:
+            pass
+        try:
+            os.remove(REMOTE_SSH_PID_FILE)
+        except Exception:
+            pass
+    subprocess.call("pkill -9 -f 'tcp@a.pinggy.io' 2>/dev/null; pkill -9 -f 'a.pinggy.io' 2>/dev/null", shell=True)
+    if os.path.exists(REMOTE_SSH_INFO_FILE):
+        try:
+            os.remove(REMOTE_SSH_INFO_FILE)
+        except Exception:
+            pass
+    if os.path.exists(REMOTE_SSH_LOG_FILE):
+        try:
+            os.remove(REMOTE_SSH_LOG_FILE)
+        except Exception:
+            pass
+    return ("Đã tắt SSH Internet" if state.current_lang == "VI"
+            else "Disabled Remote SSH Internet")
+
+def start_remote_tunnel():
+    ip = get_ip()
+    if not ip or ip.startswith("Chưa") or ip.startswith("Not"):
+        return ("Cần kết nối Wi-Fi trước khi mở SSH Internet!" if state.current_lang == "VI"
+                else "Wi-Fi connection required for Remote SSH!")
+
+    if not is_ssh_running():
+        toggle_ssh()
+        time.sleep(0.5)
+        if not is_ssh_running():
+            return ("Không thể bật SSH Server nội bộ (cổng 22)!" if state.current_lang == "VI"
+                    else "Failed to start local SSH Server (port 22)!")
+
+    stop_remote_tunnel()
+    time.sleep(0.3)
+
+    cmd = [
+        "ssh",
+        "-o", "StrictHostKeyChecking=no",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "ServerAliveInterval=30",
+        "-o", "ServerAliveCountMax=3",
+        "-p", "443",
+        "-R0:localhost:22",
+        "tcp@a.pinggy.io"
+    ]
+
+    try:
+        log_f = open(REMOTE_SSH_LOG_FILE, "w")
+        proc = subprocess.Popen(
+            cmd,
+            stdin=subprocess.DEVNULL,
+            stdout=log_f,
+            stderr=subprocess.STDOUT,
+            close_fds=True,
+            start_new_session=True
+        )
+    except Exception as e:
+        return (f"Lỗi khởi động SSH client: {e}" if state.current_lang == "VI"
+                else f"Failed to execute ssh client: {e}")
+
+    import re
+    import json
+    endpoint_host = None
+    endpoint_port = None
+    start_t = time.time()
+
+    while time.time() - start_t < 6.5:
+        if proc.poll() is not None:
+            break
+        if os.path.exists(REMOTE_SSH_LOG_FILE):
+            try:
+                with open(REMOTE_SSH_LOG_FILE, "r", errors="ignore") as f:
+                    content = f.read()
+                m = re.search(r"tcp://([a-zA-Z0-9.\-_]+):(\d+)", content)
+                if m:
+                    endpoint_host = m.group(1)
+                    endpoint_port = m.group(2)
+                    break
+            except Exception:
+                pass
+        time.sleep(0.25)
+
+    if not endpoint_host or not endpoint_port:
+        stop_remote_tunnel()
+        return ("Không nhận được địa chỉ từ Pinggy! Thử lại sau." if state.current_lang == "VI"
+                else "Failed to obtain tunnel address from Pinggy!")
+
+    try:
+        with open(REMOTE_SSH_PID_FILE, "w") as f:
+            f.write(str(proc.pid))
+    except Exception:
+        pass
+
+    info = {
+        "host": endpoint_host,
+        "port": endpoint_port,
+        "cmd": f"ssh -p {endpoint_port} root@{endpoint_host}",
+        "scp": f"scp -P {endpoint_port} root@{endpoint_host}:/mnt/SDCARD/... ./",
+        "started_at": time.time(),
+        "created_str": time.strftime("%H:%M:%S")
+    }
+    try:
+        with open(REMOTE_SSH_INFO_FILE, "w", encoding="utf-8") as f:
+            json.dump(info, f)
+    except Exception:
+        pass
+
+    return (f"Đã mở SSH Internet: cổng {endpoint_port}" if state.current_lang == "VI"
+            else f"Remote SSH active: port {endpoint_port}")
+
+def toggle_remote_tunnel():
+    if is_remote_tunnel_running():
+        return stop_remote_tunnel()
+    else:
+        return start_remote_tunnel()
+
+def get_remote_tunnel_guide_rows():
+    info = get_remote_tunnel_info()
+    vi = state.current_lang == "VI"
+    if not info:
+        return [
+            ("Trạng thái" if vi else "Status", "Chưa kích hoạt" if vi else "Not active"),
+            ("Bật tính năng" if vi else "To activate",
+             "Bật công tắc SSH Internet trong menu" if vi else "Toggle Remote SSH ON in menu")
+        ]
+    host = info.get("host", "N/A")
+    port = info.get("port", "N/A")
+    return [
+        ("Lệnh SSH từ xa" if vi else "Remote SSH Command", f"ssh -p {port} root@{host}"),
+        ("Mật khẩu" if vi else "Password", "root"),
+        ("Chép file (SCP)" if vi else "File transfer (SCP)", f"scp -P {port} root@{host}:/mnt/SDCARD/... ./"),
+        ("Thời hạn phiên" if vi else "Session duration", "60 phút (tự tạo phiên mới khi bật lại)" if vi else "60 mins (auto refreshes on restart)"),
+        ("Mạng hỗ trợ" if vi else "Supported networks", "Mọi mạng (4G, Wi-Fi khác, bypass NAT)" if vi else "All networks (4G, separate Wi-Fi, NAT bypass)")
+    ]
+

@@ -77,12 +77,14 @@ from rh.sysinfo import (get_battery_info,
     get_storage_info_rows)
 from rh.services import (get_sftp_guide_rows,
     get_ssh_guide_rows,
+    get_remote_tunnel_guide_rows,
     get_stream_guide_rows,
     get_gameweb_guide_rows,
     is_adb_running,
     is_mtp_running,
     is_sftpgo_running,
     is_ssh_running,
+    is_remote_tunnel_running,
     is_streamer_running,
     is_gameweb_running,
     is_wifi_awake,
@@ -91,6 +93,7 @@ from rh.services import (get_sftp_guide_rows,
     toggle_mtp,
     toggle_sftpgo,
     toggle_ssh,
+    toggle_remote_tunnel,
     toggle_streamer,
     toggle_gameweb,
     toggle_wifi_awake)
@@ -1737,6 +1740,7 @@ def main():
     service_states = {
         "sftp": False,
         "ssh": False,
+        "remote_ssh": False,
         "adb": False,
         "mtp": False,
         "streamer": False,
@@ -1763,11 +1767,12 @@ def main():
             downloaded_games_list = scan_all_downloaded_games()
 
         # Smart Service State Polling. Only the services screen reads these, and
-        # the six checks cost ~260ms together - a visible stall every 3s on every
+        # the checks cost ~260ms together - a visible stall every 3s on every
         # other screen, for values nothing was looking at.
         if current_screen == "network" and now - last_service_check_time > 3.0:
             service_states["sftp"] = is_sftpgo_running()
             service_states["ssh"] = is_ssh_running()
+            service_states["remote_ssh"] = is_remote_tunnel_running()
             service_states["adb"] = is_adb_running()
             service_states["mtp"] = is_mtp_running()
             service_states["streamer"] = is_streamer_running()
@@ -1792,6 +1797,7 @@ def main():
         gameweb_on = service_states["gameweb"]
         sftp_on = service_states["sftp"]
         ssh_on = service_states["ssh"]
+        remote_ssh_on = service_states["remote_ssh"]
         adb_on = service_states["adb"]
         mtp_on = service_states["mtp"]
         streamer_on = service_states["streamer"]
@@ -2162,6 +2168,9 @@ def main():
             items.append({"id": "ssh_toggle", "title": tr("ssh_item"), "type": "toggle", "state": ssh_on})
             if ssh_on:
                 items.append({"id": "ssh_guide", "title": tr("ssh_guide"), "label": tr("view"), "sub": True})
+            items.append({"id": "remote_ssh_toggle", "title": tr("remote_ssh_item"), "type": "toggle", "state": remote_ssh_on})
+            if remote_ssh_on:
+                items.append({"id": "remote_ssh_guide", "title": tr("remote_ssh_guide"), "label": tr("view"), "sub": True})
             items.append({"id": "adb_toggle", "title": tr("adb_item"), "type": "toggle", "state": adb_on})
             items.append({"id": "mtp_toggle", "title": tr("mtp_item"), "type": "toggle", "state": mtp_on})
             # The streamer is a service you switch on like the rest, so it belongs
@@ -3843,6 +3852,20 @@ def main():
                     modal_title = "HƯỚNG DẪN KẾT NỐI SSH" if state.current_lang == "VI" else "SSH CONNECTION GUIDE"
                     modal_style = "big"
                     modal_rows = get_ssh_guide_rows()
+                elif item_id == "remote_ssh_toggle":
+                    msg = toggle_remote_tunnel()
+                    service_states["remote_ssh"] = is_remote_tunnel_running()
+                    last_service_check_time = time.time()
+                    toast_msg = msg
+                    toast_timer = time.time()
+                    if service_states["remote_ssh"]:
+                        modal_title = tr("remote_ssh_title")
+                        modal_style = None
+                        modal_rows = get_remote_tunnel_guide_rows()
+                elif item_id == "remote_ssh_guide":
+                    modal_title = tr("remote_ssh_title")
+                    modal_style = None
+                    modal_rows = get_remote_tunnel_guide_rows()
                 elif item_id == "adb_toggle":
                     msg = toggle_adb()
                     service_states["adb"] = is_adb_running()

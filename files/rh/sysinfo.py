@@ -77,6 +77,18 @@ def is_streamer_running():
 def is_gameweb_running():
     return is_proc_running(['gameweb']) or is_port_listening(8090)
 
+def is_remote_tunnel_running():
+    pid_file = "/tmp/remote_ssh.pid"
+    if os.path.exists(pid_file):
+        try:
+            with open(pid_file, "r") as f:
+                pid = int(f.read().strip())
+            os.kill(pid, 0)
+            return True
+        except Exception:
+            pass
+    return is_proc_running(['tcp@a.pinggy.io', 'a.pinggy.io'])
+
 def get_mac_address():
     try:
         mac = subprocess.check_output("cat /sys/class/net/wlan0/address 2>/dev/null || echo 'N/A'", shell=True).decode().strip()

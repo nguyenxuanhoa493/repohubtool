@@ -59,6 +59,13 @@ def get_configured_ip():
 def sync(ip=None, port=22, user="root", pwd="root"):
     if not ip:
         ip = get_configured_ip()
+    if ":" in ip:
+        parts = ip.split(":")
+        ip = parts[0]
+        try:
+            port = int(parts[1])
+        except ValueError:
+            pass
     print(f"[*] Đang kết nối SSH tới {user}@{ip}:{port}...")
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
