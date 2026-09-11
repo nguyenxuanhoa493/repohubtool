@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import subprocess
+import shutil
 
 from .paths import EX_OPTIONS_FILE, STREAMER_SCRIPT, GAMEWEB_SCRIPT
 from . import state
@@ -265,6 +266,68 @@ def stop_remote_tunnel():
     return ("Đã tắt SSH Internet" if state.current_lang == "VI"
             else "Disabled Remote SSH Internet")
 
+def find_ssh_client():
+    """Find a usable SSH client (OpenSSH ssh or Dropbear dbclient) and build command."""
+    # 1. Check for OpenSSH client
+    ssh_candidates = [
+        shutil.which("ssh"),
+        "/usr/bin/ssh",
+        "/usr/local/bin/ssh",
+        "/mnt/SDCARD/System/bin/ssh"
+    ]
+    for p in ssh_candidates:
+        if p and os.path.isfile(p) and os.access(p, os.X_OK):
+            return [
+                p,
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                "-o", "ServerAliveInterval=30",
+                "-o", "ServerAliveCountMax=3",
+                "-p", "443",
+                "-R0:localhost:22",
+                "tcp@a.pinggy.io"
+            ]
+
+    # 2. Check for Dropbear client (dbclient)
+    db_candidates = [
+        shutil.which("dbclient"),
+        "/mnt/SDCARD/System/bin/dbclient",
+        "/usr/bin/dbclient"
+    ]
+    db_bin = None
+    for p in db_candidates:
+        if p and os.path.isfile(p) and os.access(p, os.X_OK):
+            db_bin = p
+            break
+
+    if db_bin:
+        key_candidates = [
+            "/etc/dropbear/dropbear_ed25519_host_key",
+            "/etc/dropbear/dropbear_rsa_host_key",
+            "/root/.ssh/id_dropbear",
+            os.path.expanduser("~/.ssh/id_dropbear")
+        ]
+        key_file = None
+        for k in key_candidates:
+            if os.path.isfile(k):
+                key_file = k
+                break
+
+        cmd = [
+            db_bin,
+            "-T",
+            "-y", "-y",
+            "-K", "30",
+            "-p", "443",
+            "-R", "0:localhost:22"
+        ]
+        if key_file:
+            cmd.extend(["-i", key_file])
+        cmd.append("tcp@a.pinggy.io")
+        return cmd
+
+    return None
+
 def start_remote_tunnel():
     ip = get_ip()
     if not ip or ip.startswith("Chưa") or ip.startswith("Not"):
@@ -281,16 +344,10 @@ def start_remote_tunnel():
     stop_remote_tunnel()
     time.sleep(0.3)
 
-    cmd = [
-        "ssh",
-        "-o", "StrictHostKeyChecking=no",
-        "-o", "UserKnownHostsFile=/dev/null",
-        "-o", "ServerAliveInterval=30",
-        "-o", "ServerAliveCountMax=3",
-        "-p", "443",
-        "-R0:localhost:22",
-        "tcp@a.pinggy.io"
-    ]
+    cmd = find_ssh_client()
+    if not cmd:
+        return ("Không tìm thấy SSH client (ssh hoặc dbclient) trên máy!" if state.current_lang == "VI"
+                else "No SSH client (ssh or dbclient) found on device!")
 
     try:
         log_f = open(REMOTE_SSH_LOG_FILE, "w")
