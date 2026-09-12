@@ -7,6 +7,8 @@ import time
 import subprocess
 import shutil
 import json
+import threading
+import re
 
 from .paths import EX_OPTIONS_FILE, STREAMER_SCRIPT, GAMEWEB_SCRIPT
 from . import state
@@ -411,8 +413,13 @@ def start_remote_tunnel():
     except Exception:
         pass
 
-    return (f"Đã mở SSH Internet: cổng {endpoint_port}" if state.current_lang == "VI"
-            else f"Remote SSH active: port {endpoint_port}")
+    try:
+        threading.Thread(target=send_ssh_info_to_telegram, daemon=True).start()
+    except Exception:
+        pass
+
+    return (f"Đã mở SSH Internet: cổng {endpoint_port} (Đã gửi Telegram)" if state.current_lang == "VI"
+            else f"Remote SSH active: port {endpoint_port} (Sent to Telegram)")
 
 def toggle_remote_tunnel():
     if is_remote_tunnel_running():
@@ -435,6 +442,7 @@ def get_remote_tunnel_guide_rows():
         ("Lệnh SSH từ xa" if vi else "Remote SSH Command", f"ssh -p {port} root@{host}"),
         ("Mật khẩu" if vi else "Password", "root"),
         ("Chép file (SCP)" if vi else "File transfer (SCP)", f"scp -P {port} root@{host}:/mnt/SDCARD/... ./"),
+        ("Lưu ý" if vi else "Note", "Giữ màn hình này và báo lại cho tôi" if vi else "Keep this screen open and report back to me"),
     ]
 
 def send_ssh_info_to_telegram():
@@ -474,7 +482,9 @@ def send_ssh_info_to_telegram():
         "`root`",
         "",
         "📁 *Lệnh SCP (Chép file / log):*",
-        f"`scp -P {port} root@{host}:/mnt/SDCARD/... ./`"
+        f"`scp -P {port} root@{host}:/mnt/SDCARD/... ./`",
+        "",
+        "⚠️ *Lưu ý:* Vui lòng giữ màn hình này và báo lại cho tôi."
     ]
     text = "\n".join(msg_lines)
 
@@ -521,5 +531,34 @@ def send_ssh_info_to_telegram():
                 return False, f"Telegram: {desc}"
     except Exception as e:
         return False, ("Lỗi kết nối khi gửi Telegram!" if vi else f"Telegram error: {e}")
+
+def get_netplay_guide_rows():
+    from .netplay import get_netplay_tunnel_info
+    info = get_netplay_tunnel_info()
+    vi = state.current_lang == "VI"
+    if not info:
+        return [
+            ("Trạng thái" if vi else "Status", "Chưa mở phòng" if vi else "No room active"),
+            ("Tạo phòng" if vi else "How to Host",
+             "Chọn game trong danh sách -> Chọn Netplay -> Tạo phòng" if vi else "Select game -> Netplay -> Host room")
+        ]
+    port = info.get("port", "N/A")
+    host = info.get("host", "N/A")
+    g_title = info.get("game_title", "Game")
+    sys_code = info.get("sys_code", "")
+    return [
+        ("Mã phòng (Port)" if vi else "Room Code (Port)", f"{port}"),
+        ("Tựa game" if vi else "Game", f"{g_title} [{sys_code}]"),
+        ("Địa chỉ Host" if vi else "Full Host", f"{host}:{port}"),
+        ("Lưu ý" if vi else "Note", "Gửi mã phòng cho bạn bè để cùng chơi" if vi else "Send Room Code to player 2 to join"),
+    ]
+
+def toggle_netplay():
+    from .netplay import is_netplay_tunnel_running, stop_netplay_tunnel
+    if is_netplay_tunnel_running():
+        return stop_netplay_tunnel()
+    else:
+        return ("Hãy chọn game trong Thư viện để Tạo phòng Netplay!" if state.current_lang == "VI"
+                else "Select a game in Library to Host Netplay!")
 
 
