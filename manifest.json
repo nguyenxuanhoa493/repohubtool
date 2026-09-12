@@ -1,12 +1,12 @@
 {
-  "version": "2.04",
+  "version": "2.05",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-12T05:28:00+0700",
+  "built": "2026-09-12T13:43:06+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tích hợp SSH Internet: Mở cổng debug từ xa qua Pinggy, vượt mọi NAT/Firewall để truy cập thiết bị mọi nơi",
-    "en": "Integrate Remote SSH: Open public debug tunnel via Pinggy, bypass NAT/firewalls for remote device access"
+    "vi": "Tính năng Netplay Internet: Chơi game 2 người xuyên mạng qua Pinggy tunnel, hỗ trợ tạo phòng và gửi mã vào Telegram",
+    "en": "Netplay Internet: 2-player multiplayer across Internet via Pinggy tunnel, room code sharing and Telegram integration"
   },
   "remove": [
     "app.pyc",
@@ -37,6 +37,7 @@
     "rh/logger.pyc",
     "rh/media.pyc",
     "rh/neterrors.pyc",
+    "rh/netplay.pyc",
     "rh/paths.pyc",
     "rh/romfiles.pyc",
     "rh/save_manager.pyc",
@@ -201,8 +202,8 @@
     },
     {
       "path": "app.py",
-      "size": 329628,
-      "sha256": "2cb87d869fb5f1f639916eb24069efd18c9f71ce6befbd7b45b12eb9ff6a6cc7"
+      "size": 356665,
+      "sha256": "233f9b4c637a71ec433dfff385f1e592d02760cda6bc2fbf30fb33b758b7e4c5"
     },
     {
       "path": "assets/fallback.ttf",
@@ -446,8 +447,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 43215,
-      "sha256": "dea6000ebeb1644fded20944ad3e4f59f30b98dc0cb6a71dba9d4705d7823657"
+      "size": 43778,
+      "sha256": "fb58671ded5d2594751f31278583aef951a5a78b7457af591dc70fa9f6246445"
     },
     {
       "path": "rh/inputs.py",
@@ -505,6 +506,11 @@
       "sha256": "379319bada496f70030cfb875403fa34981032da120e5c30ca33fbdf1de0e0bd"
     },
     {
+      "path": "rh/netplay.py",
+      "size": 7717,
+      "sha256": "9f7589e8f4c6e13be572cfc20662a02562f24d0c4303ee000147592d0970f222"
+    },
+    {
       "path": "rh/paths.py",
       "size": 5168,
       "sha256": "a92a701469bb78ac447f9332f5db6eb7d715f3acdffaec88ef5bf9268f181db9"
@@ -521,8 +527,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 21008,
-      "sha256": "248bc3dc006e63e607d9a045c99355dd7f53f8e2eac750fc1646e8539b09804f"
+      "size": 22804,
+      "sha256": "d231504166a789ba81e453b834633248f53891d536c5e99c33f1ce4f4c3d326b"
     },
     {
       "path": "rh/splash.py",
@@ -552,7 +558,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "be6758fc065e77790fb53e6d26465b50cfe89aef39e0fc414a2fe28f04bf74dd"
+      "sha256": "3030c7300485be57a6421c32f0344607d13556a24b51ed2d3019e85c84da2370"
     },
     {
       "path": "rh/yt.py",
