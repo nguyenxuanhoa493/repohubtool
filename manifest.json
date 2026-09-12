@@ -1,12 +1,12 @@
 {
-  "version": "2.05",
+  "version": "2.06",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-12T13:43:06+0700",
+  "built": "2026-09-12T17:52:58+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tính năng Netplay Internet: Chơi game 2 người xuyên mạng qua Pinggy tunnel, hỗ trợ tạo phòng và gửi mã vào Telegram",
-    "en": "Netplay Internet: 2-player multiplayer across Internet via Pinggy tunnel, room code sharing and Telegram integration"
+    "vi": "Tự động thích ứng giả lập thông minh (Smart Adaptive Fallback): Chống văng game PSP, N64, DC, Saturn; hỗ trợ toàn diện alias hệ máy (NES/FC, SNES/SFC, MD/GENESIS...)",
+    "en": "Smart Adaptive Emulator Fallback: Prevent PSP, N64, DC, Saturn crashes by falling back to RetroArch cores; full support for system aliases (NES/FC, SNES/SFC, MD/GENESIS...)"
   },
   "remove": [
     "app.pyc",
@@ -202,8 +202,8 @@
     },
     {
       "path": "app.py",
-      "size": 356665,
-      "sha256": "233f9b4c637a71ec433dfff385f1e592d02760cda6bc2fbf30fb33b758b7e4c5"
+      "size": 356779,
+      "sha256": "3d9f7d74e022d2b03eeccf7587162df1bd2ae1047bf03484c2e157261ea76cdb"
     },
     {
       "path": "assets/fallback.ttf",
@@ -437,8 +437,8 @@
     },
     {
       "path": "rh/emulators.py",
-      "size": 5611,
-      "sha256": "347c9843ca62ef915abd6c0fdaef38821edca2c4c86541e23e92fff22d37b9dc"
+      "size": 8751,
+      "sha256": "b1f45b76c60042fedb944e94b54d20c046cf840c259f769e3212c87c733c6df9"
     },
     {
       "path": "rh/fonts.py",
@@ -558,7 +558,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "3030c7300485be57a6421c32f0344607d13556a24b51ed2d3019e85c84da2370"
+      "sha256": "530714c33515de1aa635256131de57c91be86e111645d6ef0518e9ff5a520779"
     },
     {
       "path": "rh/yt.py",

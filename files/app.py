@@ -1743,6 +1743,7 @@ def main():
                 q_rom = shlex.quote(rom_p)
                 net_line = f"export NET_PARAM={shlex.quote(net_param)}\n" if net_param else ""
                 f.write(
+                    "export LD_LIBRARY_PATH=/usr/trimui/lib:/usr/lib64:/lib64:/mnt/SDCARD/lib:$LD_LIBRARY_PATH\n"
                     "cd %s\n"
                     "%s"
                     "chmod +x %s 2>/dev/null\n"

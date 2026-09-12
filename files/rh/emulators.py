@@ -25,6 +25,19 @@ EMUS_DIR = f"{SDCARD_PATH}/Emus"
 DEFAULT_SCRIPT = "launch.sh"
 
 
+ALIASES = {
+    "NES": "FC", "FC": "NES",
+    "SNES": "SFC", "SFC": "SNES",
+    "MD": "GENESIS", "GENESIS": "MD", "MEGADRIVE": "MD", "SEGAMD": "MD",
+    "PS": "PS1", "PS1": "PS", "PSX": "PS",
+    "TG16": "PCE", "PCE": "TG16", "PCENGINE": "PCE",
+    "WS": "WSC", "WSC": "WS",
+    "MS": "SMS", "SMS": "MS",
+    "PSP": "PPSSPP",
+    "GBC": "GB",
+}
+
+
 def _config_of(emu_dir):
     """config.json cua mot thu muc gia lap, {} neu khong doc duoc.
 
@@ -36,6 +49,45 @@ def _config_of(emu_dir):
     except (OSError, ValueError):
         return {}
     return cfg if isinstance(cfg, dict) else {}
+
+
+def _is_script_broken(emu_dir, script_path):
+    """Kiem tra xem mot script co dang goi binary standalone bi loi / 0-byte hay khong."""
+    if not script_path or not os.path.isfile(script_path):
+        return True
+    try:
+        with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+    except OSError:
+        return True
+
+    # Neu script co co che RetroArch fallback hoac chinh la script RetroArch thi khong broken
+    if "RetroArch" in content or "ra64.trimui" in content or "_libretro.so" in content:
+        return False
+
+    # Quet xem script co thuc thi binary standalone nao <= 1024 bytes (0-byte) khong
+    for line in content.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        for token in line.split():
+            clean = token.replace('"', '').replace("'", "")
+            if clean.startswith("./") or clean.startswith("$SA_DIR/") or clean.startswith("$progdir/"):
+                bin_name = os.path.basename(clean)
+                candidates = [
+                    os.path.join(emu_dir, bin_name),
+                ]
+                try:
+                    for sub in os.listdir(emu_dir):
+                        sub_path = os.path.join(emu_dir, sub)
+                        if os.path.isdir(sub_path):
+                            candidates.append(os.path.join(sub_path, bin_name))
+                except OSError:
+                    pass
+                for c in candidates:
+                    if os.path.isfile(c) and os.path.getsize(c) <= 1024:
+                        return True
+    return False
 
 
 def _script_in(emu_dir, cfg):
@@ -66,10 +118,10 @@ def _script_in(emu_dir, cfg):
                     sh_name = str(item.get("launch") or "").strip()
                     if sh_name and sh_name != "default.sh":
                         p = os.path.join(emu_dir, os.path.basename(sh_name))
-                        if os.path.isfile(p):
+                        if os.path.isfile(p) and not _is_script_broken(emu_dir, p):
                             return p
 
-        # 2. Neu chua co launchers.cfg hoac script khong hop le, tu chon tu launchlist
+        # 2. Loc danh sach script hop le tu launchlist
         valid_scripts = []
         for item in launchlist:
             if isinstance(item, dict):
@@ -80,17 +132,30 @@ def _script_in(emu_dir, cfg):
                         valid_scripts.append((str(item.get("name") or ""), sh_name, p))
 
         if valid_scripts:
-            # Uu tien Vulkan neu co (vi dụ PPSSPP Vulkan tren TrimUI Smart Pro cho FPS tot nhat)
-            for name, sh_name, p in valid_scripts:
+            # Uu tien cac script khong bi broken (khong tro vao file binary 0-byte)
+            working_scripts = [s for s in valid_scripts if not _is_script_broken(emu_dir, s[2])]
+            pool = working_scripts if working_scripts else valid_scripts
+
+            # Uu tien Vulkan neu co (vi du PPSSPP Vulkan tren TrimUI Smart Pro cho FPS tot nhat)
+            for name, sh_name, p in pool:
                 if "vulkan" in sh_name.lower() or "vulkan" in name.lower():
                     return p
             # Tiep theo la OpenGL
-            for name, sh_name, p in valid_scripts:
+            for name, sh_name, p in pool:
                 if "gl" in sh_name.lower() or "opengl" in name.lower():
                     return p
             # Mac dinh lay script dau tien hop le
-            return valid_scripts[0][2]
+            return pool[0][2]
 
+    # Uu tien script khong bi broken
+    for name in (named, DEFAULT_SCRIPT):
+        if not name:
+            continue
+        p = os.path.join(emu_dir, os.path.basename(name))
+        if os.path.isfile(p) and not _is_script_broken(emu_dir, p):
+            return p
+
+    # Fallback cuoi cung neu tat ca deu co nguy co loi: van tra ve script de he thu chay
     for name in (named, DEFAULT_SCRIPT):
         if not name:
             continue
@@ -109,30 +174,45 @@ def resolve(sys_code, emus_root=None):
     except OSError:
         return (None, None)
 
+    # Tap hop cac ma he tuong duong (alias)
+    sys_upper = sys_code.upper() if sys_code else ""
+    target_names = {sys_code, sys_upper, sys_code.lower()} if sys_code else set()
+    for k, v in ALIASES.items():
+        if k.upper() == sys_upper:
+            target_names.update([v, v.upper(), v.lower()])
+        elif v.upper() == sys_upper:
+            target_names.update([k, k.upper(), k.lower()])
+
     fallback = None
     for name in folders:
         emu_dir = os.path.join(root, name)
         cfg = _config_of(emu_dir)
         rompath = os.path.basename(str(cfg.get("rompath") or "").rstrip("/"))
-        if name != sys_code and rompath != sys_code:
+
+        matches_name = name in target_names or name.upper() in target_names
+        matches_rom = rompath in target_names or rompath.upper() in target_names
+        if not (matches_name or matches_rom):
             continue
+
         script = _script_in(emu_dir, cfg)
         if not script:
             continue
-        # Thu muc trung ten he la cai chinh; cai chi khop qua rompath chi duoc
-        # dung khi khong co cai nao trung ten.
-        if name == sys_code:
+
+        # Uu tien thu muc trung ten he goc hoac rompath trung he goc
+        if name == sys_code or rompath == sys_code:
             return (emu_dir, script)
         if fallback is None:
             fallback = (emu_dir, script)
+
     if fallback:
         return fallback
 
     # Check NextUI platform Paks: Emus/tg5040/<sys_code>.pak / Emus/tg5050/<sys_code>.pak
     for plat in ("tg5040", "tg5050"):
-        pak_dir = os.path.join(root, plat, f"{sys_code}.pak")
-        pak_launch = os.path.join(pak_dir, "launch.sh")
-        if os.path.isfile(pak_launch):
-            return (pak_dir, pak_launch)
+        for code in target_names:
+            pak_dir = os.path.join(root, plat, f"{code}.pak")
+            pak_launch = os.path.join(pak_dir, "launch.sh")
+            if os.path.isfile(pak_launch):
+                return (pak_dir, pak_launch)
 
     return (None, None)
