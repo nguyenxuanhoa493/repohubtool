@@ -1,12 +1,12 @@
 {
-  "version": "2.10",
+  "version": "2.11",
   "full_release_version": "1.63",
   "python": "any",
   "built": "2026-09-12T17:52:58+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Thông báo Netplay Telegram: Gửi lời mời trực tiếp vào nhóm cộng đồng, nội dung tinh gọn và nổi bật mã phòng 5 số",
-    "en": "Netplay Telegram Notifications: Send invitations to community group with streamlined format and highlighted room ID"
+    "vi": "Định tuyến Telegram Topics: Gửi lời mời Netplay vào chủ đề Netplay (#1175) và thông tin SSH vào chủ đề Debug Online (#1205)",
+    "en": "Telegram Topic Routing: Route Netplay invites to Netplay topic (#1175) and SSH details to Debug Online topic (#1205)"
   },
   "remove": [
     "app.pyc",
@@ -513,8 +513,8 @@
     },
     {
       "path": "rh/netplay.py",
-      "size": 11093,
-      "sha256": "0c3a5d5438e9ab36d547c79683d45eb00d9c4430fdd895d1d21cb798e00996c7"
+      "size": 11388,
+      "sha256": "4e499566b87abacc7d48fabe940c3908be6141122a5b7d798b53cf190e8d2dc2"
     },
     {
       "path": "rh/paths.py",
@@ -533,8 +533,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 22804,
-      "sha256": "d231504166a789ba81e453b834633248f53891d536c5e99c33f1ce4f4c3d326b"
+      "size": 23469,
+      "sha256": "6e8dec14246cd78d238ce7755fb049dc7e34efd20b34475512aedf72f1b12186"
     },
     {
       "path": "rh/splash.py",
@@ -564,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "9dcf48732f099a5fb44672394351e123405e2c3b3891ce748487532f4b0f14a6"
+      "sha256": "f3f57d1ae139f6a84137d4cfe63ab9826083ff441c78eaf1471dfe3d7ff99156"
     },
     {
       "path": "rh/yt.py",

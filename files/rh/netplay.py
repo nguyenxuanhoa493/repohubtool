@@ -22,6 +22,7 @@ NETPLAY_LOG_FILE = "/tmp/netplay_tunnel.log"
 TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
 TELEGRAM_CHAT_ID = "663642384"
 TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
+TELEGRAM_NETPLAY_THREAD_ID = 1175
 TELEGRAM_CHAT_ID_CACHE = "/tmp/netplay_tele_chat_id.txt"
 
 def resolve_netplay_telegram_chat_id():
@@ -267,20 +268,25 @@ def send_netplay_info_to_telegram(game_title=None, sys_code=None, host=None, por
     text = "\n".join(msg_lines)
 
     target_chat_id = resolve_netplay_telegram_chat_id()
-    dest_chats = [target_chat_id]
-    if TELEGRAM_CHAT_ID and TELEGRAM_CHAT_ID not in dest_chats:
-        dest_chats.append(TELEGRAM_CHAT_ID)
+    dest_chats = []
+    if target_chat_id:
+        tid = TELEGRAM_NETPLAY_THREAD_ID if str(target_chat_id) == str(TELEGRAM_GROUP_CHAT_ID) else None
+        dest_chats.append((target_chat_id, tid))
+    if TELEGRAM_CHAT_ID and str(TELEGRAM_CHAT_ID) != str(target_chat_id):
+        dest_chats.append((TELEGRAM_CHAT_ID, None))
 
     sent_any = False
     last_err = "Lỗi gửi Telegram"
 
-    for cid in dest_chats:
+    for cid, tid in dest_chats:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
             "chat_id": cid,
             "text": text,
             "parse_mode": "Markdown"
         }
+        if tid is not None:
+            payload["message_thread_id"] = tid
         try:
             import urllib.request
             import ssl
