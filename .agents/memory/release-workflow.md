@@ -13,8 +13,10 @@ Khi người dùng yêu cầu "phát hành", "phát hành đi", "ra bản mới"
      - Tính toán lại dung lượng và mã SHA-256 cho toàn bộ các file đã chỉnh sửa trong `files/`.
      - Giữ nguyên `full_release_version` trỏ tới bản full zip đã phát hành gần nhất để link tải trên website KHÔNG bị 404.
   3. Cập nhật `_src/build_changelog.py` và chạy `python3 _src/build_changelog.py && python3 _src/build.py`.
-  4. Git commit và `git push origin main`.
-  5. Thử đồng bộ qua SSH sang thiết bị nếu máy đang online.
+  4. Git commit, tạo tag và `git push origin main` (kèm tags).
+  5. Purge CDN jsDelivr cho `manifest.json`, `files/rh/version.py`, v.v.
+  6. **Gửi thông báo vào nhóm chung Telegram:** Tự động gửi thông tin phiên bản mới và nội dung cập nhật vào chủ đề chung (General / all) của nhóm RetroHub (`-1003890413445`) bằng script `_src/notify_ota_telegram.py`.
+  7. Thử đồng bộ qua SSH sang thiết bị nếu máy đang online.
 - **TUYỆT ĐỐI KHÔNG:** Không tự ý nén các file full zip (`RetroHub-*-full.zip`, `NextUI.zip`) và không chạy `gh release create`.
 
 ---
