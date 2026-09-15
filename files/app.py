@@ -6602,6 +6602,18 @@ def main():
             fill_rect(0, fy, mw, foot_h, 16, 22, 36, 255)
             fill_rect(0, fy, mw, 1, 40, 55, 85, 255)
 
+            def draw_np_btn(x, key_char, label_str, btn_color=(0, 230, 150), text_color=(220, 225, 235), is_dark_btn=True):
+                b_sz = 28
+                kw = measure_text(key_char, font_btn_badge if len(key_char) <= 2 else font_badge)
+                b_w = max(b_sz, kw + 10)
+                b_y = fy + (foot_h - b_sz) // 2
+                fill_rect(x, b_y, b_w, b_sz, btn_color[0], btn_color[1], btn_color[2], 255)
+                f_col = (0, 0, 0) if is_dark_btn else (255, 255, 255)
+                f_font = font_badge if len(key_char) > 2 else font_btn_badge
+                draw_text(key_char, f_font, x + b_w // 2, b_y + b_sz // 2, f_col[0], f_col[1], f_col[2], center_x=True, center_y=True)
+                w, h = draw_text(label_str, font_footer, x + b_w + 8, fy + foot_h // 2, text_color[0], text_color[1], text_color[2], center_y=True)
+                return x + b_w + 8 + w + 22
+
             # Right header game badge
             disp_gt = f"[{sys_c}] {g_title}"
             if len(disp_gt) > 34:
@@ -6610,7 +6622,7 @@ def main():
             draw_text(disp_gt, font_badge, mw - 28 - gt_w, head_h // 2, 255, 215, 0, center_y=True)
 
             if np_mode == "select":
-                header_str = "🎮 NETPLAY 2 NGƯỜI (INTERNET)" if state.current_lang == "VI" else "🎮 2-PLAYER NETPLAY"
+                header_str = "NETPLAY 2 NGƯỜI (INTERNET)" if state.current_lang == "VI" else "2-PLAYER NETPLAY"
                 draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
                 # 3 Cards Full Width
@@ -6731,11 +6743,13 @@ def main():
                 p3_lbl = "[A] Nhập mã 5 số" if state.current_lang == "VI" else "[A] Enter Code"
                 draw_text(p3_lbl, font_badge, c3_x + card_w // 2, pr_y + 19, 0, 230 if is_sel2 else 160, 255 if is_sel2 else 180, center_x=True, center_y=True)
 
-                foot_t = "◄ ► Chọn chế độ  •  [A] Tiếp tục  •  [B] Bỏ qua" if state.current_lang == "VI" else "◄ ► Select Mode  •  [A] Continue  •  [B] Cancel"
-                draw_text(foot_t, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
+                fx = 32
+                fx = draw_np_btn(fx, "◄►", "Chọn chế độ" if state.current_lang == "VI" else "Select Mode", (70, 95, 140), is_dark_btn=False)
+                fx = draw_np_btn(fx, "A", "Tiếp tục" if state.current_lang == "VI" else "Continue", (0, 230, 150))
+                draw_np_btn(mw - 165, "B", "Bỏ qua" if state.current_lang == "VI" else "Cancel", (255, 70, 70), is_dark_btn=False)
 
             elif np_mode == "lobby":
-                header_str = "🌐 SẢNH CHỜ CỘNG ĐỒNG" if state.current_lang == "VI" else "🌐 PUBLIC LOBBY"
+                header_str = "SẢNH CHỜ CỘNG ĐỒNG" if state.current_lang == "VI" else "PUBLIC LOBBY"
                 draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
                 if netplay_modal.get("lobby_loading"):
@@ -6749,6 +6763,7 @@ def main():
                     load_t2 = "Vui lòng đợi giây lát..." if state.current_lang == "VI" else "Please wait a moment..."
                     draw_text(load_t1, font_item, cx + cw // 2, cy + ch // 2 - 20, 255, 215, 0, center_x=True, center_y=True)
                     draw_text(load_t2, font_sub, cx + cw // 2, cy + ch // 2 + 25, 200, 220, 245, center_x=True, center_y=True)
+                    draw_np_btn(mw - 165, "B", "Quay lại" if state.current_lang == "VI" else "Back", (255, 70, 70), is_dark_btn=False)
 
                 else:
                     l_rooms = netplay_modal.get("lobby_rooms", [])
@@ -6764,7 +6779,11 @@ def main():
                         draw_rect(bx, by, bw, bh, 255, 80, 80, 255, thickness=2)
                         draw_text("LỖI KẾT NỐI TỚI SẢNH CHỜ:", font_modal_lbl, bx + bw // 2, by + bh // 2 - 40, 255, 100, 100, center_x=True, center_y=True)
                         draw_text(str(l_err)[:50], font_item, bx + bw // 2, by + bh // 2 + 5, 255, 220, 220, center_x=True, center_y=True)
-                        draw_text("Bấm [X] để thử lại  •  [B] Quay lại", font_sub, bx + bw // 2, by + bh // 2 + 50, 200, 215, 235, center_x=True, center_y=True)
+                        draw_text("Vui lòng kiểm tra Wi-Fi và thử lại", font_sub, bx + bw // 2, by + bh // 2 + 50, 200, 215, 235, center_x=True, center_y=True)
+                        fx = 32
+                        fx = draw_np_btn(fx, "X", "Thử lại" if state.current_lang == "VI" else "Retry", (0, 190, 255))
+                        fx = draw_np_btn(fx, "Y", "Làm mới" if state.current_lang == "VI" else "Refresh", (255, 200, 0))
+                        draw_np_btn(mw - 165, "B", "Quay lại" if state.current_lang == "VI" else "Back", (255, 70, 70), is_dark_btn=False)
 
                     elif not l_rooms:
                         bx = 40
@@ -6773,12 +6792,10 @@ def main():
                         bh = fy - by - 20
                         fill_rect(bx, by, bw, bh, 18, 25, 42, 255)
                         draw_rect(bx, by, bw, bh, 45, 60, 95, 255, thickness=2)
-                        empty_t1 = "CHƯA CÓ PHÒNG NETPLAY NÀO ĐANG MỞ" if state.current_lang == "VI" else "NO PUBLIC ROOMS CURRENTLY ACTIVE"
-                        empty_t2 = "Bấm [X] để nhập mã riêng  •  [Y] để làm mới danh sách" if state.current_lang == "VI" else "Press [X] to enter private code  •  [Y] to refresh list"
-                        empty_t3 = "Bấm [B] để quay lại menu chính" if state.current_lang == "VI" else "Press [B] to go back to main menu"
-                        draw_text(empty_t1, font_item, bx + bw // 2, by + bh // 2 - 35, 255, 215, 0, center_x=True, center_y=True)
-                        draw_text(empty_t2, font_sub, bx + bw // 2, by + bh // 2 + 10, 200, 220, 245, center_x=True, center_y=True)
-                        draw_text(empty_t3, font_badge, bx + bw // 2, by + bh // 2 + 55, 0, 230, 255, center_x=True, center_y=True)
+                        empty_t1 = "HIỆN CHƯA CÓ PHÒNG NETPLAY NÀO ĐANG MỞ" if state.current_lang == "VI" else "NO PUBLIC NETPLAY ROOMS ACTIVE"
+                        empty_t2 = "Bạn có thể tạo phòng từ Kho game hoặc bấm [X] để nhập mã phòng riêng" if state.current_lang == "VI" else "Host a room from Game menu or press [X] to enter private code"
+                        draw_text(empty_t1, font_item, bx + bw // 2, by + bh // 2 - 20, 255, 215, 0, center_x=True, center_y=True)
+                        draw_text(empty_t2, font_sub, bx + bw // 2, by + bh // 2 + 25, 200, 220, 245, center_x=True, center_y=True)
 
                     else:
                         # Scrollable Room Cards (5 visible rooms)
@@ -6827,11 +6844,17 @@ def main():
                             draw_text(f"MÃ: {rm_port}", font_badge, bx_x + bx_w // 2, bx_y + bx_h // 2, 0, 255, 160, center_x=True, center_y=True)
 
                     total_cnt = len(l_rooms) if not netplay_modal.get("lobby_loading") else 0
-                    foot_t = f"▲ ▼ Chọn ({total_cnt} phòng)  •  [A] Vào chơi  •  [X] Nhập mã riêng  •  [Y] Làm mới  •  [B] Quay lại" if state.current_lang == "VI" else f"▲ ▼ Select ({total_cnt} rooms)  •  [A] Join  •  [X] Enter Code  •  [Y] Refresh  •  [B] Back"
-                    draw_text(foot_t, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
+                    if not l_err and not netplay_modal.get("lobby_loading"):
+                        fx = 32
+                        if total_cnt > 0:
+                            fx = draw_np_btn(fx, "▲▼", f"Chọn ({total_cnt})" if state.current_lang == "VI" else f"Select ({total_cnt})", (70, 95, 140), is_dark_btn=False)
+                            fx = draw_np_btn(fx, "A", "Vào chơi" if state.current_lang == "VI" else "Join", (0, 230, 150))
+                        fx = draw_np_btn(fx, "X", "Mã riêng" if state.current_lang == "VI" else "Code", (0, 190, 255))
+                        fx = draw_np_btn(fx, "Y", "Làm mới" if state.current_lang == "VI" else "Refresh", (255, 200, 0))
+                        draw_np_btn(mw - 165, "B", "Quay lại" if state.current_lang == "VI" else "Back", (255, 70, 70), is_dark_btn=False)
 
             elif np_mode == "hosting":
-                header_str = "🎮 TẠO PHÒNG NETPLAY (HOST)" if state.current_lang == "VI" else "🎮 HOST NETPLAY"
+                header_str = "TẠO PHÒNG NETPLAY (HOST)" if state.current_lang == "VI" else "HOST NETPLAY"
                 draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
                 if netplay_modal.get("is_starting"):
@@ -6847,6 +6870,7 @@ def main():
                     draw_text(load_t1, font_item, cx + cw // 2, cy + ch // 2 - 35, 255, 215, 0, center_x=True, center_y=True)
                     draw_text(load_t2, font_sub, cx + cw // 2, cy + ch // 2 + 10, 200, 220, 245, center_x=True, center_y=True)
                     draw_text(load_t3, font_modal_lbl, cx + cw // 2, cy + ch // 2 + 55, 0, 230, 255, center_x=True, center_y=True)
+                    draw_np_btn(mw - 165, "B", "Hủy bỏ" if state.current_lang == "VI" else "Cancel", (255, 70, 70), is_dark_btn=False)
                 else:
                     t_info = netplay_modal.get("tunnel_info")
                     if t_info:
@@ -6943,11 +6967,18 @@ def main():
                         b2_lbl = "[B] Quay lại" if state.current_lang == "VI" else "[B] Cancel"
                         draw_text(b2_lbl, font_badge, bx2 + b2_w // 2, btn_y + btn_h // 2, 255, 180, 180, center_x=True, center_y=True)
 
-                    foot_h_lbl = "[A] Bắt đầu  •  [X] Gửi Telegram  •  [B] Đóng phòng" if state.current_lang == "VI" else "[A] Start  •  [X] Telegram  •  [B] Close"
-                    draw_text(foot_h_lbl, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
+                    if t_info:
+                        fx = 32
+                        fx = draw_np_btn(fx, "A", "Bắt đầu chơi" if state.current_lang == "VI" else "Start Game", (0, 230, 150))
+                        fx = draw_np_btn(fx, "X", "Gửi Telegram" if state.current_lang == "VI" else "Telegram", (0, 190, 255))
+                        draw_np_btn(mw - 185, "B", "Đóng phòng" if state.current_lang == "VI" else "Close Room", (255, 70, 70), is_dark_btn=False)
+                    else:
+                        fx = 32
+                        fx = draw_np_btn(fx, "A", "Thử lại kết nối" if state.current_lang == "VI" else "Retry Connection", (0, 230, 150))
+                        draw_np_btn(mw - 165, "B", "Quay lại" if state.current_lang == "VI" else "Cancel", (255, 70, 70), is_dark_btn=False)
 
             elif np_mode == "joining":
-                header_str = "🎮 VÀO PHÒNG NETPLAY (CLIENT)" if state.current_lang == "VI" else "🎮 JOIN NETPLAY"
+                header_str = "VÀO PHÒNG NETPLAY (CLIENT)" if state.current_lang == "VI" else "JOIN NETPLAY"
                 draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
                 lbl_prompt = "NHẬP MÃ PHÒNG 5 SỐ TỪ HOST:" if state.current_lang == "VI" else "ENTER 5-DIGIT ROOM CODE:"
@@ -7016,8 +7047,12 @@ def main():
                             draw_rect(kx, ky, kw, kh, 55, 75, 115, 255, thickness=1)
                             draw_text(k_lbl, font_item, kx + kw // 2, ky + kh // 2, 220, 235, 255, center_x=True, center_y=True)
 
-                foot_join = "◄ ▲ ▼ ► Di chuyển  •  [A] Chọn số  •  [Y] Xoá  •  [START] Vào game  •  [B] Quay lại" if state.current_lang == "VI" else "◄ ▲ ▼ ► Navigate  •  [A] Enter  •  [Y] Del  •  [START] Join  •  [B] Back"
-                draw_text(foot_join, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
+                fx = 32
+                fx = draw_np_btn(fx, "D-Pad", "Di chuyển" if state.current_lang == "VI" else "Navigate", (70, 95, 140), is_dark_btn=False)
+                fx = draw_np_btn(fx, "A", "Chọn số" if state.current_lang == "VI" else "Enter", (0, 230, 150))
+                fx = draw_np_btn(fx, "Y", "Xoá" if state.current_lang == "VI" else "Del", (255, 200, 0))
+                fx = draw_np_btn(fx, "START", "Vào game" if state.current_lang == "VI" else "Join", (0, 190, 255))
+                draw_np_btn(mw - 165, "B", "Quay lại" if state.current_lang == "VI" else "Back", (255, 70, 70), is_dark_btn=False)
 
         # ----------------------------------------------------------------------
         # 7. STRUCTURED INFO / GUIDE / STORAGE PROGRESS MODAL
