@@ -198,7 +198,18 @@ while true; do
     if [ -f /tmp/launch_game.sh ]; then
         sh /tmp/launch_game.sh
         rm -f /tmp/launch_game.sh
+        # Don dep phong va tunnel Netplay sau khi thoat game
+        if [ -f /tmp/netplay_info.json ] || [ -f /tmp/netplay_tunnel.pid ]; then
+            "$PY" -c "from rh.netplay import stop_netplay_tunnel; stop_netplay_tunnel()" 2>/dev/null || true
+            pkill -9 -f 'localhost:55435' 2>/dev/null || true
+        fi
     else
         break
     fi
 done
+
+# Khi thoat han RetroHub ra he dieu hanh, huy phong va dong tunnel neu con ton tai
+if [ -f /tmp/netplay_info.json ] || [ -f /tmp/netplay_tunnel.pid ]; then
+    "$PY" -c "from rh.netplay import stop_netplay_tunnel; stop_netplay_tunnel()" 2>/dev/null || true
+    pkill -9 -f 'localhost:55435' 2>/dev/null || true
+fi

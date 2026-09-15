@@ -1,12 +1,12 @@
 {
-  "version": "2.13",
+  "version": "2.14",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-15T22:10:00+0700",
+  "built": "2026-09-15T23:38:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Giao diện Sảnh Netplay tinh gọn: Bỏ icon ở tiêu đề sảnh, thanh điều hướng chân trang (footer) hiện đại với các phím bấm có màu sắc trực quan [A] [X] [Y] [B]",
-    "en": "Streamlined Netplay Lobby UI: Clean title without emoji, modern colorful navigation footer action buttons [A] [X] [Y] [B]"
+    "vi": "Khắc phục lỗi Netplay: Tự động đóng phòng và dọn dẹp tunnel khi thoát game, nhận diện và chặn tự kết nối vào phòng của chính mình (bấm [X] để đóng phòng nhanh), sửa lỗi kết nối nhập mã thủ công",
+    "en": "Fix Netplay Connection: Auto-close room and cleanup tunnel on game exit, prevent joining own room with quick [X] close action, fix manual room code connection"
   },
   "remove": [
     "app.pyc",
@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 386856,
-      "sha256": "81bea63d0b75fd194ee5f7a5a5f99367dfaf6468379a33247ecbfd5d761da391"
+      "size": 391031,
+      "sha256": "4e0418c77061ce9201dbb6ff4e2df1fddf6003a0d2e0a5329299d89d38a87672"
     },
     {
       "path": "assets/fallback.ttf",
@@ -373,8 +373,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 7722,
-      "sha256": "56079b88978208226746fbee6100ae88a9521f0b67a16c220dfa0239fb140f79"
+      "size": 8361,
+      "sha256": "6d2d9117c49e0716c4285ef7d2744f9e8860f51872039e933689d66f9f93d0ae"
     },
     {
       "path": "led_daemon.py",
@@ -513,8 +513,8 @@
     },
     {
       "path": "rh/netplay.py",
-      "size": 13098,
-      "sha256": "3d30d0a65fda829efc9dc11f1a26579d932a9f4c3c2918b71370653ee68e82b6"
+      "size": 13475,
+      "sha256": "8026dcc259e3dbe109d6365cfe069e8f5a0708549cd38ad99ad9fcf35efeb896"
     },
     {
       "path": "rh/paths.py",
@@ -564,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "8db3b7c0045920323226679bbafe5933ebb50913ca6bf8c37ab3c4126f31c0c9"
+      "sha256": "6b2ffa729dc900bbc0d92eff2b206a90958d29b3d373d294e5bf650d02c543d8"
     },
     {
       "path": "rh/yt.py",

@@ -102,7 +102,7 @@ from rh.services import (get_sftp_guide_rows,
     toggle_wifi_awake)
 from rh.netplay import (is_netplay_tunnel_running, get_netplay_tunnel_info,
     start_netplay_tunnel, stop_netplay_tunnel, send_netplay_info_to_telegram,
-    build_netplay_param, find_local_rom_for_netplay, NETPLAY_PORT)
+    build_netplay_param, find_local_rom_for_netplay, NETPLAY_PORT, get_my_hosted_room_port)
 from rh.lobby import fetch_public_rooms, find_room_by_port
 from rh.splash import (apply_splash_update,
     convert_and_fit_splash,
@@ -382,6 +382,12 @@ def auto_check_and_supplement_environment():
 # ==============================================================================
 def main():
     init_logger()
+    # Tự động dọn dẹp phiên Netplay cũ nếu vừa chơi xong hoặc khởi động lại
+    try:
+        if is_netplay_tunnel_running() or os.path.exists("/tmp/netplay_info.json"):
+            stop_netplay_tunnel()
+    except Exception:
+        pass
     sdl2.SDL_SetHint(b"SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", b"1")
     sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK | sdl2.SDL_INIT_GAMECONTROLLER)
     sdlttf.TTF_Init()
@@ -2581,7 +2587,19 @@ def main():
                     if rooms:
                         netplay_modal["lobby_cursor"] = min(len(rooms) - 1, cur_lc + 1)
                 elif btn_x:
-                    # Bấm X để nhập mã phòng riêng
+                    # Nếu đang chọn phòng của chính mình -> Đóng phòng
+                    my_np_port = get_my_hosted_room_port()
+                    if rooms and 0 <= cur_lc < len(rooms):
+                        sel_rm = rooms[cur_lc]
+                        if my_np_port and str(sel_rm.get("port")) == my_np_port:
+                            stop_netplay_tunnel()
+                            toast_msg = "Đã đóng phòng của bạn!" if state.current_lang == "VI" else "Closed your room!"
+                            toast_timer = time.time()
+                            netplay_modal["lobby_rooms"] = [r for r in rooms if str(r.get("port")) != my_np_port]
+                            if netplay_modal["lobby_cursor"] >= len(netplay_modal["lobby_rooms"]):
+                                netplay_modal["lobby_cursor"] = max(0, len(netplay_modal["lobby_rooms"]) - 1)
+                            continue
+                    # Bấm X ở phòng khác để nhập mã phòng riêng
                     netplay_modal["mode"] = "joining"
                     netplay_modal["port_input"] = ""
                     netplay_modal["key_cursor"] = 0
@@ -2612,10 +2630,16 @@ def main():
                 elif btn_a and not netplay_modal.get("lobby_loading"):
                     if rooms and 0 <= cur_lc < len(rooms):
                         target_rm = rooms[cur_lc]
-                        rm_port = target_rm.get("port")
+                        rm_port = str(target_rm.get("port", ""))
                         rm_host = target_rm.get("host") or "a.pinggy.io"
                         rm_sys = target_rm.get("sys_code", "")
                         rm_title = target_rm.get("game_title", "")
+
+                        my_np_port = get_my_hosted_room_port()
+                        if my_np_port and rm_port == my_np_port:
+                            toast_msg = "Đây là phòng do bạn tạo! Bấm [X] nếu muốn đóng phòng." if state.current_lang == "VI" else "Your room! Press [X] to close it."
+                            toast_timer = time.time()
+                            continue
 
                         target_rom = None
                         target_sys = rm_sys
@@ -2704,21 +2728,34 @@ def main():
                 elif btn_start or (btn_a and kc == 11):
                     p_in = netplay_modal["port_input"].strip()
                     if len(p_in) >= 4 and p_in.isdigit():
+                        my_np_port = get_my_hosted_room_port()
+                        if my_np_port and p_in == my_np_port:
+                            toast_msg = "Không thể tự kết nối vào phòng của chính mình!" if state.current_lang == "VI" else "Cannot join your own hosted room!"
+                            toast_timer = time.time()
+                            continue
+
                         toast_msg = "Đang kết nối phòng..." if state.current_lang == "VI" else "Connecting to room..."
                         toast_timer = time.time()
                         def _worker_join_numpad(code_str):
                             nonlocal toast_msg, toast_timer
                             try:
                                 rm = find_room_by_port(code_str)
-                                target_host = "a.pinggy.io"
-                                target_sys = netplay_modal.get("sys_code", "")
-                                target_title = netplay_modal.get("game_info", {}).get("title", "")
-                                target_rom = netplay_modal.get("rom_path")
+                                if not rm:
+                                    toast_msg = (f"Không tìm thấy phòng {code_str} trên Sảnh!" if state.current_lang == "VI"
+                                                 else f"Room {code_str} not found on lobby!")
+                                    toast_timer = time.time()
+                                    return
 
-                                if rm:
-                                    target_host = rm.get("host") or "a.pinggy.io"
-                                    target_sys = rm.get("sys_code") or target_sys
-                                    target_title = rm.get("game_title") or target_title
+                                target_host = rm.get("host")
+                                if not target_host:
+                                    toast_msg = (f"Phòng {code_str} thiếu địa chỉ máy chủ!" if state.current_lang == "VI"
+                                                 else f"Room {code_str} missing host address!")
+                                    toast_timer = time.time()
+                                    return
+
+                                target_sys = rm.get("sys_code") or netplay_modal.get("sys_code", "")
+                                target_title = rm.get("game_title") or netplay_modal.get("game_info", {}).get("title", "")
+                                target_rom = netplay_modal.get("rom_path")
 
                                 if not target_rom:
                                     target_rom, resolved_sys = find_local_rom_for_netplay(target_sys, target_title, downloaded_games_list)
@@ -6806,12 +6843,15 @@ def main():
                         scroll_off = max(0, cur_lc - vis_n + 1) if cur_lc >= vis_n else 0
                         disp_slice = l_rooms[scroll_off : scroll_off + vis_n]
 
+                        my_np_port = get_my_hosted_room_port()
                         for rel_i, rm in enumerate(disp_slice):
                             real_i = scroll_off + rel_i
                             ry = start_ry + rel_i * (r_h + r_gap)
                             rx = 32
                             rw = mw - 64
                             is_r_sel = (real_i == cur_lc)
+                            rm_port = str(rm.get("port", ""))
+                            is_my_rm = bool(my_np_port and rm_port == my_np_port)
 
                             if is_r_sel:
                                 fill_rect(rx, ry, rw, r_h, 28, 52, 82, 255)
@@ -6826,30 +6866,47 @@ def main():
                             rm_core = str(rm.get("core", "") or "Auto")
                             rm_nick = str(rm.get("player_nick", "Host"))
                             rm_dev = str(rm.get("dev_model", "Handheld"))
-                            rm_port = str(rm.get("port", ""))
 
                             txt_title = f"[{rm_sys}] {rm_title[:42]}"
                             draw_text(txt_title, font_item, rx + 22, ry + 16, 255, 255, 255 if is_r_sel else 220)
 
-                            txt_sub = f"Host: {rm_nick} ({rm_dev})  •  Core: {rm_core}"
-                            draw_text(txt_sub, font_sub, rx + 22, ry + 48, 0, 230, 255 if is_r_sel else 180)
+                            if is_my_rm:
+                                txt_sub = f"★ Phòng do bạn tạo  •  Core: {rm_core}" if state.current_lang == "VI" else f"★ Hosted by you  •  Core: {rm_core}"
+                                draw_text(txt_sub, font_sub, rx + 22, ry + 48, 255, 215, 0)
+                            else:
+                                txt_sub = f"Host: {rm_nick} ({rm_dev})  •  Core: {rm_core}"
+                                draw_text(txt_sub, font_sub, rx + 22, ry + 48, 0, 230, 255 if is_r_sel else 180)
 
-                            # Right badges: Port
-                            bx_w = 140
+                            # Right badges: Port or [BẠN (HOST)]
+                            bx_w = 150
                             bx_h = 42
                             bx_x = rx + rw - bx_w - 20
                             bx_y = ry + (r_h - bx_h) // 2
-                            fill_rect(bx_x, bx_y, bx_w, bx_h, 14, 40, 30, 255)
-                            draw_rect(bx_x, bx_y, bx_w, bx_h, 0, 230, 150, 255, thickness=1)
-                            draw_text(f"MÃ: {rm_port}", font_badge, bx_x + bx_w // 2, bx_y + bx_h // 2, 0, 255, 160, center_x=True, center_y=True)
+                            if is_my_rm:
+                                fill_rect(bx_x, bx_y, bx_w, bx_h, 50, 42, 16, 255)
+                                draw_rect(bx_x, bx_y, bx_w, bx_h, 255, 215, 0, 255, thickness=1)
+                                b_lbl = f"BẠN: {rm_port}" if state.current_lang == "VI" else f"YOU: {rm_port}"
+                                draw_text(b_lbl, font_badge, bx_x + bx_w // 2, bx_y + bx_h // 2, 255, 215, 0, center_x=True, center_y=True)
+                            else:
+                                fill_rect(bx_x, bx_y, bx_w, bx_h, 14, 40, 30, 255)
+                                draw_rect(bx_x, bx_y, bx_w, bx_h, 0, 230, 150, 255, thickness=1)
+                                draw_text(f"MÃ: {rm_port}", font_badge, bx_x + bx_w // 2, bx_y + bx_h // 2, 0, 255, 160, center_x=True, center_y=True)
 
                     total_cnt = len(l_rooms) if not netplay_modal.get("lobby_loading") else 0
                     if not l_err and not netplay_modal.get("lobby_loading"):
                         fx = 32
                         if total_cnt > 0:
+                            cur_rm = l_rooms[cur_lc] if (0 <= cur_lc < len(l_rooms)) else None
+                            cur_is_mine = bool(cur_rm and my_np_port and str(cur_rm.get("port", "")) == my_np_port)
+
                             fx = draw_np_btn(fx, "▲▼", f"Chọn ({total_cnt})" if state.current_lang == "VI" else f"Select ({total_cnt})", (70, 95, 140), is_dark_btn=False)
-                            fx = draw_np_btn(fx, "A", "Vào chơi" if state.current_lang == "VI" else "Join", (0, 230, 150))
-                        fx = draw_np_btn(fx, "X", "Mã riêng" if state.current_lang == "VI" else "Code", (0, 190, 255))
+                            if cur_is_mine:
+                                fx = draw_np_btn(fx, "X", "Đóng phòng" if state.current_lang == "VI" else "Close room", (255, 75, 75))
+                            else:
+                                fx = draw_np_btn(fx, "A", "Vào chơi" if state.current_lang == "VI" else "Join", (0, 230, 150))
+                                fx = draw_np_btn(fx, "X", "Mã riêng" if state.current_lang == "VI" else "Code", (0, 190, 255))
+                        else:
+                            fx = draw_np_btn(fx, "X", "Mã riêng" if state.current_lang == "VI" else "Code", (0, 190, 255))
                         fx = draw_np_btn(fx, "Y", "Làm mới" if state.current_lang == "VI" else "Refresh", (255, 200, 0))
                         draw_np_btn(mw - 165, "B", "Quay lại" if state.current_lang == "VI" else "Back", (255, 70, 70), is_dark_btn=False)
 
