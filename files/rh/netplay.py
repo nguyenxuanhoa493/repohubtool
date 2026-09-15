@@ -263,7 +263,7 @@ def send_netplay_info_to_telegram(game_title=None, sys_code=None, host=None, por
         "",
         f"🔥 *MÃ PHÒNG:*  👉 `{port}` 👈",
         "",
-        f"👉 *Vào chơi:* Mở RetroHub ➔ Vào *Sảnh Online* hoặc *Nhập mã* `{port}`"
+        f"👉 *Vào chơi:* Mở RetroHub ➔ Menu *Netplay* (ở màn hình chính) ➔ Chọn phòng hoặc bấm [X] nhập mã `{port}`"
     ]
     text = "\n".join(msg_lines)
 
@@ -327,3 +327,44 @@ def build_netplay_param(mode="host", host="a.pinggy.io", port=55435, nick="Playe
         if ":" in clean_host and (not clean_port or clean_port == "55435"):
             clean_host, clean_port = clean_host.split(":", 1)
         return f"-C {clean_host} --port {clean_port} --nick {nick}"
+
+def find_local_rom_for_netplay(sys_code="", game_title="", games_list=None):
+    """Tìm đường dẫn file ROM phù hợp trên thẻ nhớ theo hệ máy và tên game."""
+    clean_sys = str(sys_code or "").strip().upper()
+    clean_title = str(game_title or "").strip().lower()
+
+    if games_list is None:
+        try:
+            from .catalog import scan_all_downloaded_games
+            games_list = scan_all_downloaded_games()
+        except Exception:
+            games_list = []
+
+    # 1. Tìm trong danh sách game đã tải
+    if games_list:
+        for g in games_list:
+            g_sys = str(g.get("sys_code") or "").strip().upper()
+            g_t = str(g.get("title") or "").strip().lower()
+            if clean_sys and g_sys and g_sys != clean_sys:
+                continue
+            if clean_title and (clean_title == g_t or clean_title in g_t or g_t in clean_title):
+                p = g.get("rom_path")
+                if p and os.path.exists(p):
+                    return p, g_sys or clean_sys
+
+    # 2. Quét trực tiếp thư mục Roms/<sys_code>/ trên thẻ nhớ
+    if clean_sys:
+        try:
+            sys_dir = os.path.join(SDCARD_PATH, "Roms", clean_sys)
+            if os.path.isdir(sys_dir):
+                for fname in os.listdir(sys_dir):
+                    fl = fname.lower()
+                    if clean_title and (clean_title in fl or (len(clean_title) >= 5 and clean_title[:5] in fl)):
+                        fp = os.path.join(sys_dir, fname)
+                        if os.path.isfile(fp):
+                            return fp, clean_sys
+        except Exception:
+            pass
+
+    return None, clean_sys
+
