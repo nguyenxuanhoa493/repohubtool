@@ -18,6 +18,7 @@ core trong MainUI thi RetroHub theo ngay ma khong can biet gi them."""
 
 import json
 import os
+import re
 
 from .paths import SDCARD_PATH
 
@@ -216,3 +217,37 @@ def resolve(sys_code, emus_root=None):
                 return (pak_dir, pak_launch)
 
     return (None, None)
+ 
+ 
+def resolve_core_name(sys_code, emus_root=None):
+    """Detect friendly or libretro core name for sys_code, e.g. 'fceumm', 'snes9x'."""
+    emu_dir, script = resolve(sys_code, emus_root=emus_root)
+    if not script or not os.path.isfile(script):
+        return ""
+    try:
+        with open(script, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+        m = re.search(r"([A-Za-z0-9_]+)_libretro\.so", content)
+        if m:
+            core = m.group(1)
+            clean_map = {
+                "fceumm": "FCEUmm",
+                "nestopia": "Nestopia",
+                "snes9x": "Snes9x",
+                "snes9x2005": "Snes9x 2005",
+                "genesis_plus_gx": "GenesisPlusGX",
+                "genesis_plus_gx_wide": "GenesisPlusGX Wide",
+                "picodrive": "PicoDrive",
+                "fbneo": "FBNeo",
+                "fbalpha2012": "FBA 2012",
+                "mamearcade": "MAME",
+                "pcsx_rearmed": "PCSX ReARMed",
+                "swanstation": "SwanStation",
+                "mgba": "mGBA",
+                "gambatte": "Gambatte",
+                "mednafen_pce_fast": "PCE Fast",
+            }
+            return clean_map.get(core.lower(), core)
+    except Exception:
+        pass
+    return ""

@@ -45,6 +45,15 @@ def get_netplay_tunnel_info():
     return None
 
 def stop_netplay_tunnel():
+    old_port = None
+    if os.path.exists(NETPLAY_INFO_FILE):
+        try:
+            with open(NETPLAY_INFO_FILE, "r", encoding="utf-8") as f:
+                old_info = json.load(f)
+                old_port = old_info.get("port")
+        except Exception:
+            pass
+
     if os.path.exists(NETPLAY_PID_FILE):
         try:
             with open(NETPLAY_PID_FILE, "r") as f:
@@ -57,7 +66,7 @@ def stop_netplay_tunnel():
         except Exception:
             pass
     try:
-        subprocess.call("pkill -9 -f '0:localhost:55435' 2>/dev/null", shell=True)
+        subprocess.call("pkill -9 -f 'localhost:55435' 2>/dev/null", shell=True)
     except Exception:
         pass
     try:
@@ -65,6 +74,13 @@ def stop_netplay_tunnel():
             os.remove(NETPLAY_INFO_FILE)
     except Exception:
         pass
+
+    if old_port:
+        try:
+            from .lobby import delete_room
+            threading.Thread(target=delete_room, args=(old_port,), daemon=True).start()
+        except Exception:
+            pass
     return "Đã đóng phòng Netplay" if state.current_lang == "VI" else "Netplay room closed"
 
 def start_netplay_tunnel(game_title="Game", sys_code="NES"):
@@ -83,11 +99,12 @@ def start_netplay_tunnel(game_title="Game", sys_code="NES"):
         return False, ("Không tìm thấy SSH client trên máy!" if vi
                        else "No SSH client found on device!")
 
-    # Replace local port forwarding with Netplay port 55435
+    # Replace local port forwarding with Netplay port 55435 (supports OpenSSH -R0:localhost:22 and Dropbear 0:localhost:22)
     netplay_cmd = []
     for arg in cmd:
-        if arg.startswith("0:localhost:"):
-            netplay_cmd.append(f"0:localhost:{NETPLAY_PORT}")
+        if "0:localhost:" in arg:
+            prefix = arg.split("0:localhost:")[0]
+            netplay_cmd.append(f"{prefix}0:localhost:{NETPLAY_PORT}")
         else:
             netplay_cmd.append(arg)
 
@@ -154,6 +171,24 @@ def start_netplay_tunnel(game_title="Game", sys_code="NES"):
         threading.Thread(target=send_netplay_info_to_telegram,
                          args=(game_title, sys_code, endpoint_host, endpoint_port),
                          daemon=True).start()
+    except Exception:
+        pass
+
+    # Publish room to public lobby API in background thread
+    try:
+        from .lobby import publish_room
+        from .emulators import resolve_core_name
+        from .sysinfo import detect_device_platform
+        room_payload = {
+            "port": int(endpoint_port),
+            "game_title": game_title,
+            "sys_code": sys_code,
+            "core": resolve_core_name(sys_code) or "",
+            "host": endpoint_host,
+            "player_nick": "Host",
+            "dev_model": detect_device_platform() or "Handheld"
+        }
+        threading.Thread(target=publish_room, args=(room_payload,), daemon=True).start()
     except Exception:
         pass
 
@@ -239,4 +274,8 @@ def build_netplay_param(mode="host", host="a.pinggy.io", port=55435, nick="Playe
     if mode == "host":
         return f"-H --port {NETPLAY_PORT} --nick {nick}"
     else:
-        return f"-C {host} --port {port} --nick {nick}"
+        clean_host = str(host or "a.pinggy.io").strip()
+        clean_port = str(port).strip()
+        if ":" in clean_host and (not clean_port or clean_port == "55435"):
+            clean_host, clean_port = clean_host.split(":", 1)
+        return f"-C {clean_host} --port {clean_port} --nick {nick}"

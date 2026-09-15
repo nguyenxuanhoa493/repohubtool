@@ -1,12 +1,12 @@
 {
-  "version": "2.06",
+  "version": "2.07",
   "full_release_version": "1.63",
   "python": "any",
   "built": "2026-09-12T17:52:58+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tự động thích ứng giả lập thông minh (Smart Adaptive Fallback): Chống văng game PSP, N64, DC, Saturn; hỗ trợ toàn diện alias hệ máy (NES/FC, SNES/SFC, MD/GENESIS...)",
-    "en": "Smart Adaptive Emulator Fallback: Prevent PSP, N64, DC, Saturn crashes by falling back to RetroArch cores; full support for system aliases (NES/FC, SNES/SFC, MD/GENESIS...)"
+    "vi": "Sảnh chờ công khai (Public Lobby): Tìm & tham gia phòng Netplay qua Internet nhanh chóng, tự động công khai phòng của bạn lên sảnh; sửa lỗi Netplay tunnel trên OpenSSH",
+    "en": "Public Lobby: Discover & join online Netplay rooms easily, auto-publish hosted rooms; fix Netplay tunnel on OpenSSH"
   },
   "remove": [
     "app.pyc",
@@ -34,6 +34,7 @@
     "rh/leddaemon.pyc",
     "rh/ledfx.pyc",
     "rh/ledthemes.pyc",
+    "rh/lobby.pyc",
     "rh/logger.pyc",
     "rh/media.pyc",
     "rh/neterrors.pyc",
@@ -202,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 356779,
-      "sha256": "3d9f7d74e022d2b03eeccf7587162df1bd2ae1047bf03484c2e157261ea76cdb"
+      "size": 375027,
+      "sha256": "603518e1bf2580f784083a60934bea11f7e1ef9739e3bbd8e3fde0ca240b0a53"
     },
     {
       "path": "assets/fallback.ttf",
@@ -437,8 +438,8 @@
     },
     {
       "path": "rh/emulators.py",
-      "size": 8751,
-      "sha256": "b1f45b76c60042fedb944e94b54d20c046cf840c259f769e3212c87c733c6df9"
+      "size": 10034,
+      "sha256": "5b0d23a6f70f7be4d22c77cf7c8fef9e95417835977fb5922738aa6e902675e6"
     },
     {
       "path": "rh/fonts.py",
@@ -491,6 +492,11 @@
       "sha256": "dc12665aeaf8a26f69f472fcb43fcb0cd841a9a3e4e0f6bb78dee0d18e84d239"
     },
     {
+      "path": "rh/lobby.py",
+      "size": 3929,
+      "sha256": "a9fe2ed2e5f6593281444e918f7ea2077417742bc0d106d64e5e40aedc1d5001"
+    },
+    {
       "path": "rh/logger.py",
       "size": 35827,
       "sha256": "e83f47d6568d35f2d976a2b7b88f6ec1b67ef20af30dbd5dc07f5a478903298f"
@@ -507,8 +513,8 @@
     },
     {
       "path": "rh/netplay.py",
-      "size": 7717,
-      "sha256": "9f7589e8f4c6e13be572cfc20662a02562f24d0c4303ee000147592d0970f222"
+      "size": 9226,
+      "sha256": "e3ad204e97e3607ae21dc8c0311c97a2577ff0be108f5105cd94e615f59902cb"
     },
     {
       "path": "rh/paths.py",
@@ -558,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "530714c33515de1aa635256131de57c91be86e111645d6ef0518e9ff5a520779"
+      "sha256": "3ac3d23409a1c43ffea6e7cb98930db8316440e5cace70b890b1ff00fc54320f"
     },
     {
       "path": "rh/yt.py",
