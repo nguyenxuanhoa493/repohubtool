@@ -1360,6 +1360,11 @@ def main():
         "active": False,
     }
 
+    # Remote SSH / Debug Online Confirmation Modal State
+    remote_ssh_confirm_modal = {
+        "active": False,
+    }
+
     modal_title = None
     modal_rows = None
     # Layout for the shared info modal. None keeps the stacked label-over-value
@@ -2963,6 +2968,20 @@ def main():
                 break
             elif btn_a:
                 exit_modal["active"] = False
+        elif remote_ssh_confirm_modal["active"]:
+            if btn_a:
+                remote_ssh_confirm_modal["active"] = False
+                msg = toggle_remote_tunnel()
+                service_states["remote_ssh"] = is_remote_tunnel_running()
+                last_service_check_time = time.time()
+                toast_msg = msg
+                toast_timer = time.time()
+                if service_states["remote_ssh"]:
+                    modal_title = tr("remote_ssh_title")
+                    modal_style = None
+                    modal_rows = get_remote_tunnel_guide_rows()
+            elif btn_b:
+                remote_ssh_confirm_modal["active"] = False
         elif alphabet_modal["active"]:
             if btn_left:
                 alphabet_modal["selected_idx"] = (alphabet_modal["selected_idx"] - 1) % 27
@@ -4159,15 +4178,14 @@ def main():
                     modal_style = "big"
                     modal_rows = get_ssh_guide_rows()
                 elif item_id == "remote_ssh_toggle":
-                    msg = toggle_remote_tunnel()
-                    service_states["remote_ssh"] = is_remote_tunnel_running()
-                    last_service_check_time = time.time()
-                    toast_msg = msg
-                    toast_timer = time.time()
-                    if service_states["remote_ssh"]:
-                        modal_title = tr("remote_ssh_title")
-                        modal_style = None
-                        modal_rows = get_remote_tunnel_guide_rows()
+                    if not service_states.get("remote_ssh"):
+                        remote_ssh_confirm_modal["active"] = True
+                    else:
+                        msg = toggle_remote_tunnel()
+                        service_states["remote_ssh"] = is_remote_tunnel_running()
+                        last_service_check_time = time.time()
+                        toast_msg = msg
+                        toast_timer = time.time()
                 elif item_id == "remote_ssh_guide":
                     modal_title = tr("remote_ssh_title")
                     modal_style = None
@@ -5990,6 +6008,69 @@ def main():
             draw_text(f"[B] {tr('exit_btn_quit')}", font_badge, bx1 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
+        # 5.36. REMOTE SSH / DEBUG ONLINE CONFIRMATION MODAL
+        # ----------------------------------------------------------------------
+        elif remote_ssh_confirm_modal["active"]:
+            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
+            mw = min(820, state.SCREEN_W - 60)
+            mh = 370
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            # Background & Outer Frame
+            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+
+            # Header bar
+            fill_rect(mx + 3, my + 3, mw - 6, 62, 24, 34, 58, 255)
+            fill_rect(mx + 3, my + 63, mw - 6, 2, 0, 246, 246, 255)
+            c_title = "XÁC NHẬN BẬT DEBUG ONLINE (SSH)" if state.current_lang == "VI" else "CONFIRM REMOTE SSH DEBUG"
+            draw_text(c_title, font_title, mx + mw // 2, my + 33, 0, 246, 246, center_x=True, center_y=True)
+
+            # Description lines
+            if state.current_lang == "VI":
+                msg1 = "Tính năng này sẽ mở đường hầm SSH Internet (Pinggy),"
+                msg2 = "cho phép điều khiển và can thiệp gỡ lỗi hệ thống từ xa."
+            else:
+                msg1 = "This will open a Remote SSH tunnel via Pinggy,"
+                msg2 = "allowing remote debugging and control over the Internet."
+            draw_text(msg1, font_item, mx + mw // 2, my + 104, 235, 245, 255, center_x=True, center_y=True)
+            draw_text(msg2, font_sub, mx + mw // 2, my + 144, 180, 205, 235, center_x=True, center_y=True)
+
+            # Safety Warning Box
+            wb_w = mw - 70
+            wb_h = 74
+            wb_x = mx + 35
+            wb_y = my + 176
+            fill_rect(wb_x, wb_y, wb_w, wb_h, 36, 32, 16, 255)
+            draw_rect(wb_x, wb_y, wb_w, wb_h, 255, 215, 0, 255, thickness=2)
+
+            w_txt1 = "⚠️ HÃY BÁO CHO TÔI BIẾT TRƯỚC KHI BẬT!" if state.current_lang == "VI" else "⚠️ PLEASE NOTIFY ME BEFORE ENABLING!"
+            w_txt2 = "Chỉ bật khi cần hỗ trợ kỹ thuật và tắt ngay sau khi hoàn tất." if state.current_lang == "VI" else "Only enable when requesting technical help, disable once done."
+            draw_text(w_txt1, font_badge, wb_x + wb_w // 2, wb_y + 24, 255, 215, 0, center_x=True, center_y=True)
+            draw_text(w_txt2, font_sub, wb_x + wb_w // 2, wb_y + 52, 240, 230, 200, center_x=True, center_y=True)
+
+            # Two Action Buttons: [A] Confirm Enable, [B] Cancel
+            btn_gap = 24
+            bw = (mw - 80 - btn_gap) // 2
+            bh = 54
+            by = my + mh - bh - 24
+
+            # Button 0: [A] Xác nhận Bật
+            bx0 = mx + 40
+            fill_rect(bx0, by, bw, bh, 0, 160, 75, 255)
+            draw_rect(bx0, by, bw, bh, 0, 255, 140, 255, thickness=2)
+            btn_ok_lbl = "[A] Xác nhận Bật" if state.current_lang == "VI" else "[A] Confirm Enable"
+            draw_text(btn_ok_lbl, font_badge, bx0 + bw // 2, by + bh // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            # Button 1: [B] Hủy bỏ
+            bx1 = bx0 + bw + btn_gap
+            fill_rect(bx1, by, bw, bh, 55, 35, 40, 255)
+            draw_rect(bx1, by, bw, bh, 180, 70, 70, 255, thickness=2)
+            btn_cancel_lbl = "[B] Hủy bỏ" if state.current_lang == "VI" else "[B] Cancel"
+            draw_text(btn_cancel_lbl, font_badge, bx1 + bw // 2, by + bh // 2, 255, 180, 180, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
         # 5.4. UPDATE AVAILABLE MODAL
         # ----------------------------------------------------------------------
         elif update_modal["active"]:
@@ -7062,7 +7143,7 @@ def main():
         sdl2.SDL_RenderPresent(renderer)
 
         # Adaptive Dynamic Eco Power Saving (60 FPS when active, ~28 FPS when idle to save battery)
-        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False) or yt_launch_state.get("active", False) or exit_modal.get("active", False)
+        is_active = (now - last_user_activity_time < 1.0) or dl_state.get("active", False) or (toast_msg is not None) or yt_loading_state.get("active", False) or yt_launch_state.get("active", False) or exit_modal.get("active", False) or remote_ssh_confirm_modal.get("active", False)
         if is_active:
             time.sleep(0.016)
         else:

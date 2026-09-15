@@ -1,12 +1,12 @@
 {
-  "version": "2.08",
+  "version": "2.09",
   "full_release_version": "1.63",
   "python": "any",
   "built": "2026-09-12T17:52:58+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Giao diện Netplay toàn màn hình (Full-Screen UI): Tối ưu hóa bố cục rộng rãi, chữ súc tích không vỡ màn hình, bàn phím ảo & thẻ phòng gọn gàng",
-    "en": "Full-screen Netplay UI: Spacious layout, concise text, optimized virtual keypad and clean room cards"
+    "vi": "Xác nhận bật Debug Online (Remote SSH): Thêm modal cảnh báo & yêu cầu xác nhận trước khi mở kết nối SSH Internet qua Pinggy",
+    "en": "Remote SSH Confirmation Modal: Add safety confirmation before enabling Internet Debug tunnel via Pinggy"
   },
   "remove": [
     "app.pyc",
@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 375757,
-      "sha256": "4fe9fc17eccdbfe850946626575c848ae07674d50101b6cdef1ce6ef8ebc0438"
+      "size": 380158,
+      "sha256": "73b2ea88f357a5084c2104926699a46377cd8a78042d8bd61beeb743787398ee"
     },
     {
       "path": "assets/fallback.ttf",
@@ -564,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "690c8379726830d685d7c4d6f81c4fb1f92bff1fb0f857b2dbc533b578319ecc"
+      "sha256": "855a45e328baf9a1ff8e41ce4eaf94f3ae6d7ae9e5adb722af30e57ced8a3a5a"
     },
     {
       "path": "rh/yt.py",
