@@ -1,12 +1,12 @@
 {
-  "version": "2.12",
+  "version": "2.13",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-12T17:52:58+0700",
+  "built": "2026-09-15T22:10:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Menu Netplay ở màn hình chính: Truy cập Sảnh trực tiếp dưới Kho game, bấm [X] nhập mã riêng, tự động nhận server Pinggy động và quét ROM kết nối mượt mà",
-    "en": "Main Menu Netplay & Smart Connect: Direct lobby access below ROM Store, press [X] to enter room code, auto-resolves dynamic Pinggy host and matches local ROM"
+    "vi": "Giao diện Sảnh Netplay tinh gọn: Bỏ icon ở tiêu đề sảnh, thanh điều hướng chân trang (footer) hiện đại với các phím bấm có màu sắc trực quan [A] [X] [Y] [B]",
+    "en": "Streamlined Netplay Lobby UI: Clean title without emoji, modern colorful navigation footer action buttons [A] [X] [Y] [B]"
   },
   "remove": [
     "app.pyc",
@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 384245,
-      "sha256": "5b4b2c5ef5aaff1b45936b31517decc166acce80f74dbc05a71e2b9867f81a32"
+      "size": 386856,
+      "sha256": "81bea63d0b75fd194ee5f7a5a5f99367dfaf6468379a33247ecbfd5d761da391"
     },
     {
       "path": "assets/fallback.ttf",
@@ -564,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "3a5323e7d128c1794bcdb6e51b2b2f339cb4d1a34221e9ce98e598cafb39e731"
+      "sha256": "8db3b7c0045920323226679bbafe5933ebb50913ca6bf8c37ab3c4126f31c0c9"
     },
     {
       "path": "rh/yt.py",
