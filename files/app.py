@@ -102,8 +102,8 @@ from rh.services import (get_sftp_guide_rows,
     toggle_wifi_awake)
 from rh.netplay import (is_netplay_tunnel_running, get_netplay_tunnel_info,
     start_netplay_tunnel, stop_netplay_tunnel, send_netplay_info_to_telegram,
-    build_netplay_param, NETPLAY_PORT)
-from rh.lobby import fetch_public_rooms
+    build_netplay_param, find_local_rom_for_netplay, NETPLAY_PORT)
+from rh.lobby import fetch_public_rooms, find_room_by_port
 from rh.splash import (apply_splash_update,
     convert_and_fit_splash,
     restore_original_splash,
@@ -1870,6 +1870,7 @@ def main():
             header_title = tr("app_title")
             items = [
                 {"id": "nav_rom_store_menu", "title": tr("home_item2")},
+                {"id": "nav_netplay", "title": tr("home_item_netplay")},
                 {"id": "nav_youtube", "title": tr("home_item_youtube")},
                 {"id": "nav_network", "title": tr("home_item1")},
                 {"id": "nav_utilities", "title": tr("home_item3")},
@@ -2579,14 +2580,19 @@ def main():
                 elif btn_down:
                     if rooms:
                         netplay_modal["lobby_cursor"] = min(len(rooms) - 1, cur_lc + 1)
-                elif btn_x or btn_y:
+                elif btn_x:
+                    # Bấm X để nhập mã phòng riêng
+                    netplay_modal["mode"] = "joining"
+                    netplay_modal["port_input"] = ""
+                    netplay_modal["key_cursor"] = 0
+                elif btn_y:
                     netplay_modal["lobby_loading"] = True
                     netplay_modal["lobby_err"] = None
                     toast_msg = "Đang làm mới danh sách phòng..." if state.current_lang == "VI" else "Refreshing room list..."
                     toast_timer = time.time()
                     def _worker_ref_lobby():
                         try:
-                            ok_lob, lob_res = fetch_public_rooms()
+                            ok_lob, lob_res = fetch_public_rooms(force_refresh=True)
                             if ok_lob:
                                 netplay_modal["lobby_rooms"] = lob_res
                                 if netplay_modal["lobby_cursor"] >= len(lob_res):
@@ -2599,33 +2605,36 @@ def main():
                             netplay_modal["lobby_loading"] = False
                     threading.Thread(target=_worker_ref_lobby, daemon=True).start()
                 elif btn_b:
-                    netplay_modal["mode"] = "select"
+                    if netplay_modal.get("rom_path"):
+                        netplay_modal["mode"] = "select"
+                    else:
+                        netplay_modal["active"] = False
                 elif btn_a and not netplay_modal.get("lobby_loading"):
                     if rooms and 0 <= cur_lc < len(rooms):
                         target_rm = rooms[cur_lc]
                         rm_port = target_rm.get("port")
-                        rm_host = target_rm.get("host", "a.pinggy.io")
+                        rm_host = target_rm.get("host") or "a.pinggy.io"
                         rm_sys = target_rm.get("sys_code", "")
                         rm_title = target_rm.get("game_title", "")
-                        
+
                         target_rom = None
+                        target_sys = rm_sys
                         if netplay_modal.get("sys_code") == rm_sys and netplay_modal.get("rom_path"):
                             target_rom = netplay_modal.get("rom_path")
                         else:
-                            for g in downloaded_games_list:
-                                if g.get("sys_code") == rm_sys and (g.get("title") == rm_title or rm_title in g.get("title", "")):
-                                    target_rom = g.get("rom_path")
-                                    break
-                        
+                            target_rom, resolved_sys = find_local_rom_for_netplay(rm_sys, rm_title, downloaded_games_list)
+                            if resolved_sys:
+                                target_sys = resolved_sys
+
                         if target_rom and os.path.exists(target_rom):
                             net_p = build_netplay_param(mode="client", host=rm_host, port=rm_port, nick="Player2")
                             netplay_modal["active"] = False
-                            ok, err = launch_emulator_game(rm_sys, target_rom, net_param=net_p)
+                            ok, err = launch_emulator_game(target_sys, target_rom, net_param=net_p)
                             if not ok:
                                 toast_msg = err
                                 toast_timer = time.time()
                         else:
-                            toast_msg = f"Chưa có ROM: [{rm_sys}] {rm_title[:24]}" if state.current_lang == "VI" else f"Missing ROM: [{rm_sys}] {rm_title[:24]}"
+                            toast_msg = f"Chưa có game '{rm_title}'! Vui lòng tải trước." if state.current_lang == "VI" else f"Missing game '{rm_title}'! Please download first."
                             toast_timer = time.time()
 
             elif netplay_modal["mode"] == "hosting":
@@ -2695,14 +2704,47 @@ def main():
                 elif btn_start or (btn_a and kc == 11):
                     p_in = netplay_modal["port_input"].strip()
                     if len(p_in) >= 4 and p_in.isdigit():
-                        net_p = build_netplay_param(mode="client", host="a.pinggy.io", port=p_in, nick="Player2")
-                        netplay_modal["active"] = False
-                        ok, err = launch_emulator_game(netplay_modal["sys_code"], netplay_modal["rom_path"], net_param=net_p)
-                        if not ok:
-                            toast_msg = err
-                            toast_timer = time.time()
+                        toast_msg = "Đang kết nối phòng..." if state.current_lang == "VI" else "Connecting to room..."
+                        toast_timer = time.time()
+                        def _worker_join_numpad(code_str):
+                            nonlocal toast_msg, toast_timer
+                            try:
+                                rm = find_room_by_port(code_str)
+                                target_host = "a.pinggy.io"
+                                target_sys = netplay_modal.get("sys_code", "")
+                                target_title = netplay_modal.get("game_info", {}).get("title", "")
+                                target_rom = netplay_modal.get("rom_path")
+
+                                if rm:
+                                    target_host = rm.get("host") or "a.pinggy.io"
+                                    target_sys = rm.get("sys_code") or target_sys
+                                    target_title = rm.get("game_title") or target_title
+
+                                if not target_rom:
+                                    target_rom, resolved_sys = find_local_rom_for_netplay(target_sys, target_title, downloaded_games_list)
+                                    if resolved_sys:
+                                        target_sys = resolved_sys
+
+                                if not target_rom or not os.path.exists(target_rom):
+                                    g_hint = f" '{target_title}'" if target_title else ""
+                                    toast_msg = (f"Chưa có ROM game{g_hint}! Hãy vào Kho game tải trước." if state.current_lang == "VI"
+                                                 else f"Missing ROM file{g_hint}! Please download it first.")
+                                    toast_timer = time.time()
+                                    return
+
+                                net_p = build_netplay_param(mode="client", host=target_host, port=code_str, nick="Player2")
+                                netplay_modal["active"] = False
+                                ok, err = launch_emulator_game(target_sys, target_rom, net_param=net_p)
+                                if not ok:
+                                    toast_msg = err
+                                    toast_timer = time.time()
+                            except Exception as e:
+                                toast_msg = f"Lỗi vào phòng: {e}" if state.current_lang == "VI" else f"Join error: {e}"
+                                toast_timer = time.time()
+
+                        threading.Thread(target=_worker_join_numpad, args=(p_in,), daemon=True).start()
                     else:
-                        toast_msg = "Mã phòng không hợp lệ (cần 5 số)!" if state.current_lang == "VI" else "Invalid room code (5 digits needed)!"
+                        toast_msg = "Mã phòng không hợp lệ (cần 4-5 số)!" if state.current_lang == "VI" else "Invalid room code (4-5 digits)!"
                         toast_timer = time.time()
                 elif btn_a:
                     if kc < 10:
@@ -2712,7 +2754,10 @@ def main():
                     elif kc == 10:
                         netplay_modal["port_input"] = netplay_modal["port_input"][:-1]
                 elif btn_b:
-                    netplay_modal["mode"] = "select"
+                    if netplay_modal.get("rom_path"):
+                        netplay_modal["mode"] = "select"
+                    else:
+                        netplay_modal["mode"] = "lobby"
         elif dl_state["active"] and not dl_state.get("is_background", False):
             if dl_state["status"] in ("downloading", "extracting"):
                 if btn_b or btn_y:
@@ -3772,6 +3817,29 @@ def main():
                         toast_msg = tr("low_battery_warn")
                         toast_timer = time.time()
                     screen_stack.append("rom_store_menu")
+                elif item_id == "nav_netplay":
+                    netplay_modal["active"] = True
+                    netplay_modal["mode"] = "lobby"
+                    netplay_modal["selected_opt"] = 1
+                    netplay_modal["game_info"] = {}
+                    netplay_modal["rom_path"] = ""
+                    netplay_modal["sys_code"] = ""
+                    netplay_modal["lobby_loading"] = True
+                    netplay_modal["lobby_rooms"] = []
+                    netplay_modal["lobby_cursor"] = 0
+                    netplay_modal["lobby_err"] = None
+                    def _worker_open_netplay_lobby():
+                        try:
+                            ok_lob, lob_res = fetch_public_rooms(force_refresh=True)
+                            if ok_lob:
+                                netplay_modal["lobby_rooms"] = lob_res
+                            else:
+                                netplay_modal["lobby_err"] = str(lob_res)
+                        except Exception as e:
+                            netplay_modal["lobby_err"] = str(e)
+                        finally:
+                            netplay_modal["lobby_loading"] = False
+                    threading.Thread(target=_worker_open_netplay_lobby, daemon=True).start()
                 elif item_id == "nav_utilities":
                     selected_indices["utilities"] = 0
                     screen_stack.append("utilities")
@@ -6706,8 +6774,8 @@ def main():
                         fill_rect(bx, by, bw, bh, 18, 25, 42, 255)
                         draw_rect(bx, by, bw, bh, 45, 60, 95, 255, thickness=2)
                         empty_t1 = "CHƯA CÓ PHÒNG NETPLAY NÀO ĐANG MỞ" if state.current_lang == "VI" else "NO PUBLIC ROOMS CURRENTLY ACTIVE"
-                        empty_t2 = "Hãy quay lại và chọn 'TẠO PHÒNG' để mở phòng cho cộng đồng!" if state.current_lang == "VI" else "Select 'HOST ROOM' to create the first public room!"
-                        empty_t3 = "Bấm [X] để làm mới  •  Bấm [B] để quay lại" if state.current_lang == "VI" else "Press [X] to refresh  •  Press [B] to go back"
+                        empty_t2 = "Bấm [X] để nhập mã riêng  •  [Y] để làm mới danh sách" if state.current_lang == "VI" else "Press [X] to enter private code  •  [Y] to refresh list"
+                        empty_t3 = "Bấm [B] để quay lại menu chính" if state.current_lang == "VI" else "Press [B] to go back to main menu"
                         draw_text(empty_t1, font_item, bx + bw // 2, by + bh // 2 - 35, 255, 215, 0, center_x=True, center_y=True)
                         draw_text(empty_t2, font_sub, bx + bw // 2, by + bh // 2 + 10, 200, 220, 245, center_x=True, center_y=True)
                         draw_text(empty_t3, font_badge, bx + bw // 2, by + bh // 2 + 55, 0, 230, 255, center_x=True, center_y=True)
@@ -6759,7 +6827,7 @@ def main():
                             draw_text(f"MÃ: {rm_port}", font_badge, bx_x + bx_w // 2, bx_y + bx_h // 2, 0, 255, 160, center_x=True, center_y=True)
 
                     total_cnt = len(l_rooms) if not netplay_modal.get("lobby_loading") else 0
-                    foot_t = f"▲ ▼ Chọn ({total_cnt} phòng)  •  [A] Vào chơi  •  [X] Làm mới  •  [B] Quay lại" if state.current_lang == "VI" else f"▲ ▼ Select ({total_cnt} rooms)  •  [A] Join  •  [X] Refresh  •  [B] Back"
+                    foot_t = f"▲ ▼ Chọn ({total_cnt} phòng)  •  [A] Vào chơi  •  [X] Nhập mã riêng  •  [Y] Làm mới  •  [B] Quay lại" if state.current_lang == "VI" else f"▲ ▼ Select ({total_cnt} rooms)  •  [A] Join  •  [X] Enter Code  •  [Y] Refresh  •  [B] Back"
                     draw_text(foot_t, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
 
             elif np_mode == "hosting":
@@ -6813,7 +6881,7 @@ def main():
                         st_txt = f"• Trạng thái: {notice}" if notice else "• Trạng thái: Đã đăng lên Sảnh online & gửi Telegram"
                         draw_text(st_txt, font_sub, bx + 24, iy + 62, 0, 255, 160)
 
-                        note_p2 = "• Người chơi 2 chỉ cần mở cùng game này và nhập mã 5 số ở trên để vào chơi." if state.current_lang == "VI" else "• Player 2 opens this same game and enters the 5-digit code above to join."
+                        note_p2 = "• Bấm [A] để vào game chờ người chơi 2. KHÔNG bấm [B] vì [B] sẽ hủy phòng!" if state.current_lang == "VI" else "• Press [A] to enter game and wait for Player 2. DO NOT press [B] (closes room)!"
                         draw_text(note_p2, font_modal_lbl, bx + 24, iy + 98, 255, 215, 0)
 
                         # Action Buttons

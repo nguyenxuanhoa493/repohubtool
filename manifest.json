@@ -1,12 +1,12 @@
 {
-  "version": "2.11",
+  "version": "2.12",
   "full_release_version": "1.63",
   "python": "any",
   "built": "2026-09-12T17:52:58+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Định tuyến Telegram Topics: Gửi lời mời Netplay vào chủ đề Netplay (#1175) và thông tin SSH vào chủ đề Debug Online (#1205)",
-    "en": "Telegram Topic Routing: Route Netplay invites to Netplay topic (#1175) and SSH details to Debug Online topic (#1205)"
+    "vi": "Menu Netplay ở màn hình chính: Truy cập Sảnh trực tiếp dưới Kho game, bấm [X] nhập mã riêng, tự động nhận server Pinggy động và quét ROM kết nối mượt mà",
+    "en": "Main Menu Netplay & Smart Connect: Direct lobby access below ROM Store, press [X] to enter room code, auto-resolves dynamic Pinggy host and matches local ROM"
   },
   "remove": [
     "app.pyc",
@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 380158,
-      "sha256": "73b2ea88f357a5084c2104926699a46377cd8a78042d8bd61beeb743787398ee"
+      "size": 384245,
+      "sha256": "5b4b2c5ef5aaff1b45936b31517decc166acce80f74dbc05a71e2b9867f81a32"
     },
     {
       "path": "assets/fallback.ttf",
@@ -448,8 +448,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 43778,
-      "sha256": "fb58671ded5d2594751f31278583aef951a5a78b7457af591dc70fa9f6246445"
+      "size": 43916,
+      "sha256": "71e4bc3039323afa3aeeb328518388083eb3e9aca3d47113d305b4fcf830cf21"
     },
     {
       "path": "rh/inputs.py",
@@ -493,8 +493,8 @@
     },
     {
       "path": "rh/lobby.py",
-      "size": 3929,
-      "sha256": "a9fe2ed2e5f6593281444e918f7ea2077417742bc0d106d64e5e40aedc1d5001"
+      "size": 5029,
+      "sha256": "8da5b89a150b1d2c520d7abc28c294c9244842833287351fdbb65704814e8696"
     },
     {
       "path": "rh/logger.py",
@@ -513,8 +513,8 @@
     },
     {
       "path": "rh/netplay.py",
-      "size": 11388,
-      "sha256": "4e499566b87abacc7d48fabe940c3908be6141122a5b7d798b53cf190e8d2dc2"
+      "size": 13098,
+      "sha256": "3d30d0a65fda829efc9dc11f1a26579d932a9f4c3c2918b71370653ee68e82b6"
     },
     {
       "path": "rh/paths.py",
@@ -564,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "f3f57d1ae139f6a84137d4cfe63ab9826083ff441c78eaf1471dfe3d7ff99156"
+      "sha256": "3a5323e7d128c1794bcdb6e51b2b2f339cb4d1a34221e9ce98e598cafb39e731"
     },
     {
       "path": "rh/yt.py",
