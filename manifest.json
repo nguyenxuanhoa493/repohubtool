@@ -1,12 +1,12 @@
 {
-  "version": "2.09",
+  "version": "2.10",
   "full_release_version": "1.63",
   "python": "any",
   "built": "2026-09-12T17:52:58+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Xác nhận bật Debug Online (Remote SSH): Thêm modal cảnh báo & yêu cầu xác nhận trước khi mở kết nối SSH Internet qua Pinggy",
-    "en": "Remote SSH Confirmation Modal: Add safety confirmation before enabling Internet Debug tunnel via Pinggy"
+    "vi": "Thông báo Netplay Telegram: Gửi lời mời trực tiếp vào nhóm cộng đồng, nội dung tinh gọn và nổi bật mã phòng 5 số",
+    "en": "Netplay Telegram Notifications: Send invitations to community group with streamlined format and highlighted room ID"
   },
   "remove": [
     "app.pyc",
@@ -513,8 +513,8 @@
     },
     {
       "path": "rh/netplay.py",
-      "size": 9226,
-      "sha256": "e3ad204e97e3607ae21dc8c0311c97a2577ff0be108f5105cd94e615f59902cb"
+      "size": 11093,
+      "sha256": "0c3a5d5438e9ab36d547c79683d45eb00d9c4430fdd895d1d21cb798e00996c7"
     },
     {
       "path": "rh/paths.py",
@@ -564,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "855a45e328baf9a1ff8e41ce4eaf94f3ae6d7ae9e5adb722af30e57ced8a3a5a"
+      "sha256": "9dcf48732f099a5fb44672394351e123405e2c3b3891ce748487532f4b0f14a6"
     },
     {
       "path": "rh/yt.py",

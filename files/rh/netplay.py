@@ -21,6 +21,47 @@ NETPLAY_LOG_FILE = "/tmp/netplay_tunnel.log"
 
 TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
 TELEGRAM_CHAT_ID = "663642384"
+TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
+TELEGRAM_CHAT_ID_CACHE = "/tmp/netplay_tele_chat_id.txt"
+
+def resolve_netplay_telegram_chat_id():
+    """Tự động kiểm tra getUpdates xem nhóm nào có chat 'test_nhóm' hoặc 'test_nhom' để lấy chat_id.
+    Nếu có lưu cache thì đọc cache, nếu không mặc định gửi vào nhóm RetroHub (-1003890413445).
+    """
+    try:
+        import urllib.request, ssl
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates?limit=50"
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        req = urllib.request.Request(url, headers={"User-Agent": "RetroHub-Handheld"})
+        with urllib.request.urlopen(req, context=ctx, timeout=3) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for u in reversed(data.get("result", [])):
+                msg = u.get("message") or u.get("channel_post") or {}
+                txt = (msg.get("text") or "").strip().lower()
+                if "test_nhóm" in txt or "test_nhom" in txt:
+                    cid = str(msg.get("chat", {}).get("id"))
+                    if cid:
+                        try:
+                            with open(TELEGRAM_CHAT_ID_CACHE, "w") as cf:
+                                cf.write(cid)
+                        except Exception:
+                            pass
+                        return cid
+    except Exception:
+        pass
+
+    if os.path.exists(TELEGRAM_CHAT_ID_CACHE):
+        try:
+            with open(TELEGRAM_CHAT_ID_CACHE, "r") as cf:
+                cid = cf.read().strip()
+                if cid:
+                    return cid
+        except Exception:
+            pass
+
+    return TELEGRAM_GROUP_CHAT_ID
 
 def is_netplay_tunnel_running():
     if os.path.exists(NETPLAY_PID_FILE):
@@ -215,59 +256,60 @@ def send_netplay_info_to_telegram(game_title=None, sys_code=None, host=None, por
     dev_model = detect_device_platform()
 
     msg_lines = [
-        "🎮 *[RetroHub] Lời mời chơi Netplay qua Internet*",
-        f"🕹️ *Tựa game:* {game_title} `[{sys_code}]`",
-        f"📱 *Máy chủ (Host):* {dev_model} (`{dev_id}`)",
+        "🎮 *KÈO NETPLAY RETROHUB*",
+        f"🕹️ *Game:* {game_title} `[{sys_code}]`",
+        f"👤 *Host:* {dev_model}",
         "",
-        "🔑 *MÃ PHÒNG (PORT):*",
-        f"`{port}`",
+        f"🔥 *MÃ PHÒNG:*  👉 `{port}` 👈",
         "",
-        "🌐 *Địa chỉ kết nối đầy đủ:*",
-        f"`{host}:{port}`",
-        "",
-        "👉 *Cách vào chơi (Player 2):*",
-        f"Mở RetroHub ➔ chọn cùng game `{game_title}` ➔ chọn *Netplay* ➔ chọn *[Vào phòng]* và nhập mã: `{port}`!"
+        f"👉 *Vào chơi:* Mở RetroHub ➔ Vào *Sảnh Online* hoặc *Nhập mã* `{port}`"
     ]
     text = "\n".join(msg_lines)
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown"
-    }
+    target_chat_id = resolve_netplay_telegram_chat_id()
+    dest_chats = [target_chat_id]
+    if TELEGRAM_CHAT_ID and TELEGRAM_CHAT_ID not in dest_chats:
+        dest_chats.append(TELEGRAM_CHAT_ID)
 
-    try:
-        import urllib.request
-        import ssl
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            url,
-            data=data,
-            headers={
-                "Content-Type": "application/json",
-                "User-Agent": "RetroHub-Handheld"
-            }
-        )
+    sent_any = False
+    last_err = "Lỗi gửi Telegram"
+
+    for cid in dest_chats:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": cid,
+            "text": text,
+            "parse_mode": "Markdown"
+        }
         try:
+            import urllib.request
+            import ssl
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "RetroHub-Handheld"
+                }
+            )
             ctx = ssl.create_default_context()
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-        except Exception:
-            ctx = None
 
-        kw = {"timeout": 10}
-        if ctx:
-            kw["context"] = ctx
+            with urllib.request.urlopen(req, context=ctx, timeout=8) as resp:
+                res_data = json.loads(resp.read().decode("utf-8"))
+                if res_data.get("ok"):
+                    sent_any = True
+                else:
+                    last_err = res_data.get("description", "Lỗi Telegram")
+        except Exception as e:
+            last_err = str(e)
 
-        with urllib.request.urlopen(req, **kw) as resp:
-            res_data = json.loads(resp.read().decode("utf-8"))
-            if res_data.get("ok"):
-                return True, "Đã gửi mã phòng Netplay vào Telegram!"
-            else:
-                return False, res_data.get("description", "Lỗi Telegram")
-    except Exception as e:
-        return False, f"Lỗi gửi Telegram: {e}"
+    if sent_any:
+        return True, "Đã gửi mã phòng Netplay vào nhóm Telegram!"
+    else:
+        return False, f"Lỗi gửi Telegram: {last_err}"
 
 def build_netplay_param(mode="host", host="a.pinggy.io", port=55435, nick="Player"):
     """Generate NET_PARAM string for RetroArch CLI."""
