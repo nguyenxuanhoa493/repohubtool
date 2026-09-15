@@ -120,10 +120,21 @@ def stop_netplay_tunnel():
     if old_port:
         try:
             from .lobby import delete_room
-            threading.Thread(target=delete_room, args=(old_port,), daemon=True).start()
+            t = threading.Thread(target=delete_room, args=(old_port,), daemon=True)
+            t.start()
+            t.join(timeout=1.0)
         except Exception:
             pass
     return "Đã đóng phòng Netplay" if state.current_lang == "VI" else "Netplay room closed"
+
+def get_my_hosted_room_port():
+    """Trả về port phòng mà máy đang host nếu tunnel hoặc thông tin phòng đang mở."""
+    if not is_netplay_tunnel_running():
+        return None
+    info = get_netplay_tunnel_info()
+    if info and info.get("port"):
+        return str(info.get("port")).strip()
+    return None
 
 def start_netplay_tunnel(game_title="Game", sys_code="NES"):
     """Launch Pinggy TCP reverse tunnel forwarding port 55435."""
