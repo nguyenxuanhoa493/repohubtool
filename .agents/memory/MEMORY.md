@@ -2,6 +2,7 @@
 
 ## User Preferences
 - [user] Releasing: By default, ONLY release OTA updates. ONLY build full zips/GitHub release when user explicitly asks → release-workflow.md
+- [user] OTA Notification: Always send release notification to the Telegram general topic (-1003890413445) upon OTA release → release-workflow.md
 - [user] Communication language: Always respond in Vietnamese (luôn trả lời bằng tiếng việt) → user-preferences.md
 - [user] Handheld device: TrimUI Smart Pro / Brick (192.168.100.115) - do not reboot/kill without permission → user-preferences.md
 
