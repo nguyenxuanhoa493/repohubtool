@@ -6430,40 +6430,47 @@ def main():
         # 6.6. NETPLAY MULTIPLAYER MODAL (HOST / JOIN VIA PINGGY)
         # ----------------------------------------------------------------------
         elif netplay_modal["active"]:
-            fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
+            mw = state.SCREEN_W
+            mh = state.SCREEN_H
+            mx = 0
+            my = 0
 
-            mw = min(960, state.SCREEN_W - 40)
-            mh = 490
-            mx = (state.SCREEN_W - mw) // 2
-            my = (state.SCREEN_H - mh) // 2
+            # Full Screen Background
+            fill_rect(0, 0, mw, mh, 13, 17, 28, 255)
 
-            fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
-            draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
-
-            # Header
-            fill_rect(mx + 3, my + 3, mw - 6, 68, 24, 34, 58, 255)
-            fill_rect(mx + 3, my + 69, mw - 6, 2, 0, 246, 246, 255)
+            # Top Header Bar
+            head_h = 58
+            fill_rect(0, 0, mw, head_h, 20, 28, 48, 255)
+            fill_rect(0, head_h - 2, mw, 2, 0, 246, 246, 255)
 
             np_mode = netplay_modal.get("mode", "select")
             g_title = netplay_modal.get("game_info", {}).get("title", "Game")
             sys_c = netplay_modal.get("sys_code", "")
 
+            # Bottom Footer Bar setup
+            foot_h = 50
+            fy = mh - foot_h
+            fill_rect(0, fy, mw, foot_h, 16, 22, 36, 255)
+            fill_rect(0, fy, mw, 1, 40, 55, 85, 255)
+
+            # Right header game badge
+            disp_gt = f"[{sys_c}] {g_title}"
+            if len(disp_gt) > 34:
+                disp_gt = disp_gt[:31] + "..."
+            gt_w = measure_text(disp_gt, font_badge)
+            draw_text(disp_gt, font_badge, mw - 28 - gt_w, head_h // 2, 255, 215, 0, center_y=True)
+
             if np_mode == "select":
-                header_str = "🎮 NETPLAY 2 NGƯỜI (INTERNET)" if state.current_lang == "VI" else "🎮 2-PLAYER INTERNET NETPLAY"
-                draw_text(header_str, font_title, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+                header_str = "🎮 NETPLAY 2 NGƯỜI (INTERNET)" if state.current_lang == "VI" else "🎮 2-PLAYER NETPLAY"
+                draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
-                # Game Title
-                disp_gt = f"[{sys_c}] {g_title}"
-                if len(disp_gt) > 42:
-                    disp_gt = disp_gt[:39] + "..."
-                draw_text(disp_gt, font_modal_lbl, mx + mw // 2, my + 102, 255, 215, 0, center_x=True, center_y=True)
-
-                # 3 Role Selection Cards: Host, Lobby, Join Code
-                gap_c = 16
-                card_w = (mw - 70 - gap_c * 2) // 3
-                card_h = 245
-                card_y = my + 130
-                c1_x = mx + 35
+                # 3 Cards Full Width
+                card_margin = 32
+                gap_c = 18
+                card_w = (mw - card_margin * 2 - gap_c * 2) // 3
+                card_y = 80
+                card_h = fy - card_y - 18
+                c1_x = card_margin
                 c2_x = c1_x + card_w + gap_c
                 c3_x = c2_x + card_w + gap_c
 
@@ -6472,103 +6479,127 @@ def main():
                 # CARD 1: HOST (P1)
                 is_sel0 = (sel_o == 0)
                 if is_sel0:
-                    fill_rect(c1_x, card_y, card_w, card_h, 28, 46, 72, 255)
+                    fill_rect(c1_x, card_y, card_w, card_h, 24, 40, 64, 255)
                     draw_rect(c1_x, card_y, card_w, card_h, 0, 255, 160, 255, thickness=3)
                     fill_rect(c1_x + 4, card_y + 4, card_w - 8, 6, 0, 255, 160, 255)
                 else:
-                    fill_rect(c1_x, card_y, card_w, card_h, 20, 28, 46, 255)
-                    draw_rect(c1_x, card_y, card_w, card_h, 45, 60, 95, 255, thickness=1)
+                    fill_rect(c1_x, card_y, card_w, card_h, 18, 25, 42, 255)
+                    draw_rect(c1_x, card_y, card_w, card_h, 38, 52, 80, 255, thickness=1)
 
-                fill_rect(c1_x + 14, card_y + 18, card_w - 28, 28, 14, 40, 30, 255)
-                draw_rect(c1_x + 14, card_y + 18, card_w - 28, 28, 0, 230, 150, 255, thickness=1)
+                bw = card_w - 40
+                bx1 = c1_x + 20
+                fill_rect(bx1, card_y + 22, bw, 32, 14, 40, 30, 255)
+                draw_rect(bx1, card_y + 22, bw, 32, 0, 230, 150, 255, thickness=1)
                 badge1_str = "P1 • HOST" if state.current_lang == "VI" else "PLAYER 1"
-                draw_text(badge1_str, font_badge, c1_x + card_w // 2, card_y + 18 + 14, 0, 255, 160, center_x=True, center_y=True)
+                draw_text(badge1_str, font_badge, c1_x + card_w // 2, card_y + 38, 0, 255, 160, center_x=True, center_y=True)
 
                 c1_t = "TẠO PHÒNG" if state.current_lang == "VI" else "HOST ROOM"
-                draw_text(c1_t, font_item, c1_x + 18, card_y + 72, 255, 255, 255)
+                draw_text(c1_t, font_item, c1_x + card_w // 2, card_y + 86, 255, 255, 255, center_x=True, center_y=True)
+                fill_rect(c1_x + 24, card_y + 116, card_w - 48, 1, 45, 60, 95, 255)
+
                 if state.current_lang == "VI":
-                    draw_text("• Mở server qua Pinggy", font_sub, c1_x + 18, card_y + 112, 200, 215, 235)
-                    draw_text("• Đăng lên Sảnh cộng đồng", font_sub, c1_x + 18, card_y + 144, 255, 215, 0)
-                    draw_text("• Tự động gửi Telegram", font_sub, c1_x + 18, card_y + 176, 0, 230, 255)
+                    draw_text("• Mở server Pinggy", font_sub, c1_x + 24, card_y + 144, 200, 215, 235)
+                    draw_text("• Tự đăng lên Sảnh online", font_sub, c1_x + 24, card_y + 188, 255, 215, 0)
+                    draw_text("• Báo mã qua Telegram", font_sub, c1_x + 24, card_y + 232, 0, 230, 255)
                 else:
-                    draw_text("• Open server via Pinggy", font_sub, c1_x + 18, card_y + 112, 200, 215, 235)
-                    draw_text("• Publish to Public Lobby", font_sub, c1_x + 18, card_y + 144, 255, 215, 0)
-                    draw_text("• Forward to Telegram", font_sub, c1_x + 18, card_y + 176, 0, 230, 255)
+                    draw_text("• Open Pinggy tunnel", font_sub, c1_x + 24, card_y + 144, 200, 215, 235)
+                    draw_text("• Auto-post to Lobby", font_sub, c1_x + 24, card_y + 188, 255, 215, 0)
+                    draw_text("• Share via Telegram", font_sub, c1_x + 24, card_y + 232, 0, 230, 255)
+
+                # Prompt bar in card
+                pr_y = card_y + card_h - 58
+                pr_w = card_w - 40
+                fill_rect(c1_x + 20, pr_y, pr_w, 38, 14, 40, 30 if is_sel0 else 22, 255)
+                draw_rect(c1_x + 20, pr_y, pr_w, 38, 0, 230 if is_sel0 else 80, 150 if is_sel0 else 90, 255, thickness=1)
+                p1_lbl = "[A] Mở phòng ngay" if state.current_lang == "VI" else "[A] Host Now"
+                draw_text(p1_lbl, font_badge, c1_x + card_w // 2, pr_y + 19, 0, 255 if is_sel0 else 180, 160 if is_sel0 else 120, center_x=True, center_y=True)
 
                 # CARD 2: PUBLIC LOBBY
                 is_sel1 = (sel_o == 1)
                 if is_sel1:
-                    fill_rect(c2_x, card_y, card_w, card_h, 28, 46, 72, 255)
+                    fill_rect(c2_x, card_y, card_w, card_h, 24, 40, 64, 255)
                     draw_rect(c2_x, card_y, card_w, card_h, 255, 215, 0, 255, thickness=3)
                     fill_rect(c2_x + 4, card_y + 4, card_w - 8, 6, 255, 215, 0, 255)
                 else:
-                    fill_rect(c2_x, card_y, card_w, card_h, 20, 28, 46, 255)
-                    draw_rect(c2_x, card_y, card_w, card_h, 45, 60, 95, 255, thickness=1)
+                    fill_rect(c2_x, card_y, card_w, card_h, 18, 25, 42, 255)
+                    draw_rect(c2_x, card_y, card_w, card_h, 38, 52, 80, 255, thickness=1)
 
-                fill_rect(c2_x + 14, card_y + 18, card_w - 28, 28, 42, 34, 14, 255)
-                draw_rect(c2_x + 14, card_y + 18, card_w - 28, 28, 255, 215, 0, 255, thickness=1)
+                bx2 = c2_x + 20
+                fill_rect(bx2, card_y + 22, bw, 32, 42, 34, 14, 255)
+                draw_rect(bx2, card_y + 22, bw, 32, 255, 215, 0, 255, thickness=1)
                 badge2_str = "CỘNG ĐỒNG • LOBBY" if state.current_lang == "VI" else "PUBLIC LOBBY"
-                draw_text(badge2_str, font_badge, c2_x + card_w // 2, card_y + 18 + 14, 255, 215, 0, center_x=True, center_y=True)
+                draw_text(badge2_str, font_badge, c2_x + card_w // 2, card_y + 38, 255, 215, 0, center_x=True, center_y=True)
 
                 c2_t = "SẢNH ONLINE" if state.current_lang == "VI" else "FIND ROOMS"
-                draw_text(c2_t, font_item, c2_x + 18, card_y + 72, 255, 255, 255)
+                draw_text(c2_t, font_item, c2_x + card_w // 2, card_y + 86, 255, 255, 255, center_x=True, center_y=True)
+                fill_rect(c2_x + 24, card_y + 116, card_w - 48, 1, 45, 60, 95, 255)
+
                 if state.current_lang == "VI":
-                    draw_text("• Xem danh sách phòng mở", font_sub, c2_x + 18, card_y + 112, 200, 215, 235)
-                    draw_text("• Tự động khớp game & core", font_sub, c2_x + 18, card_y + 144, 200, 215, 235)
-                    draw_text("• Bấm [A] vào chơi ngay!", font_sub, c2_x + 18, card_y + 176, 0, 255, 160)
+                    draw_text("• Xem phòng cộng đồng", font_sub, c2_x + 24, card_y + 144, 200, 215, 235)
+                    draw_text("• Tự khớp ROM & Core", font_sub, c2_x + 24, card_y + 188, 200, 215, 235)
+                    draw_text("• Bấm [A] vào chơi ngay", font_sub, c2_x + 24, card_y + 232, 0, 255, 160)
                 else:
-                    draw_text("• Browse active rooms", font_sub, c2_x + 18, card_y + 112, 200, 215, 235)
-                    draw_text("• Auto-match game & core", font_sub, c2_x + 18, card_y + 144, 200, 215, 235)
-                    draw_text("• Press [A] to join instantly!", font_sub, c2_x + 18, card_y + 176, 0, 255, 160)
+                    draw_text("• Browse active rooms", font_sub, c2_x + 24, card_y + 144, 200, 215, 235)
+                    draw_text("• Match Core & ROM", font_sub, c2_x + 24, card_y + 188, 200, 215, 235)
+                    draw_text("• Join with [A] button", font_sub, c2_x + 24, card_y + 232, 0, 255, 160)
+
+                fill_rect(c2_x + 20, pr_y, pr_w, 38, 42, 34, 14 if is_sel1 else 10, 255)
+                draw_rect(c2_x + 20, pr_y, pr_w, 38, 255 if is_sel1 else 130, 215 if is_sel1 else 110, 0, 255, thickness=1)
+                p2_lbl = "[A] Xem sảnh chờ" if state.current_lang == "VI" else "[A] Open Lobby"
+                draw_text(p2_lbl, font_badge, c2_x + card_w // 2, pr_y + 19, 255 if is_sel1 else 180, 215 if is_sel1 else 150, 0, center_x=True, center_y=True)
 
                 # CARD 3: CLIENT CODE INPUT (P2)
                 is_sel2 = (sel_o == 2)
                 if is_sel2:
-                    fill_rect(c3_x, card_y, card_w, card_h, 28, 46, 72, 255)
+                    fill_rect(c3_x, card_y, card_w, card_h, 24, 40, 64, 255)
                     draw_rect(c3_x, card_y, card_w, card_h, 0, 230, 255, 255, thickness=3)
                     fill_rect(c3_x + 4, card_y + 4, card_w - 8, 6, 0, 230, 255, 255)
                 else:
-                    fill_rect(c3_x, card_y, card_w, card_h, 20, 28, 46, 255)
-                    draw_rect(c3_x, card_y, card_w, card_h, 45, 60, 95, 255, thickness=1)
+                    fill_rect(c3_x, card_y, card_w, card_h, 18, 25, 42, 255)
+                    draw_rect(c3_x, card_y, card_w, card_h, 38, 52, 80, 255, thickness=1)
 
-                fill_rect(c3_x + 14, card_y + 18, card_w - 28, 28, 14, 30, 48, 255)
-                draw_rect(c3_x + 14, card_y + 18, card_w - 28, 28, 0, 210, 255, 255, thickness=1)
+                bx3 = c3_x + 20
+                fill_rect(bx3, card_y + 22, bw, 32, 14, 30, 48, 255)
+                draw_rect(bx3, card_y + 22, bw, 32, 0, 210, 255, 255, thickness=1)
                 badge3_str = "P2 • RIÊNG TƯ" if state.current_lang == "VI" else "P2 • PRIVATE"
-                draw_text(badge3_str, font_badge, c3_x + card_w // 2, card_y + 18 + 14, 0, 230, 255, center_x=True, center_y=True)
+                draw_text(badge3_str, font_badge, c3_x + card_w // 2, card_y + 38, 0, 230, 255, center_x=True, center_y=True)
 
                 c3_t = "NHẬP MÃ (P2)" if state.current_lang == "VI" else "ENTER CODE"
-                draw_text(c3_t, font_item, c3_x + 18, card_y + 72, 255, 255, 255)
-                if state.current_lang == "VI":
-                    draw_text("• Nhập mã 5 số từ bạn bè", font_sub, c3_x + 18, card_y + 112, 200, 215, 235)
-                    draw_text("• Bàn phím số Numpad ảo", font_sub, c3_x + 18, card_y + 144, 200, 215, 235)
-                    draw_text("• Chơi riêng tư không lộ mã", font_sub, c3_x + 18, card_y + 176, 200, 215, 235)
-                else:
-                    draw_text("• Enter 5-digit room code", font_sub, c3_x + 18, card_y + 112, 200, 215, 235)
-                    draw_text("• Virtual numpad keypad", font_sub, c3_x + 18, card_y + 144, 200, 215, 235)
-                    draw_text("• Private friend match", font_sub, c3_x + 18, card_y + 176, 200, 215, 235)
+                draw_text(c3_t, font_item, c3_x + card_w // 2, card_y + 86, 255, 255, 255, center_x=True, center_y=True)
+                fill_rect(c3_x + 24, card_y + 116, card_w - 48, 1, 45, 60, 95, 255)
 
-                # Footer bar
-                fy = my + mh - 58
-                fill_rect(mx + 35, fy, mw - 70, 42, 20, 28, 48, 255)
-                draw_rect(mx + 35, fy, mw - 70, 42, 60, 85, 130, 255)
+                if state.current_lang == "VI":
+                    draw_text("• Nhập mã 5 số từ Host", font_sub, c3_x + 24, card_y + 144, 200, 215, 235)
+                    draw_text("• Bàn phím số Numpad ảo", font_sub, c3_x + 24, card_y + 188, 200, 215, 235)
+                    draw_text("• Chơi riêng tư bạn bè", font_sub, c3_x + 24, card_y + 232, 200, 215, 235)
+                else:
+                    draw_text("• Enter 5-digit code", font_sub, c3_x + 24, card_y + 144, 200, 215, 235)
+                    draw_text("• Virtual numpad keypad", font_sub, c3_x + 24, card_y + 188, 200, 215, 235)
+                    draw_text("• Private friend match", font_sub, c3_x + 24, card_y + 232, 200, 215, 235)
+
+                fill_rect(c3_x + 20, pr_y, pr_w, 38, 14, 30, 48 if is_sel2 else 26, 255)
+                draw_rect(c3_x + 20, pr_y, pr_w, 38, 0, 210 if is_sel2 else 110, 255 if is_sel2 else 140, 255, thickness=1)
+                p3_lbl = "[A] Nhập mã 5 số" if state.current_lang == "VI" else "[A] Enter Code"
+                draw_text(p3_lbl, font_badge, c3_x + card_w // 2, pr_y + 19, 0, 230 if is_sel2 else 160, 255 if is_sel2 else 180, center_x=True, center_y=True)
+
                 foot_t = "◄ ► Chọn chế độ  •  [A] Tiếp tục  •  [B] Bỏ qua" if state.current_lang == "VI" else "◄ ► Select Mode  •  [A] Continue  •  [B] Cancel"
-                draw_text(foot_t, font_badge, mx + mw // 2, fy + 21, 255, 215, 0, center_x=True, center_y=True)
+                draw_text(foot_t, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
 
             elif np_mode == "lobby":
-                header_str = "🌐 SẢNH CHỜ NETPLAY CỘNG ĐỒNG (ONLINE)" if state.current_lang == "VI" else "🌐 PUBLIC NETPLAY LOBBY (ONLINE)"
-                draw_text(header_str, font_title, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+                header_str = "🌐 SẢNH CHỜ CỘNG ĐỒNG" if state.current_lang == "VI" else "🌐 PUBLIC LOBBY"
+                draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
                 if netplay_modal.get("lobby_loading"):
-                    cx = mx + 60
-                    cy = my + 120
-                    cw = mw - 120
-                    ch = 240
-                    fill_rect(cx, cy, cw, ch, 20, 28, 46, 255)
+                    cx = 40
+                    cy = 90
+                    cw = mw - 80
+                    ch = fy - cy - 20
+                    fill_rect(cx, cy, cw, ch, 18, 25, 42, 255)
                     draw_rect(cx, cy, cw, ch, 0, 246, 246, 255, thickness=2)
-                    load_t1 = "ĐANG TẢI DANH SÁCH PHÒNG TỪ CLOUDFLARE EDGE..." if state.current_lang == "VI" else "FETCHING ACTIVE ROOMS FROM CLOUDFLARE..."
+                    load_t1 = "ĐANG TẢI DANH SÁCH PHÒNG TỪ CLOUDFLARE..." if state.current_lang == "VI" else "FETCHING ACTIVE ROOMS..."
                     load_t2 = "Vui lòng đợi giây lát..." if state.current_lang == "VI" else "Please wait a moment..."
-                    draw_text(load_t1, font_item, cx + cw // 2, cy + 90, 255, 215, 0, center_x=True, center_y=True)
-                    draw_text(load_t2, font_sub, cx + cw // 2, cy + 145, 200, 220, 245, center_x=True, center_y=True)
+                    draw_text(load_t1, font_item, cx + cw // 2, cy + ch // 2 - 20, 255, 215, 0, center_x=True, center_y=True)
+                    draw_text(load_t2, font_sub, cx + cw // 2, cy + ch // 2 + 25, 200, 220, 245, center_x=True, center_y=True)
 
                 else:
                     l_rooms = netplay_modal.get("lobby_rooms", [])
@@ -6576,55 +6607,54 @@ def main():
                     cur_lc = netplay_modal.get("lobby_cursor", 0)
 
                     if l_err:
-                        bx = mx + 35
-                        by = my + 100
-                        bw = mw - 70
-                        bh = 220
-                        fill_rect(bx, by, bw, bh, 42, 22, 28, 255)
+                        bx = 40
+                        by = 90
+                        bw = mw - 80
+                        bh = fy - by - 20
+                        fill_rect(bx, by, bw, bh, 36, 20, 26, 255)
                         draw_rect(bx, by, bw, bh, 255, 80, 80, 255, thickness=2)
-                        draw_text("LỖI KẾT NỐI TỚI SẢNH CHỜ:", font_modal_lbl, bx + bw // 2, by + 50, 255, 100, 100, center_x=True, center_y=True)
-                        draw_text(str(l_err)[:55], font_item, bx + bw // 2, by + 105, 255, 220, 220, center_x=True, center_y=True)
-                        draw_text("Kiểm tra Wi-Fi rồi bấm [X] để làm mới lại", font_sub, bx + bw // 2, by + 160, 200, 215, 235, center_x=True, center_y=True)
+                        draw_text("LỖI KẾT NỐI TỚI SẢNH CHỜ:", font_modal_lbl, bx + bw // 2, by + bh // 2 - 40, 255, 100, 100, center_x=True, center_y=True)
+                        draw_text(str(l_err)[:50], font_item, bx + bw // 2, by + bh // 2 + 5, 255, 220, 220, center_x=True, center_y=True)
+                        draw_text("Bấm [X] để thử lại  •  [B] Quay lại", font_sub, bx + bw // 2, by + bh // 2 + 50, 200, 215, 235, center_x=True, center_y=True)
 
                     elif not l_rooms:
-                        bx = mx + 35
-                        by = my + 100
-                        bw = mw - 70
-                        bh = 220
-                        fill_rect(bx, by, bw, bh, 20, 28, 46, 255)
+                        bx = 40
+                        by = 90
+                        bw = mw - 80
+                        bh = fy - by - 20
+                        fill_rect(bx, by, bw, bh, 18, 25, 42, 255)
                         draw_rect(bx, by, bw, bh, 45, 60, 95, 255, thickness=2)
-                        empty_t1 = "HIỆN CHƯA CÓ PHÒNG NETPLAY NÀO ĐANG MỞ" if state.current_lang == "VI" else "NO PUBLIC ROOMS CURRENTLY ACTIVE"
-                        empty_t2 = "Hãy quay lại và chọn 'TẠO PHÒNG' để mở phòng đầu tiên cho cộng đồng!" if state.current_lang == "VI" else "Go back and select 'HOST ROOM' to create the first room!"
-                        empty_t3 = "Bấm [X] để tải lại danh sách  •  Bấm [B] để quay lại" if state.current_lang == "VI" else "Press [X] to refresh  •  Press [B] to go back"
-                        draw_text(empty_t1, font_item, bx + bw // 2, by + 65, 255, 215, 0, center_x=True, center_y=True)
-                        draw_text(empty_t2, font_sub, bx + bw // 2, by + 115, 200, 220, 245, center_x=True, center_y=True)
-                        draw_text(empty_t3, font_badge, bx + bw // 2, by + 165, 0, 230, 255, center_x=True, center_y=True)
+                        empty_t1 = "CHƯA CÓ PHÒNG NETPLAY NÀO ĐANG MỞ" if state.current_lang == "VI" else "NO PUBLIC ROOMS CURRENTLY ACTIVE"
+                        empty_t2 = "Hãy quay lại và chọn 'TẠO PHÒNG' để mở phòng cho cộng đồng!" if state.current_lang == "VI" else "Select 'HOST ROOM' to create the first public room!"
+                        empty_t3 = "Bấm [X] để làm mới  •  Bấm [B] để quay lại" if state.current_lang == "VI" else "Press [X] to refresh  •  Press [B] to go back"
+                        draw_text(empty_t1, font_item, bx + bw // 2, by + bh // 2 - 35, 255, 215, 0, center_x=True, center_y=True)
+                        draw_text(empty_t2, font_sub, bx + bw // 2, by + bh // 2 + 10, 200, 220, 245, center_x=True, center_y=True)
+                        draw_text(empty_t3, font_badge, bx + bw // 2, by + bh // 2 + 55, 0, 230, 255, center_x=True, center_y=True)
 
                     else:
-                        # Scrollable Room Cards (Up to 4 visible)
-                        vis_n = 4
-                        r_h = 66
-                        r_gap = 8
-                        start_ry = my + 95
+                        # Scrollable Room Cards (5 visible rooms)
+                        vis_n = 5
+                        r_h = 80
+                        r_gap = 10
+                        start_ry = 80
                         scroll_off = max(0, cur_lc - vis_n + 1) if cur_lc >= vis_n else 0
                         disp_slice = l_rooms[scroll_off : scroll_off + vis_n]
 
                         for rel_i, rm in enumerate(disp_slice):
                             real_i = scroll_off + rel_i
                             ry = start_ry + rel_i * (r_h + r_gap)
-                            rx = mx + 35
-                            rw = mw - 70
+                            rx = 32
+                            rw = mw - 64
                             is_r_sel = (real_i == cur_lc)
 
                             if is_r_sel:
                                 fill_rect(rx, ry, rw, r_h, 28, 52, 82, 255)
                                 draw_rect(rx, ry, rw, r_h, 0, 246, 246, 255, thickness=2)
-                                fill_rect(rx + 2, ry + 2, 5, r_h - 4, 0, 246, 246, 255)
+                                fill_rect(rx + 2, ry + 2, 6, r_h - 4, 0, 246, 246, 255)
                             else:
                                 fill_rect(rx, ry, rw, r_h, 18, 25, 42, 255)
                                 draw_rect(rx, ry, rw, r_h, 35, 48, 75, 255, thickness=1)
 
-                            # Left info: Game title & system badge
                             rm_sys = str(rm.get("sys_code", ""))
                             rm_title = str(rm.get("game_title", "Retro Game"))
                             rm_core = str(rm.get("core", "") or "Auto")
@@ -6632,162 +6662,153 @@ def main():
                             rm_dev = str(rm.get("dev_model", "Handheld"))
                             rm_port = str(rm.get("port", ""))
 
-                            txt_title = f"[{rm_sys}] {rm_title[:30]}"
-                            draw_text(txt_title, font_item, rx + 18, ry + 22, 255, 255, 255 if is_r_sel else 220)
+                            txt_title = f"[{rm_sys}] {rm_title[:42]}"
+                            draw_text(txt_title, font_item, rx + 22, ry + 16, 255, 255, 255 if is_r_sel else 220)
 
                             txt_sub = f"Host: {rm_nick} ({rm_dev})  •  Core: {rm_core}"
-                            draw_text(txt_sub, font_sub, rx + 18, ry + 46, 0, 230, 255 if is_r_sel else 180)
+                            draw_text(txt_sub, font_sub, rx + 22, ry + 48, 0, 230, 255 if is_r_sel else 180)
 
-                            # Right badges: Port & Status
-                            bx_w = 120
-                            bx_x = rx + rw - bx_w - 15
-                            fill_rect(bx_x, ry + 16, bx_w, 32, 14, 40, 30, 255)
-                            draw_rect(bx_x, ry + 16, bx_w, 32, 0, 230, 150, 255, thickness=1)
-                            draw_text(f"MÃ: {rm_port}", font_badge, bx_x + bx_w // 2, ry + 32, 0, 255, 160, center_x=True, center_y=True)
+                            # Right badges: Port
+                            bx_w = 140
+                            bx_h = 42
+                            bx_x = rx + rw - bx_w - 20
+                            bx_y = ry + (r_h - bx_h) // 2
+                            fill_rect(bx_x, bx_y, bx_w, bx_h, 14, 40, 30, 255)
+                            draw_rect(bx_x, bx_y, bx_w, bx_h, 0, 230, 150, 255, thickness=1)
+                            draw_text(f"MÃ: {rm_port}", font_badge, bx_x + bx_w // 2, bx_y + bx_h // 2, 0, 255, 160, center_x=True, center_y=True)
 
-                    # Footer bar for lobby
-                    fy = my + mh - 58
-                    fill_rect(mx + 35, fy, mw - 70, 42, 20, 28, 48, 255)
-                    draw_rect(mx + 35, fy, mw - 70, 42, 60, 85, 130, 255)
                     total_cnt = len(l_rooms) if not netplay_modal.get("lobby_loading") else 0
                     foot_t = f"▲ ▼ Chọn ({total_cnt} phòng)  •  [A] Vào chơi  •  [X] Làm mới  •  [B] Quay lại" if state.current_lang == "VI" else f"▲ ▼ Select ({total_cnt} rooms)  •  [A] Join  •  [X] Refresh  •  [B] Back"
-                    draw_text(foot_t, font_badge, mx + mw // 2, fy + 21, 255, 215, 0, center_x=True, center_y=True)
+                    draw_text(foot_t, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
 
             elif np_mode == "hosting":
-                header_str = "🎮 TẠO PHÒNG NETPLAY (HOST - NGƯỜI CHƠI 1)" if state.current_lang == "VI" else "🎮 HOST NETPLAY (PLAYER 1)"
-                draw_text(header_str, font_title, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+                header_str = "🎮 TẠO PHÒNG NETPLAY (HOST)" if state.current_lang == "VI" else "🎮 HOST NETPLAY"
+                draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
                 if netplay_modal.get("is_starting"):
-                    # Loading box
-                    cx = mx + 60
-                    cy = my + 110
-                    cw = mw - 120
-                    ch = 260
-                    fill_rect(cx, cy, cw, ch, 20, 28, 46, 255)
+                    cx = 40
+                    cy = 90
+                    cw = mw - 80
+                    ch = fy - cy - 20
+                    fill_rect(cx, cy, cw, ch, 18, 25, 42, 255)
                     draw_rect(cx, cy, cw, ch, 0, 246, 246, 255, thickness=2)
                     load_t1 = "ĐANG TẠO ĐƯỜNG TRUYỀN PINGGY QUA INTERNET..." if state.current_lang == "VI" else "ESTABLISHING PINGGY INTERNET TUNNEL..."
-                    load_t2 = "Đang nhận mã phòng 5 số & tự động gửi sang Telegram..." if state.current_lang == "VI" else "Obtaining room code & sending to Telegram..."
+                    load_t2 = "Đang nhận mã phòng & đăng ký lên Sảnh online..." if state.current_lang == "VI" else "Getting room code & publishing to lobby..."
                     load_t3 = "Vui lòng đợi vài giây..." if state.current_lang == "VI" else "Please wait a few seconds..."
-                    draw_text(load_t1, font_item, cx + cw // 2, cy + 70, 255, 215, 0, center_x=True, center_y=True)
-                    draw_text(load_t2, font_sub, cx + cw // 2, cy + 125, 200, 220, 245, center_x=True, center_y=True)
-                    draw_text(load_t3, font_modal_lbl, cx + cw // 2, cy + 180, 0, 230, 255, center_x=True, center_y=True)
+                    draw_text(load_t1, font_item, cx + cw // 2, cy + ch // 2 - 35, 255, 215, 0, center_x=True, center_y=True)
+                    draw_text(load_t2, font_sub, cx + cw // 2, cy + ch // 2 + 10, 200, 220, 245, center_x=True, center_y=True)
+                    draw_text(load_t3, font_modal_lbl, cx + cw // 2, cy + ch // 2 + 55, 0, 230, 255, center_x=True, center_y=True)
                 else:
                     t_info = netplay_modal.get("tunnel_info")
                     if t_info:
                         p_num = str(t_info.get("port", "-----"))
                         h_name = str(t_info.get("host", "a.pinggy.io"))
 
-                        # Big Room Code Card
-                        bx = mx + 35
-                        by = my + 90
-                        bw = mw - 70
-                        bh = 135
+                        # Big Hero Code Card
+                        bx = 32
+                        by = 80
+                        bw = mw - 64
+                        bh = 175
                         fill_rect(bx, by, bw, bh, 22, 30, 52, 255)
                         draw_rect(bx, by, bw, bh, 255, 215, 0, 255, thickness=2)
-                        fill_rect(bx + 2, by + 2, 5, bh - 4, 255, 215, 0, 255)
+                        fill_rect(bx + 2, by + 2, 6, bh - 4, 255, 215, 0, 255)
 
-                        lbl_room = "MÃ PHÒNG CỦA BẠN (GỬI MÃ 5 SỐ NÀY CHO NGƯỜI CHƠI 2):" if state.current_lang == "VI" else "YOUR ROOM CODE (SEND THIS 5-DIGIT CODE TO PLAYER 2):"
-                        draw_text(lbl_room, font_modal_lbl, bx + bw // 2, by + 30, 0, 230, 255, center_x=True, center_y=True)
-                        draw_text(p_num, font_huge, bx + bw // 2, by + 84, 255, 215, 0, center_x=True, center_y=True)
+                        lbl_room = "MÃ PHÒNG CỦA BẠN (GỬI MÃ 5 SỐ NÀY CHO NGƯỜI CHƠI 2):" if state.current_lang == "VI" else "YOUR ROOM CODE (SEND TO PLAYER 2):"
+                        draw_text(lbl_room, font_modal_lbl, bx + bw // 2, by + 34, 0, 230, 255, center_x=True, center_y=True)
+                        draw_text(p_num, font_huge, bx + bw // 2, by + 98, 255, 215, 0, center_x=True, center_y=True)
+                        draw_text(f"Server: {h_name}  •  Port: 55435", font_sub, bx + bw // 2, by + 146, 170, 190, 220, center_x=True, center_y=True)
 
-                        # Info lines
-                        iy = by + bh + 14
+                        # Detailed Info Card
+                        iy = by + bh + 16
+                        ih = fy - iy - 75
+                        fill_rect(bx, iy, bw, ih, 18, 25, 42, 255)
+                        draw_rect(bx, iy, bw, ih, 38, 52, 80, 255, thickness=1)
+
                         core_n = resolve_core_name(sys_c)
-                        core_part = f"  |  Core: {core_n}" if core_n else ""
-                        info_line1 = f"• Máy chủ: {h_name}  |  Cổng: 55435{core_part}  |  Game: [{sys_c}] {g_title[:28]}" if state.current_lang == "VI" else f"• Server: {h_name}  |  Port: 55435{core_part}  |  Game: [{sys_c}] {g_title[:28]}"
-                        draw_text(info_line1, font_sub, mx + 45, iy, 200, 215, 235)
+                        line1 = f"• Game: [{sys_c}] {g_title[:45]}  |  Core: {core_n or 'Tự động'}"
+                        draw_text(line1, font_sub, bx + 24, iy + 26, 220, 235, 255)
 
                         notice = netplay_modal.get("notice")
-                        if notice:
-                            draw_text(f"• Trạng thái: {notice}", font_sub, mx + 45, iy + 30, 0, 255, 160)
-                        else:
-                            st_tele = "• Đã tự động gửi thông tin phòng sang Telegram!" if state.current_lang == "VI" else "• Room info forwarded to Telegram!"
-                            draw_text(st_tele, font_sub, mx + 45, iy + 30, 0, 255, 160)
+                        st_txt = f"• Trạng thái: {notice}" if notice else "• Trạng thái: Đã đăng lên Sảnh online & gửi Telegram"
+                        draw_text(st_txt, font_sub, bx + 24, iy + 62, 0, 255, 160)
 
-                        note_p2 = "⚠️ Lưu ý: Bạn bè cần mở cùng game này trên máy của họ và chọn 'Vào phòng'." if state.current_lang == "VI" else "⚠️ Note: Player 2 must open this same game and select 'Join Room'."
-                        draw_text(note_p2, font_modal_lbl, mx + 45, iy + 64, 255, 215, 0)
+                        note_p2 = "• Người chơi 2 chỉ cần mở cùng game này và nhập mã 5 số ở trên để vào chơi." if state.current_lang == "VI" else "• Player 2 opens this same game and enters the 5-digit code above to join."
+                        draw_text(note_p2, font_modal_lbl, bx + 24, iy + 98, 255, 215, 0)
 
-                        # Bottom 3 Action Buttons: [A] Start Game, [X] Resend Tele, [B] Close
-                        btn_y = my + mh - 58
-                        btn_h = 46
-                        b1_w = 320
-                        b2_w = 300
-                        b3_w = 180
+                        # Action Buttons
+                        btn_y = fy - 62
+                        btn_h = 48
+                        btn_w = (bw - 30) // 3
                         gap_b = 15
-                        start_bx = mx + (mw - (b1_w + b2_w + b3_w + gap_b * 2)) // 2
 
-                        # Button 1: Start Game [A]
-                        fill_rect(start_bx, btn_y, b1_w, btn_h, 0, 180, 100, 255)
-                        draw_rect(start_bx, btn_y, b1_w, btn_h, 0, 255, 160, 255, thickness=2)
+                        b1_x = bx
+                        fill_rect(b1_x, btn_y, btn_w, btn_h, 0, 180, 100, 255)
+                        draw_rect(b1_x, btn_y, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
                         b1_lbl = "[A] Bắt đầu chơi (Host)" if state.current_lang == "VI" else "[A] Start Game (Host)"
-                        draw_text(b1_lbl, font_badge, start_bx + b1_w // 2, btn_y + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
+                        draw_text(b1_lbl, font_badge, b1_x + btn_w // 2, btn_y + btn_h // 2, 0, 0, 0, center_x=True, center_y=True)
 
-                        # Button 2: Resend Telegram [X]
-                        bx2 = start_bx + b1_w + gap_b
-                        fill_rect(bx2, btn_y, b2_w, btn_h, 0, 136, 204, 255)
-                        draw_rect(bx2, btn_y, b2_w, btn_h, 0, 210, 255, 255, thickness=2)
+                        b2_x = b1_x + btn_w + gap_b
+                        fill_rect(b2_x, btn_y, btn_w, btn_h, 0, 136, 204, 255)
+                        draw_rect(b2_x, btn_y, btn_w, btn_h, 0, 210, 255, 255, thickness=2)
                         b2_lbl = "[X] Gửi lại Telegram" if state.current_lang == "VI" else "[X] Resend Telegram"
-                        draw_text(b2_lbl, font_badge, bx2 + b2_w // 2, btn_y + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+                        draw_text(b2_lbl, font_badge, b2_x + btn_w // 2, btn_y + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                        # Button 3: Close Room [B]
-                        bx3 = bx2 + b2_w + gap_b
-                        fill_rect(bx3, btn_y, b3_w, btn_h, 55, 35, 40, 255)
-                        draw_rect(bx3, btn_y, b3_w, btn_h, 160, 70, 70, 255, thickness=2)
+                        b3_x = b2_x + btn_w + gap_b
+                        fill_rect(b3_x, btn_y, btn_w, btn_h, 55, 35, 40, 255)
+                        draw_rect(b3_x, btn_y, btn_w, btn_h, 160, 70, 70, 255, thickness=2)
                         b3_lbl = "[B] Đóng phòng" if state.current_lang == "VI" else "[B] Close Room"
-                        draw_text(b3_lbl, font_badge, bx3 + b3_w // 2, btn_y + btn_h // 2, 255, 180, 180, center_x=True, center_y=True)
-                    else:
-                        # Error / Failed State
-                        bx = mx + 35
-                        by = my + 90
-                        bw = mw - 70
-                        bh = 135
-                        fill_rect(bx, by, bw, bh, 42, 22, 28, 255)
-                        draw_rect(bx, by, bw, bh, 255, 80, 80, 255, thickness=2)
-                        fill_rect(bx + 2, by + 2, 5, bh - 4, 255, 80, 80, 255)
+                        draw_text(b3_lbl, font_badge, b3_x + btn_w // 2, btn_y + btn_h // 2, 255, 180, 180, center_x=True, center_y=True)
 
-                        lbl_err = "KHÔNG THỂ KHỞI TẠO ĐƯỜNG TRUYỀN NETPLAY:" if state.current_lang == "VI" else "FAILED TO INITIALIZE NETPLAY TUNNEL:"
-                        draw_text(lbl_err, font_modal_lbl, bx + bw // 2, by + 30, 255, 100, 100, center_x=True, center_y=True)
-                        err_msg = netplay_modal.get("notice") or ("Kiểm tra Wi-Fi hoặc SSH client" if state.current_lang == "VI" else "Check Wi-Fi or SSH client")
+                    else:
+                        bx = 40
+                        by = 90
+                        bw = mw - 80
+                        bh = 175
+                        fill_rect(bx, by, bw, bh, 36, 20, 26, 255)
+                        draw_rect(bx, by, bw, bh, 255, 80, 80, 255, thickness=2)
+                        fill_rect(bx + 2, by + 2, 6, bh - 4, 255, 80, 80, 255)
+
+                        lbl_err = "KHÔNG THỂ TẠO ĐƯỜNG TRUYỀN NETPLAY:" if state.current_lang == "VI" else "FAILED TO INITIALIZE TUNNEL:"
+                        draw_text(lbl_err, font_modal_lbl, bx + bw // 2, by + 34, 255, 100, 100, center_x=True, center_y=True)
+                        err_msg = netplay_modal.get("notice") or ("Kiểm tra Wi-Fi hoặc SSH client" if state.current_lang == "VI" else "Check Wi-Fi connection")
                         if len(err_msg) > 52:
                             err_msg = err_msg[:49] + "..."
-                        draw_text(err_msg, font_item, bx + bw // 2, by + 84, 255, 220, 220, center_x=True, center_y=True)
+                        draw_text(err_msg, font_item, bx + bw // 2, by + 98, 255, 220, 220, center_x=True, center_y=True)
+                        draw_text("Vui lòng kết nối Wi-Fi rồi thử lại", font_sub, bx + bw // 2, by + 146, 200, 215, 235, center_x=True, center_y=True)
 
-                        iy = by + bh + 14
-                        hint_txt = "• Hãy kết nối Wi-Fi ổn định và bấm [A] để thử lại, hoặc [B] để quay lại." if state.current_lang == "VI" else "• Please ensure Wi-Fi is connected and press [A] to Retry, or [B] to Cancel."
-                        draw_text(hint_txt, font_sub, mx + 45, iy, 200, 215, 235)
-
-                        btn_y = my + mh - 58
-                        btn_h = 46
-                        b1_w = 300
+                        btn_y = fy - 62
+                        btn_h = 48
+                        b1_w = 280
                         b2_w = 200
                         gap_b = 20
-                        start_bx = mx + (mw - (b1_w + b2_w + gap_b)) // 2
+                        start_bx = (mw - (b1_w + b2_w + gap_b)) // 2
 
-                        # Button 1: Retry [A]
                         fill_rect(start_bx, btn_y, b1_w, btn_h, 0, 136, 204, 255)
                         draw_rect(start_bx, btn_y, b1_w, btn_h, 0, 210, 255, 255, thickness=2)
                         b1_lbl = "[A] Thử lại kết nối" if state.current_lang == "VI" else "[A] Retry Connection"
                         draw_text(b1_lbl, font_badge, start_bx + b1_w // 2, btn_y + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
 
-                        # Button 2: Close [B]
                         bx2 = start_bx + b1_w + gap_b
                         fill_rect(bx2, btn_y, b2_w, btn_h, 55, 35, 40, 255)
                         draw_rect(bx2, btn_y, b2_w, btn_h, 160, 70, 70, 255, thickness=2)
                         b2_lbl = "[B] Quay lại" if state.current_lang == "VI" else "[B] Cancel"
                         draw_text(b2_lbl, font_badge, bx2 + b2_w // 2, btn_y + btn_h // 2, 255, 180, 180, center_x=True, center_y=True)
 
-            elif np_mode == "joining":
-                header_str = "🎮 VÀO PHÒNG NETPLAY (CLIENT - NGƯỜI CHƠI 2)" if state.current_lang == "VI" else "🎮 JOIN NETPLAY (PLAYER 2)"
-                draw_text(header_str, font_title, mx + mw // 2, my + 36, 0, 246, 246, center_x=True, center_y=True)
+                    foot_h_lbl = "[A] Bắt đầu  •  [X] Gửi Telegram  •  [B] Đóng phòng" if state.current_lang == "VI" else "[A] Start  •  [X] Telegram  •  [B] Close"
+                    draw_text(foot_h_lbl, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
 
-                lbl_prompt = "NHẬP MÃ PHÒNG 5 SỐ DO NGƯỜI CHƠI 1 (HOST) CUNG CẤP:" if state.current_lang == "VI" else "ENTER 5-DIGIT ROOM CODE PROVIDED BY PLAYER 1:"
-                draw_text(lbl_prompt, font_modal_lbl, mx + mw // 2, my + 92, 0, 230, 255, center_x=True, center_y=True)
+            elif np_mode == "joining":
+                header_str = "🎮 VÀO PHÒNG NETPLAY (CLIENT)" if state.current_lang == "VI" else "🎮 JOIN NETPLAY"
+                draw_text(header_str, font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
+
+                lbl_prompt = "NHẬP MÃ PHÒNG 5 SỐ TỪ HOST:" if state.current_lang == "VI" else "ENTER 5-DIGIT ROOM CODE:"
+                draw_text(lbl_prompt, font_modal_lbl, mw // 2, 88, 0, 230, 255, center_x=True, center_y=True)
 
                 # Input Display Box
-                in_w = 380
-                in_h = 64
-                in_x = mx + (mw - in_w) // 2
-                in_y = my + 115
+                in_w = 420
+                in_h = 72
+                in_x = (mw - in_w) // 2
+                in_y = 115
                 fill_rect(in_x, in_y, in_w, in_h, 12, 16, 28, 255)
                 draw_rect(in_x, in_y, in_w, in_h, 0, 246, 246, 255, thickness=2)
 
@@ -6803,13 +6824,13 @@ def main():
                     "⌫ XOÁ" if state.current_lang == "VI" else "⌫ DEL",
                     "VÀO GAME" if state.current_lang == "VI" else "CONNECT"
                 ]
-                kw = 125
-                kh = 54
-                gap_x = 14
-                gap_y = 12
+                kw = 145
+                kh = 68
+                gap_x = 16
+                gap_y = 14
                 total_kp_w = 6 * kw + 5 * gap_x
-                start_kpx = mx + (mw - total_kp_w) // 2
-                start_kpy = in_y + in_h + 18
+                start_kpx = (mw - total_kp_w) // 2
+                start_kpy = in_y + in_h + 24
                 cur_kc = netplay_modal.get("key_cursor", 0)
 
                 for k_idx, k_lbl in enumerate(kp_keys):
@@ -6846,10 +6867,8 @@ def main():
                             draw_rect(kx, ky, kw, kh, 55, 75, 115, 255, thickness=1)
                             draw_text(k_lbl, font_item, kx + kw // 2, ky + kh // 2, 220, 235, 255, center_x=True, center_y=True)
 
-                # Footer bar
-                fy = my + mh - 50
-                foot_join = "◄ ▲ ▼ ► Di chuyển  •  [A] Chọn  •  [Y] Xoá  •  [START] Kết nối  •  [B] Quay lại" if state.current_lang == "VI" else "◄ ▲ ▼ ► Navigate  •  [A] Select  •  [Y] Backspace  •  [START] Connect  •  [B] Back"
-                draw_text(foot_join, font_badge, mx + mw // 2, fy + 14, 255, 215, 0, center_x=True, center_y=True)
+                foot_join = "◄ ▲ ▼ ► Di chuyển  •  [A] Chọn số  •  [Y] Xoá  •  [START] Vào game  •  [B] Quay lại" if state.current_lang == "VI" else "◄ ▲ ▼ ► Navigate  •  [A] Enter  •  [Y] Del  •  [START] Join  •  [B] Back"
+                draw_text(foot_join, font_badge, mw // 2, fy + foot_h // 2, 255, 215, 0, center_x=True, center_y=True)
 
         # ----------------------------------------------------------------------
         # 7. STRUCTURED INFO / GUIDE / STORAGE PROGRESS MODAL
