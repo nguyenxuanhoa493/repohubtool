@@ -1,12 +1,12 @@
 {
-  "version": "2.07",
+  "version": "2.08",
   "full_release_version": "1.63",
   "python": "any",
   "built": "2026-09-12T17:52:58+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sảnh chờ công khai (Public Lobby): Tìm & tham gia phòng Netplay qua Internet nhanh chóng, tự động công khai phòng của bạn lên sảnh; sửa lỗi Netplay tunnel trên OpenSSH",
-    "en": "Public Lobby: Discover & join online Netplay rooms easily, auto-publish hosted rooms; fix Netplay tunnel on OpenSSH"
+    "vi": "Giao diện Netplay toàn màn hình (Full-Screen UI): Tối ưu hóa bố cục rộng rãi, chữ súc tích không vỡ màn hình, bàn phím ảo & thẻ phòng gọn gàng",
+    "en": "Full-screen Netplay UI: Spacious layout, concise text, optimized virtual keypad and clean room cards"
   },
   "remove": [
     "app.pyc",
@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 375027,
-      "sha256": "603518e1bf2580f784083a60934bea11f7e1ef9739e3bbd8e3fde0ca240b0a53"
+      "size": 375757,
+      "sha256": "4fe9fc17eccdbfe850946626575c848ae07674d50101b6cdef1ce6ef8ebc0438"
     },
     {
       "path": "assets/fallback.ttf",
@@ -564,7 +564,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "3ac3d23409a1c43ffea6e7cb98930db8316440e5cace70b890b1ff00fc54320f"
+      "sha256": "690c8379726830d685d7c4d6f81c4fb1f92bff1fb0f857b2dbc533b578319ecc"
     },
     {
       "path": "rh/yt.py",
