@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.18", "2026-09-16",
+     ("Fix startup crash on boot (ImportError modals) & introduce launcher Emergency Self-Healing auto-recovery",
+      "Sửa triệt để lỗi khởi động văng app (ImportError modals) & bổ sung cơ chế Tự động cứu hộ (Emergency Self-Healing)"),
+     [("Fix Modal Module Imports: Standardized and corrected rh/modals/__init__.py imports (ExitModal, ResolutionModal, TwoColInfoModal, StreamLoadingModal, and NetplayModal), resolving ImportError on startup.",
+       "Sửa lỗi Import Module Modal: Chuẩn hóa toàn bộ import trong rh/modals/__init__.py khớp đúng định nghĩa thực tế (ExitModal, ResolutionModal, TwoColInfoModal, StreamLoadingModal và NetplayModal), chấm dứt hoàn toàn hiện tượng văng ứng dụng khi khởi động."),
+      ("Launcher Emergency Self-Healing Recovery: Added automatic fallback recovery in launch.sh to safely fetch emergency hotfixes over network when app encounters startup errors, auto-healing the device seamlessly.",
+       "Tự động Cứu hộ khi có sự cố (Self-Healing): Bổ sung cơ chế tự động cứu hộ trong launch.sh, tự động kéo bản vá khẩn cấp qua mạng khi phát hiện ứng dụng gặp sự cố khởi động và tự chạy lại mượt mà.")]),
+
     ("2.17", "2026-09-16",
      ("Integrate full-featured OTA UpdateModal dialog, fix manual update check in Settings & optimize background self-updater",
       "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm"),

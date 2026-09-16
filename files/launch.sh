@@ -194,6 +194,7 @@ fi
 while true; do
     rm -f /tmp/launch_game.sh
     "$PY" app.py 2>> "$ERRLOG"
+    APP_EXIT_CODE=$?
 
     if [ -f /tmp/launch_game.sh ]; then
         sh /tmp/launch_game.sh
@@ -203,6 +204,26 @@ while true; do
             "$PY" -c "from rh.netplay import stop_netplay_tunnel; stop_netplay_tunnel()" 2>/dev/null || true
             pkill -9 -f 'localhost:55435' 2>/dev/null || true
         fi
+    elif [ $APP_EXIT_CODE -ne 0 ] && [ -z "$RETROHUB_RECOVERED" ]; then
+        # Tu dong cuu ho neu app bi vang / loi khoi dong (Self-Healing)
+        export RETROHUB_RECOVERED=1
+        log "Phat hien app bi loi (exit code $APP_EXIT_CODE). Dang thu tu dong cuu ho..."
+        HOTFIX_URL="https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/files/rh/modals/__init__.py"
+        HOTFIX_DST="$APP/rh/modals/__init__.py"
+        HOTFIX_OK=1
+        if command -v curl >/dev/null 2>&1; then
+            curl -fsSLk "$HOTFIX_URL" -o "$HOTFIX_DST.tmp" 2>/dev/null && HOTFIX_OK=0
+        elif command -v wget >/dev/null 2>&1; then
+            wget --no-check-certificate -q -O "$HOTFIX_DST.tmp" "$HOTFIX_URL" 2>/dev/null && HOTFIX_OK=0
+        fi
+        if [ $HOTFIX_OK -eq 0 ] && [ -s "$HOTFIX_DST.tmp" ]; then
+            mv -f "$HOTFIX_DST.tmp" "$HOTFIX_DST"
+            rm -f "$ERRLOG" 2>/dev/null
+            rm -rf "$APP/rh/__pycache__" "$APP/rh/modals/__pycache__" 2>/dev/null
+            log "Da tai ban va cuu ho thanh cong. Khoi dong lai RetroHub..."
+            continue
+        fi
+        break
     else
         break
     fi
