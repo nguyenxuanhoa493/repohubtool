@@ -553,8 +553,8 @@
     },
     {
       "path": "rh/modals/update.py",
-      "size": 18089,
-      "sha256": "10a195d330db6824064909853bbd8132302da901840e9f6e47776281d26959a9"
+      "size": 18255,
+      "sha256": "a0ddd875cee4842fd147c7e72a2a2dfd26f20279835dbdae10c19502acbbfca7"
     },
     {
       "path": "rh/neterrors.py",
