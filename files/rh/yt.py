@@ -475,6 +475,319 @@ search_videos = search_youtube
 fetch_trending = get_trending
 
 
+def extract_playlist_id(url_or_text: str) -> str:
+    """Extract YouTube playlist ID from various URL formats or raw ID string."""
+    s = str(url_or_text or "").strip()
+    if not s:
+        return ""
+    m = re.search(r"[?&]list=([a-zA-Z0-9_-]+)", s)
+    if m:
+        return m.group(1)
+    clean = s.split("/")[-1].split("?")[0].strip()
+    if clean.startswith("VL"):
+        clean = clean[2:]
+    return clean
+
+
+def _extract_playlist_videos_from_json(node, found_list: list, limit: int = 150):
+    """Extract video items from playlist browse/search InnerTube response."""
+    if len(found_list) >= limit:
+        return
+
+    if isinstance(node, dict):
+        # 1. lockupViewModel (modern InnerTube)
+        if "lockupViewModel" in node:
+            vm = node["lockupViewModel"]
+            vid = vm.get("contentId")
+            if not vid:
+                try:
+                    vid = (
+                        vm.get("rendererContext", {})
+                        .get("commandContext", {})
+                        .get("onTap", {})
+                        .get("innertubeCommand", {})
+                        .get("watchEndpoint", {})
+                        .get("videoId")
+                    )
+                except Exception:
+                    pass
+
+            if vid and not any(it["id"] == vid for it in found_list):
+                # Title
+                v_title = (
+                    vm.get("metadata", {})
+                    .get("lockupMetadataViewModel", {})
+                    .get("title", {})
+                    .get("content", "")
+                )
+                if not v_title:
+                    v_title = (
+                        vm.get("rendererContext", {})
+                        .get("accessibilityContext", {})
+                        .get("label", "")
+                    )
+                v_title = clean_yt_text(v_title) or f"Video {vid}"
+
+                # Channel
+                v_channel = ""
+                try:
+                    rows = (
+                        vm.get("metadata", {})
+                        .get("lockupMetadataViewModel", {})
+                        .get("metadata", {})
+                        .get("contentMetadataViewModel", {})
+                        .get("metadataRows", [])
+                    )
+                    if rows and rows[0].get("metadataParts"):
+                        v_channel = (
+                            rows[0]["metadataParts"][0]
+                            .get("text", {})
+                            .get("content", "")
+                        )
+                except Exception:
+                    pass
+                v_channel = clean_yt_text(v_channel)
+
+                # Duration
+                v_dur = ""
+                try:
+                    cimg = vm.get("contentImage", {})
+                    t_vm = (
+                        cimg.get("thumbnailViewModel")
+                        or cimg.get("collectionThumbnailViewModel", {})
+                        .get("primaryThumbnail", {})
+                        .get("thumbnailViewModel", {})
+                    )
+                    for ov in t_vm.get("overlays", []):
+                        tb = ov.get(
+                            "thumbnailOverlayTimeStatusRenderer", {}
+                        ).get("text", {})
+                        if tb.get("simpleText"):
+                            v_dur = tb.get("simpleText")
+                            break
+                        elif tb.get("runs"):
+                            v_dur = tb["runs"][0].get("text", "")
+                            break
+                        for b_item in ov.get(
+                            "thumbnailBottomOverlayViewModel", {}
+                        ).get("badges", []):
+                            txt = b_item.get(
+                                "thumbnailBadgeViewModel", {}
+                            ).get("text")
+                            if txt:
+                                v_dur = str(txt)
+                                break
+                        if v_dur:
+                            break
+                        txt = ov.get(
+                            "thumbnailOverlayTimeStatusViewModel", {}
+                        ).get("text")
+                        if txt:
+                            v_dur = str(txt)
+                            break
+                except Exception:
+                    pass
+                v_dur = clean_yt_text(v_dur)
+
+                thumb_url = f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
+                disp_title = (
+                    v_title if len(v_title) <= 120 else v_title[:117] + "..."
+                )
+                info_str = f"{v_channel} • Playlist" if v_channel else "Playlist"
+                disp_info = (
+                    info_str if len(info_str) <= 34 else info_str[:32] + "..."
+                )
+
+                found_list.append({
+                    "id": vid,
+                    "title": v_title,
+                    "disp_title": disp_title,
+                    "channel": v_channel,
+                    "disp_info": disp_info,
+                    "duration": v_dur,
+                    "thumb": thumb_url,
+                    "pub": "Playlist",
+                    "age": 0.0,
+                })
+
+        # 2. playlistVideoRenderer / videoRenderer / gridVideoRenderer
+        for r_key in (
+            "playlistVideoRenderer",
+            "videoRenderer",
+            "gridVideoRenderer",
+        ):
+            if r_key in node:
+                vr = node[r_key]
+                vid = vr.get("videoId")
+                if vid and not any(it["id"] == vid for it in found_list):
+                    t_runs = vr.get("title", {}).get("runs", [])
+                    v_title = (
+                        t_runs[0].get("text", "")
+                        if t_runs
+                        else vr.get("title", {}).get("simpleText", "")
+                    )
+                    v_title = clean_yt_text(v_title) or f"Video {vid}"
+
+                    o_runs = vr.get("shortBylineText", {}).get("runs", []) or vr.get(
+                        "ownerText", {}
+                    ).get("runs", [])
+                    v_channel = clean_yt_text(
+                        o_runs[0].get("text", "") if o_runs else ""
+                    )
+
+                    v_dur = clean_yt_text(
+                        vr.get("lengthText", {}).get("simpleText", "")
+                    )
+                    if not v_dur:
+                        sec = vr.get("lengthSeconds")
+                        if sec:
+                            try:
+                                s = int(sec)
+                                v_dur = f"{s//60}:{s%60:02d}"
+                            except Exception:
+                                pass
+
+                    thumb_url = f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
+                    disp_title = (
+                        v_title
+                        if len(v_title) <= 120
+                        else v_title[:117] + "..."
+                    )
+                    info_str = (
+                        f"{v_channel} • Playlist" if v_channel else "Playlist"
+                    )
+                    disp_info = (
+                        info_str
+                        if len(info_str) <= 34
+                        else info_str[:32] + "..."
+                    )
+
+                    found_list.append({
+                        "id": vid,
+                        "title": v_title,
+                        "disp_title": disp_title,
+                        "channel": v_channel,
+                        "disp_info": disp_info,
+                        "duration": v_dur,
+                        "thumb": thumb_url,
+                        "pub": "Playlist",
+                        "age": 0.0,
+                    })
+
+        for val in node.values():
+            _extract_playlist_videos_from_json(val, found_list, limit)
+            if len(found_list) >= limit:
+                break
+
+    elif isinstance(node, list):
+        for item in node:
+            _extract_playlist_videos_from_json(item, found_list, limit)
+            if len(found_list) >= limit:
+                break
+
+
+def fetch_playlist_info_and_videos(playlist_id_or_url: str, limit: int = 150) -> dict:
+    """Fetch all videos and metadata from a YouTube Playlist using InnerTube with HTML scraping fallback."""
+    pid = extract_playlist_id(playlist_id_or_url)
+    if not pid:
+        return {"ok": False, "error": "ID hoặc Link Playlist không hợp lệ"}
+
+    browse_id = f"VL{pid}" if not pid.startswith("VL") else pid
+    payload = {
+        "context": WEB_CONTEXT,
+        "browseId": browse_id,
+    }
+
+    data = None
+    try:
+        data = _make_request("browse", payload, timeout=10)
+    except Exception as e:
+        print(f"[rh.yt] InnerTube browse error for playlist {pid}: {e}")
+
+    videos = []
+    title = ""
+
+    if data:
+        header = data.get("header", {})
+        if "pageHeaderRenderer" in header:
+            phr = header["pageHeaderRenderer"]
+            title = phr.get("pageTitle", "")
+            if not title:
+                title = (
+                    phr.get("content", {})
+                    .get("pageHeaderViewModel", {})
+                    .get("title", {})
+                    .get("dynamicTextViewModel", {})
+                    .get("text", {})
+                    .get("content", "")
+                )
+        if not title and "playlistHeaderRenderer" in header:
+            plhr = header["playlistHeaderRenderer"]
+            runs = plhr.get("title", {}).get("runs", [])
+            title = (
+                runs[0].get("text", "")
+                if runs
+                else plhr.get("title", {}).get("simpleText", "")
+            )
+        if not title:
+            meta = data.get("metadata", {}).get("playlistMetadataRenderer", {})
+            title = meta.get("title", "")
+
+        _extract_playlist_videos_from_json(data, videos, limit=limit)
+
+        cont_token = _find_continuation_token(data)
+        while cont_token and len(videos) < limit:
+            try:
+                cont_payload = {"context": WEB_CONTEXT, "continuation": cont_token}
+                cont_data = _make_request("browse", cont_payload, timeout=8)
+                _extract_playlist_videos_from_json(cont_data, videos, limit=limit)
+                cont_token = _find_continuation_token(cont_data)
+            except Exception:
+                break
+
+    if not videos:
+        try:
+            pl_url = f"https://www.youtube.com/playlist?list={pid}"
+            req = urllib.request.Request(pl_url, headers={"User-Agent": USER_AGENT})
+            ctx = _get_ssl_context()
+            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+                html_text = resp.read().decode("utf-8", errors="ignore")
+
+            m = re.search(r"var\s+ytInitialData\s*=\s*({.+?});</script>", html_text)
+            if not m:
+                m = re.search(r"ytInitialData\s*=\s*({.+?});", html_text)
+            if m:
+                js_data = json.loads(m.group(1))
+                if not title:
+                    title = (
+                        js_data.get("metadata", {})
+                        .get("playlistMetadataRenderer", {})
+                        .get("title", "")
+                    )
+                _extract_playlist_videos_from_json(js_data, videos, limit=limit)
+        except Exception as e:
+            print(f"[rh.yt] HTML scrape fallback error for playlist {pid}: {e}")
+
+    title = clean_yt_text(title)
+    if not title:
+        title = f"Playlist {pid}"
+
+    if not videos:
+        return {
+            "ok": False,
+            "error": f"Không tìm thấy video trong Playlist {pid} (Có thể playlist là riêng tư hoặc không tồn tại).",
+        }
+
+    return {
+        "ok": True,
+        "pid": pid,
+        "title": title,
+        "count": len(videos),
+        "videos": videos,
+    }
+
+
+
 def fetch_thumbnail(url: str, cache_dir: str, video_id: str) -> str:
     """Download standard YouTube 16:9 JPEG thumbnail and return local cached path."""
     if not video_id:

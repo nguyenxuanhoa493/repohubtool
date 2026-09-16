@@ -1,12 +1,12 @@
 {
-  "version": "2.20",
-  "full_release_version": "2.20",
+  "version": "2.21",
+  "full_release_version": "2.21",
   "python": "any",
-  "built": "2026-09-16T18:16:39+0700",
+  "built": "2026-09-16T18:26:26+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tái thiết kế Modal Dịch vụ & Hướng dẫn (Bố cục thẻ Card, hộp giá trị Hero Box nổi bật, tự động căn chiều cao & cuộn mượt mà)",
-    "en": "Redesign Service & Guide Modals (Card layout, prominent Hero value boxes, responsive auto-height & smooth scrolling)"
+    "vi": "Web Game Manager: Nhập trọn bộ Playlist YouTube từ liên kết (Trích xuất toàn bộ video, tự động tạo chủ đề và đồng bộ tức thì lên RetroHub)",
+    "en": "Web Game Manager: YouTube Playlist Import (Extract full video list from URL/ID, auto-create category & sync to RetroHub)"
   },
   "remove": [
     "app.pyc",
@@ -363,8 +363,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 131042,
-      "sha256": "fbc5aa8b67db3453155a917f17691c8666171caa5ed0664a4a386a5c08739f31"
+      "size": 138071,
+      "sha256": "6b4928734138bda8d6aa8b229784e7bb4fbb545f3e099696598cb47fe93e33d0"
     },
     {
       "path": "icon.png",
@@ -638,8 +638,8 @@
     },
     {
       "path": "rh/screens/youtube.py",
-      "size": 15580,
-      "sha256": "723a19b25017e59dc3711b4540105ffacaa2c9e4a509103b248ea6aea0414d3a"
+      "size": 15744,
+      "sha256": "76041f496d9674f81b2781ee978e5571ab12007348a2ddaad4d47ca25925d847"
     },
     {
       "path": "rh/services.py",
@@ -694,12 +694,12 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "a874b9ae68f42df463ef0acde5ba86c395509c663f5bf67ec1005e12262e850d"
+      "sha256": "a09a205b52f5ee11d30260d407f844c0861f5c12532cfd840467609ada6a1215"
     },
     {
       "path": "rh/yt.py",
-      "size": 24736,
-      "sha256": "8a745d398d4ce537e1e56580925eb18b7c04be483154860929ec536880d885c5"
+      "size": 36658,
+      "sha256": "1cf832c8e7a698f538ee447593fb50e4c781b520d611d9d1375ffe2d86558f2a"
     },
     {
       "path": "rh/yt_player.py",

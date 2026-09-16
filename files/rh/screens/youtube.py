@@ -64,7 +64,11 @@ class YoutubeScreen(BaseScreen):
                 elif cur_q == "Trending":
                     self.videos = yt.get_trending() or []
                 else:
-                    self.videos = yt.search_youtube(cur_q) or []
+                    cached, _ = yt.load_feed_cache(cur_q)
+                    if cached:
+                        self.videos = cached
+                    else:
+                        self.videos = yt.search_youtube(cur_q) or []
             except Exception as e:
                 self.engine.toast(f"Lỗi tải YouTube: {e}")
             self.loading = False

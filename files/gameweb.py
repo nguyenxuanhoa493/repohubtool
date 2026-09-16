@@ -1142,7 +1142,11 @@ class GameWebHandler(BaseHTTPRequestHandler):
       if q.lower() in ("trending", "thịnh hành", "top"):
         videos = yt.get_trending(limit=limit) or []
       elif q:
-        videos = yt.search_youtube(q, limit=limit) or []
+        cached, _ = yt.load_feed_cache(q)
+        if cached:
+          videos = cached
+        else:
+          videos = yt.search_youtube(q, limit=limit) or []
 
       self.send_json(
           {"ok": True, "query": q, "videos": videos, "count": len(videos)}
@@ -1739,6 +1743,52 @@ class GameWebHandler(BaseHTTPRequestHandler):
         self.send_json({"ok": False, "error": str(e)}, 500)
       return
 
+    if path == "/api/youtube/playlists/import":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        url_or_id = payload.get("url", "").strip()
+        custom_title = payload.get("custom_title", "").strip()
+        if not url_or_id:
+          self.send_json(
+              {"ok": False, "error": "Vui lòng nhập Link hoặc ID Playlist YouTube."},
+              400,
+          )
+          return
+
+        res = yt.fetch_playlist_info_and_videos(url_or_id, limit=200)
+        if not res.get("ok"):
+          self.send_json(
+              {"ok": False, "error": res.get("error", "Không thể lấy video từ Playlist này.")},
+              400,
+          )
+          return
+
+        final_title = custom_title if custom_title else res.get("title", f"Playlist {res.get('pid')}")
+        final_title = yt.clean_yt_text(final_title)
+        videos = res.get("videos", [])
+
+        # Save into search history (playlist list)
+        cur_list = yt.load_search_history() or []
+        if final_title in cur_list:
+          cur_list.remove(final_title)
+        cur_list.insert(0, final_title)
+        yt.save_search_history(cur_list)
+
+        # Cache all videos into feed cache under final_title
+        yt.save_feed_cache(final_title, videos)
+
+        self.send_json({
+            "ok": True,
+            "message": f"Đã nhập thành công Playlist '{final_title}' với {len(videos)} video!",
+            "title": final_title,
+            "count": len(videos),
+            "videos": videos,
+            "playlists": cur_list,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
     if path == "/api/youtube/playlists/delete":
       try:
         payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
@@ -2212,9 +2262,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <div id="tab-view-youtube" class="tab-view">
         <div class="app-container">
             <aside id="yt-sidebar" style="width: 320px;">
-                <div class="sidebar-header">
-                    <span>Playlist & Chủ đề</span>
-                    <button class="btn btn-sm btn-green" onclick="openAddPlaylistModal()">+ Thêm</button>
+                <div class="sidebar-header" style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                    <span style="font-weight:700;">Playlist & Chủ đề</span>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn btn-sm btn-danger" onclick="openImportPlaylistModal()" title="Dán link Playlist YouTube để nhập toàn bộ video" style="padding:4px 8px; font-size:11px;">📥 Dán link</button>
+                        <button class="btn btn-sm btn-green" onclick="openAddPlaylistModal()" title="Thêm chủ đề / từ khóa tìm kiếm" style="padding:4px 8px; font-size:11px;">+ Thêm</button>
+                    </div>
                 </div>
                 <div id="yt-playlists-list" style="padding: 10px;"></div>
                 
@@ -2323,6 +2376,34 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     <input type="file" id="art-file-input" accept="image/*" style="display:none" onchange="uploadCustomArt(event)">
                 </label>
                 <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-scrape')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nhập Playlist YouTube từ Link -->
+    <div class="modal-backdrop" id="modal-import-playlist">
+        <div class="modal-box" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3>📥 Nhập Playlist YouTube từ Link</h3>
+                <button class="modal-close" onclick="closeModal('modal-import-playlist')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Link Playlist hoặc Link Video có list=</label>
+                <input type="text" id="import-playlist-url" placeholder="https://www.youtube.com/playlist?list=PL... hoặc ID Playlist">
+                <small style="color: var(--text-sub); display:block; margin-top:5px; font-size:11px;">
+                    💡 Hỗ trợ mọi link: <code>youtube.com/playlist?list=...</code>, <code>youtu.be/...&list=...</code> hoặc mã ID Playlist (PL..., RD..., OLAK...).
+                </small>
+            </div>
+            <div class="form-group" style="margin-top:12px;">
+                <label>Tên Playlist hiển thị (tùy chọn)</label>
+                <input type="text" id="import-playlist-title" placeholder="Để trống nếu muốn tự lấy tên gốc trên YouTube">
+            </div>
+            <div id="import-playlist-status" style="display:none; margin-top:14px; padding:12px; border-radius:8px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:12px; text-align:center;">
+                <span id="import-playlist-status-text">Đang trích xuất toàn bộ video từ YouTube InnerTube...</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-import-playlist')">Hủy</button>
+                <button class="btn btn-danger" id="btn-submit-import-pl" onclick="submitImportPlaylist()">🚀 Nhập toàn bộ Playlist</button>
             </div>
         </div>
     </div>
@@ -2872,6 +2953,62 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 </div>`;
             });
             container.innerHTML = html;
+        }
+
+        function openImportPlaylistModal() {
+            document.getElementById('import-playlist-url').value = '';
+            document.getElementById('import-playlist-title').value = '';
+            document.getElementById('import-playlist-status').style.display = 'none';
+            document.getElementById('btn-submit-import-pl').disabled = false;
+            openModal('modal-import-playlist');
+        }
+
+        async function submitImportPlaylist() {
+            const url = document.getElementById('import-playlist-url').value.trim();
+            const customTitle = document.getElementById('import-playlist-title').value.trim();
+            if (!url) {
+                alert('Vui lòng dán Link hoặc ID Playlist YouTube!');
+                return;
+            }
+
+            const statusEl = document.getElementById('import-playlist-status');
+            const statusText = document.getElementById('import-playlist-status-text');
+            const btnSubmit = document.getElementById('btn-submit-import-pl');
+
+            statusEl.style.display = 'block';
+            statusText.innerText = '⏳ Đang quét danh sách và lấy toàn bộ video từ YouTube...';
+            btnSubmit.disabled = true;
+
+            try {
+                const res = await fetch('/api/youtube/playlists/import', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url, custom_title: customTitle})
+                });
+                const data = await res.json();
+                btnSubmit.disabled = false;
+
+                if (data.ok) {
+                    closeModal('modal-import-playlist');
+                    showToast(`🎉 ${data.message}`);
+                    ytPlaylists = data.playlists || [];
+                    currentYtTab = data.title;
+                    renderYouTubePlaylists();
+                    
+                    // Render the imported videos directly
+                    const titleEl = document.getElementById('yt-current-title');
+                    const countEl = document.getElementById('yt-video-count');
+                    titleEl.innerText = `📺 Playlist: ${data.title}`;
+                    countEl.innerText = `${data.count} video`;
+                    ytVideos = data.videos || [];
+                    renderYouTubeGrid(ytVideos, false);
+                } else {
+                    statusText.innerText = '❌ ' + (data.error || 'Lỗi khi nhập playlist');
+                }
+            } catch (e) {
+                btnSubmit.disabled = false;
+                statusText.innerText = '❌ Lỗi kết nối: ' + e;
+            }
         }
 
         function openAddPlaylistModal() {
