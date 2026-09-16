@@ -180,27 +180,51 @@ class ResolutionModal(BaseModal):
 
 
 class TwoColInfoModal(BaseModal):
-    """Two-column key-value or guide information dialog."""
+    """Modern card-based two-column / guide information dialog with auto-height and scroll."""
 
     def __init__(self, engine=None):
         super().__init__(engine)
         self.title = ""
         self.rows = []
         self.style = "normal"
+        self.scroll_top = 0
+        self.selected_idx = 0
 
     def open(self, data=None):
         super().open(data)
-        self.title = self.data.get("title", "Thông tin")
+        self.title = (self.data.get("title") or "THÔNG TIN HƯỚNG DẪN").upper()
         self.rows = self.data.get("rows", [])
         self.style = self.data.get("style", "normal")
+        self.scroll_top = 0
+        self.selected_idx = 0
 
     def handle_input(self, inputs):
         if not self.active:
             return False
 
-        if inputs.get("btn_a") or inputs.get("btn_b"):
+        btn_a = inputs.get("btn_a")
+        btn_b = inputs.get("btn_b")
+        btn_up = inputs.get("btn_up")
+        btn_down = inputs.get("btn_down")
+
+        if btn_b or btn_a:
             self.close()
             return True
+
+        num_rows = len(self.rows)
+        vis_limit = 4 if state.SCREEN_H >= 600 else 3
+        if btn_up:
+            if self.selected_idx > 0:
+                self.selected_idx -= 1
+                if self.selected_idx < self.scroll_top:
+                    self.scroll_top = self.selected_idx
+                return True
+        elif btn_down:
+            if self.selected_idx < num_rows - 1:
+                self.selected_idx += 1
+                if self.selected_idx >= self.scroll_top + vis_limit:
+                    self.scroll_top = self.selected_idx - vis_limit + 1
+                return True
 
         return True
 
@@ -208,32 +232,95 @@ class TwoColInfoModal(BaseModal):
         if not self.active:
             return
 
-        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 200)
+        # Dim backdrop
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
 
-        mw = 760 if self.style == "big" else 680
-        mh = 400
+        head_h = 58
+        foot_h = 48
+        card_h = 82
+        card_gap = 10
+        num_rows = len(self.rows)
+        vis_limit = 4 if state.SCREEN_H >= 600 else 3
+        vis_rows = max(1, min(num_rows, vis_limit))
+
+        # Responsive Dimensions
+        mw = min(state.SCREEN_W - 64, 940)
+        content_h = vis_rows * (card_h + card_gap) - card_gap
+        mh = head_h + foot_h + 28 + content_h
+
         mx = (state.SCREEN_W - mw) // 2
         my = (state.SCREEN_H - mh) // 2
 
-        engine.fill_rect(mx, my, mw, mh, 18, 25, 42, 255)
-        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+        # Outer Container & Glow Border
+        engine.fill_rect(mx, my, mw, mh, 14, 20, 34, 255)
+        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
 
-        engine.fill_rect(mx + 3, my + 3, mw - 6, 56, 24, 34, 58, 255)
-        engine.draw_text(self.title, engine.font_item, mx + mw // 2, my + 31, 0, 246, 246, center_x=True, center_y=True)
+        # Header Bar
+        engine.fill_rect(mx + 2, my + 2, mw - 4, head_h - 4, 20, 28, 48, 255)
+        engine.fill_rect(mx + 2, my + head_h - 2, mw - 4, 2, 0, 246, 246, 255)
+        engine.draw_text(self.title, engine.font_title, mx + 28, my + head_h // 2, 0, 246, 246, center_y=True)
 
-        start_y = my + 80
-        for idx, row in enumerate(self.rows):
-            ry = start_y + idx * 40
+        # Rows Container
+        disp_slice = self.rows[self.scroll_top : self.scroll_top + vis_rows]
+        start_y = my + head_h + 14
+        cx = mx + 24
+        cw = mw - 48
+
+        for rel_i, row in enumerate(disp_slice):
+            real_i = self.scroll_top + rel_i
+            cy = start_y + rel_i * (card_h + card_gap)
+            is_sel = (real_i == self.selected_idx) and (num_rows > vis_limit)
+
+            # Card background & border
+            engine.fill_rect(cx, cy, cw, card_h, 24 if is_sel else 18, 36 if is_sel else 26, 56 if is_sel else 44, 255)
+            engine.draw_rect(cx, cy, cw, card_h, 0 if is_sel else 40, 246 if is_sel else 56, 246 if is_sel else 88, 255, thickness=2 if is_sel else 1)
+            # Left accent stripe
+            engine.fill_rect(cx + 2, cy + 2, 4, card_h - 4, 0 if is_sel else 255, 246 if is_sel else 215, 246 if is_sel else 0, 255)
+
             if isinstance(row, (tuple, list)) and len(row) == 2:
                 lbl, val = str(row[0]), str(row[1])
-                engine.draw_text(lbl, engine.font_sub, mx + 40, ry, 160, 180, 210)
-                engine.draw_text(val, engine.font_sub, mx + 260, ry, 255, 255, 255)
-            elif isinstance(row, str):
-                engine.draw_text(row, engine.font_sub, mx + 40, ry, 220, 235, 255)
 
-        # Close hint
-        close_txt = "[B] Đóng" if state.current_lang == "VI" else "[B] Close"
-        engine.draw_text(close_txt, engine.font_badge, mx + mw // 2, my + mh - 30, 140, 160, 190, center_x=True, center_y=True)
+                # Label text
+                engine.draw_text(lbl, engine.font_badge, cx + 18, cy + 20, 185, 210, 245, center_y=True)
+
+                # Hero Value Box
+                bx = cx + 18
+                by = cy + 38
+                bw = cw - 36
+                bh = 34
+                engine.fill_rect(bx, by, bw, bh, 10, 15, 26, 255)
+                engine.draw_rect(bx, by, bw, bh, 255 if is_sel else 55, 215 if is_sel else 75, 0 if is_sel else 115, 255, thickness=1)
+
+                # Format Value Color
+                val_col = (255, 220, 0) if ("http" in val or "ssh " in val or "IP:" in val) else (255, 255, 255)
+                # Trim if exceptionally long
+                disp_val = val
+                if len(disp_val) > 70:
+                    disp_val = disp_val[:67] + "..."
+                engine.draw_text(disp_val, engine.font_sub, bx + 14, by + bh // 2, val_col[0], val_col[1], val_col[2], center_y=True)
+
+            elif isinstance(row, str):
+                engine.draw_text(row, engine.font_sub, cx + 18, cy + card_h // 2, 230, 240, 255, center_y=True)
+
+        # Scrollbar if overflow
+        if num_rows > vis_limit:
+            sb_x = mx + mw - 14
+            sb_y = start_y
+            sb_h = content_h
+            engine.fill_rect(sb_x, sb_y, 4, sb_h, 25, 35, 55, 255)
+            thumb_h = max(20, int(sb_h * (vis_limit / num_rows)))
+            thumb_y = sb_y + int((sb_h - thumb_h) * (self.scroll_top / (num_rows - vis_limit)))
+            engine.fill_rect(sb_x, thumb_y, 4, thumb_h, 0, 246, 246, 255)
+
+        # Footer Bar
+        fy = my + mh - foot_h
+        engine.fill_rect(mx + 2, fy, mw - 4, foot_h - 2, 16, 22, 36, 255)
+        engine.fill_rect(mx + 2, fy, mw - 4, 1, 38, 52, 80, 255)
+
+        fx = mx + 24
+        if num_rows > vis_limit:
+            fx = engine.draw_footer_btn(fx, fy, foot_h - 2, "▲▼", "Cuộn xem" if state.current_lang == "VI" else "Scroll", (70, 95, 140), is_dark_btn=False)
+        engine.draw_footer_btn(mx + mw - 165, fy, foot_h - 2, "B", "Đóng" if state.current_lang == "VI" else "Close", (255, 75, 75), is_dark_btn=False)
 
 
 class StreamLoadingModal(BaseModal):

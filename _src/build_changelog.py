@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.20", "2026-09-16",
+     ("Redesign Service & Guide Modals (Card layout, prominent Hero value boxes, responsive auto-height & smooth scrolling)",
+      "Tái thiết kế toàn diện các Modal Dịch vụ & Hướng dẫn (Bố cục thẻ Card hiện đại, hộp giá trị Hero Box nổi bật, tự động căn chỉnh chiều cao & cuộn mượt mà)"),
+     [("Card-based Modal Layout: Upgraded TwoColInfoModal with card panels, cyan accent borders, and structured hierarchy, eliminating text overlapping across all screen sizes.",
+       "Bố cục Thẻ Card Hiện Đại: Nâng cấp TwoColInfoModal với các thẻ phân tầng riêng biệt, viền dạ quang và cấu trúc thông tin rõ ràng, chấm dứt hoàn toàn hiện tượng chữ bị đè dính."),
+      ("Prominent Hero Value Boxes: Highlighted critical connection details (Web URLs, SSH commands, IPs, and passwords) in dark golden Hero boxes for instant readability.",
+       "Hộp Giá Trị Hero Box Nổi Bật: Tự động đóng khung các thông tin kết nối quan trọng (Địa chỉ Web, Lệnh SSH, IP, Cổng port và Mật khẩu) trong các hộp viền vàng Gold sắc nét, dễ quan sát từ xa."),
+      ("Dynamic Height & Smooth Scrolling: Added auto-adjusting window dimensions and D-pad [▲▼] scrolling support for long guide lists.",
+       "Tự Động Căn Chiều Cao & Cuộn Danh Sách: Tự động điều chỉnh kích thước modal theo số lượng hàng và hỗ trợ cuộn [▲▼] mượt mà với thanh Scrollbar khi danh sách dài.")]),
+
     ("2.19", "2026-09-16",
      ("Fix Netplay Lobby crash, handle API response safely & add standalone Netplay game launcher",
       "Sửa triệt để lỗi văng app khi vào Sảnh game (Netplay), tối ưu nạp danh sách phòng Cloudflare & tự động khởi chạy game độc lập"),
