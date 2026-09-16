@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.15", "2026-09-16",
+     ("Restructure Main Menu (Game Library, Watch YouTube, Game Lobby), reorganize ROM Store (Search on top, Top 100 Games, Romhacks), unified sequential numbering, and smooth circular wrap-around navigation",
+      "Tái cấu trúc Menu chính (Thư viện game, Xem YouTube, Sảnh game), cơ cấu Kho ROM (Tìm kiếm game, Top 100 game, Kho game hack), đồng bộ số thứ tự STT và tối ưu cuộn xoay vòng danh sách"),
+     [("Main Menu & ROM Store Reorganization: Moved '1. Game Library' to the top of the main menu, followed by '2. Watch YouTube' and '3. Game Lobby (Netplay)'. Reorganized ROM Store with '1. Search games' at the top, followed by 'Top 100 Games', 'Romhacks', and cleaned duplicate entries.",
+       "Tái cơ cấu Menu chính & Kho ROM: Đưa '1. Thư viện game' lên đầu Menu chính, tiếp theo là '2. Xem YouTube' và '3. Sảnh game'. Sắp xếp lại Kho ROM với '1. Tìm kiếm game' lên đầu, bổ sung 'Top 100 game hay nhất', 'Kho game hack' và lược bỏ các mục trùng lặp."),
+      ("Unified Sequential Numbering (STT): Added clear numeric prefixes across all UI screens (Main, Store, Library list & grid, Settings, Utilities, LED, Netplay, YouTube, and Splash screens) for effortless navigation.",
+       "Đồng bộ đánh số thứ tự (STT): Bổ sung tiền tố số thứ tự (1., 2., 3....) rõ ràng trên toàn bộ các màn hình (Menu chính, Kho ROM, Thư viện game dạng danh sách & lưới, Cài đặt, Tiện ích, LED, Sảnh game, YouTube và Splash Screen)."),
+      ("Smooth Viewport Scrolling & Circular Wrap-Around Navigation: Implemented sliding window viewport scrolling and bidirectional circular wrap-around navigation (up/down and left/right) on all lists, 2D grids, and modal dialogs.",
+       "Tối ưu cuộn khung nhìn & Di chuyển xoay vòng: Áp dụng cơ chế cuộn cửa sổ hiển thị mượt mà kèm khả năng di chuyển xoay vòng 4 hướng (lên/xuống, trái/phải) trên tất cả danh sách, lưới 2D và hộp thoại modal."),
+      ("Modular Screen & Engine Architecture: Refactored screens into rh/screens/, modals into rh/modals/, and core loop into rh/engine.py with py_compile verification.",
+       "Kiến trúc module hóa màn hình & Engine: Tách các màn hình vào rh/screens/, modals vào rh/modals/ và vòng lặp chính vào rh/engine.py, đảm bảo hiệu năng và tính ổn định cao.")]),
+
     ("2.01", "2026-09-11",
      ("Fix PSP game launch (PPSSPP Vulkan/GL) on CrossMix-OS, unified InputManager, and enhanced diagnostics",
       "Sửa lỗi khởi chạy game PSP (PPSSPP Vulkan/GL) trên CrossMix-OS, đồng bộ bộ điều khiển InputManager & nâng cấp báo cáo chẩn đoán"),

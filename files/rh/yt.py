@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """YouTube client via InnerTube API for RetroHub on TrimUI devices."""
 
+import html
 import json
 import os
 import re
@@ -9,6 +10,34 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+
+_EMOJI_PATTERN = re.compile(
+    "[\U00010000-\U0010ffff"  # Supplemental symbols & pictographs, emojis
+    "\u2600-\u26ff"            # Misc symbols
+    "\u2700-\u27bf"            # Dingbats
+    "\u2300-\u23ff"            # Misc technical
+    "\ufe00-\ufe0f"            # Variation selectors
+    "\u200d"                   # Zero-width joiner
+    "]+",
+    flags=re.UNICODE
+)
+
+
+def clean_yt_text(text: str) -> str:
+    """Sanitize HTML entities, emojis, and unrenderable characters for SDL_ttf."""
+    if not text:
+        return ""
+    # 1. Unescape HTML entities (&amp; -> &, &#39; -> ', &quot; -> ", etc.)
+    text = html.unescape(text)
+    # 2. Replace typographic quotes / dashes with standard ASCII equivalents
+    text = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
+    text = text.replace("–", "-").replace("—", "-")
+    # 3. Strip emojis / high unicode pictographs
+    text = _EMOJI_PATTERN.sub("", text)
+    # 4. Collapse multiple whitespaces
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
 
 from rh.paths import (
     YT_HISTORY_FILE,
@@ -67,7 +96,7 @@ def get_effective_query(query: str) -> str:
 def load_search_history() -> list:
     """Load list of recent search queries from disk. Falls back to DEFAULT_QUERIES if empty or missing."""
     try:
-        if os.path.exists(YT_HISTORY_FILE):
+        if os.path.exists(YT_HISTORY_FILE) and os.path.getsize(YT_HISTORY_FILE) > 2:
             with open(YT_HISTORY_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list) and data:
@@ -79,7 +108,7 @@ def load_search_history() -> list:
                     if cleaned:
                         return cleaned[:10]
     except Exception as e:
-        print(f"[rh.yt] Error loading search history: {e}")
+        pass
     return list(DEFAULT_QUERIES)
 
 
@@ -121,7 +150,14 @@ def load_favorites() -> list:
                 with open(p, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 if isinstance(data, list):
-                    return data
+                    cleaned = []
+                    for it in data:
+                        if isinstance(it, dict) and it.get("id"):
+                            it["title"] = clean_yt_text(it.get("title", ""))
+                            it["channel"] = clean_yt_text(it.get("channel", ""))
+                            it["disp_title"] = it["title"] if len(it["title"]) <= 120 else it["title"][:117] + "..."
+                            cleaned.append(it)
+                    return cleaned
             except Exception:
                 pass
     return []
@@ -254,6 +290,7 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                 # Title
                 title_runs = v.get("title", {}).get("runs", [])
                 title = title_runs[0].get("text", "") if title_runs else v.get("title", {}).get("simpleText", "")
+                title = clean_yt_text(title)
                 if not title:
                     title = "Video YouTube"
 
@@ -263,17 +300,17 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                     or v.get("shortBylineText", {}).get("runs", [])
                     or v.get("longBylineText", {}).get("runs", [])
                 )
-                channel = owner_runs[0].get("text", "") if owner_runs else ""
+                channel = clean_yt_text(owner_runs[0].get("text", "") if owner_runs else "")
 
                 # Duration
-                duration = v.get("lengthText", {}).get("simpleText", "")
+                duration = clean_yt_text(v.get("lengthText", {}).get("simpleText", ""))
 
                 # Thumbnail: Always use standard YouTube 16:9 JPEG (mqdefault.jpg: 320x180)
                 # YouTube InnerTube returns WebP which SDL_image on TrimUI cannot decode.
                 thumb_url = f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"
 
                 # Upload relative date & computed age in hours
-                pub = v.get("publishedTimeText", {}).get("simpleText", "")
+                pub = clean_yt_text(v.get("publishedTimeText", {}).get("simpleText", ""))
                 age = parse_age_hours(pub)
 
                 # Pre-format truncated titles and channel info for zero-overhead UI rendering
@@ -423,12 +460,19 @@ def search_youtube(query: str, limit: int = 24) -> list:
 
 
 def get_trending(limit: int = 24) -> list:
-    """Get latest music videos on YouTube using default query 'Music'."""
-    items = search_youtube("Music", limit=limit)
+    """Fetch YouTube Trending / Music videos."""
+    cached, ts = load_feed_cache("Music")
+    if cached and (time.time() - ts) < 3600:
+        return cached
+    items = search_youtube("Nhạc Trẻ Trending Việt Nam", limit=limit)
     if items:
-        save_feed_cache("trending", items)
         save_feed_cache("Music", items)
     return items
+
+
+# Aliases for cross-module compatibility
+search_videos = search_youtube
+fetch_trending = get_trending
 
 
 def fetch_thumbnail(url: str, cache_dir: str, video_id: str) -> str:

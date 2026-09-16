@@ -383,19 +383,49 @@ def download_single_cht_content(sys_part, cht_file):
     return None
 
 
+def has_cheat_file(sys_code, rom_filename, base_sd=None):
+    """Kiểm tra nhanh xem ROM này đã có file .cht trên máy hay chưa (~0.1ms)."""
+    if not sys_code or not rom_filename:
+        return False
+    sd = base_sd or SDCARD_PATH
+    primary_dir = os.path.join(sd, "RetroArch", ".retroarch", "cheats")
+    secondary_dir = os.path.join(sd, "RetroArch", "cheats")
+    rom_base = os.path.splitext(os.path.basename(rom_filename))[0]
+
+    code = re.sub(r'\(.*?\)|\[.*?\]', '', sys_code).strip().upper()
+    libretro_systems = LIBRETRO_SYSTEM_MAP.get(code, [sys_code])
+
+    for base_dir in (primary_dir, secondary_dir):
+        if not os.path.isdir(base_dir):
+            continue
+        for l_sys in libretro_systems:
+            sys_path = os.path.join(base_dir, l_sys)
+            if not os.path.isdir(sys_path):
+                continue
+            if os.path.isfile(os.path.join(sys_path, f"{rom_base}.cht")):
+                return True
+    return False
+
+
 def check_or_download_single_cheat(sys_code, rom_filename, base_sd=None):
     sd = base_sd or SDCARD_PATH
     primary_dir = os.path.join(sd, "RetroArch", ".retroarch", "cheats")
+    secondary_dir = os.path.join(sd, "RetroArch", "cheats")
     rom_base = os.path.splitext(rom_filename)[0]
 
     code = re.sub(r'\(.*?\)|\[.*?\]', '', sys_code).strip().upper()
     libretro_systems = LIBRETRO_SYSTEM_MAP.get(code, [sys_code])
 
-    for l_sys in libretro_systems:
-        target_cht = os.path.join(primary_dir, l_sys, f"{rom_base}.cht")
-        if os.path.isfile(target_cht):
-            return {"ok": True, "exists": True, "path": target_cht, "message": "Game này đã có sẵn file Cheat trên máy."}
+    # 1. Kiểm tra xem đã có sẵn file Cheat trên máy chưa
+    for base_dir in (primary_dir, secondary_dir):
+        if not os.path.isdir(base_dir):
+            continue
+        for l_sys in libretro_systems:
+            target_cht = os.path.join(base_dir, l_sys, f"{rom_base}.cht")
+            if os.path.isfile(target_cht):
+                return {"ok": True, "exists": True, "path": target_cht, "message": "Game này đã có sẵn file Cheat trên máy."}
 
+    # 2. Tìm trong kho Libretro Index và tải về
     idx = get_cheats_index()
     for l_sys in libretro_systems:
         available_cheats = idx.get(l_sys, [])
@@ -406,19 +436,22 @@ def check_or_download_single_cheat(sys_code, rom_filename, base_sd=None):
         if matched_cht:
             content = download_single_cht_content(l_sys, matched_cht)
             if content:
-                sys_dest = os.path.join(primary_dir, l_sys)
-                os.makedirs(sys_dest, exist_ok=True)
-                target_file = os.path.join(sys_dest, f"{rom_base}.cht")
-                with open(target_file, "wb") as f:
-                    f.write(content)
-                orig_file = os.path.join(sys_dest, matched_cht)
-                if not os.path.isfile(orig_file):
+                saved_path = None
+                for base_dir in (primary_dir, secondary_dir):
                     try:
-                        with open(orig_file, "wb") as of:
-                            of.write(content)
+                        sys_dest = os.path.join(base_dir, l_sys)
+                        os.makedirs(sys_dest, exist_ok=True)
+                        target_file = os.path.join(sys_dest, f"{rom_base}.cht")
+                        with open(target_file, "wb") as f:
+                            f.write(content)
+                        saved_path = target_file
+                        orig_file = os.path.join(sys_dest, matched_cht)
+                        if not os.path.isfile(orig_file):
+                            with open(orig_file, "wb") as of:
+                                of.write(content)
                     except Exception:
                         pass
-                return {"ok": True, "downloaded": True, "path": target_file, "message": "Đã tải file Cheat thành công!"}
+                return {"ok": True, "downloaded": True, "path": saved_path or os.path.join(primary_dir, l_sys, f"{rom_base}.cht"), "message": "Đã tải file Cheat thành công!"}
 
     return {"ok": False, "message": "Chưa có file Cheat trong kho Libretro cho game này."}
 

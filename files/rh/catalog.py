@@ -2,6 +2,7 @@
 """The ROM catalogue: local scans, system names, and building list views."""
 
 import os
+import re
 
 from .paths import SDCARD_PATH
 from . import state
@@ -17,6 +18,13 @@ VALID_EXTS = (
     ".cue", ".bin", ".wsc", ".ws", ".ngp", ".ngc", ".pce", ".n64", ".z64", ".v64", ".cdi", 
     ".gdi", ".a26", ".a78", ".lnx", ".fig", ".smd"
 )
+
+def clean_game_title(title):
+    """Strip numbering prefixes such as '097 - Contra' -> 'Contra', '01. Mario' -> 'Mario'."""
+    if not title:
+        return ""
+    cleaned = re.sub(r'^\d+\s*[-–—.]\s*', '', str(title).strip())
+    return cleaned if cleaned else str(title).strip()
 
 def scan_all_downloaded_games():
     """Scans all folders in /mnt/SDCARD/Roms/ to list all downloaded games across all systems."""
@@ -89,12 +97,15 @@ def scan_all_downloaded_games():
                                 sub_media = os.path.join(scan_dir, ".media", f"{base_name}.png")
                                 img_p = sub_media if os.path.exists(sub_media) else None
 
+                        clean_name = clean_game_title(base_name)
                         results.append({
                             "sys_code": actual_code,
                             "sys_name": get_system_display_name(actual_code),
-                            "title": base_name,
+                            "title": clean_name,
+                            "raw_title": base_name,
                             "filename": name,
                             "rom_path": entry.path,
+                            "path": entry.path,
                             "img_path": img_p,
                             "size_str": sz_str
                         })
@@ -199,16 +210,15 @@ def get_java_category_list():
 
 
 def alpha_index(games):
-    """(vi_tri_dau_tien, so_luong) theo tung chu cai, tinh tren danh sach dua vao.
-
-    Index chi co nghia trong dung mot thu tu, nen ham phai duoc goi voi chinh
-    danh sach se hien ra sau khi nhay; dua nham thu tu thi bam "A" se roi vao
-    mot game bat dau bang chu khac. Ten khong bat dau bang chu cai - "1942",
-    "<unknown>", ten rong - deu ve chung ke "#"."""
+    """Scan list of games (or strings) and return (avail_map, counts_map)."""
     avail = {}
     counts = {}
     for idx, g in enumerate(games):
-        title = (g.get("title") or "").strip().upper()
+        if isinstance(g, dict):
+            raw = g.get("title") or g.get("name") or g.get("filename", "")
+        else:
+            raw = str(g or "")
+        title = clean_game_title(raw).strip().upper()
         ch = title[0] if title and title[0].isalpha() else "#"
         if ch not in avail:
             avail[ch] = idx
@@ -222,9 +232,11 @@ def clear_catalog_cache():
     global _catalog_view_cache
     _catalog_view_cache.clear()
 
-def get_games_for_view(src_code, sys_code, sort_by=None, category=None):
+def get_games_for_view(src_code, sys_code, sort_by=None, category=None, **kwargs):
     """Returns list of game dicts for the specified source and system filter using SQLite DAO.
     Caches raw rows in memory so switching sort mode or opening alphabet jump is instantaneous."""
+    if category is None and "java_cat" in kwargs:
+        category = kwargs["java_cat"]
     active_sort = sort_by or state.rom_sort_mode
     base_key = (src_code, sys_code, category)
 

@@ -9,6 +9,8 @@ smooth hold-to-scroll autorepeat.
 import json
 import os
 import sys
+import time
+import ctypes
 
 try:
     import sdl2
@@ -336,3 +338,37 @@ class InputManager:
                     if now - k_st["last_repeat"] > self.repeat_interval:
                         setattr(self, f"btn_{k_dir}", True)
                         k_st["last_repeat"] = now
+
+    def poll(self, has_controller=False, current_screen=None):
+        """Poll all pending SDL2 events and return a dictionary of button actions."""
+        self.reset()
+        now = time.time()
+        event = sdl2.SDL_Event()
+        quit_flag = False
+
+        while sdl2.SDL_PollEvent(ctypes.byref(event)) != 0:
+            etype = event.type
+            if etype == sdl2.SDL_QUIT:
+                print(f"[DEBUG INPUT] SDL_QUIT received! type={etype}")
+                quit_flag = True
+            self.process_event(event, has_controller, now, current_screen)
+
+        self.update_repeats(now)
+
+        return {
+            "btn_up": self.btn_up,
+            "btn_down": self.btn_down,
+            "btn_left": self.btn_left,
+            "btn_right": self.btn_right,
+            "btn_l1": self.btn_l1,
+            "btn_r1": self.btn_r1,
+            "btn_a": self.btn_a,
+            "btn_b": self.btn_b,
+            "btn_x": self.btn_x,
+            "btn_y": self.btn_y,
+            "btn_start": self.btn_start,
+            "btn_select": self.btn_f1,
+            "btn_f1": self.btn_f1,
+            "backspace": self.backspace,
+            "quit": quit_flag
+        }

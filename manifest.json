@@ -1,12 +1,12 @@
 {
-  "version": "2.14",
+  "version": "2.15",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-15T23:38:00+0700",
+  "built": "2026-09-16T11:57:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Khắc phục lỗi Netplay: Tự động đóng phòng và dọn dẹp tunnel khi thoát game, nhận diện và chặn tự kết nối vào phòng của chính mình (bấm [X] để đóng phòng nhanh), sửa lỗi kết nối nhập mã thủ công",
-    "en": "Fix Netplay Connection: Auto-close room and cleanup tunnel on game exit, prevent joining own room with quick [X] close action, fix manual room code connection"
+    "vi": "Tái cấu trúc Menu chính (Thư viện game, Xem YouTube, Sảnh game), cơ cấu Kho ROM (Tìm kiếm game, Top 100 game, Kho game hack), đồng bộ số thứ tự STT và tối ưu cuộn xoay vòng danh sách",
+    "en": "Restructure Main Menu (Game Library, Watch YouTube, Game Lobby), reorganize ROM Store (Search on top, Top 100 Games, Romhacks), unified sequential numbering, and smooth circular wrap-around navigation"
   },
   "remove": [
     "app.pyc",
@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 391031,
-      "sha256": "4e0418c77061ce9201dbb6ff4e2df1fddf6003a0d2e0a5329299d89d38a87672"
+      "size": 3726,
+      "sha256": "1d3f4890b0ebeb18b8c86b00ec31257317dd53966c3febc048acf6af4c9a44a1"
     },
     {
       "path": "assets/fallback.ttf",
@@ -383,8 +383,8 @@
     },
     {
       "path": "rh/__init__.py",
-      "size": 69,
-      "sha256": "9c4745906c2f854ea1f12b6444a5fa35309d8b534cf4c958f5e54684ecfab82e"
+      "size": 711,
+      "sha256": "b78cb8e3bd4e880a6efd44514e3705f79b5c4f7473c081803ff5292ec72b8637"
     },
     {
       "path": "rh/arcade_device_roms.py",
@@ -408,18 +408,18 @@
     },
     {
       "path": "rh/boxart_scraper.py",
-      "size": 30017,
-      "sha256": "99e91a765d5b67bb4972b5b6fa1ed48d6fd1cda55c91890832a6474cf328b2a3"
+      "size": 30942,
+      "sha256": "a9115a215d543a90562b216d07d16fba719defec7f94374e2151095a99d512d2"
     },
     {
       "path": "rh/catalog.py",
-      "size": 11540,
-      "sha256": "f46dd1ac99472da75a1cdb0dba33766193278d3e46f3897970797620e2a292ad"
+      "size": 11959,
+      "sha256": "dd518a6d526593c98558baca6e80a364cd3d7c63cc3bfbaa6d10ce5f2852ccb8"
     },
     {
       "path": "rh/cheat_manager.py",
-      "size": 24263,
-      "sha256": "514a14c8c271e444964949c1f18c270008942f0f54d91392111c182f4db674b4"
+      "size": 25797,
+      "sha256": "cc96371ed2cf749ebce6ed1c378909ac76b26d71d7c4259ad0626a7067291353"
     },
     {
       "path": "rh/cheats_index.json.gz",
@@ -442,19 +442,29 @@
       "sha256": "5b0d23a6f70f7be4d22c77cf7c8fef9e95417835977fb5922738aa6e902675e6"
     },
     {
+      "path": "rh/engine.py",
+      "size": 17452,
+      "sha256": "6495f147ccf8e5e6b0144f0e39db83cf4f024457c895fd5b8915794e6113f1ee"
+    },
+    {
+      "path": "rh/env.py",
+      "size": 5708,
+      "sha256": "efc20841dd3cf21340a2e577753f919236392b7255c4acb4927e78edd85e5a4a"
+    },
+    {
       "path": "rh/fonts.py",
       "size": 2302,
       "sha256": "423bacf4e8d95afc0239b6134e0ea0793090c37e165888c633fae72795f5d67d"
     },
     {
       "path": "rh/i18n.py",
-      "size": 43916,
-      "sha256": "71e4bc3039323afa3aeeb328518388083eb3e9aca3d47113d305b4fcf830cf21"
+      "size": 50512,
+      "sha256": "79744530afc056854bfa418058d0cff99069f33c862f707d07fe1c6e59f1e49d"
     },
     {
       "path": "rh/inputs.py",
-      "size": 12895,
-      "sha256": "12693dbf38cad20a0f285aa5c1295df3fb5599707ab8ab2230ec2938b7c6ba9c"
+      "size": 14092,
+      "sha256": "576ae419779c68673c1f8ed7849e98a03e13089d53e61a853f5578cd9fb2dd95"
     },
     {
       "path": "rh/j2me.py",
@@ -507,6 +517,41 @@
       "sha256": "128a717d8213eadd82863692d876facb401babb1de63ae4a0f13f4d9954c8eee"
     },
     {
+      "path": "rh/modals/__init__.py",
+      "size": 71,
+      "sha256": "b53779651f22eaa1f5c73cd0edab8f113eaab09358508f9aeb90562a0c0687c8"
+    },
+    {
+      "path": "rh/modals/alphabet.py",
+      "size": 5819,
+      "sha256": "9b73b669029ea76a04c63c7bf86e1739847cdbd199ec319bbdb21a4b6affbe9d"
+    },
+    {
+      "path": "rh/modals/base.py",
+      "size": 684,
+      "sha256": "db58bd36d2a7a7322c0e57fc416a878bf1886ad210b7570d6468fc66b05acb58"
+    },
+    {
+      "path": "rh/modals/common.py",
+      "size": 12539,
+      "sha256": "bfed15ffa604918e78599a6265a433be3ef873a1180a761bab11b07dde921dbb"
+    },
+    {
+      "path": "rh/modals/game_action.py",
+      "size": 13412,
+      "sha256": "5d1fb3f7ef63f0beb65bd9c4c736df1996e64a134bf375c8105f4514e8ef8ce5"
+    },
+    {
+      "path": "rh/modals/j2me.py",
+      "size": 4588,
+      "sha256": "4cfddb62effd0d1c7c0087a1e07dcde3fc245542af56d09874aae95be8472162"
+    },
+    {
+      "path": "rh/modals/netplay.py",
+      "size": 20581,
+      "sha256": "580e081674a1f13de14b35b1204586e2115fab4e27d3ec263e6ed7f071963133"
+    },
+    {
       "path": "rh/neterrors.py",
       "size": 3665,
       "sha256": "379319bada496f70030cfb875403fa34981032da120e5c30ca33fbdf1de0e0bd"
@@ -530,6 +575,66 @@
       "path": "rh/save_manager.py",
       "size": 10965,
       "sha256": "bc6c85e7b9904d20435638bb589927425ab9c643843216ab971ad044cbc23541"
+    },
+    {
+      "path": "rh/screens/__init__.py",
+      "size": 77,
+      "sha256": "0a7494492eff5ecce45ff243250941998f0c9a84db4f8ec0884906e7b11d0a99"
+    },
+    {
+      "path": "rh/screens/base.py",
+      "size": 1086,
+      "sha256": "0c3ce172bea32f04ce155ab4459e3b353ef7b857575e9413fff50b84a2680c19"
+    },
+    {
+      "path": "rh/screens/home.py",
+      "size": 5846,
+      "sha256": "311457df53946fae25aece24fe0e7485823a3191d40233d10ed965c7caac8d5f"
+    },
+    {
+      "path": "rh/screens/keyboard.py",
+      "size": 5611,
+      "sha256": "581a535c4be211ba8e2628949a7ab00f26cc98f1987822963b47a904d93a287e"
+    },
+    {
+      "path": "rh/screens/led.py",
+      "size": 9038,
+      "sha256": "c6e87bd49fca0b983f792552e684cc425c46cf431ca1b436dca88a7879d80a89"
+    },
+    {
+      "path": "rh/screens/library.py",
+      "size": 21866,
+      "sha256": "143d9a833690d2d5c14abcaa22c0722ceb646ee6030e93b4bb20258dbd206c56"
+    },
+    {
+      "path": "rh/screens/network.py",
+      "size": 9549,
+      "sha256": "04aaccae560327059a7419ffdb612d19d54ee7023501aea338dc1cc016299143"
+    },
+    {
+      "path": "rh/screens/settings.py",
+      "size": 7273,
+      "sha256": "7ca05031a23cdd91bef21580b3431b7cc77dab01de540e29a9b1396eb6748987"
+    },
+    {
+      "path": "rh/screens/splash.py",
+      "size": 5883,
+      "sha256": "35af43263036c99c9c712e6582a508de7d9b7efaa257ea4d69361b8a28d5f39a"
+    },
+    {
+      "path": "rh/screens/store.py",
+      "size": 18587,
+      "sha256": "bee951f55d6c99daf6bc914586b5f1c7f1e2513ca416b42ab5eb23bc2d3c675d"
+    },
+    {
+      "path": "rh/screens/utilities.py",
+      "size": 8996,
+      "sha256": "89d511a150d33f256a4a3a97451e0d8d442b98a5707f660f730fd7d1835f7375"
+    },
+    {
+      "path": "rh/screens/youtube.py",
+      "size": 15580,
+      "sha256": "723a19b25017e59dc3711b4540105ffacaa2c9e4a509103b248ea6aea0414d3a"
     },
     {
       "path": "rh/services.py",
@@ -557,6 +662,26 @@
       "sha256": "20b2c48d4bd86daacf314e6b2ec25eca6cfc0c09aee792a2d07828a5d6998391"
     },
     {
+      "path": "rh/ui/__init__.py",
+      "size": 87,
+      "sha256": "6643a800c9073b1a939898fe7063e032a5c6f5b9866a4dc7256a53b37fa0fe30"
+    },
+    {
+      "path": "rh/ui/boxart.py",
+      "size": 5003,
+      "sha256": "ba84f6c21c88b04d2a12d7b7b075757695e9f788df576bd3bef3a5145842644a"
+    },
+    {
+      "path": "rh/ui/primitives.py",
+      "size": 10724,
+      "sha256": "1227e0c2b00d743973f623ad1253c26f41d0748c292e343fd9c70af5ef739e09"
+    },
+    {
+      "path": "rh/ui/toast.py",
+      "size": 2075,
+      "sha256": "6fd944583b9a17a1f0c0e32ac76f1ba0a7e5cf2ad555aa7d5b9f15d1d7ca5cf7"
+    },
+    {
       "path": "rh/updater.py",
       "size": 26294,
       "sha256": "e25c5410579e536604bf131c1120c213e3e5ed83d7caa99efafea930e67d03b6"
@@ -564,17 +689,17 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "6b2ffa729dc900bbc0d92eff2b206a90958d29b3d373d294e5bf650d02c543d8"
+      "sha256": "1a7433f13cfe9f87e4d5a1e9c840af6d6013b2b269edebef90309e896da3cecb"
     },
     {
       "path": "rh/yt.py",
-      "size": 22947,
-      "sha256": "b2188176413270075b2aa9599350ece6e9c678b9032374e3e2417e20bea640ca"
+      "size": 24736,
+      "sha256": "8a745d398d4ce537e1e56580925eb18b7c04be483154860929ec536880d885c5"
     },
     {
       "path": "rh/yt_player.py",
-      "size": 15293,
-      "sha256": "9e93b8a4c9e940aa3d9f815b2a77ee022ec5ef277c2184a2c8d6255a0c594ed1"
+      "size": 16795,
+      "sha256": "a91119067cde545541e9b606d8f5ae2a869025dfe4ed7093b186103d54655b7f"
     },
     {
       "path": "streamer.py",
