@@ -114,6 +114,11 @@ class UpdateModal(BaseModal):
             state.save_settings()
             request_restart()
             self.restart = True
+            # Tự động thoát app sau 1.2s để launch.sh khởi động lại với bản mới
+            import time
+            time.sleep(1.2)
+            if self.engine:
+                self.engine.running = False
         else:
             self.failed = True
             self.status = tr("upd_failed")

@@ -1,12 +1,12 @@
 {
-  "version": "2.24",
+  "version": "2.25",
   "full_release_version": "2.21",
   "python": "any",
-  "built": "2026-09-16T19:37:24+0700",
+  "built": "2026-09-16T19:57:57+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tự động mở SSH Internet Online khi gửi Telegram & chỉ hiển thị hướng dẫn khi dịch vụ tương ứng được BẬT",
-    "en": "Auto-open Remote SSH Tunnel for Telegram & dynamically show sub-guides only when services are ON"
+    "vi": "Khắc phục triệt để hiện tượng treo màn hình \"Installed. Restarting\" sau khi cập nhật OTA (Tự động khởi động lại liền mạch)",
+    "en": "Fix OTA Update restart freeze (Auto-exit & restart RetroHub seamlessly after installation finishes)"
   },
   "remove": [
     "app.pyc",
@@ -553,8 +553,8 @@
     },
     {
       "path": "rh/modals/update.py",
-      "size": 9213,
-      "sha256": "ebb0a4ed070c0783b05879016e713dd1d157efdabbb3b87a27861460a40bb0f5"
+      "size": 9439,
+      "sha256": "0b6ca5d117edced58fc8fe53d0674dd78bbbe18475be388502aaf371cb4060c9"
     },
     {
       "path": "rh/neterrors.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "18c8bf69062ae36791505bb6257a3db7dbad74622deaf324127d780c2790dab4"
+      "sha256": "8d5ef861dfb94bd79a57444baee7233021b2a569f3f4b5fa5d12926be013e5f5"
     },
     {
       "path": "rh/yt.py",
