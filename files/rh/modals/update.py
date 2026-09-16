@@ -42,8 +42,14 @@ class UpdateModal(BaseModal):
         self.manifest = data.get("manifest")
         self.files = data.get("files") or []
         self.cat_only = data.get("cat_only", False)
+        self.rt_only = False
         if self.manifest and not self.cat_only:
-            self.cat_only = not is_newer(self.manifest.get("version", ""), APP_VERSION)
+            is_new = is_newer(self.manifest.get("version", ""), APP_VERSION)
+            if not is_new:
+                if catalog_pending(self.manifest) and not self.files and not runtime_pending(self.manifest):
+                    self.cat_only = True
+                elif runtime_pending(self.manifest) and not self.files:
+                    self.rt_only = True
         self.selected_opt = 0
         self.busy = False
         self.failed = False
@@ -79,7 +85,9 @@ class UpdateModal(BaseModal):
 
         ok = False
         try:
-            if download_update(m, files, progress=prog):
+            if not files:
+                ok = True
+            elif download_update(m, files, progress=prog):
                 self.phase_title = "Đang cài đặt & thay thế tệp..."
                 self.status = tr("upd_installing")
                 self.progress_pct = 0.95
@@ -108,9 +116,13 @@ class UpdateModal(BaseModal):
                 except RuntimeUpdateError as re_:
                     print(f"Runtime update failed: {re_}")
                     state.pending_catalog_notice = tr(re_.key)
+                    self.status = f"{tr('upd_failed')}: {tr(re_.key)}"
+                    ok = False
                 except Exception as e:
                     print(f"Runtime update error: {e}")
                     state.pending_catalog_notice = tr(RUNTIME_FAILED)
+                    self.status = f"{tr('upd_failed')}: Runtime"
+                    ok = False
 
             try:
                 ensure_latest_j2me_installed()
@@ -118,16 +130,28 @@ class UpdateModal(BaseModal):
                 print(f"Error ensuring latest J2ME runtime after update: {e}")
 
         if ok and catalog_pending(m):
+            is_cat_only = getattr(self, "cat_only", False) or not files
+
             def enter_unpack():
                 self.phase_title = "Đang giải nén Cơ sở dữ liệu Kho game..."
                 self.status = tr("upd_cat_unpacking")
-                self.progress_pct = 0.98
+                self.progress_pct = 0.50 if is_cat_only else 0.96
 
             def cat_prog(done, total, path):
-                self.phase_title = "Đang tải Cơ sở dữ liệu Kho game..."
-                self.status = f"{tr('upd_cat_downloading')} {done}/{total}"
                 if total > 0:
-                    self.progress_pct = 0.95 + min(0.04, (done / total) * 0.04)
+                    fraction = min(1.0, done / total)
+                    d_str = human_bytes(done)
+                    t_str = human_bytes(total)
+                    if path.endswith(".gz"):
+                        self.phase_title = "Đang tải Cơ sở dữ liệu..."
+                        self.progress_file = "roms_store.sqlite3.gz"
+                        self.status = f"Tải {d_str} / {t_str}"
+                        self.progress_pct = fraction * 0.50 if is_cat_only else 0.92 + fraction * 0.04
+                    else:
+                        self.phase_title = "Đang giải nén Cơ sở dữ liệu..."
+                        self.progress_file = "roms_store.sqlite3"
+                        self.status = f"Bung nén {d_str} / {t_str}"
+                        self.progress_pct = 0.50 + fraction * 0.48 if is_cat_only else 0.96 + fraction * 0.03
 
             try:
                 staged_cat = download_catalog(m, progress=cat_prog, on_phase=enter_unpack)
@@ -136,15 +160,20 @@ class UpdateModal(BaseModal):
             except CatalogError as ce:
                 print(f"Catalog update failed: {ce}")
                 state.pending_catalog_notice = tr(ce.key)
+                self.status = f"{tr('upd_failed')}: {tr(ce.key)}"
+                ok = False
             except Exception as e:
                 print(f"Catalog update error: {e}")
                 state.pending_catalog_notice = tr(CATALOG_FAILED)
+                self.status = f"{tr('upd_failed')}: Database"
+                ok = False
 
         if ok:
             self.progress_pct = 1.0
             self.phase_title = "Cập nhật thành công!"
             self.status = tr("upd_done")
             state.pending_update = m.get("version", "")
+            state.pending_catalog_notice = ""
             state.save_settings()
             request_restart()
             self.restart = True
@@ -155,7 +184,8 @@ class UpdateModal(BaseModal):
         else:
             self.failed = True
             self.phase_title = "Cập nhật thất bại"
-            self.status = tr("upd_failed")
+            if not self.status:
+                self.status = tr("upd_failed")
         self.busy = False
 
     def handle_input(self, inputs):
@@ -249,11 +279,11 @@ class UpdateModal(BaseModal):
                          255, 215, 0, right_align=True, center_y=True)
 
         # Body & Footer dimensions with strict separation
-        bot_h = 96
+        bot_h = 100
         body_y = my + hdr_h + 16
         body_h = mh - hdr_h - bot_h - 44
-        left_w = 270
-        gap = 26
+        left_w = 260
+        gap = 32
 
         # --- LEFT PANEL: Clean Typography & Generous Line Spacing ---
         lx = mx + 24
@@ -271,16 +301,23 @@ class UpdateModal(BaseModal):
             c_sz = human_bytes(cat.get("size", 0)) if cat else ""
             left_items[0] = (tr("upd_cat_new"), "Database", (0, 255, 200))
             left_items[2] = (tr("game_size"), c_sz, (255, 215, 80))
+        elif getattr(self, "rt_only", False):
+            rt_p = runtime_pending(um)
+            rt_sz = human_bytes(sum(f.get("size", 0) for f in rt_p)) if rt_p else ""
+            left_items[0] = (tr("upd_new"), "Runtime", (0, 255, 200))
+            left_items[2] = (tr("upd_files"), f"{len(rt_p)} tệp" + (f" ({rt_sz})" if rt_sz else ""), (255, 215, 80))
 
         engine.draw_text("THÔNG TIN PHIÊN BẢN", engine.font_sub, lx, body_y + 4, 0, 246, 246)
         item_y = body_y + 36
         for lbl, val, col in left_items:
             engine.draw_text(lbl, engine.font_sub, lx, item_y, 130, 160, 190)
             engine.draw_text(val, engine.font_item, lx, item_y + 24, *col)
-            item_y += 60
+            item_y += 58
 
-        # Safety Note at bottom of left column
-        engine.draw_text("Dữ liệu ROM và Save được bảo vệ 100%", engine.font_sub, lx, body_y + body_h - 14, 0, 200, 220)
+        # Safety Note at bottom of left column (fits cleanly inside left_w)
+        safe_y = body_y + body_h - 40
+        engine.draw_text("Bảo vệ dữ liệu:", engine.font_sub, lx, safe_y, 0, 246, 246)
+        engine.draw_text("ROM & Save an toàn 100%", engine.font_sub, lx, safe_y + 20, 0, 200, 220)
 
         # --- RIGHT PANEL: Changelog & Release Notes ---
         rx = lx + left_w + gap
@@ -333,17 +370,17 @@ class UpdateModal(BaseModal):
         engine.fill_rect(mx + 20, bot_y - 10, mw - 40, 1, 35, 50, 75, 255)
 
         if self.busy or self.failed or self.restart:
-            # Row 1: Phase Title (Left) + Percentage (Right)
+            # Row 1: Phase Title (Left) + Percentage (Right) with font_item
             stat_col = (255, 100, 100) if self.failed else ((0, 255, 180) if self.restart else (0, 246, 246))
             engine.draw_text(self.phase_title or self.status, engine.font_item, mx + 24, bot_y + 8, *stat_col)
 
             pct_val = int(min(1.0, max(0.0, self.progress_pct)) * 100)
             pct_txt = f"{pct_val}%"
-            engine.draw_text(pct_txt, engine.font_title, mx + mw - 24, bot_y + 8, 255, 215, 0, right_align=True)
+            engine.draw_text(pct_txt, engine.font_item, mx + mw - 24, bot_y + 8, 255, 215, 0, right_align=True)
 
-            # Row 2: Clean Glowing Progress Bar
+            # Row 2: Clean Glowing Progress Bar (placed 34px below Row 1)
             pbar_x = mx + 24
-            pbar_y = bot_y + 38
+            pbar_y = bot_y + 42
             pbar_w = mw - 48
             pbar_h = 14
             engine.fill_rect(pbar_x, pbar_y, pbar_w, pbar_h, 20, 28, 46, 255)
@@ -359,11 +396,11 @@ class UpdateModal(BaseModal):
                 if fill_w < pbar_w - 4:
                     engine.fill_rect(pbar_x + fill_w - 4, pbar_y + 1, 4, pbar_h - 2, 255, 255, 255, 255)
 
-            # Row 3: Current file & step details (strictly spaced below the bar)
+            # Row 3: Current file & step details (placed comfortably below the bar)
             if self.failed or self.restart:
-                engine.draw_text("[A/B] OK", engine.font_sub, mx + mw - 24, bot_y + 64, 220, 235, 255, right_align=True)
+                engine.draw_text("[A/B] OK", engine.font_sub, mx + mw - 24, bot_y + 68, 220, 235, 255, right_align=True)
             elif self.status:
-                engine.draw_text(self.status, engine.font_sub, mx + 24, bot_y + 64, 140, 170, 205)
+                engine.draw_text(self.status, engine.font_sub, mx + 24, bot_y + 68, 140, 170, 205)
         else:
             labels = self.get_labels()
             bw = (mw - 48 - (len(labels) - 1) * 14) // len(labels)
