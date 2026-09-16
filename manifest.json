@@ -1,12 +1,12 @@
 {
-  "version": "2.18",
-  "full_release_version": "2.18",
+  "version": "2.19",
+  "full_release_version": "2.19",
   "python": "any",
-  "built": "2026-09-16T17:16:03+0700",
+  "built": "2026-09-16T17:51:38+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa triệt để lỗi khởi động văng app (ImportError modals) & bổ sung cơ chế Tự động cứu hộ (Emergency Self-Healing)",
-    "en": "Fix startup crash on boot (ImportError modals) & introduce launcher Emergency Self-Healing auto-recovery"
+    "vi": "Sửa triệt để lỗi văng app khi vào Sảnh game (Netplay), tối ưu nạp danh sách phòng Cloudflare & tự động khởi chạy game độc lập",
+    "en": "Fix Netplay Lobby crash, handle API response safely & add standalone Netplay game launcher"
   },
   "remove": [
     "app.pyc",
@@ -373,8 +373,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 9500,
-      "sha256": "decf7c94701a00dbe57c60c216e10ea8bc8177c7e74dab98455ab28cc6763045"
+      "size": 9511,
+      "sha256": "cae7e3bad3ac03e579fab59220021f049573bec10adacba7345f49a88d091783"
     },
     {
       "path": "led_daemon.py",
@@ -548,8 +548,8 @@
     },
     {
       "path": "rh/modals/netplay.py",
-      "size": 20581,
-      "sha256": "580e081674a1f13de14b35b1204586e2115fab4e27d3ec263e6ed7f071963133"
+      "size": 25286,
+      "sha256": "63202dd35632856a6867b7e55b5a53f93ff15fa2e210d118c5f2d19a4708f507"
     },
     {
       "path": "rh/modals/update.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "1a7b68baa587b820672da05b35aecbc6cd609fa3866c94b3f9a5528568992a45"
+      "sha256": "0fd40c8fe2d70dbf1dff84db12b5fd93e98d9136c308c3a957a163b7cb5bba81"
     },
     {
       "path": "rh/yt.py",
@@ -705,6 +705,11 @@
       "path": "rh/yt_player.py",
       "size": 16795,
       "sha256": "a91119067cde545541e9b606d8f5ae2a869025dfe4ed7093b186103d54655b7f"
+    },
+    {
+      "path": "settings.json",
+      "size": 267,
+      "sha256": "0e1f97d22994d3a2e53c6d56e4f2f6ae5e2d8df967bfd3fc0a798c3288df9284"
     },
     {
       "path": "streamer.py",
