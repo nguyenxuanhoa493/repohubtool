@@ -33,7 +33,7 @@ def draw_line(renderer, x1, y1, x2, y2, r, g, b, a=255, thickness=1):
             sdl2.SDL_RenderDrawLine(renderer, int(x1 + i), int(y1), int(x2 + i), int(y2))
 
 
-def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False, text_texture_cache=None, max_cache=280):
+def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False, text_texture_cache=None, max_cache=280, right_align=False):
     if text is None or text == "":
         return 0, 0
     if not isinstance(text, str):
@@ -68,7 +68,13 @@ def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center
                         sdl2.SDL_DestroyTexture(item[0])
             text_texture_cache[key] = [tex, w, h, now_ts]
 
-    dest_x = x - (w // 2) if center_x else x
+    if right_align:
+        dest_x = x - w
+    elif center_x:
+        dest_x = x - (w // 2)
+    else:
+        dest_x = x
+
     dest_y = y - (h // 2) if center_y else y
     dest = sdl2.SDL_Rect(int(dest_x), int(dest_y), int(w), int(h))
     sdl2.SDL_RenderCopy(renderer, tex, None, dest)

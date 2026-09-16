@@ -260,8 +260,8 @@ class RetroHubEngine:
     def draw_line(self, x1, y1, x2, y2, r, g, b, a=255, thickness=1):
         draw_line(self.renderer, x1, y1, x2, y2, r, g, b, a, thickness)
 
-    def draw_text(self, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False):
-        return draw_text(self.renderer, text, font, x, y, r, g, b, a, center_x, center_y, self.text_texture_cache, self.MAX_TEXT_CACHE)
+    def draw_text(self, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False, right_align=False):
+        return draw_text(self.renderer, text, font, x, y, r, g, b, a, center_x, center_y, self.text_texture_cache, self.MAX_TEXT_CACHE, right_align=right_align)
 
     def measure_text(self, text, font):
         return measure_text(text, font)
