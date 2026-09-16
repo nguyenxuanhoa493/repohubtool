@@ -103,9 +103,19 @@ def step_3_update_manifest():
 
     manifest["files"] = sorted(list(manifest_files_by_path.values()), key=lambda x: x["path"])
 
+    # Cap nhat luon ca cac tep trong runtime neu co
+    for rf in manifest.get("runtime", {}).get("files", []):
+        rel_url = rf.get("url", "")
+        local_fp = os.path.join(ROOT, rel_url)
+        if os.path.isfile(local_fp):
+            with open(local_fp, "rb") as fh:
+                data = fh.read()
+            rf["size"] = len(data)
+            rf["sha256"] = hashlib.sha256(data).hexdigest()
+
     with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
-    print(f"  -> Da dong bo ma bam SHA256 cua {scanned} tep vao manifest.json.")
+    print(f"  -> Da dong bo ma bam SHA256 cua {scanned} tep vao manifest.json (kem runtime).")
 
 
 def step_4_package_dist():

@@ -127,7 +127,7 @@ def candidate_base_urls(rel_path=""):
     return candidates
 
 
-def _get(url, max_bytes, timeout=TIMEOUT):
+def _get(url, max_bytes, timeout=TIMEOUT, progress=None):
     headers = {
         "User-Agent": UA,
         "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -136,13 +136,22 @@ def _get(url, max_bytes, timeout=TIMEOUT):
     req = urllib.request.Request(url, headers=headers)
     ctx = ssl._create_unverified_context()
     with urllib.request.urlopen(req, context=ctx, timeout=timeout) as resp:
-        data = resp.read(max_bytes + 1)
-    if len(data) > max_bytes:
-        raise ValueError("response larger than %d bytes" % max_bytes)
-    return data
+        content_length = resp.headers.get("Content-Length")
+        total_size = int(content_length) if (content_length and content_length.isdigit()) else 0
+        buf = bytearray()
+        while True:
+            chunk = resp.read(65536)
+            if not chunk:
+                break
+            buf.extend(chunk)
+            if len(buf) > max_bytes:
+                raise ValueError("response larger than %d bytes" % max_bytes)
+            if progress and total_size > 0:
+                progress(len(buf), total_size)
+    return bytes(buf)
 
 
-def _fetch_blob(rel_path, max_bytes, expected_sha=None):
+def _fetch_blob(rel_path, max_bytes, expected_sha=None, progress=None):
     """Tai du lieu tu cac candidate base URL (GHProxy, GitHub Raw, CDN mirror).
 
     Kiem tra ma bam sha256 neu duoc cung cap. Tu dong them anti-cache query
@@ -156,7 +165,7 @@ def _fetch_blob(rel_path, max_bytes, expected_sha=None):
                 # Luon gui kem query timestamp de bypass cache cua proxy/CDN
                 sep = "&" if "?" in url else "?"
                 fetch_url = "%s%s_t=%d" % (url, sep, int(time.time()))
-                data = _get(fetch_url, max_bytes)
+                data = _get(fetch_url, max_bytes, progress=progress)
                 if expected_sha:
                     if hashlib.sha256(data).hexdigest() == expected_sha:
                         return data
@@ -452,8 +461,12 @@ def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
         gz_path = os.path.join(CATALOG_STAGING_DIR, "catalog.gz")
         out_path = os.path.join(CATALOG_STAGING_DIR, "catalog.sqlite3")
 
+        def dl_prog(cur, tot):
+            if progress:
+                progress(cur, tot, "catalog.gz")
+
         try:
-            blob = _fetch_blob(c["url"], MAX_CATALOG_BYTES, expected_sha=c["sha256"])
+            blob = _fetch_blob(c["url"], MAX_CATALOG_BYTES, expected_sha=c["sha256"], progress=dl_prog)
         except ValueError:
             raise CatalogError(CATALOG_BAD_HASH, "ban nen")
         except Exception as e:
@@ -465,6 +478,8 @@ def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
             on_phase()
 
         h = hashlib.sha256()
+        total_plain = c.get("size_plain", 0)
+        unpacked_bytes = 0
         with gzip.open(gz_path, "rb") as src, open(out_path, "wb") as dst:
             while True:
                 chunk = src.read(CATALOG_CHUNK)
@@ -472,6 +487,9 @@ def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
                     break
                 dst.write(chunk)
                 h.update(chunk)
+                unpacked_bytes += len(chunk)
+                if progress and total_plain > 0:
+                    progress(unpacked_bytes, total_plain, "roms_store.sqlite3")
         if h.hexdigest() != c["sha256_plain"]:
             raise CatalogError(CATALOG_BAD_HASH, "ban bung")
 
