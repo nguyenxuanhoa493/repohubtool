@@ -32,7 +32,11 @@ RELEASES = [
      [("Visual High-Tech Progress Bar: Upgraded the OTA download console with a thick glowing progress bar, dynamic progress percentage (0-100%), and real-time file counters.",
        "Thanh tiến trình trực quan & Nổi bật: Nâng cấp bảng tiến độ cập nhật với thanh Progress Bar phát sáng viền neon, hiển thị phần trăm (%) động từ 0-100% cùng số lượng tệp theo thời gian thực."),
       ("Detailed Phase & File Status: Shows exactly which component or file is currently downloading/installing (Code, Runtime, Database) with clear indicators.",
-       "Hiển thị chi tiết giai đoạn & Tệp đang tải: Theo dõi chính xác từng tệp mã nguồn, tệp giả lập hoặc cơ sở dữ liệu đang được tải và giải nén.")]),
+       "Hiển thị chi tiết giai đoạn & Tệp đang tải: Theo dõi chính xác từng tệp mã nguồn, tệp giả lập hoặc cơ sở dữ liệu đang được tải và giải nén."),
+      ("Fix Update Loop & Automated SHA256 Sync: Resolved infinite update prompts by fixing runtime hash validation, eliminating false success restart loops.",
+       "Khắc phục triệt để vòng lặp cập nhật: Sửa dứt điểm lỗi báo tải lại database/runtime, tự động đồng bộ mã băm SHA256 và xử lý trạng thái lỗi chính xác."),
+      ("Refined Modal Typography & Layout: Added generous bottom padding to the feature changelog box and adjusted font sizes to eliminate text overlapping.",
+       "Tối ưu giao diện & Chống đè text: Tăng khoảng đệm (padding) đáy cho Box tính năng, chuẩn hóa tỷ lệ font chữ modal giúp các dòng hiển thị thoáng đãng, không bị đè nhau.")]),
 
     ("2.26", "2026-09-16",
      ("Redesign Full-Screen Update Modal with rich release details, smooth scrolling & unified i18n review",

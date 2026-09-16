@@ -117,6 +117,7 @@ T = {
   "og_alt": "RetroHub — games and tools for handheld consoles",
   "og_desc": "Nearly 40,000 games, a Java J2ME emulator, Wi-Fi file transfer and self-updating. Install once, update forever.",
   "tagline": "Games and tools for handheld consoles (TrimUI & NextUI)",
+  "hero_badge": "New Release: Visual OTA Progress & Refined UI",
   "nav_home": "RetroHub",
   "dls": "downloads so far",
   "dl_trimui": "Download for TrimUI (Stock) — v" + VERSION,
@@ -174,6 +175,7 @@ T = {
   "og_alt": "RetroHub — kho game và tiện ích cho máy chơi game cầm tay",
   "og_desc": "Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật. Cài một lần, tự cập nhật mãi.",
   "tagline": "Kho game và tiện ích cho máy cầm tay (TrimUI & NextUI)",
+  "hero_badge": "Bản mới v2.27: Thanh tiến trình OTA & Tối ưu giao diện",
   "nav_home": "RetroHub",
   "dls": "lượt tải",
   "dl_trimui": "Tải bản TrimUI (Hệ gốc) — v" + VERSION,
@@ -264,8 +266,14 @@ CSS = """
   .lang:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
   .lang img{width:24px;height:16px;border-radius:3px;display:block}
 
-  header{padding:70px 0 52px;text-align:center;
+  header{padding:54px 0 52px;text-align:center;
     background:radial-gradient(900px 400px at 50% -140px,rgba(0,246,246,.16),transparent)}
+  .badge-hero{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;
+    background:rgba(0,246,246,.1);border:1px solid rgba(0,246,246,.38);color:var(--accent);
+    font-size:.86rem;font-weight:600;margin-bottom:20px;text-decoration:none;
+    transition:transform .18s,border-color .18s,background .18s;letter-spacing:.2px}
+  .badge-hero:hover{transform:translateY(-2px);background:rgba(0,246,246,.18);border-color:var(--accent)}
+  .badge-hero b{background:var(--accent);color:#04121b;padding:2px 8px;border-radius:999px;font-size:.76rem;font-weight:800}
   .logo{width:118px;height:118px;display:block;margin:0 auto;
     filter:drop-shadow(0 6px 22px rgba(0,246,246,.28));animation:float 5s ease-in-out infinite}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
@@ -585,6 +593,7 @@ PAGE = """<!doctype html>
 
 <header id="top">
   <div class="wrap">
+    <a class="badge-hero" href="{changelog_url}"><b>v{VERSION}</b> {hero_badge} →</a>
     <img class="logo" src="/logo.png" alt="RetroHub">
     <h1>RetroHub</h1>
     <p class="sub">{tagline}</p>
@@ -751,7 +760,7 @@ def render(lang):
         "og_desc": t["og_desc"], "ldjson": json.dumps(ld, ensure_ascii=False, indent=2),
         "css": CSS, "home": t["home"], "otherhome": T[other]["home"],
         "other": other, "other_name": t["other_name"], "navlinks": navlinks,
-        "tagline": t["tagline"], "REL": REL, "VER_FULL": VER_FULL, "VER_NEXTUI": VER_NEXTUI,
+        "tagline": t["tagline"], "REL": REL, "VERSION": VERSION, "VER_FULL": VER_FULL, "VER_NEXTUI": VER_NEXTUI,
         "hotfix_url": HOTFIX_URL,
         "steps": steps, "osrows": osrows, "roadrows": roadrows, "disc": disc,
         "SVG_TG": SVG_TG, "SVG_MAIL": SVG_MAIL, "SVG_TEL": SVG_TEL, "SVG_CUP": SVG_CUP,
