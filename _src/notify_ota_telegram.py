@@ -23,14 +23,16 @@ def send_ota_notification(version=None, note_vi=None):
             print(f"Lỗi đọc manifest.json: {e}")
             return False
 
+    import html
+    escaped_note = html.escape(note_vi)
     msg_lines = [
-        f"🚀 *[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)*",
+        f"🚀 <b>[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)</b>",
         "",
-        "✨ *Nội dung cập nhật:*",
-        f"• {note_vi}",
+        "✨ <b>Nội dung cập nhật:</b>",
+        f"• {escaped_note}",
         "",
-        "📲 *Cách cập nhật:*",
-        "Bật Wi-Fi trên máy cầm tay ➔ Mở *RetroHub* ➔ Ứng dụng sẽ tự động phát hiện và cập nhật tệp mới nhất!"
+        "📲 <b>Cách cập nhật:</b>",
+        "Bật Wi-Fi trên máy cầm tay ➔ Mở <b>RetroHub</b> ➔ Ứng dụng sẽ tự động phát hiện và cập nhật tệp mới nhất!"
     ]
     text = "\n".join(msg_lines)
 
@@ -38,7 +40,7 @@ def send_ota_notification(version=None, note_vi=None):
     payload = {
         "chat_id": TELEGRAM_GROUP_CHAT_ID,
         "text": text,
-        "parse_mode": "Markdown"
+        "parse_mode": "HTML"
     }
 
     try:
