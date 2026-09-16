@@ -30,22 +30,25 @@ class NetworkScreen(BaseScreen):
 
     def refresh_services(self):
         self.items = [
+            {"id": "gameweb_toggle", "title": tr("net_gameweb_toggle"), "type": "toggle", "state": is_gameweb_running()},
+            {"id": "gameweb_guide", "title": tr("net_gameweb_guide"), "label": tr("view"), "sub": True},
             {"id": "ssh_toggle", "title": tr("net_ssh_toggle"), "type": "toggle", "state": is_ssh_running()},
             {"id": "ssh_guide", "title": tr("net_ssh_guide"), "label": tr("view"), "sub": True},
             {"id": "ssh_telegram", "title": tr("net_ssh_telegram"), "label": tr("view"), "sub": True},
+            {"id": "stream_toggle", "title": tr("net_stream_toggle"), "type": "toggle", "state": is_streamer_running()},
+            {"id": "stream_guide", "title": tr("net_stream_guide"), "label": tr("view"), "sub": True},
             {"id": "sftpgo_toggle", "title": tr("net_sftp_toggle"), "type": "toggle", "state": is_sftpgo_running()},
             {"id": "sftpgo_guide", "title": tr("net_sftp_guide"), "label": tr("view"), "sub": True},
             {"id": "adb_toggle", "title": tr("net_adb_toggle"), "type": "toggle", "state": is_adb_running()},
             {"id": "mtp_toggle", "title": tr("net_mtp_toggle"), "type": "toggle", "state": is_mtp_running()},
-            {"id": "stream_toggle", "title": tr("net_stream_toggle"), "type": "toggle", "state": is_streamer_running()},
-            {"id": "stream_guide", "title": tr("net_stream_guide"), "label": tr("view"), "sub": True},
-            {"id": "gameweb_toggle", "title": tr("net_gameweb_toggle"), "type": "toggle", "state": is_gameweb_running()},
-            {"id": "gameweb_guide", "title": tr("net_gameweb_guide"), "label": tr("view"), "sub": True},
             {"id": "device_info", "title": tr("device_info"), "label": tr("view")},
             {"id": "back", "title": tr("back_home")}
         ]
-        for idx, it in enumerate(self.items):
-            it["title"] = f"{idx + 1}. {it['title']}"
+        main_num = 1
+        for it in self.items:
+            if not it.get("sub") and it.get("id") != "back":
+                it["title"] = f"{main_num}. {it['title']}"
+                main_num += 1
 
     def get_header_title(self):
         return tr("net_title")
@@ -98,7 +101,17 @@ class NetworkScreen(BaseScreen):
                 self.engine.pop_screen()
                 return True
 
-            if it_id == "ssh_toggle":
+            if it_id == "gameweb_toggle":
+                msg = toggle_gameweb()
+                self.engine.toast(msg)
+                self.refresh_services()
+            elif it_id == "gameweb_guide":
+                self.engine.open_modal(TwoColInfoModal(self.engine), {
+                    "title": "HƯỚNG DẪN GAMEWEB 8090",
+                    "rows": get_gameweb_guide_rows(),
+                    "style": "big"
+                })
+            elif it_id == "ssh_toggle":
                 msg = toggle_ssh()
                 self.engine.toast(msg)
                 self.refresh_services()
@@ -111,7 +124,21 @@ class NetworkScreen(BaseScreen):
             elif it_id == "ssh_telegram":
                 self.engine.toast("Đang gửi thông tin sang Telegram...")
                 import threading
-                threading.Thread(target=lambda: self.engine.toast(send_ssh_info_to_telegram()), daemon=True).start()
+                def _bg_send():
+                    res = send_ssh_info_to_telegram()
+                    msg = res[1] if isinstance(res, tuple) else res
+                    self.engine.toast(msg)
+                threading.Thread(target=_bg_send, daemon=True).start()
+            elif it_id == "stream_toggle":
+                msg = toggle_streamer()
+                self.engine.toast(msg)
+                self.refresh_services()
+            elif it_id == "stream_guide":
+                self.engine.open_modal(TwoColInfoModal(self.engine), {
+                    "title": "HƯỚNG DẪN STREAMING",
+                    "rows": get_stream_guide_rows(),
+                    "style": "big"
+                })
             elif it_id == "sftpgo_toggle":
                 msg = toggle_sftpgo()
                 self.engine.toast(msg)
@@ -130,26 +157,6 @@ class NetworkScreen(BaseScreen):
                 msg = toggle_mtp()
                 self.engine.toast(msg)
                 self.refresh_services()
-            elif it_id == "stream_toggle":
-                msg = toggle_streamer()
-                self.engine.toast(msg)
-                self.refresh_services()
-            elif it_id == "stream_guide":
-                self.engine.open_modal(TwoColInfoModal(self.engine), {
-                    "title": "HƯỚNG DẪN STREAMING",
-                    "rows": get_stream_guide_rows(),
-                    "style": "big"
-                })
-            elif it_id == "gameweb_toggle":
-                msg = toggle_gameweb()
-                self.engine.toast(msg)
-                self.refresh_services()
-            elif it_id == "gameweb_guide":
-                self.engine.open_modal(TwoColInfoModal(self.engine), {
-                    "title": "HƯỚNG DẪN GAMEWEB 8090",
-                    "rows": get_gameweb_guide_rows(),
-                    "style": "big"
-                })
             elif it_id == "device_info":
                 self.engine.open_modal(TwoColInfoModal(self.engine), {
                     "title": tr("device_info"),

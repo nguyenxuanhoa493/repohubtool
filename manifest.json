@@ -1,12 +1,12 @@
 {
-  "version": "2.22",
+  "version": "2.23",
   "full_release_version": "2.21",
   "python": "any",
-  "built": "2026-09-16T19:25:03+0700",
+  "built": "2026-09-16T19:32:12+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Khắc phục triệt để lỗi sập/tự khởi động lại (Reboot) khi tắt màn hình lâu trên TrimUI (Tích hợp cơ chế cờ stay_alive bảo vệ Kernel)",
-    "en": "Fix system crash & reboot when screen is turned off for a long time on TrimUI (Integrated stay_alive system flag)"
+    "vi": "Nâng cấp Quản lý Dịch vụ & Gửi thông tin SSH qua Telegram (Tổng hợp đầy đủ thông tin IP/SSH/Web Manager, tối ưu thứ tự & phân cấp menu)",
+    "en": "Service Dashboard & SSH Telegram enhancements (Comprehensive connection info sent to bot, clean menu hierarchy & Web Game Manager priority)"
   },
   "remove": [
     "app.pyc",
@@ -613,8 +613,8 @@
     },
     {
       "path": "rh/screens/network.py",
-      "size": 9549,
-      "sha256": "04aaccae560327059a7419ffdb612d19d54ee7023501aea338dc1cc016299143"
+      "size": 9801,
+      "sha256": "7e56d1a15fc235b55bb270d03d7d6cc8a2ae795c5cd7f3e25e56e06cb77f7ac3"
     },
     {
       "path": "rh/screens/settings.py",
@@ -633,8 +633,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 8996,
-      "sha256": "89d511a150d33f256a4a3a97451e0d8d442b98a5707f660f730fd7d1835f7375"
+      "size": 9097,
+      "sha256": "232d08b631dcda5742324f44b7b459bced23b65e32fd837ba4d197c1b27bff9e"
     },
     {
       "path": "rh/screens/youtube.py",
@@ -643,8 +643,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 23469,
-      "sha256": "6e8dec14246cd78d238ce7755fb049dc7e34efd20b34475512aedf72f1b12186"
+      "size": 23786,
+      "sha256": "4cb5d0a7f4593ce4fc1bca96bd1d5be5033522e3b81fc82261d06130747863f9"
     },
     {
       "path": "rh/splash.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "4d78fa96f7e32b8a24223f6e926b32037eb66744957f5ae3583cc11981a10b10"
+      "sha256": "c3d56d8d838d47949823c281e8941c1cca213eae69f341dbd0cb3a40518810dc"
     },
     {
       "path": "rh/yt.py",

@@ -61,8 +61,11 @@ class UtilitiesScreen(BaseScreen):
         self.items.append({"id": "device_info", "title": tr("device_info"), "label": tr("view")})
         self.items.append({"id": "storage_status", "title": tr("util_storage_item"), "label": tr("view")})
         self.items.append({"id": "back", "title": tr("back_home")})
-        for idx, it in enumerate(self.items):
-            it["title"] = f"{idx + 1}. {it['title']}"
+        main_num = 1
+        for it in self.items:
+            if not it.get("sub") and it.get("id") != "back":
+                it["title"] = f"{main_num}. {it['title']}"
+                main_num += 1
 
     def get_header_title(self):
         return tr("util_title")
