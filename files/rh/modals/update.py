@@ -130,8 +130,8 @@ class UpdateModal(BaseModal):
                     self.progress_pct = 0.95 + min(0.04, (done / total) * 0.04)
 
             try:
-                download_catalog(m, progress=cat_prog, on_phase=enter_unpack)
-                if not apply_catalog(m):
+                staged_cat = download_catalog(m, progress=cat_prog, on_phase=enter_unpack)
+                if not staged_cat or not apply_catalog(m, staged_cat):
                     raise CatalogError(CATALOG_FAILED, "doi ten that bai")
             except CatalogError as ce:
                 print(f"Catalog update failed: {ce}")

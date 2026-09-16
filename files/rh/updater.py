@@ -406,7 +406,7 @@ def pending_files(manifest):
     return out
 
 
-def download_catalog(manifest, free_space=None, on_phase=None):
+def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
     """Tai, kiem va giai nen catalogue vao staging. Tra duong dan file da bung.
 
     Nem CatalogError o moi loi, kem key dich duoc. Hong o bat ky buoc nao thi
