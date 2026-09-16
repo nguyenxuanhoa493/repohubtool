@@ -1,0 +1,13 @@
+{
+  "language": "EN",
+  "view_mode": "grid",
+  "wifi_awake": false,
+  "auto_update": true,
+  "enable_logging": false,
+  "device_id": "RH-5930",
+  "skipped_versions": [],
+  "update_url": "",
+  "pending_update": "",
+  "catalog_sha": "",
+  "pending_catalog_notice": ""
+}
