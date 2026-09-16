@@ -48,7 +48,7 @@ VERSION = _published_version()
 FULL_VERSION = _full_release_version()
 VER_FULL = "RetroHub-%s-full.zip" % FULL_VERSION
 VER_NEXTUI = "RetroHub-%s-NextUI.zip" % FULL_VERSION
-VER_HOTFIX = "RetroHub-v2.17-HOTFIX.zip"
+VER_HOTFIX = "RetroHub-HOTFIX.zip"
 VER_SD_FULL = "trimui_brick_pro_tg4040_sd_base_20260824_retrohub_v1.97.zip"
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
        % FULL_VERSION)
@@ -123,9 +123,9 @@ T = {
   "dl_trimui_sub": "95 MB · Java included · Latest",
   "dl_nextui": "Download for NextUI (Pak) — v2.18",
   "dl_nextui_sub": "192 MB · Ready for NextUI · Latest",
-  "dl_hotfix": "⚡ Hotfix for v2.17 (14 KB)",
-  "dl_hotfix_sub": "Fix startup crash · Safe for DB",
-  "hotfix_note": "💡 <b>Stuck on v2.17 startup crash?</b> Download the 14 KB Hotfix, unpack and copy to SD card to repair the app instantly without touching ROMs, saves, or database.",
+  "dl_hotfix": "⚡ Hotfix for v2.15 & v2.17 (1.5 MB)",
+  "dl_hotfix_sub": "Upgrade to v2.18 · 100% Safe for DB & Saves",
+  "hotfix_note": "💡 <b>Using v2.15 or v2.17?</b> Download the 1.5 MB Hotfix, unpack and copy to your SD card to upgrade directly to <b>v2.18</b>, fixing startup crashes and update check bugs while keeping 100% of your ROMs, saves, and databases intact.",
   "dl_sd": "Full Package (Brick Pro only)",
   "dl_sd_sub": "1.05 GB · Pre-configured for Brick Pro (TG4040)",
   "sd_warn": "⚠️ <b>Note:</b> The Full ROM Package (1.05 GB) is pre-configured specifically for <b>TrimUI Brick Pro (TG4040)</b>. If you use <b>TrimUI Smart Pro</b>, please download the standalone TrimUI (Stock) or NextUI package above.",
@@ -180,9 +180,9 @@ T = {
   "dl_trimui_sub": "95 MB · Kèm giả lập Java · Mới nhất",
   "dl_nextui": "Tải bản NextUI (Pak) — v2.18",
   "dl_nextui_sub": "192 MB · Dành riêng NextUI · Mới nhất",
-  "dl_hotfix": "⚡ Bản Hotfix v2.17 (14 KB)",
-  "dl_hotfix_sub": "Sửa văng app · Giữ nguyên DB & Save",
-  "hotfix_note": "💡 <b>Máy bị văng khi mở ở v2.17?</b> Tải bản Hotfix siêu nhẹ (14 KB) chép đè vào thẻ nhớ để sửa lỗi ngay mà không ảnh hưởng đến ROMs, file save hay cơ sở dữ liệu.",
+  "dl_hotfix": "⚡ Bản Hotfix v2.15 & v2.17 (1.5 MB)",
+  "dl_hotfix_sub": "Nâng cấp lên v2.18 · Giữ nguyên DB & Save",
+  "hotfix_note": "💡 <b>Đang ở v2.15 hoặc v2.17?</b> Tải bản Hotfix siêu nhẹ (1.5 MB) giải nén chép đè vào thẻ nhớ để lên thẳng <b>v2.18</b>, sửa dứt điểm lỗi văng app & kiểm tra cập nhật, 100% giữ nguyên ROMs, file save và cơ sở dữ liệu.",
   "dl_sd": "Bản Full (Chỉ cho Brick Pro)",
   "dl_sd_sub": "1.05 GB · Cài sẵn cho Brick Pro (TG4040)",
   "sd_warn": "⚠️ <b>Lưu ý:</b> Bản Full ROM (1.05 GB) được cấu hình riêng cho <b>TrimUI Brick Pro (TG4040)</b>. Người dùng <b>TrimUI Smart Pro</b> vui lòng tải bản TrimUI (Hệ gốc) hoặc NextUI ở trên.",
