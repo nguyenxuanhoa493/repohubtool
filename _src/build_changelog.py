@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.16", "2026-09-16",
+     ("Upgrade Web Game Manager: Added 3 main menus (Game Manager, Download Online Games directly to SD card from 40k+ catalog, and YouTube Playlist & Favorites Manager)",
+      "Nâng cấp Web Game Manager: Bổ sung 3 menu chính (Quản lý game, Tải game online từ kho 40.000+ ROMs về thẻ nhớ, Quản lý playlist và video yêu thích YouTube trực tuyến)"),
+     [("Three Main Web Manager Hubs: Reorganized web management into 3 intuitive tabs: 1. Game Manager (ROMs list, Scraper boxarts, Renamer, Deleter, Uploader, Save backup/restore), 2. Download Online Games (browse 40,000+ catalog titles, filter by 6 curated shelves & 29 systems, background download directly to SD card with boxarts), and 3. YouTube Manager (search videos, manage custom playlists, topic categories, and favorite channels).",
+       "3 Trung tâm Quản lý Web trực quan: Cơ cấu trang web quản trị thành 3 menu chính: 1. Quản lý game (danh sách ROMs, cào ảnh bìa, đổi tên, xóa, tải lên, sao lưu/khôi phục save), 2. Tải game online (khám phá kho 40.000+ game, lọc 6 nhóm tuyển chọn & 29 hệ máy, tải ngầm trực tiếp về thẻ nhớ kèm ảnh bìa), và 3. Quản lý YouTube (tìm kiếm video trực tuyến, quản lý danh sách phát, thể loại chủ đề và video yêu thích)."),
+      ("Robust Database Path Resolution: Enhanced catalog DB path discovery in db.py to reliably locate roms_store.sqlite3 across various handheld mount points and local dev environments.",
+       "Tự động nhận diện đường dẫn Database: Hoàn thiện cơ chế tự động tìm nạp cơ sở dữ liệu roms_store.sqlite3 trong db.py trên mọi môi trường và điểm gắn thẻ nhớ máy cầm tay.")]),
+
     ("2.15", "2026-09-16",
      ("Restructure Main Menu (Game Library, Watch YouTube, Game Lobby), reorganize ROM Store (Search on top, Top 100 Games, Romhacks), unified sequential numbering, and smooth circular wrap-around navigation",
       "Tái cấu trúc Menu chính (Thư viện game, Xem YouTube, Sảnh game), cơ cấu Kho ROM (Tìm kiếm game, Top 100 game, Kho game hack), đồng bộ số thứ tự STT và tối ưu cuộn xoay vòng danh sách"),

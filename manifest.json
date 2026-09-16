@@ -1,12 +1,12 @@
 {
-  "version": "2.15",
+  "version": "2.16",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-16T11:57:00+0700",
+  "built": "2026-09-16T13:35:13+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tái cấu trúc Menu chính (Thư viện game, Xem YouTube, Sảnh game), cơ cấu Kho ROM (Tìm kiếm game, Top 100 game, Kho game hack), đồng bộ số thứ tự STT và tối ưu cuộn xoay vòng danh sách",
-    "en": "Restructure Main Menu (Game Library, Watch YouTube, Game Lobby), reorganize ROM Store (Search on top, Top 100 Games, Romhacks), unified sequential numbering, and smooth circular wrap-around navigation"
+    "vi": "Nâng cấp Web Game Manager: Bổ sung 3 menu chính (Quản lý game, Tải game online từ kho 40.000+ ROMs về thẻ nhớ, Quản lý playlist và video yêu thích YouTube trực tuyến)",
+    "en": "Upgrade Web Game Manager: Added 3 main menus (Game Manager, Download Online Games directly to SD card from 40k+ catalog, and YouTube Playlist & Favorites Manager)"
   },
   "remove": [
     "app.pyc",
@@ -263,8 +263,8 @@
     },
     {
       "path": "db.py",
-      "size": 20184,
-      "sha256": "7f0a2a140eb3d6fccd8cb1f811739676f015d1541640dd9061c1aaf01842ad31"
+      "size": 20596,
+      "sha256": "1a1703b5381400e6656ead10af05770e6275b93cf709810c74467f52ed47782c"
     },
     {
       "path": "emus/JAVA/NOTICE.txt",
@@ -363,8 +363,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 178888,
-      "sha256": "e27d4d361e8d7b05469848c8bd82ec7655b5fe30a611d529319a6639008ca3f9"
+      "size": 131042,
+      "sha256": "fbc5aa8b67db3453155a917f17691c8666171caa5ed0664a4a386a5c08739f31"
     },
     {
       "path": "icon.png",
@@ -689,7 +689,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "1a7433f13cfe9f87e4d5a1e9c840af6d6013b2b269edebef90309e896da3cecb"
+      "sha256": "b8af4f554e1328b3cd32cce937250111e9cc56d4f1c28603d93aff7b42f1c6e2"
     },
     {
       "path": "rh/yt.py",
@@ -1087,6 +1087,6 @@
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
     }
   ],
-  "notes": "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu.",
-  "notes_en": "Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback."
+  "notes": "Nâng cấp Web Game Manager: Bổ sung 3 menu chính (Quản lý game, Tải game online từ kho 40.000+ ROMs về thẻ nhớ, Quản lý playlist và video yêu thích YouTube trực tuyến)",
+  "notes_en": "Upgrade Web Game Manager: Added 3 main menus (Game Manager, Download Online Games directly to SD card from 40k+ catalog, and YouTube Playlist & Favorites Manager)"
 }

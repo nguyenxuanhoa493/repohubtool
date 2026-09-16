@@ -2,7 +2,19 @@
 import os
 import ctypes
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog", "roms_store.sqlite3")
+def _find_db_path():
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog", "roms_store.sqlite3"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "catalog", "roms_store.sqlite3"),
+        "/mnt/SDCARD/Apps/RetroHub/catalog/roms_store.sqlite3",
+        "/mnt/SDCARD/RetroHub/catalog/roms_store.sqlite3",
+    ]
+    for p in candidates:
+        if os.path.isfile(p):
+            return p
+    return candidates[0]
+
+DB_PATH = _find_db_path()
 
 # ==============================================================================
 # UNIVERSAL SQLITE CONNECTION (NATIVE OR CTYPES FALLBACK FOR TRIMUI LINUX)
