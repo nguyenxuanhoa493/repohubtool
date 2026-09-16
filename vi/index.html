@@ -88,8 +88,14 @@
   .lang:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
   .lang img{width:24px;height:16px;border-radius:3px;display:block}
 
-  header{padding:70px 0 52px;text-align:center;
+  header{padding:54px 0 52px;text-align:center;
     background:radial-gradient(900px 400px at 50% -140px,rgba(0,246,246,.16),transparent)}
+  .badge-hero{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;
+    background:rgba(0,246,246,.1);border:1px solid rgba(0,246,246,.38);color:var(--accent);
+    font-size:.86rem;font-weight:600;margin-bottom:20px;text-decoration:none;
+    transition:transform .18s,border-color .18s,background .18s;letter-spacing:.2px}
+  .badge-hero:hover{transform:translateY(-2px);background:rgba(0,246,246,.18);border-color:var(--accent)}
+  .badge-hero b{background:var(--accent);color:#04121b;padding:2px 8px;border-radius:999px;font-size:.76rem;font-weight:800}
   .logo{width:118px;height:118px;display:block;margin:0 auto;
     filter:drop-shadow(0 6px 22px rgba(0,246,246,.28));animation:float 5s ease-in-out infinite}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
@@ -270,6 +276,7 @@
 
 <header id="top">
   <div class="wrap">
+    <a class="badge-hero" href="/vi/changelog/"><b>v2.27</b> Bản mới v2.27: Thanh tiến trình OTA & Tối ưu giao diện →</a>
     <img class="logo" src="/logo.png" alt="RetroHub">
     <h1>RetroHub</h1>
     <p class="sub">Kho game và tiện ích cho máy cầm tay (TrimUI & NextUI)</p>
