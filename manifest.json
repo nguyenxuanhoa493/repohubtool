@@ -1,12 +1,12 @@
 {
-  "version": "2.25",
-  "full_release_version": "2.25",
+  "version": "2.26",
+  "full_release_version": "2.26",
   "python": "any",
-  "built": "2026-09-16T19:57:57+0700",
+  "built": "2026-09-16T20:03:36+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Khắc phục triệt để hiện tượng treo màn hình \"Installed. Restarting\" sau khi cập nhật OTA (Tự động khởi động lại liền mạch)",
-    "en": "Fix OTA Update restart freeze (Auto-exit & restart RetroHub seamlessly after installation finishes)"
+    "vi": "Tái thiết kế Modal Cập nhật dạng Toàn màn hình (Full-Screen) hiển thị chi tiết nội dung, cuộn mượt mà & chuẩn hóa i18n",
+    "en": "Redesign Full-Screen Update Modal with rich release details, smooth scrolling & unified i18n review"
   },
   "remove": [
     "app.pyc",
@@ -458,8 +458,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 50512,
-      "sha256": "79744530afc056854bfa418058d0cff99069f33c862f707d07fe1c6e59f1e49d"
+      "size": 51004,
+      "sha256": "fba0d30768948709bbf82cef9bcb8d604cd705c849bab91d17c887b2f73480ff"
     },
     {
       "path": "rh/inputs.py",
@@ -553,8 +553,8 @@
     },
     {
       "path": "rh/modals/update.py",
-      "size": 9439,
-      "sha256": "0b6ca5d117edced58fc8fe53d0674dd78bbbe18475be388502aaf371cb4060c9"
+      "size": 14650,
+      "sha256": "5cdf8071ea9b35b1f34486f873d97810fe57fcdcfebcaf4fea7d29cf86ee2670"
     },
     {
       "path": "rh/neterrors.py",
@@ -613,8 +613,8 @@
     },
     {
       "path": "rh/screens/network.py",
-      "size": 10332,
-      "sha256": "def2c172ae5ccadab1f6fa2910fafb83c486530c624e06d23791a4ddf151ea8d"
+      "size": 10330,
+      "sha256": "50c51dde0510d7a835ee8f6e7cbc39bf8d6a93247a926fe37ed1d6b02eddee8a"
     },
     {
       "path": "rh/screens/settings.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "8d5ef861dfb94bd79a57444baee7233021b2a569f3f4b5fa5d12926be013e5f5"
+      "sha256": "43a38f83eee13aa415a46395df91c0db4d569ee23e4d554e4d0d10a2723b5896"
     },
     {
       "path": "rh/yt.py",

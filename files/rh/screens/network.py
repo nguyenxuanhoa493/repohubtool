@@ -128,7 +128,7 @@ class NetworkScreen(BaseScreen):
                 self.refresh_services()
             elif it_id == "gameweb_guide":
                 self.engine.open_modal(TwoColInfoModal(self.engine), {
-                    "title": "HƯỚNG DẪN GAMEWEB 8090",
+                    "title": tr("net_gameweb_guide_title"),
                     "rows": get_gameweb_guide_rows(),
                     "style": "big"
                 })
@@ -138,7 +138,7 @@ class NetworkScreen(BaseScreen):
                 self.refresh_services()
             elif it_id == "ssh_guide":
                 self.engine.open_modal(TwoColInfoModal(self.engine), {
-                    "title": "HƯỚNG DẪN KẾT NỐI SSH",
+                    "title": tr("net_ssh_guide_title"),
                     "rows": get_ssh_guide_rows(),
                     "style": "big"
                 })
@@ -156,7 +156,7 @@ class NetworkScreen(BaseScreen):
                 self.refresh_services()
             elif it_id == "stream_guide":
                 self.engine.open_modal(TwoColInfoModal(self.engine), {
-                    "title": "HƯỚNG DẪN STREAMING",
+                    "title": tr("net_stream_guide_title"),
                     "rows": get_stream_guide_rows(),
                     "style": "big"
                 })
@@ -166,7 +166,7 @@ class NetworkScreen(BaseScreen):
                 self.refresh_services()
             elif it_id == "sftpgo_guide":
                 self.engine.open_modal(TwoColInfoModal(self.engine), {
-                    "title": "HƯỚNG DẪN SFTPGO",
+                    "title": tr("net_sftp_guide_title"),
                     "rows": get_sftp_guide_rows(),
                     "style": "big"
                 })

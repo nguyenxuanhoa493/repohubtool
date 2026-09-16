@@ -30,6 +30,7 @@ class UpdateModal(BaseModal):
         self.restart = False
         self.status = ""
         self.cat_only = False
+        self.scroll_top = 0
 
     def open(self, data=None):
         data = data or {}
@@ -43,6 +44,7 @@ class UpdateModal(BaseModal):
         self.failed = False
         self.restart = False
         self.status = ""
+        self.scroll_top = 0
         super().open(data)
 
     def get_labels(self):
@@ -114,7 +116,6 @@ class UpdateModal(BaseModal):
             state.save_settings()
             request_restart()
             self.restart = True
-            # Tự động thoát app sau 1.2s để launch.sh khởi động lại với bản mới
             import time
             time.sleep(1.2)
             if self.engine:
@@ -132,11 +133,14 @@ class UpdateModal(BaseModal):
         btn_b = inputs.get("btn_b")
         btn_left = inputs.get("btn_left")
         btn_right = inputs.get("btn_right")
+        btn_up = inputs.get("btn_up")
+        btn_down = inputs.get("btn_down")
 
         if self.restart:
             if btn_a or btn_b:
                 self.close()
-                self.engine.running = False
+                if self.engine:
+                    self.engine.running = False
             return True
 
         if self.busy:
@@ -149,6 +153,14 @@ class UpdateModal(BaseModal):
 
         if btn_b:
             self.close()
+            return True
+
+        if btn_up:
+            if self.scroll_top > 0:
+                self.scroll_top -= 1
+            return True
+        elif btn_down:
+            self.scroll_top += 1
             return True
 
         labels = self.get_labels()
@@ -180,62 +192,170 @@ class UpdateModal(BaseModal):
         if not self.active:
             return
 
-        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 215)
-        mw = min(760, state.SCREEN_W - 60)
-        mh = 380
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 225)
+        mw = min(1180, state.SCREEN_W - 60)
+        mh = min(650, state.SCREEN_H - 50)
         mx = (state.SCREEN_W - mw) // 2
         my = (state.SCREEN_H - mh) // 2
 
-        engine.fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+        # Main Modal Container
+        engine.fill_rect(mx, my, mw, mh, 14, 20, 34, 255)
         engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
-        engine.fill_rect(mx + 3, my + 3, mw - 6, 70, 24, 34, 58, 255)
-        engine.fill_rect(mx + 3, my + 71, mw - 6, 2, 0, 246, 246, 255)
-        engine.draw_text(tr("upd_title"), engine.font_title, mx + mw // 2, my + 36,
-                         0, 246, 246, center_x=True, center_y=True)
+
+        # Header Bar
+        hdr_h = 66
+        engine.fill_rect(mx + 3, my + 3, mw - 6, hdr_h, 22, 32, 54, 255)
+        engine.fill_rect(mx + 3, my + hdr_h + 1, mw - 6, 2, 0, 246, 246, 255)
+        engine.draw_text(tr("upd_title"), engine.font_title, mx + 30, my + hdr_h // 2,
+                         0, 246, 246, center_y=True)
 
         um = self.manifest or {}
-        rows_y = my + 100
-        engine.draw_text(f"{tr('upd_current')} {APP_VERSION}", engine.font_item, mx + 45, rows_y, 200, 215, 235)
+        new_v = um.get("version", "?")
+        ver_badge = f"v{APP_VERSION}  ➔  v{new_v}"
+        engine.draw_text(ver_badge, engine.font_item, mx + mw - 30, my + hdr_h // 2,
+                         255, 215, 0, right_align=True, center_y=True)
+
+        # Main Body Split: Left Info Cards (300px), Right Changelog (Rest)
+        body_y = my + hdr_h + 16
+        body_h = mh - hdr_h - 106
+        left_w = 310
+        gap = 18
+
+        # --- LEFT PANEL: Summary Cards ---
+        lx = mx + 20
+        ly = body_y
+        card_h = 68
+        card_gap = 10
+
+        # Calculate download size
+        tot_bytes = sum(f.get("size", 0) for f in self.files) if self.files else 0
+        size_str = human_bytes(tot_bytes) if tot_bytes > 0 else ""
+
+        # Left Info Items
+        left_items = [
+            (tr("upd_new"), f"v{new_v}", (0, 255, 200)),
+            (tr("upd_current"), f"v{APP_VERSION}", (180, 200, 225)),
+            (tr("upd_files"), f"{len(self.files)} tệp" + (f" ({size_str})" if size_str else ""), (255, 215, 80)),
+            ("Kênh phát hành", "Chính thức (CDN)", (140, 220, 255))
+        ]
         if self.cat_only:
             cat = catalog_entry(um) or {}
-            size_txt = human_bytes(cat["size"]) if cat else ""
-            engine.draw_text(tr("upd_cat_new"), engine.font_item, mx + 45, rows_y + 40, 0, 246, 200)
-            engine.draw_text(f"{tr('game_size')}{size_txt}", engine.font_sub, mx + 45, rows_y + 82, 150, 170, 200)
-        else:
-            engine.draw_text(f"{tr('upd_new')} {um.get('version', '?')}", engine.font_item, mx + 45, rows_y + 40, 0, 246, 200)
-            engine.draw_text(f"{tr('upd_files')} {len(self.files)}", engine.font_sub, mx + 45, rows_y + 82, 150, 170, 200)
+            c_sz = human_bytes(cat.get("size", 0)) if cat else ""
+            left_items[0] = (tr("upd_cat_new"), "Database", (0, 255, 200))
+            left_items[2] = (tr("game_size"), c_sz, (255, 215, 80))
 
-        note_y = rows_y + 116
+        for idx, (lbl, val, col) in enumerate(left_items):
+            cy = ly + idx * (card_h + card_gap)
+            engine.fill_rect(lx, cy, left_w, card_h, 20, 28, 46, 255)
+            engine.draw_rect(lx, cy, left_w, card_h, 38, 54, 85, 255, thickness=1)
+            engine.draw_text(lbl, engine.font_sub, lx + 16, cy + 18, 140, 165, 195)
+            engine.draw_text(val, engine.font_item, lx + 16, cy + 44, *col)
+
+        # Safety Note at bottom of left panel
+        tip_y = ly + len(left_items) * (card_h + card_gap) + 4
+        tip_h = body_h - (tip_y - body_y)
+        if tip_h > 40:
+            engine.fill_rect(lx, tip_y, left_w, tip_h, 16, 24, 38, 255)
+            engine.draw_rect(lx, tip_y, left_w, tip_h, 0, 180, 220, 120, thickness=1)
+            engine.draw_text("🔒 An toàn dữ liệu", engine.font_sub, lx + 16, tip_y + 16, 0, 246, 246)
+            tip_msg = "Game và Save trên thẻ nhớ được bảo vệ an toàn 100%."
+            tip_lines = engine.wrap_text_to_width(tip_msg, engine.font_sub, left_w - 32, max_lines=2)
+            for t_idx, tl in enumerate(tip_lines):
+                engine.draw_text(tl, engine.font_sub, lx + 16, tip_y + 38 + t_idx * 20, 150, 175, 200)
+
+        # --- RIGHT PANEL: Changelog & Release Notes ---
+        rx = lx + left_w + gap
+        rw = mw - left_w - gap - 40
+        rh_ = body_h
+
+        engine.fill_rect(rx, body_y, rw, rh_, 10, 16, 28, 255)
+        engine.draw_rect(rx, body_y, rw, rh_, 0, 200, 240, 180, thickness=1)
+        engine.fill_rect(rx + 2, body_y + 2, rw - 4, 38, 18, 28, 48, 255)
+        engine.draw_text("✨ NỘI DUNG NÂNG CẤP & TÍNH NĂNG MỚI", engine.font_sub,
+                         rx + 20, body_y + 19, 0, 246, 246, center_y=True)
+
+        # Changelog lines
         rel_note = release_note(um, state.current_lang)
+        all_lines = []
         if rel_note:
-            note_txt = f"• {rel_note}"
-            limit = mw - 90
-            lines = engine.wrap_text_to_width(note_txt, engine.font_sub, limit, max_lines=2)
-            for nl in lines:
-                engine.draw_text(nl, engine.font_sub, mx + 45, note_y, 0, 230, 180)
-                note_y += 26
-        engine.draw_text(tr("upd_note"), engine.font_sub, mx + 45, note_y, 150, 170, 200)
+            raw_sections = rel_note.split("\n")
+            for sec in raw_sections:
+                sec = sec.strip()
+                if not sec:
+                    continue
+                wrapped = engine.wrap_text_to_width(sec, engine.font_item, rw - 44, max_lines=10)
+                for w in wrapped:
+                    all_lines.append(w)
+        else:
+            all_lines.append("• Bản cập nhật tối ưu hóa hiệu năng và sửa các lỗi phát sinh.")
+
+        visible_lines_cnt = max(1, (rh_ - 54) // 30)
+        max_scroll = max(0, len(all_lines) - visible_lines_cnt)
+        self.scroll_top = max(0, min(self.scroll_top, max_scroll))
+
+        line_y = body_y + 50
+        for l_idx in range(self.scroll_top, min(len(all_lines), self.scroll_top + visible_lines_cnt)):
+            line_str = all_lines[l_idx]
+            is_bullet = line_str.startswith("•") or line_str.startswith("-") or line_str.startswith("*")
+            col = (255, 235, 170) if is_bullet else (210, 225, 245)
+            engine.draw_text(line_str, engine.font_item, rx + 22, line_y, *col)
+            line_y += 30
+
+        # Scrollbar Indicator if content exceeds
+        if max_scroll > 0:
+            sb_h = max(24, int((visible_lines_cnt / len(all_lines)) * (rh_ - 50)))
+            sb_y = body_y + 44 + int((self.scroll_top / max_scroll) * (rh_ - 50 - sb_h))
+            engine.fill_rect(rx + rw - 8, body_y + 44, 4, rh_ - 50, 25, 35, 55, 255)
+            engine.fill_rect(rx + rw - 8, sb_y, 4, sb_h, 0, 246, 246, 255)
+
+        # --- BOTTOM ACTION / PROGRESS AREA ---
+        bot_y = my + mh - 80
+        bot_h = 68
 
         if self.busy or self.failed or self.restart:
-            colour = (255, 120, 120) if self.failed else (0, 230, 255)
-            engine.draw_text(self.status, engine.font_item, mx + mw // 2, my + mh - 62,
-                             *colour, center_x=True, center_y=True)
+            engine.fill_rect(mx + 20, bot_y, mw - 40, bot_h, 16, 24, 40, 255)
+            engine.draw_rect(mx + 20, bot_y, mw - 40, bot_h, 0, 200, 240, 180, thickness=1)
+
+            # Status Message
+            stat_col = (255, 100, 100) if self.failed else ((0, 255, 180) if self.restart else (0, 246, 246))
+            engine.draw_text(self.status, engine.font_item, mx + 40, bot_y + 22, *stat_col)
+
+            # Dynamic Progress bar
+            pbar_x = mx + 40
+            pbar_y = bot_y + 44
+            pbar_w = mw - 80
+            pbar_h = 10
+            engine.fill_rect(pbar_x, pbar_y, pbar_w, pbar_h, 25, 35, 55, 255)
+            if self.restart:
+                engine.fill_rect(pbar_x, pbar_y, pbar_w, pbar_h, 0, 255, 180, 255)
+            elif self.busy:
+                # Calculate progress from status string if available
+                pct = 0.5
+                if "/" in self.status:
+                    try:
+                        parts = self.status.split()[0].split("/")
+                        pct = min(1.0, max(0.05, int(parts[0]) / int(parts[1])))
+                    except Exception:
+                        pct = 0.5
+                engine.fill_rect(pbar_x, pbar_y, int(pbar_w * pct), pbar_h, 0, 246, 246, 255)
+
             if self.failed or self.restart:
-                engine.draw_text("[A/B] OK", engine.font_sub, mx + mw // 2, my + mh - 26,
-                                 200, 215, 235, center_x=True, center_y=True)
+                engine.draw_text("[A/B] OK", engine.font_item, mx + mw - 40, bot_y + 22,
+                                 255, 255, 255, right_align=True)
         else:
             labels = self.get_labels()
-            bw = (mw - 100) // len(labels)
-            bh = 52
-            by = my + mh - 78
+            bw = (mw - 40 - (len(labels) - 1) * 14) // len(labels)
+            bh = 54
             for i, lbl in enumerate(labels):
-                bx = mx + 40 + i * (bw + 10)
+                bx = mx + 20 + i * (bw + 14)
                 sel = (i == self.selected_opt)
                 if sel:
-                    engine.fill_rect(bx, by, bw, bh, 0, 120, 130, 255)
-                    engine.draw_rect(bx, by, bw, bh, 0, 246, 246, 255, thickness=3)
+                    engine.fill_rect(bx, bot_y + 4, bw, bh, 0, 140, 150, 255)
+                    engine.draw_rect(bx, bot_y + 4, bw, bh, 0, 246, 246, 255, thickness=3)
+                    engine.draw_text(lbl, engine.font_badge, bx + bw // 2, bot_y + 4 + bh // 2,
+                                     255, 255, 255, center_x=True, center_y=True)
                 else:
-                    engine.fill_rect(bx, by, bw, bh, 30, 42, 66, 255)
-                    engine.draw_rect(bx, by, bw, bh, 70, 90, 125, 255, thickness=1)
-                engine.draw_text(lbl, engine.font_badge, bx + bw // 2, by + bh // 2,
-                                 255, 255, 255, center_x=True, center_y=True)
+                    engine.fill_rect(bx, bot_y + 4, bw, bh, 24, 34, 52, 255)
+                    engine.draw_rect(bx, bot_y + 4, bw, bh, 45, 60, 90, 255, thickness=1)
+                    engine.draw_text(lbl, engine.font_badge, bx + bw // 2, bot_y + 4 + bh // 2,
+                                     190, 205, 225, center_x=True, center_y=True)
