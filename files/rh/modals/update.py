@@ -31,6 +31,11 @@ class UpdateModal(BaseModal):
         self.status = ""
         self.cat_only = False
         self.scroll_top = 0
+        self.progress_pct = 0.0
+        self.progress_done = 0
+        self.progress_total = 0
+        self.progress_file = ""
+        self.phase_title = ""
 
     def open(self, data=None):
         data = data or {}
@@ -45,6 +50,11 @@ class UpdateModal(BaseModal):
         self.restart = False
         self.status = ""
         self.scroll_top = 0
+        self.progress_pct = 0.0
+        self.progress_done = 0
+        self.progress_total = len(self.files) if self.files else 0
+        self.progress_file = ""
+        self.phase_title = ""
         super().open(data)
 
     def get_labels(self):
@@ -53,15 +63,26 @@ class UpdateModal(BaseModal):
     def run_update_thread(self):
         m = self.manifest
         files = self.files
+        total_steps = len(files)
+        self.progress_total = total_steps
+        self.progress_done = 0
+        self.progress_pct = 0.0
+        self.phase_title = "Đang tải tệp cập nhật..."
 
         def prog(done, total, path):
-            name = os.path.basename(path) if path else ""
-            self.status = f"{done}/{total}  {name}".strip()
+            self.progress_done = done
+            self.progress_total = total
+            self.progress_file = os.path.basename(path) if path else ""
+            if total > 0:
+                self.progress_pct = min(0.92, done / total)
+            self.status = f"Tải {done}/{total}: {self.progress_file}"
 
         ok = False
         try:
             if download_update(m, files, progress=prog):
+                self.phase_title = "Đang cài đặt & thay thế tệp..."
                 self.status = tr("upd_installing")
+                self.progress_pct = 0.95
                 ok = apply_update(m, files)
         except Exception as e:
             print(f"Update error: {e}")
@@ -74,7 +95,11 @@ class UpdateModal(BaseModal):
                 rt_pending = []
             if rt_pending:
                 def rt_prog(done, total, path):
+                    self.phase_title = "Đang tải môi trường Runtime..."
+                    self.progress_file = os.path.basename(path) if path else ""
                     self.status = f"{tr('upd_rt_downloading')} {done}/{total}"
+                    if total > 0:
+                        self.progress_pct = 0.95 + min(0.03, (done / total) * 0.03)
                 try:
                     download_runtime(rt_pending, progress=rt_prog)
                     self.status = tr("upd_rt_installing")
@@ -94,10 +119,15 @@ class UpdateModal(BaseModal):
 
         if ok and catalog_pending(m):
             def enter_unpack():
+                self.phase_title = "Đang giải nén Cơ sở dữ liệu Kho game..."
                 self.status = tr("upd_cat_unpacking")
+                self.progress_pct = 0.98
 
             def cat_prog(done, total, path):
+                self.phase_title = "Đang tải Cơ sở dữ liệu Kho game..."
                 self.status = f"{tr('upd_cat_downloading')} {done}/{total}"
+                if total > 0:
+                    self.progress_pct = 0.95 + min(0.04, (done / total) * 0.04)
 
             try:
                 download_catalog(m, progress=cat_prog, on_phase=enter_unpack)
@@ -111,6 +141,8 @@ class UpdateModal(BaseModal):
                 state.pending_catalog_notice = tr(CATALOG_FAILED)
 
         if ok:
+            self.progress_pct = 1.0
+            self.phase_title = "🎉 Cập nhật thành công!"
             self.status = tr("upd_done")
             state.pending_update = m.get("version", "")
             state.save_settings()
@@ -122,6 +154,7 @@ class UpdateModal(BaseModal):
                 self.engine.running = False
         else:
             self.failed = True
+            self.phase_title = "❌ Cập nhật thất bại"
             self.status = tr("upd_failed")
         self.busy = False
 
@@ -313,35 +346,42 @@ class UpdateModal(BaseModal):
         bot_h = 68
 
         if self.busy or self.failed or self.restart:
-            engine.fill_rect(mx + 20, bot_y, mw - 40, bot_h, 16, 24, 40, 255)
-            engine.draw_rect(mx + 20, bot_y, mw - 40, bot_h, 0, 200, 240, 180, thickness=1)
+            prog_h = 78
+            prog_y = my + mh - prog_h - 14
+            engine.fill_rect(mx + 20, prog_y, mw - 40, prog_h, 14, 22, 38, 255)
+            engine.draw_rect(mx + 20, prog_y, mw - 40, prog_h, 0, 246, 246, 255, thickness=2)
 
-            # Status Message
+            # Row 1: Phase Title (Left) + Percentage (Right)
             stat_col = (255, 100, 100) if self.failed else ((0, 255, 180) if self.restart else (0, 246, 246))
-            engine.draw_text(self.status, engine.font_item, mx + 40, bot_y + 22, *stat_col)
+            engine.draw_text(self.phase_title or self.status, engine.font_item, mx + 38, prog_y + 16, *stat_col)
 
-            # Dynamic Progress bar
-            pbar_x = mx + 40
-            pbar_y = bot_y + 44
-            pbar_w = mw - 80
-            pbar_h = 10
-            engine.fill_rect(pbar_x, pbar_y, pbar_w, pbar_h, 25, 35, 55, 255)
+            pct_val = int(min(1.0, max(0.0, self.progress_pct)) * 100)
+            pct_txt = f"{pct_val}%"
+            engine.draw_text(pct_txt, engine.font_title, mx + mw - 38, prog_y + 16, 255, 215, 0, right_align=True)
+
+            # Row 2: Heavy Glowing Progress Bar
+            pbar_x = mx + 38
+            pbar_y = prog_y + 36
+            pbar_w = mw - 76
+            pbar_h = 16
+            engine.fill_rect(pbar_x, pbar_y, pbar_w, pbar_h, 24, 34, 54, 255)
+            engine.draw_rect(pbar_x, pbar_y, pbar_w, pbar_h, 45, 65, 95, 255, thickness=1)
+
+            fill_w = max(0, min(pbar_w, int(pbar_w * self.progress_pct)))
             if self.restart:
-                engine.fill_rect(pbar_x, pbar_y, pbar_w, pbar_h, 0, 255, 180, 255)
-            elif self.busy:
-                # Calculate progress from status string if available
-                pct = 0.5
-                if "/" in self.status:
-                    try:
-                        parts = self.status.split()[0].split("/")
-                        pct = min(1.0, max(0.05, int(parts[0]) / int(parts[1])))
-                    except Exception:
-                        pct = 0.5
-                engine.fill_rect(pbar_x, pbar_y, int(pbar_w * pct), pbar_h, 0, 246, 246, 255)
+                engine.fill_rect(pbar_x + 1, pbar_y + 1, pbar_w - 2, pbar_h - 2, 0, 255, 180, 255)
+            elif self.failed:
+                engine.fill_rect(pbar_x + 1, pbar_y + 1, pbar_w - 2, pbar_h - 2, 255, 80, 80, 255)
+            elif fill_w > 0:
+                engine.fill_rect(pbar_x + 1, pbar_y + 1, fill_w - 2, pbar_h - 2, 0, 246, 246, 255)
+                if fill_w < pbar_w - 4:
+                    engine.fill_rect(pbar_x + fill_w - 4, pbar_y + 1, 4, pbar_h - 2, 255, 255, 255, 255)
 
+            # Row 3: Current file & step details
             if self.failed or self.restart:
-                engine.draw_text("[A/B] OK", engine.font_item, mx + mw - 40, bot_y + 22,
-                                 255, 255, 255, right_align=True)
+                engine.draw_text("[A/B] OK", engine.font_sub, mx + mw - 38, prog_y + 58, 220, 235, 255, right_align=True)
+            elif self.status:
+                engine.draw_text(self.status, engine.font_sub, mx + 38, prog_y + 58, 140, 170, 205)
         else:
             labels = self.get_labels()
             bw = (mw - 40 - (len(labels) - 1) * 14) // len(labels)

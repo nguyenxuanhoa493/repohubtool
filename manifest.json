@@ -1,12 +1,12 @@
 {
-  "version": "2.26",
-  "full_release_version": "2.26",
+  "version": "2.27",
+  "full_release_version": "2.27",
   "python": "any",
-  "built": "2026-09-16T20:03:36+0700",
+  "built": "2026-09-16T20:06:07+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tái thiết kế Modal Cập nhật dạng Toàn màn hình (Full-Screen) hiển thị chi tiết nội dung, cuộn mượt mà & chuẩn hóa i18n",
-    "en": "Redesign Full-Screen Update Modal with rich release details, smooth scrolling & unified i18n review"
+    "vi": "Bổ sung Thanh tiến trình trực quan & Phần trăm tải tệp thời gian thực trong Modal Cập nhật",
+    "en": "Visual Progress Bar & Real-time Percentage for OTA Update Downloads"
   },
   "remove": [
     "app.pyc",
@@ -553,8 +553,8 @@
     },
     {
       "path": "rh/modals/update.py",
-      "size": 14650,
-      "sha256": "5cdf8071ea9b35b1f34486f873d97810fe57fcdcfebcaf4fea7d29cf86ee2670"
+      "size": 16861,
+      "sha256": "c889a12e3ea8e3512a5d3998c86f2f51b415cb37bd26844634ba6810f1c9321d"
     },
     {
       "path": "rh/neterrors.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "43a38f83eee13aa415a46395df91c0db4d569ee23e4d554e4d0d10a2723b5896"
+      "sha256": "ea36f146b4e3eb4e1bc24fb0d93911323f14d11fc3a1094d2d905013830a65f7"
     },
     {
       "path": "rh/yt.py",

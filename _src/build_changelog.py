@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.27", "2026-09-16",
+     ("Visual Progress Bar & Real-time Percentage for OTA Update Downloads",
+      "Bổ sung Thanh tiến trình trực quan & Phần trăm tải tệp thời gian thực trong Modal Cập nhật"),
+     [("Visual High-Tech Progress Bar: Upgraded the OTA download console with a thick glowing progress bar, dynamic progress percentage (0-100%), and real-time file counters.",
+       "Thanh tiến trình trực quan & Nổi bật: Nâng cấp bảng tiến độ cập nhật với thanh Progress Bar phát sáng viền neon, hiển thị phần trăm (%) động từ 0-100% cùng số lượng tệp theo thời gian thực."),
+      ("Detailed Phase & File Status: Shows exactly which component or file is currently downloading/installing (Code, Runtime, Database) with clear indicators.",
+       "Hiển thị chi tiết giai đoạn & Tệp đang tải: Theo dõi chính xác từng tệp mã nguồn, tệp giả lập hoặc cơ sở dữ liệu đang được tải và giải nén.")]),
+
     ("2.26", "2026-09-16",
      ("Redesign Full-Screen Update Modal with rich release details, smooth scrolling & unified i18n review",
       "Tái thiết kế Modal Cập nhật dạng Toàn màn hình (Full-Screen) hiển thị chi tiết nội dung, cuộn mượt mà & chuẩn hóa i18n"),
