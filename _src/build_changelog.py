@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.19", "2026-09-16",
+     ("Fix Netplay Lobby crash, handle API response safely & add standalone Netplay game launcher",
+      "Sửa triệt để lỗi văng app khi vào Sảnh game (Netplay), tối ưu nạp danh sách phòng Cloudflare & tự động khởi chạy game độc lập"),
+     [("Fix Netplay Lobby Crash: Fixed return tuple handling in fetch_public_rooms, preventing AttributeError crash when rendering room lists in Public Lobby.",
+       "Sửa lỗi văng Sảnh game: Khắc phục triệt để lỗi phân giải giá trị trả về của fetch_public_rooms, chấm dứt hoàn toàn hiện tượng văng ứng dụng khi duyệt danh sách phòng trực tuyến."),
+      ("Direct Netplay Game Launcher: Added direct emulator launching fallback when joining/hosting Netplay rooms directly from the Main Menu without requiring prior game selection in Library.",
+       "Khởi chạy Netplay trực tiếp: Bổ sung cơ chế tự động khớp ROM và khởi chạy giả lập trực tiếp từ Menu chính mà không bắt buộc phải mở từ Thư viện game."),
+      ("Robust Error Handling: Added network error status display and room validation safeguards across all Netplay modals.",
+       "Tăng cường an toàn kết nối: Bổ sung hiển thị trạng thái lỗi mạng trực quan và xác thực dữ liệu phòng trên giao diện Netplay.")]),
+
     ("2.18", "2026-09-16",
      ("Fix startup crash on boot (ImportError modals) & introduce launcher Emergency Self-Healing auto-recovery",
       "Sửa triệt để lỗi khởi động văng app (ImportError modals) & bổ sung cơ chế Tự động cứu hộ (Emergency Self-Healing)"),

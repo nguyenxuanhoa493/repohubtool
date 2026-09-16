@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Netplay Multiplayer Modal (Host / Join via Pinggy & Cloudflare Lobby)."""
 
+import os
 import time
 import threading
 from .. import state
@@ -38,12 +39,61 @@ class NetplayModal(BaseModal):
         super().open(data)
         self.mode = "select"
         self.selected_opt = 0
-        self.game_info = self.data.get("game_info") or {}
-        self.sys_code = self.data.get("sys_code", "")
-        self.rom_path = self.data.get("rom_path", "")
-        self.on_launch_cb = self.data.get("on_launch")
+        self.game_info = (self.data.get("game_info") or {}) if isinstance(self.data, dict) else {}
+        self.sys_code = self.data.get("sys_code", "") if isinstance(self.data, dict) else ""
+        self.rom_path = self.data.get("rom_path", "") if isinstance(self.data, dict) else ""
+        self.on_launch_cb = self.data.get("on_launch") if isinstance(self.data, dict) else None
         self.tunnel_info = None
         self.is_starting = False
+        self.lobby_rooms = []
+        self.lobby_cursor = 0
+        self.lobby_loading = False
+        self.lobby_err = None
+        self.numpad_code = ""
+        self.numpad_cursor = 0
+
+    def _direct_launch(self, sys_code, game_info, netplay_param=None):
+        from ..emulators import resolve_emulator
+        from ..helpers import clean_game_title
+        from ..paths import SDCARD_PATH
+
+        rom_p = game_info.get("path") or game_info.get("rom_path") or ""
+        fn = game_info.get("filename", "")
+        if not rom_p or not os.path.exists(rom_p):
+            candidates = [
+                os.path.join(SDCARD_PATH, "Roms", sys_code, fn),
+                os.path.join(SDCARD_PATH, "Roms", f"({sys_code})", fn),
+            ]
+            for c in candidates:
+                if fn and os.path.exists(c):
+                    rom_p = c
+                    break
+
+        if not rom_p or not os.path.exists(rom_p):
+            self.engine.toast("Không tìm thấy file ROM trên thẻ nhớ!" if state.current_lang == "VI" else "ROM file not found on SD card!")
+            return
+
+        emu_dir, script_path = resolve_emulator(sys_code)
+        if not script_path or not os.path.exists(script_path):
+            self.engine.toast(f"Không tìm thấy giả lập cho hệ {sys_code}!" if state.current_lang == "VI" else f"Emulator for {sys_code} not found!")
+            return
+
+        title_display = clean_game_title(game_info.get("title", "Game"))
+        self.engine.toast(f"Đang khởi động {title_display}..." if state.current_lang == "VI" else f"Launching {title_display}...")
+
+        handoff_script = f"""#!/bin/sh
+cd "{emu_dir or os.path.dirname(script_path)}"
+"{script_path}" "{rom_p}" {" " + str(netplay_param) if netplay_param else ""}
+"""
+        try:
+            with open("/tmp/launch_game.sh", "w", encoding="utf-8") as f:
+                f.write(handoff_script)
+            os.chmod("/tmp/launch_game.sh", 0o755)
+            with open("/tmp/rh_last_screen.txt", "w", encoding="utf-8") as f:
+                f.write("home")
+            self.engine.running = False
+        except Exception as e:
+            self.engine.toast(f"Lỗi khởi động: {e}")
 
     def handle_input(self, inputs):
         if not self.active:
@@ -71,6 +121,9 @@ class NetplayModal(BaseModal):
             if btn_a:
                 if self.selected_opt == 0:
                     # Host Room
+                    if not self.sys_code or not self.game_info or not self.game_info.get("title"):
+                        self.engine.toast("Vui lòng vào Thư viện và chọn Game để Tạo phòng Host!" if state.current_lang == "VI" else "Select a Game from Library to Host!")
+                        return True
                     self.start_hosting()
                 elif self.selected_opt == 1:
                     # Public Lobby
@@ -100,7 +153,7 @@ class NetplayModal(BaseModal):
                 my_port = get_my_hosted_room_port()
                 if self.lobby_rooms and 0 <= self.lobby_cursor < len(self.lobby_rooms):
                     rm = self.lobby_rooms[self.lobby_cursor]
-                    if my_port and str(rm.get("port")) == my_port:
+                    if isinstance(rm, dict) and my_port and str(rm.get("port")) == my_port:
                         stop_netplay_tunnel()
                         self.engine.toast("Đã đóng phòng của bạn!" if state.current_lang == "VI" else "Closed your room!")
                         self.open_lobby()
@@ -112,14 +165,15 @@ class NetplayModal(BaseModal):
             if btn_a:
                 if self.lobby_rooms and 0 <= self.lobby_cursor < len(self.lobby_rooms):
                     rm = self.lobby_rooms[self.lobby_cursor]
-                    self.join_room(rm)
+                    if isinstance(rm, dict):
+                        self.join_room(rm)
                 return True
 
         elif self.mode == "hosting":
             if btn_b:
                 stop_netplay_tunnel()
                 self.mode = "select"
-                self.engine.toast("Đã hủy và đóng phòng Netplay")
+                self.engine.toast("Đã hủy và đóng phòng Netplay" if state.current_lang == "VI" else "Cancelled and closed Netplay room")
                 return True
             if btn_x:
                 # Resend Telegram
@@ -127,15 +181,18 @@ class NetplayModal(BaseModal):
                 if t_info:
                     threading.Thread(target=lambda: send_netplay_info_to_telegram(
                         t_info.get("port", ""), self.sys_code, self.game_info.get("title", "")), daemon=True).start()
-                    self.engine.toast("Đang gửi lại sang Telegram...")
+                    self.engine.toast("Đang gửi lại sang Telegram..." if state.current_lang == "VI" else "Resending to Telegram...")
                 return True
             if btn_a:
                 # Start Game as Host
                 t_info = get_netplay_tunnel_info()
-                if t_info and self.on_launch_cb:
-                    self.close()
+                if t_info:
                     netplay_param = build_netplay_param("host", "127.0.0.1", t_info.get("port", ""))
-                    self.on_launch_cb(self.sys_code, self.game_info, netplay_param=netplay_param)
+                    self.close()
+                    if self.on_launch_cb:
+                        self.on_launch_cb(self.sys_code, self.game_info, netplay_param=netplay_param)
+                    else:
+                        self._direct_launch(self.sys_code, self.game_info, netplay_param=netplay_param)
                 return True
 
         elif self.mode == "numpad":
@@ -182,9 +239,9 @@ class NetplayModal(BaseModal):
             if info:
                 p_num = str(info.get("port", ""))
                 send_netplay_info_to_telegram(p_num, self.sys_code, self.game_info.get("title", ""))
-                self.engine.toast(f"Phòng Netplay đã mở: Mã {p_num}")
+                self.engine.toast(f"Phòng Netplay đã mở: Mã {p_num}" if state.current_lang == "VI" else f"Netplay room open: Code {p_num}")
             else:
-                self.engine.toast("Lỗi mở phòng Netplay!")
+                self.engine.toast("Lỗi mở phòng Netplay!" if state.current_lang == "VI" else "Failed to open Netplay room!")
 
         threading.Thread(target=_bg_host, daemon=True).start()
 
@@ -192,52 +249,67 @@ class NetplayModal(BaseModal):
         self.mode = "lobby"
         self.lobby_loading = True
         self.lobby_err = None
+        self.lobby_rooms = []
+        self.lobby_cursor = 0
 
         def _bg_lobby():
             try:
-                rooms = fetch_public_rooms()
-                self.lobby_rooms = rooms or []
+                ok, rooms = fetch_public_rooms(force_refresh=True)
+                if ok and isinstance(rooms, list):
+                    self.lobby_rooms = rooms
+                    self.lobby_err = None
+                else:
+                    self.lobby_rooms = []
+                    self.lobby_err = str(rooms) if rooms else ("Không tải được phòng" if state.current_lang == "VI" else "Failed to fetch rooms")
                 self.lobby_loading = False
             except Exception as e:
+                self.lobby_rooms = []
                 self.lobby_err = str(e)
                 self.lobby_loading = False
 
         threading.Thread(target=_bg_lobby, daemon=True).start()
 
     def join_room(self, rm):
+        if not rm or not isinstance(rm, dict):
+            return
         my_port = get_my_hosted_room_port()
         port_str = str(rm.get("port", ""))
         if my_port and port_str == my_port:
-            self.engine.toast("Không thể tự kết nối vào phòng của chính mình!")
+            self.engine.toast("Không thể tự kết nối vào phòng của chính mình!" if state.current_lang == "VI" else "Cannot join your own room!")
             return
 
         h_name = rm.get("host_domain") or "a.pinggy.io"
-        sys_c = rm.get("sys_code", self.sys_code)
+        sys_c = rm.get("sys_code") or self.sys_code
         g_title = rm.get("game_title", "")
 
         # Check local ROM
-        rom_p, g_info = find_local_rom_for_netplay(sys_c, g_title)
+        rom_p, found_sys = find_local_rom_for_netplay(sys_c, g_title)
         if not rom_p:
-            self.engine.toast(f"Chưa có ROM game '{g_title}'! Vui lòng tải trước.")
+            self.engine.toast(f"Chưa có ROM '{g_title}'! Vui lòng tải trước." if state.current_lang == "VI" else f"Missing ROM '{g_title}'! Please download first.")
             return
+
+        target_sys = found_sys or sys_c
+        target_game = {"title": g_title, "path": rom_p, "sys_code": target_sys}
+        netplay_param = build_netplay_param("client", h_name, port_str)
 
         self.close()
         if self.on_launch_cb:
-            netplay_param = build_netplay_param("client", h_name, port_str)
-            self.on_launch_cb(sys_c, g_info or self.game_info, netplay_param=netplay_param)
+            self.on_launch_cb(target_sys, target_game, netplay_param=netplay_param)
+        else:
+            self._direct_launch(target_sys, target_game, netplay_param=netplay_param)
 
     def submit_numpad_code(self):
         if len(self.numpad_code) < 4:
-            self.engine.toast("Mã phòng cần ít nhất 4-5 số!")
+            self.engine.toast("Mã phòng cần ít nhất 4-5 số!" if state.current_lang == "VI" else "Room code needs 4-5 digits!")
             return
 
         code_str = self.numpad_code
-        self.engine.toast(f"Đang tìm phòng {code_str}...")
+        self.engine.toast(f"Đang tìm phòng {code_str}..." if state.current_lang == "VI" else f"Searching room {code_str}...")
 
         def _bg_join():
             rm = find_room_by_port(code_str)
             if not rm:
-                self.engine.toast(f"Không tìm thấy phòng {code_str} trên Sảnh!")
+                self.engine.toast(f"Không tìm thấy phòng {code_str} trên Sảnh!" if state.current_lang == "VI" else f"Room {code_str} not found!")
                 return
             self.join_room(rm)
 
@@ -255,13 +327,14 @@ class NetplayModal(BaseModal):
         engine.fill_rect(0, 0, mw, head_h, 20, 28, 48, 255)
         engine.fill_rect(0, head_h - 2, mw, 2, 0, 246, 246, 255)
 
-        g_title = self.game_info.get("title", "Game")
-        sys_c = self.sys_code
-        disp_gt = f"[{sys_c}] {g_title}"
-        if len(disp_gt) > 34:
-            disp_gt = disp_gt[:31] + "..."
-        gt_w = engine.measure_text(disp_gt, engine.font_badge)
-        engine.draw_text(disp_gt, engine.font_badge, mw - 28 - gt_w, head_h // 2, 255, 215, 0, center_y=True)
+        g_title = (self.game_info.get("title") or "") if isinstance(self.game_info, dict) else ""
+        sys_c = self.sys_code or ""
+        if g_title and sys_c:
+            disp_gt = f"[{sys_c}] {g_title}"
+            if len(disp_gt) > 34:
+                disp_gt = disp_gt[:31] + "..."
+            gt_w = engine.measure_text(disp_gt, engine.font_badge)
+            engine.draw_text(disp_gt, engine.font_badge, mw - 28 - gt_w, head_h // 2, 255, 215, 0, center_y=True)
 
         foot_h = 50
         fy = mh - foot_h
@@ -361,6 +434,8 @@ class NetplayModal(BaseModal):
 
             if self.lobby_loading:
                 engine.draw_text("ĐANG TẢI DANH SÁCH PHÒNG TỪ CLOUDFLARE...", engine.font_item, mw // 2, mh // 2, 255, 215, 0, center_x=True, center_y=True)
+            elif self.lobby_err:
+                engine.draw_text(str(self.lobby_err).upper(), engine.font_item, mw // 2, mh // 2, 255, 100, 100, center_x=True, center_y=True)
             elif not self.lobby_rooms:
                 engine.draw_text("HIỆN CHƯA CÓ PHÒNG NETPLAY NÀO ĐANG MỞ", engine.font_item, mw // 2, mh // 2, 255, 215, 0, center_x=True, center_y=True)
             else:
@@ -373,6 +448,8 @@ class NetplayModal(BaseModal):
                 my_np_port = get_my_hosted_room_port()
 
                 for rel_i, rm in enumerate(disp_slice):
+                    if not isinstance(rm, dict):
+                        continue
                     real_i = scroll_off + rel_i
                     ry = start_ry + rel_i * (r_h + r_gap)
                     rx = 32
@@ -387,6 +464,8 @@ class NetplayModal(BaseModal):
                     txt_title = f"[{rm.get('sys_code','')}] {str(rm.get('game_title',''))[:42]}"
                     engine.draw_text(txt_title, engine.font_item, rx + 22, ry + 16, 255, 255, 255)
                     txt_sub = f"Host: {rm.get('player_nick','Host')}  •  Core: {rm.get('core','Auto')}"
+                    if is_my_rm:
+                        txt_sub += "  [PHÒNG CỦA BẠN - BẤM X ĐỂ ĐÓNG]"
                     engine.draw_text(txt_sub, engine.font_sub, rx + 22, ry + 48, 0, 230, 255)
 
             fx = 32

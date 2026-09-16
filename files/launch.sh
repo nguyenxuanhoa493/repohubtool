@@ -29,7 +29,7 @@ APP="$(pwd)"
 # two drifted until the .pak had no --led-daemon branch at all.
 export SDCARD_PATH="${SDCARD_PATH:-/mnt/SDCARD}"
 export PATH="$SDCARD_PATH/System/bin:$PATH"
-export LD_LIBRARY_PATH="$APP/libs:$SDCARD_PATH/System/lib:/usr/trimui/lib:/usr/lib:/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$APP/libs:$SDCARD_PATH/System/lib:/usr/trimui/lib:/usr/lib64:/usr/lib:/lib:$LD_LIBRARY_PATH"
 
 # Thu vien SDL2 phu thuoc vao tung thiet bi va ban firmware:
 # - TrimUI Brick / Smart Pro dat ban tuy bien rieng o /usr/trimui/lib
