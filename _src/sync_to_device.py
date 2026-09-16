@@ -101,15 +101,18 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     local_root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files")
 
-    # Tu dong gom toan bo cac file ma nguon trong files/rh/ de khong bao gio bi sot
+    # Tu dong gom toan bo cac file ma nguon trong files/rh/ (va thu muc con) de khong bao gio bi sot
     all_targets = list(TARGET_FILES)
     rh_dir = os.path.join(local_root, "rh")
     if os.path.isdir(rh_dir):
-        for fname in os.listdir(rh_dir):
-            if fname.endswith(".py"):
-                entry = (f"rh/{fname}", f"rh/{fname}")
-                if entry not in all_targets:
-                    all_targets.append(entry)
+        for root, dirs, files in os.walk(rh_dir):
+            for fname in files:
+                if fname.endswith(".py") or fname.endswith(".json") or fname.endswith(".gz"):
+                    abs_f = os.path.join(root, fname)
+                    rel_f = os.path.relpath(abs_f, local_root)
+                    entry = (rel_f, rel_f)
+                    if entry not in all_targets:
+                        all_targets.append(entry)
 
     print("[*] Bắt đầu đồng bộ tệp...")
     for rel_src, rel_dst in all_targets:

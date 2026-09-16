@@ -627,6 +627,66 @@ def count_missing_boxarts():
         return 0
 
 
+def scrape_boxart_for_single_rom(item, base_sd=None):
+    """Cào và lưu ảnh bìa cho một ROM cụ thể. Trả về (success, target_art_path, message)."""
+    sd = base_sd or SDCARD_PATH
+    sys_code = item.get("sys_code") or ""
+    fname = item.get("filename") or ""
+    rom_path = item.get("rom_path") or ""
+    title = item.get("title") or ""
+
+    rom_base = os.path.splitext(os.path.basename(rom_path or fname))[0]
+    base_name = rom_base or title
+    clean_title = clean_rom_title(fname or rom_base) or title or base_name
+
+    target_img_dir = os.path.join(sd, "Imgs", sys_code)
+    if rom_path:
+        parts = rom_path.replace("\\", "/").split("/")
+        if "Roms" in parts:
+            idx = parts.index("Roms")
+            if idx + 1 < len(parts):
+                sys_folder = parts[idx + 1]
+                candidate = os.path.join(sd, "Imgs", sys_folder)
+                if os.path.isdir(candidate) or not os.path.isdir(target_img_dir):
+                    target_img_dir = candidate
+
+    os.makedirs(target_img_dir, exist_ok=True)
+    target_art = os.path.join(target_img_dir, f"{rom_base}.png")
+
+    # 1. Trích xuất trực tiếp icon từ file .jar nếu là game Java J2ME
+    if ((rom_path and rom_path.lower().endswith(".jar")) or sys_code.upper() == "JAVA") and rom_path:
+        if extract_jar_icon(rom_path, target_art):
+            if title and title != rom_base:
+                try:
+                    shutil.copyfile(target_art, os.path.join(target_img_dir, f"{title}.png"))
+                except Exception:
+                    pass
+            return True, target_art, "Đã trích xuất icon Java J2ME thành công."
+
+    # 2. Tìm ảnh bìa online
+    best_url, src_type = find_best_boxart(sys_code, clean_title, filename=fname, fast_only=False)
+    if best_url:
+        for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
+            old_f = os.path.join(target_img_dir, f"{rom_base}{old_ext}")
+            if os.path.isfile(old_f):
+                try:
+                    os.remove(old_f)
+                except Exception:
+                    pass
+
+        ok, err = download_image_to_file(best_url, target_art, timeout=10)
+        if ok:
+            if title and title != rom_base:
+                try:
+                    shutil.copyfile(target_art, os.path.join(target_img_dir, f"{title}.png"))
+                except Exception:
+                    pass
+            return True, target_art, f"Đã tải ảnh bìa từ {src_type} thành công!"
+        return False, None, f"Lỗi tải ảnh: {err}"
+
+    return False, None, "Không tìm thấy ảnh bìa phù hợp trên cơ sở dữ liệu."
+
+
 class BoxartScraperRunner:
     """Điều phối cào ảnh đa luồng song song (4 workers) chạy nền cho máy cầm tay."""
 
@@ -703,51 +763,13 @@ class BoxartScraperRunner:
         sys_code = item.get("sys_code") or ""
         fname = item.get("filename") or ""
         base_name = item.get("title") or os.path.splitext(fname)[0]
-        rom_path = item.get("rom_path") or ""
-
-        clean_title = clean_rom_title(fname) or base_name
 
         with self._lock:
             self.current_title = base_name
             self.current_sys = sys_code
             self.status_msg = f"Đang tìm: {base_name} [{sys_code}]"
 
-        success = False
-        target_img_dir = os.path.join(SDCARD_PATH, "Imgs", sys_code)
-        if rom_path:
-            parts = rom_path.replace("\\", "/").split("/")
-            if "Roms" in parts:
-                idx = parts.index("Roms")
-                if idx + 1 < len(parts):
-                    sys_folder = parts[idx + 1]
-                    candidate = os.path.join(SDCARD_PATH, "Imgs", sys_folder)
-                    if os.path.isdir(candidate) or not os.path.isdir(target_img_dir):
-                        target_img_dir = candidate
-
-        os.makedirs(target_img_dir, exist_ok=True)
-        target_art = os.path.join(target_img_dir, f"{base_name}.png")
-
-        # 1. Trích xuất trực tiếp icon từ file .jar nếu là game Java J2ME
-        if ((rom_path and rom_path.lower().endswith(".jar")) or sys_code.upper() == "JAVA") and rom_path:
-            if extract_jar_icon(rom_path, target_art):
-                success = True
-
-        # 2. Nếu chưa có, tìm ảnh bìa online
-        if not success:
-            best_url, src_type = find_best_boxart(sys_code, clean_title, filename=fname, fast_only=False)
-            if best_url:
-                # Xóa các file ảnh định dạng cũ
-                for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
-                    old_f = os.path.join(target_img_dir, f"{base_name}{old_ext}")
-                    if os.path.isfile(old_f):
-                        try:
-                            os.remove(old_f)
-                        except Exception:
-                            pass
-
-                ok, _ = download_image_to_file(best_url, target_art, timeout=10)
-                if ok:
-                    success = True
+        success, target_art, msg = scrape_boxart_for_single_rom(item, SDCARD_PATH)
 
         with self._lock:
             self.completed += 1

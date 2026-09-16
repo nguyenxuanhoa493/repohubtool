@@ -239,6 +239,40 @@ def extract_stream_url(video_id: str) -> tuple:
         return None, None
 
 
+def resolve_retroarch_and_ffmpeg():
+    """Find RetroArch binary and FFMPEG core across multiple standard paths."""
+    ra_candidates = [
+        os.path.join(SDCARD_PATH, "RetroArch", "ra64.trimui"),
+        os.path.join(SDCARD_PATH, "RetroArch", "ra32.trimui"),
+        os.path.join(SDCARD_PATH, "RetroArch", "retroarch"),
+        os.path.join(SDCARD_PATH, "System", "bin", "retroarch"),
+        "/usr/bin/retroarch",
+    ]
+    ra_bin = None
+    ra_dir = os.path.join(SDCARD_PATH, "RetroArch")
+    for c in ra_candidates:
+        if os.path.exists(c):
+            ra_bin = c
+            ra_dir = os.path.dirname(c)
+            break
+
+    ffmpeg_candidates = [
+        os.path.join(SDCARD_PATH, "Emus", "FFMPEG", "ffmpeg_libretro.so"),
+        os.path.join(SDCARD_PATH, "RetroArch", ".retroarch", "cores", "ffmpeg_libretro.so"),
+        os.path.join(SDCARD_PATH, "RetroArch", "cores", "ffmpeg_libretro.so"),
+        os.path.join(SDCARD_PATH, "Emus", "MEDIA", "ffmpeg_libretro.so"),
+        "/usr/lib/libretro/ffmpeg_libretro.so",
+        "/usr/trimui/lib/libretro/ffmpeg_libretro.so",
+    ]
+    ffmpeg_core = None
+    for c in ffmpeg_candidates:
+        if os.path.exists(c):
+            ffmpeg_core = c
+            break
+
+    return ra_bin, ra_dir, ffmpeg_core
+
+
 def play_video(video_id: str, direct_stream_url: str = None, direct_title: str = None):
     # Reset error marker
     if os.path.exists(ERR_MARKER):
@@ -350,16 +384,14 @@ input_joypad_driver = "sdl2"
     except Exception as e:
         log(f"Loi khi ghi override config: {e}")
 
-    # 3. Xac dinh trinh phat RetroArch
-    ra_dir = os.path.join(SDCARD_PATH, "RetroArch")
-    emu_dir = os.path.join(SDCARD_PATH, "Emus", "FFMPEG")
-    ra_bin = os.path.join(ra_dir, "ra64.trimui")
-    ffmpeg_core = os.path.join(emu_dir, "ffmpeg_libretro.so")
+    # 3. Xac dinh trinh phat RetroArch va FFMPEG Core
+    ra_bin, ra_dir, ffmpeg_core = resolve_retroarch_and_ffmpeg()
+    emu_dir = os.path.dirname(ffmpeg_core) if ffmpeg_core else os.path.join(SDCARD_PATH, "Emus", "FFMPEG")
 
     success = False
     try:
-        if os.path.exists(ra_bin) and os.path.exists(ffmpeg_core):
-            log(f"Khoi chay RetroArch FFMPEG core: {ra_bin}")
+        if ra_bin and ffmpeg_core and os.path.exists(ra_bin) and os.path.exists(ffmpeg_core):
+            log(f"Khoi chay RetroArch: {ra_bin}, Core: {ffmpeg_core}")
             # CPU boost
             for sh_f in ("cpufreq.sh", "cpuswitch.sh"):
                 p = os.path.join(emu_dir, sh_f)
@@ -399,6 +431,12 @@ input_joypad_driver = "sdl2"
                 proxy_server.shutdown()
                 proxy_server.server_close()
                 log("Da dong Streaming Proxy bridge.")
+            except Exception:
+                pass
+        for tmp_f in (ra_override_path, "/tmp/yt_stream_info.json", "/tmp/stay_awake"):
+            try:
+                if os.path.exists(tmp_f):
+                    os.remove(tmp_f)
             except Exception:
                 pass
 
