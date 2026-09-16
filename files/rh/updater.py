@@ -143,17 +143,19 @@ def _get(url, max_bytes, timeout=TIMEOUT):
 
 
 def _fetch_blob(rel_path, max_bytes, expected_sha=None):
-    """Tai du lieu tu cac candidate base URL (CDN mirror truoc, fallback ve proxy va GitHub).
+    """Tai du lieu tu cac candidate base URL (GHProxy, GitHub Raw, CDN mirror).
 
-    Kiem tra ma bam sha256 neu duoc cung cap. Neu CDN tra ve ban cache cu
-    khong khop hash, se thu them query anti-cache truoc khi fallback.
+    Kiem tra ma bam sha256 neu duoc cung cap. Tu dong them anti-cache query
+    de tranh bi Fastly / CDN cache giu trang 404 hoac file cu.
     """
     last_err = None
     for base in candidate_base_urls(rel_path):
         url = "%s/%s" % (base, rel_path)
         for attempt in range(2):
             try:
-                fetch_url = url if attempt == 0 else ("%s?_t=%d" % (url, int(time.time())))
+                # Luon gui kem query timestamp de bypass cache cua proxy/CDN
+                sep = "&" if "?" in url else "?"
+                fetch_url = "%s%s_t=%d" % (url, sep, int(time.time()))
                 data = _get(fetch_url, max_bytes)
                 if expected_sha:
                     if hashlib.sha256(data).hexdigest() == expected_sha:
@@ -163,9 +165,6 @@ def _fetch_blob(rel_path, max_bytes, expected_sha=None):
                     return data
             except Exception as e:
                 last_err = e
-                # HTTP 403 Forbidden hoac 404 Not Found thi bo qua attempt 2, sang mirror tiep theo
-                if isinstance(e, urllib.error.HTTPError) and e.code in (403, 404):
-                    break
             time.sleep(0.3)
     raise last_err or RuntimeError("fetch failed for %s" % rel_path)
 
