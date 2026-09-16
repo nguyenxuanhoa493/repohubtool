@@ -58,7 +58,7 @@ class UpdateModal(BaseModal):
         super().open(data)
 
     def get_labels(self):
-        return [tr("upd_install_now"), tr("upd_remind_later"), tr("upd_skip_version")]
+        return [tr("upd_install"), tr("upd_later"), tr("upd_skip")]
 
     def run_update_thread(self):
         m = self.manifest
@@ -142,7 +142,7 @@ class UpdateModal(BaseModal):
 
         if ok:
             self.progress_pct = 1.0
-            self.phase_title = "🎉 Cập nhật thành công!"
+            self.phase_title = "Cập nhật thành công!"
             self.status = tr("upd_done")
             state.pending_update = m.get("version", "")
             state.save_settings()
@@ -154,7 +154,7 @@ class UpdateModal(BaseModal):
                 self.engine.running = False
         else:
             self.failed = True
-            self.phase_title = "❌ Cập nhật thất bại"
+            self.phase_title = "Cập nhật thất bại"
             self.status = tr("upd_failed")
         self.busy = False
 
@@ -244,7 +244,7 @@ class UpdateModal(BaseModal):
 
         um = self.manifest or {}
         new_v = um.get("version", "?")
-        ver_badge = f"v{APP_VERSION}  ➔  v{new_v}"
+        ver_badge = f"v{APP_VERSION}  ->  v{new_v}"
         engine.draw_text(ver_badge, engine.font_item, mx + mw - 24, my + hdr_h // 2,
                          255, 215, 0, right_align=True, center_y=True)
 
@@ -280,7 +280,7 @@ class UpdateModal(BaseModal):
             item_y += 54
 
         # Safety Note at bottom of left column
-        engine.draw_text("🔒 Dữ liệu được bảo vệ 100%", engine.font_sub, lx, body_y + body_h - 18, 0, 200, 220)
+        engine.draw_text("Dữ liệu ROM và Save được bảo vệ 100%", engine.font_sub, lx, body_y + body_h - 18, 0, 200, 220)
 
         # --- RIGHT PANEL: Changelog & Release Notes ---
         rx = lx + left_w + gap
@@ -289,7 +289,7 @@ class UpdateModal(BaseModal):
 
         engine.fill_rect(rx, body_y, rw, rh_, 10, 16, 28, 255)
         engine.draw_rect(rx, body_y, rw, rh_, 35, 52, 78, 255, thickness=1)
-        engine.draw_text("✨ NỘI DUNG NÂNG CẤP & TÍNH NĂNG MỚI", engine.font_sub,
+        engine.draw_text("NỘI DUNG NÂNG CẤP & TÍNH NĂNG MỚI", engine.font_sub,
                          rx + 18, body_y + 14, 0, 246, 246)
         engine.fill_rect(rx + 16, body_y + 34, rw - 32, 1, 35, 50, 75, 255)
 
@@ -306,7 +306,7 @@ class UpdateModal(BaseModal):
                 for w in wrapped:
                     all_lines.append(w)
         else:
-            all_lines.append("• Bản cập nhật tối ưu hóa hiệu năng và sửa các lỗi phát sinh.")
+            all_lines.append("- Bản cập nhật tối ưu hóa hiệu năng và sửa các lỗi phát sinh.")
 
         visible_lines_cnt = max(1, (rh_ - 54) // 30)
         max_scroll = max(0, len(all_lines) - visible_lines_cnt)
