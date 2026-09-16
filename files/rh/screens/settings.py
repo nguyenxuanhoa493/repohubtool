@@ -115,11 +115,16 @@ class SettingsScreen(BaseScreen):
             elif it_id == "check_update":
                 self.engine.toast(tr("upd_checking"))
                 def _bg_check():
-                    upd = check_for_update()
-                    if upd:
-                        self.engine.toast(f"Đã có bản cập nhật mới: v{upd.get('version')}")
-                    else:
-                        self.engine.toast(tr("upd_latest"))
+                    try:
+                        found = check_for_update(force=True)
+                        if found:
+                            manifest, files = found
+                            self.engine.open_modal(self.engine.update_modal, {"manifest": manifest, "files": files})
+                        else:
+                            self.engine.toast(tr("upd_latest"))
+                    except Exception as e:
+                        print(f"Manual update check error: {e}")
+                        self.engine.toast(tr("upd_check_failed"))
                 threading.Thread(target=_bg_check, daemon=True).start()
 
             return True

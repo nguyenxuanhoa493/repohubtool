@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.17", "2026-09-16",
+     ("Integrate full-featured OTA UpdateModal dialog, fix manual update check in Settings & optimize background self-updater",
+      "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm"),
+     [("Integrated Full OTA UpdateModal Dialog: Added UpdateModal with visual progress reporting, package hash verification, and clear interactive actions (Install now, Remind later, Skip version).",
+       "Tích hợp hộp thoại Cập nhật OTA (UpdateModal): Bổ sung giao diện cập nhật với thanh tiến trình tải chi tiết từng file, xác thực mã băm SHA256 an toàn và 3 tùy chọn tương tác rõ ràng (Cài đặt ngay, Nhắc sau, Bỏ qua bản này)."),
+      ("Fixed Settings Manual Update Check: Fixed tuple unpacking error when checking for updates manually from Settings, resolving false 'up to date' warnings and opening UpdateModal directly.",
+       "Sửa lỗi Kiểm tra Cập nhật trong Cài đặt: Khắc phục triệt để lỗi phân giải kết quả kiểm tra cập nhật thủ công trong màn hình Cài đặt, loại bỏ thông báo nhận diện sai phiên bản và kích hoạt trực tiếp hộp thoại tải bản mới."),
+      ("Automated Background OTA Check on Boot: Background thread automatically scans for newer releases 2.5s after boot when Wi-Fi is connected, smoothly popping up update prompt without blocking gameplay.",
+       "Tự động dò bản cập nhật khi khởi động: Luồng kiểm tra nền tự động quét bản cập nhật mới sau khi máy kết nối mạng, mở thông báo nâng cấp mượt mà không gây gián đoạn trải nghiệm.")]),
+
     ("2.16", "2026-09-16",
      ("Upgrade Web Game Manager: Added 3 main menus (Game Manager, Download Online Games directly to SD card from 40k+ catalog, and YouTube Playlist & Favorites Manager)",
       "Nâng cấp Web Game Manager: Bổ sung 3 menu chính (Quản lý game, Tải game online từ kho 40.000+ ROMs về thẻ nhớ, Quản lý playlist và video yêu thích YouTube trực tuyến)"),
