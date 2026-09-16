@@ -1,12 +1,12 @@
 {
-  "version": "2.19",
-  "full_release_version": "2.19",
+  "version": "2.20",
+  "full_release_version": "2.20",
   "python": "any",
-  "built": "2026-09-16T18:11:25+0700",
+  "built": "2026-09-16T18:16:39+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa triệt để lỗi văng app khi vào Sảnh game (Netplay), tối ưu nạp danh sách phòng Cloudflare & tự động khởi chạy game độc lập",
-    "en": "Fix Netplay Lobby crash, handle API response safely & add standalone Netplay game launcher"
+    "vi": "Tái thiết kế Modal Dịch vụ & Hướng dẫn (Bố cục thẻ Card, hộp giá trị Hero Box nổi bật, tự động căn chiều cao & cuộn mượt mà)",
+    "en": "Redesign Service & Guide Modals (Card layout, prominent Hero value boxes, responsive auto-height & smooth scrolling)"
   },
   "remove": [
     "app.pyc",
@@ -533,8 +533,8 @@
     },
     {
       "path": "rh/modals/common.py",
-      "size": 12539,
-      "sha256": "bfed15ffa604918e78599a6265a433be3ef873a1180a761bab11b07dde921dbb"
+      "size": 16312,
+      "sha256": "a531a876d3f4a81e2518b20f4fda04d111c3f2efa1d29e9be96fdad574a8346f"
     },
     {
       "path": "rh/modals/game_action.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "0fd40c8fe2d70dbf1dff84db12b5fd93e98d9136c308c3a957a163b7cb5bba81"
+      "sha256": "a874b9ae68f42df463ef0acde5ba86c395509c663f5bf67ec1005e12262e850d"
     },
     {
       "path": "rh/yt.py",
