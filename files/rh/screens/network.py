@@ -29,26 +29,47 @@ class NetworkScreen(BaseScreen):
         self.refresh_services()
 
     def refresh_services(self):
+        gw_on = is_gameweb_running()
+        ssh_on = is_ssh_running()
+        stream_on = is_streamer_running()
+        sftp_on = is_sftpgo_running()
+        adb_on = is_adb_running()
+        mtp_on = is_mtp_running()
+
         self.items = [
-            {"id": "gameweb_toggle", "title": tr("net_gameweb_toggle"), "type": "toggle", "state": is_gameweb_running()},
-            {"id": "gameweb_guide", "title": tr("net_gameweb_guide"), "label": tr("view"), "sub": True},
-            {"id": "ssh_toggle", "title": tr("net_ssh_toggle"), "type": "toggle", "state": is_ssh_running()},
-            {"id": "ssh_guide", "title": tr("net_ssh_guide"), "label": tr("view"), "sub": True},
-            {"id": "ssh_telegram", "title": tr("net_ssh_telegram"), "label": tr("view"), "sub": True},
-            {"id": "stream_toggle", "title": tr("net_stream_toggle"), "type": "toggle", "state": is_streamer_running()},
-            {"id": "stream_guide", "title": tr("net_stream_guide"), "label": tr("view"), "sub": True},
-            {"id": "sftpgo_toggle", "title": tr("net_sftp_toggle"), "type": "toggle", "state": is_sftpgo_running()},
-            {"id": "sftpgo_guide", "title": tr("net_sftp_guide"), "label": tr("view"), "sub": True},
-            {"id": "adb_toggle", "title": tr("net_adb_toggle"), "type": "toggle", "state": is_adb_running()},
-            {"id": "mtp_toggle", "title": tr("net_mtp_toggle"), "type": "toggle", "state": is_mtp_running()},
+            {"id": "gameweb_toggle", "title": tr("net_gameweb_toggle"), "type": "toggle", "state": gw_on},
+        ]
+        if gw_on:
+            self.items.append({"id": "gameweb_guide", "title": tr("net_gameweb_guide"), "label": tr("view"), "sub": True})
+
+        self.items.append({"id": "ssh_toggle", "title": tr("net_ssh_toggle"), "type": "toggle", "state": ssh_on})
+        if ssh_on:
+            self.items.append({"id": "ssh_guide", "title": tr("net_ssh_guide"), "label": tr("view"), "sub": True})
+            self.items.append({"id": "ssh_telegram", "title": tr("net_ssh_telegram"), "label": tr("view"), "sub": True})
+
+        self.items.append({"id": "stream_toggle", "title": tr("net_stream_toggle"), "type": "toggle", "state": stream_on})
+        if stream_on:
+            self.items.append({"id": "stream_guide", "title": tr("net_stream_guide"), "label": tr("view"), "sub": True})
+
+        self.items.append({"id": "sftpgo_toggle", "title": tr("net_sftp_toggle"), "type": "toggle", "state": sftp_on})
+        if sftp_on:
+            self.items.append({"id": "sftpgo_guide", "title": tr("net_sftp_guide"), "label": tr("view"), "sub": True})
+
+        self.items.extend([
+            {"id": "adb_toggle", "title": tr("net_adb_toggle"), "type": "toggle", "state": adb_on},
+            {"id": "mtp_toggle", "title": tr("net_mtp_toggle"), "type": "toggle", "state": mtp_on},
             {"id": "device_info", "title": tr("device_info"), "label": tr("view")},
             {"id": "back", "title": tr("back_home")}
-        ]
+        ])
+
         main_num = 1
         for it in self.items:
             if not it.get("sub") and it.get("id") != "back":
                 it["title"] = f"{main_num}. {it['title']}"
                 main_num += 1
+
+        if self.items and self.selected_idx >= len(self.items):
+            self.selected_idx = max(0, len(self.items) - 1)
 
     def get_header_title(self):
         return tr("net_title")

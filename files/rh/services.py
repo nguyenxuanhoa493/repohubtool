@@ -215,17 +215,21 @@ def get_sftp_guide_rows():
     ]
 
 def get_ssh_guide_rows():
-    """The command to paste, then the password.
-
-    Port 22 and the list of SSH clients were two of four rows and told nobody
-    anything they could act on - the command already carries the port."""
+    """The command to paste, then the password and remote tunnel if active."""
     ip = get_ip()
     vi = state.current_lang == "VI"
-    return [
-        ("Dán vào Terminal / PowerShell" if vi else "Paste into Terminal / PowerShell",
+    rows = [
+        ("SSH Cùng Wi-Fi (Nội mạng)" if vi else "Local SSH (Same Wi-Fi)",
          f"ssh root@{ip}"),
         ("Mật khẩu" if vi else "Password", "root"),
     ]
+    tunnel = get_remote_tunnel_info()
+    if tunnel and tunnel.get("host") and tunnel.get("port"):
+        r_host = tunnel["host"]
+        r_port = tunnel["port"]
+        rows.append(("SSH Online (Từ xa qua Internet)" if vi else "Remote SSH (Internet)",
+                     f"ssh -p {r_port} root@{r_host}"))
+    return rows
 
 REMOTE_SSH_INFO_FILE = "/tmp/remote_ssh.json"
 REMOTE_SSH_PID_FILE = "/tmp/remote_ssh.pid"
@@ -234,68 +238,79 @@ REMOTE_SSH_LOG_FILE = "/tmp/remote_ssh.log"
 def get_remote_tunnel_info():
     if not is_remote_tunnel_running():
         return None
-    if os.path.exists(REMOTE_SSH_INFO_FILE):
-        try:
-            import json
-            with open(REMOTE_SSH_INFO_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return None
+    if not os.path.isfile(REMOTE_SSH_INFO_FILE):
+        return None
+    try:
+        import json
+        with open(REMOTE_SSH_INFO_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+def is_remote_tunnel_running():
+    if not os.path.isfile(REMOTE_SSH_PID_FILE):
+        return False
+    try:
+        with open(REMOTE_SSH_PID_FILE, "r") as f:
+            pid = int(f.read().strip())
+        return os.path.exists(f"/proc/{pid}")
+    except Exception:
+        return False
 
 def stop_remote_tunnel():
-    if os.path.exists(REMOTE_SSH_PID_FILE):
+    if os.path.isfile(REMOTE_SSH_PID_FILE):
         try:
             with open(REMOTE_SSH_PID_FILE, "r") as f:
                 pid = int(f.read().strip())
-            os.kill(pid, 9)
+            os.kill(pid, signal.SIGTERM)
         except Exception:
             pass
         try:
             os.remove(REMOTE_SSH_PID_FILE)
         except Exception:
             pass
-    subprocess.call("pkill -9 -f 'tcp@a.pinggy.io' 2>/dev/null; pkill -9 -f 'a.pinggy.io' 2>/dev/null", shell=True)
-    if os.path.exists(REMOTE_SSH_INFO_FILE):
-        try:
+
+    try:
+        subprocess.run(["killall", "ssh", "dbclient"], stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
+    try:
+        if os.path.isfile(REMOTE_SSH_INFO_FILE):
             os.remove(REMOTE_SSH_INFO_FILE)
-        except Exception:
-            pass
-    if os.path.exists(REMOTE_SSH_LOG_FILE):
-        try:
-            os.remove(REMOTE_SSH_LOG_FILE)
-        except Exception:
-            pass
-    return ("Đã tắt SSH Internet" if state.current_lang == "VI"
-            else "Disabled Remote SSH Internet")
+    except Exception:
+        pass
+    return ("Đã đóng kết nối SSH Internet" if state.current_lang == "VI"
+            else "Remote SSH connection closed")
 
 def find_ssh_client():
-    """Find a usable SSH client (OpenSSH ssh or Dropbear dbclient) and build command."""
-    # 1. Check for OpenSSH client
-    ssh_candidates = [
-        shutil.which("ssh"),
+    openssh_candidates = [
         "/usr/bin/ssh",
+        "/bin/ssh",
         "/usr/local/bin/ssh",
-        "/mnt/SDCARD/System/bin/ssh"
+        "/mnt/SDCARD/System/bin/ssh",
+        "/mnt/SDCARD/Apps/RetroHub/bin/ssh"
     ]
-    for p in ssh_candidates:
+    for p in openssh_candidates:
         if p and os.path.isfile(p) and os.access(p, os.X_OK):
             return [
                 p,
+                "-N",
                 "-o", "StrictHostKeyChecking=no",
                 "-o", "UserKnownHostsFile=/dev/null",
                 "-o", "ServerAliveInterval=30",
                 "-o", "ServerAliveCountMax=3",
                 "-p", "443",
-                "-R0:localhost:22",
+                "-R", "0:localhost:22",
                 "tcp@a.pinggy.io"
             ]
 
-    # 2. Check for Dropbear client (dbclient)
     db_candidates = [
-        shutil.which("dbclient"),
+        "/usr/bin/dbclient",
+        "/bin/dbclient",
+        "/usr/sbin/dbclient",
         "/mnt/SDCARD/System/bin/dbclient",
-        "/usr/bin/dbclient"
+        "/mnt/SDCARD/Apps/RetroHub/bin/dbclient"
     ]
     db_bin = None
     for p in db_candidates:
@@ -331,7 +346,7 @@ def find_ssh_client():
 
     return None
 
-def start_remote_tunnel():
+def start_remote_tunnel(auto_notify=False):
     ip = get_ip()
     if not ip or ip.startswith("Chưa") or ip.startswith("Not"):
         return ("Cần kết nối Wi-Fi trước khi mở SSH Internet!" if state.current_lang == "VI"
@@ -413,10 +428,11 @@ def start_remote_tunnel():
     except Exception:
         pass
 
-    try:
-        threading.Thread(target=send_ssh_info_to_telegram, daemon=True).start()
-    except Exception:
-        pass
+    if auto_notify:
+        try:
+            threading.Thread(target=send_ssh_info_to_telegram, daemon=True).start()
+        except Exception:
+            pass
 
     return (f"Đã mở SSH Internet: cổng {endpoint_port} (Đã gửi Telegram)" if state.current_lang == "VI"
             else f"Remote SSH active: port {endpoint_port} (Sent to Telegram)")
@@ -454,6 +470,15 @@ def send_ssh_info_to_telegram():
         return ("Cần kết nối Wi-Fi trước khi gửi thông tin SSH!" if vi
                 else "Wi-Fi connection required to send SSH info!")
 
+    # Đảm bảo SSH Server nội bộ đang chạy
+    if not is_ssh_running():
+        toggle_ssh()
+        time.sleep(0.5)
+
+    # Tự động kích hoạt Remote Tunnel (SSH Internet Online) nếu chưa chạy
+    if not is_remote_tunnel_running():
+        start_remote_tunnel(auto_notify=False)
+
     try:
         from .logger import get_device_id
         dev_id = get_device_id()
@@ -468,6 +493,26 @@ def send_ssh_info_to_telegram():
         f"📱 <b>Thiết bị:</b> {dev_model}",
         f"🆔 <b>Mã máy:</b> <code>{dev_id}</code>",
         f"🌐 <b>Địa chỉ IP Wi-Fi:</b> <code>{dev_ip}</code>",
+    ]
+
+    if tunnel_info and tunnel_info.get("host") and tunnel_info.get("port"):
+        r_host = tunnel_info["host"]
+        r_port = tunnel_info["port"]
+        msg_lines.extend([
+            "",
+            "🌍 <b>Lệnh SSH Internet (Online từ xa):</b>",
+            f"<code>ssh -p {r_port} root@{r_host}</code>",
+            "",
+            "📁 <b>Lệnh SCP Internet (Chép file/log từ xa):</b>",
+            f"<code>scp -P {r_port} root@{r_host}:/mnt/SDCARD/... ./</code>"
+        ])
+    else:
+        msg_lines.extend([
+            "",
+            "⚠️ <i>(Đường hầm SSH Online chưa sẵn sàng, chỉ có thể kết nối nội mạng cùng Wi-Fi)</i>"
+        ])
+
+    msg_lines.extend([
         "",
         "🔑 <b>Lệnh SSH nội mạng (Cùng Wi-Fi):</b>",
         f"<code>ssh root@{dev_ip}</code>",
@@ -479,18 +524,10 @@ def send_ssh_info_to_telegram():
         f"http://{dev_ip}:8090",
         "",
         "📁 <b>SFTPGo Web Manager (8080):</b>",
-        f"http://{dev_ip}:8080"
-    ]
-
-    if tunnel_info and tunnel_info.get("host") and tunnel_info.get("port"):
-        r_host = tunnel_info["host"]
-        r_port = tunnel_info["port"]
-        msg_lines.extend([
-            "",
-            "🌍 <b>Lệnh SSH Internet (Từ xa):</b>",
-            f"<code>ssh -p {r_port} root@{r_host}</code>",
-            f"<code>scp -P {r_port} root@{r_host}:/mnt/SDCARD/... ./</code>"
-        ])
+        f"http://{dev_ip}:8080",
+        "",
+        "⚠️ <b>Lưu ý:</b> Giữ RetroHub đang mở để duy trì phiên kết nối SSH."
+    ])
 
     text = "\n".join(msg_lines)
 
