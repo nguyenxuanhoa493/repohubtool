@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.23", "2026-09-16",
+     ("Service Dashboard & SSH Telegram enhancements (Comprehensive connection info sent to bot, clean menu hierarchy & Web Game Manager priority)",
+      "Nâng cấp Quản lý Dịch vụ & Gửi thông tin SSH qua Telegram (Tổng hợp đầy đủ thông tin IP/SSH/Web Manager, tối ưu thứ tự & phân cấp menu)"),
+     [("Send SSH & Service Info to Telegram: Fixed the issue where SSH info failed to send without an active remote tunnel. Now automatically aggregates Wi-Fi IP, SSH connection commands, Web Game Manager (8090), SFTPGo (8080) and remote tunnels to Telegram bot.",
+       "Gửi thông tin SSH & Dịch vụ qua Telegram: Sửa triệt để lỗi báo 'chưa có phiên SSH' khi dùng mạng cục bộ. Tự động tổng hợp đầy đủ địa chỉ IP Wi-Fi, lệnh kết nối SSH, mật khẩu, link Quản lý Game qua Web (8090), SFTPGo (8080) và SSH Internet từ xa gửi về Telegram bot."),
+      ("Service Dashboard Reordering: Moved 'Web Game Manager (8090)' to top priority for immediate access, followed by SSH Server, Screen Stream, SFTP Server, ADB, and MTP.",
+       "Tối ưu thứ tự Menu Dịch vụ: Đưa tính năng 'Quản lý Game qua Web (8090)' lên vị trí đầu tiên, tiếp theo là SSH Server (22), Stream màn hình (8088), SFTP Server... giúp thao tác nhanh chóng và thuận tiện."),
+      ("Streamlined Menu Numbering: Sub-guide items no longer carry sequence numbers, providing a clean, logical distinction between main features and accompanying instructions across Network and Utilities screens.",
+       "Chuẩn hóa phân cấp & đánh số STT: Các mục hướng dẫn con (Sub-items) không còn bị đánh số thứ tự, giúp giao diện phân cấp mạch lạc, trực quan và chuyên nghiệp hơn trên cả màn hình Dịch vụ mạng và Tiện ích.")]),
+
     ("2.22", "2026-09-16",
      ("Fix system crash & reboot when screen is turned off for a long time on TrimUI (Integrated stay_alive system flag)",
       "Khắc phục triệt để lỗi sập/tự khởi động lại (Reboot) khi tắt màn hình lâu trên TrimUI (Tích hợp cơ chế cờ stay_alive bảo vệ Kernel)"),

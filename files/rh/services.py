@@ -446,18 +446,13 @@ def get_remote_tunnel_guide_rows():
     ]
 
 def send_ssh_info_to_telegram():
-    """Send current Remote SSH tunnel connection details to user's Telegram."""
-    info = get_remote_tunnel_info()
+    """Send current Local & Remote SSH connection details to user's Telegram."""
     vi = state.current_lang == "VI"
-    if not info:
-        return False, ("Chưa có phiên SSH Internet nào đang chạy!" if vi
-                       else "No active Remote SSH session found!")
-
-    host = info.get("host", "")
-    port = info.get("port", "")
-    if not host or not port:
-        return False, ("Thông tin kết nối chưa sẵn sàng!" if vi
-                       else "Connection details not ready!")
+    from .sysinfo import get_ip, detect_device_platform
+    dev_ip = get_ip()
+    if not dev_ip or dev_ip.startswith("Chưa") or dev_ip.startswith("Not"):
+        return ("Cần kết nối Wi-Fi trước khi gửi thông tin SSH!" if vi
+                else "Wi-Fi connection required to send SSH info!")
 
     try:
         from .logger import get_device_id
@@ -465,27 +460,38 @@ def send_ssh_info_to_telegram():
     except Exception:
         dev_id = "N/A"
 
-    from .sysinfo import get_ip, detect_device_platform
-    dev_ip = get_ip()
     dev_model = detect_device_platform()
+    tunnel_info = get_remote_tunnel_info()
 
     msg_lines = [
-        "🚀 *[RetroHub] Kết nối SSH Internet*",
-        f"📱 *Thiết bị:* {dev_model}",
-        f"🆔 *Mã máy:* `{dev_id}`",
-        f"🌐 *IP nội mạng:* `{dev_ip}`",
+        "🚀 <b>[RetroHub] Thông tin Kết nối SSH & Dịch vụ</b>",
+        f"📱 <b>Thiết bị:</b> {dev_model}",
+        f"🆔 <b>Mã máy:</b> <code>{dev_id}</code>",
+        f"🌐 <b>Địa chỉ IP Wi-Fi:</b> <code>{dev_ip}</code>",
         "",
-        "🔑 *Lệnh SSH:*",
-        f"`ssh -p {port} root@{host}`",
+        "🔑 <b>Lệnh SSH nội mạng (Cùng Wi-Fi):</b>",
+        f"<code>ssh root@{dev_ip}</code>",
         "",
-        "🔒 *Mật khẩu:*",
-        "`root`",
+        "🔒 <b>Mật khẩu mặc định:</b>",
+        "<code>root</code>",
         "",
-        "📁 *Lệnh SCP (Chép file / log):*",
-        f"`scp -P {port} root@{host}:/mnt/SDCARD/... ./`",
+        "🌐 <b>Quản lý Game Web (8090):</b>",
+        f"http://{dev_ip}:8090",
         "",
-        "⚠️ *Lưu ý:* Vui lòng giữ màn hình này và báo lại cho tôi."
+        "📁 <b>SFTPGo Web Manager (8080):</b>",
+        f"http://{dev_ip}:8080"
     ]
+
+    if tunnel_info and tunnel_info.get("host") and tunnel_info.get("port"):
+        r_host = tunnel_info["host"]
+        r_port = tunnel_info["port"]
+        msg_lines.extend([
+            "",
+            "🌍 <b>Lệnh SSH Internet (Từ xa):</b>",
+            f"<code>ssh -p {r_port} root@{r_host}</code>",
+            f"<code>scp -P {r_port} root@{r_host}:/mnt/SDCARD/... ./</code>"
+        ])
+
     text = "\n".join(msg_lines)
 
     TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
@@ -507,7 +513,7 @@ def send_ssh_info_to_telegram():
         payload = {
             "chat_id": cid,
             "text": text,
-            "parse_mode": "Markdown"
+            "parse_mode": "HTML"
         }
         if tid is not None:
             payload["message_thread_id"] = tid
@@ -545,11 +551,11 @@ def send_ssh_info_to_telegram():
             last_err = str(e)
 
     if sent_any:
-        return True, ("Đã gửi thông tin SSH vào Telegram thành công!" if vi
-                      else "SSH info sent to Telegram successfully!")
+        return ("Đã gửi thông tin SSH vào Telegram thành công!" if vi
+                else "SSH info sent to Telegram successfully!")
     else:
-        return False, ("Lỗi kết nối khi gửi Telegram: " + str(last_err) if vi
-                      else f"Telegram error: {last_err}")
+        return ("Lỗi kết nối khi gửi Telegram: " + str(last_err) if vi
+                else f"Telegram error: {last_err}")
 
 def get_netplay_guide_rows():
     from .netplay import get_netplay_tunnel_info
