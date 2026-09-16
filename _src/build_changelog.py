@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.21", "2026-09-16",
+     ("Web Game Manager: YouTube Playlist Import (Extract full video list from URL/ID, auto-create category & sync to RetroHub)",
+      "Web Game Manager: Nhập trọn bộ Playlist YouTube từ liên kết (Trích xuất toàn bộ video, tự động tạo chủ đề và đồng bộ tức thì lên RetroHub)"),
+     [("YouTube Playlist Import: Added instant URL/ID parsing for YouTube playlists in Web Game Manager, supporting all playlist URL formats (playlist?list=..., youtu.be/...&list=..., raw IDs PL..., RD..., OLAK...).",
+       "Nhập Playlist YouTube qua đường dẫn: Bổ sung tính năng dán link hoặc mã ID Playlist YouTube trực tiếp trên Web Game Manager, hỗ trợ mọi định dạng liên kết (playlist?list=..., youtu.be/...&list=..., mã PL..., RD..., OLAK...)."),
+      ("Automated Video Extraction & Cache: Traverses InnerTube browse responses and extracts complete video collections (IDs, titles, channels, durations, thumbnails), storing them in persistent local cache for zero-delay offline/online access.",
+       "Tự động trích xuất toàn bộ Video & Lưu đệm: Quét và trích xuất trọn bộ danh sách video (mã video, tiêu đề chuẩn hóa, kênh, thời lượng và ảnh bìa) qua YouTube InnerTube API, tự động tạo danh mục và lưu đệm trên thẻ nhớ."),
+      ("Seamless Handheld Integration: Imported playlists appear directly in both Web Game Manager and the Handheld YouTube browser, instantly playable via RetroArch FFMPEG.",
+       "Đồng bộ tức thì lên thiết bị: Toàn bộ danh sách phát vừa nhập hiển thị ngay lập tức trên cả giao diện Web và màn hình YouTube máy cầm tay, sẵn sàng thưởng thức mượt mà.")]),
+
     ("2.20", "2026-09-16",
      ("Redesign Service & Guide Modals (Card layout, prominent Hero value boxes, responsive auto-height & smooth scrolling)",
       "Tái thiết kế toàn diện các Modal Dịch vụ & Hướng dẫn (Bố cục thẻ Card hiện đại, hộp giá trị Hero Box nổi bật, tự động căn chỉnh chiều cao & cuộn mượt mà)"),
