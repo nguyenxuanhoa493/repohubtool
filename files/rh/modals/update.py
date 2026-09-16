@@ -248,14 +248,14 @@ class UpdateModal(BaseModal):
         engine.draw_text(ver_badge, engine.font_item, mx + mw - 24, my + hdr_h // 2,
                          255, 215, 0, right_align=True, center_y=True)
 
-        # Body & Footer dimensions
-        bot_h = 76
+        # Body & Footer dimensions with strict separation
+        bot_h = 96
         body_y = my + hdr_h + 16
-        body_h = mh - hdr_h - bot_h - 32
+        body_h = mh - hdr_h - bot_h - 44
         left_w = 270
-        gap = 24
+        gap = 26
 
-        # --- LEFT PANEL: Clean Typography (No enclosing boxes) ---
+        # --- LEFT PANEL: Clean Typography & Generous Line Spacing ---
         lx = mx + 24
         tot_bytes = sum(f.get("size", 0) for f in self.files) if self.files else 0
         size_str = human_bytes(tot_bytes) if tot_bytes > 0 else ""
@@ -275,12 +275,12 @@ class UpdateModal(BaseModal):
         engine.draw_text("THÔNG TIN PHIÊN BẢN", engine.font_sub, lx, body_y + 4, 0, 246, 246)
         item_y = body_y + 36
         for lbl, val, col in left_items:
-            engine.draw_text(lbl, engine.font_sub, lx, item_y, 140, 165, 195)
-            engine.draw_text(val, engine.font_item, lx, item_y + 22, *col)
-            item_y += 54
+            engine.draw_text(lbl, engine.font_sub, lx, item_y, 130, 160, 190)
+            engine.draw_text(val, engine.font_item, lx, item_y + 24, *col)
+            item_y += 60
 
         # Safety Note at bottom of left column
-        engine.draw_text("Dữ liệu ROM và Save được bảo vệ 100%", engine.font_sub, lx, body_y + body_h - 18, 0, 200, 220)
+        engine.draw_text("Dữ liệu ROM và Save được bảo vệ 100%", engine.font_sub, lx, body_y + body_h - 14, 0, 200, 220)
 
         # --- RIGHT PANEL: Changelog & Release Notes ---
         rx = lx + left_w + gap
@@ -291,9 +291,9 @@ class UpdateModal(BaseModal):
         engine.draw_rect(rx, body_y, rw, rh_, 35, 52, 78, 255, thickness=1)
         engine.draw_text("NỘI DUNG NÂNG CẤP & TÍNH NĂNG MỚI", engine.font_sub,
                          rx + 18, body_y + 14, 0, 246, 246)
-        engine.fill_rect(rx + 16, body_y + 34, rw - 32, 1, 35, 50, 75, 255)
+        engine.fill_rect(rx + 16, body_y + 36, rw - 32, 1, 35, 50, 75, 255)
 
-        # Changelog lines
+        # Changelog lines with generous line height (34px)
         rel_note = release_note(um, state.current_lang)
         all_lines = []
         if rel_note:
@@ -308,42 +308,42 @@ class UpdateModal(BaseModal):
         else:
             all_lines.append("- Bản cập nhật tối ưu hóa hiệu năng và sửa các lỗi phát sinh.")
 
-        visible_lines_cnt = max(1, (rh_ - 54) // 30)
+        visible_lines_cnt = max(1, (rh_ - 60) // 34)
         max_scroll = max(0, len(all_lines) - visible_lines_cnt)
         self.scroll_top = max(0, min(self.scroll_top, max_scroll))
 
-        line_y = body_y + 46
+        line_y = body_y + 50
         for l_idx in range(self.scroll_top, min(len(all_lines), self.scroll_top + visible_lines_cnt)):
             line_str = all_lines[l_idx]
             is_bullet = line_str.startswith("•") or line_str.startswith("-") or line_str.startswith("*")
             col = (255, 235, 170) if is_bullet else (210, 225, 245)
             engine.draw_text(line_str, engine.font_item, rx + 18, line_y, *col)
-            line_y += 30
+            line_y += 34
 
         # Scrollbar Indicator
         if max_scroll > 0:
-            sb_h = max(24, int((visible_lines_cnt / len(all_lines)) * (rh_ - 50)))
-            sb_y = body_y + 44 + int((self.scroll_top / max_scroll) * (rh_ - 50 - sb_h))
-            engine.fill_rect(rx + rw - 6, body_y + 44, 3, rh_ - 50, 25, 35, 55, 255)
+            sb_h = max(24, int((visible_lines_cnt / len(all_lines)) * (rh_ - 56)))
+            sb_y = body_y + 48 + int((self.scroll_top / max_scroll) * (rh_ - 56 - sb_h))
+            engine.fill_rect(rx + rw - 6, body_y + 48, 3, rh_ - 56, 25, 35, 55, 255)
             engine.fill_rect(rx + rw - 6, sb_y, 3, sb_h, 0, 246, 246, 255)
 
         # --- BOTTOM ACTION / PROGRESS AREA ---
         bot_y = my + mh - bot_h - 14
-        # Divider Line
-        engine.fill_rect(mx + 20, bot_y - 6, mw - 40, 1, 35, 50, 75, 255)
+        # Divider Line clearly separating Body and Footer
+        engine.fill_rect(mx + 20, bot_y - 10, mw - 40, 1, 35, 50, 75, 255)
 
         if self.busy or self.failed or self.restart:
             # Row 1: Phase Title (Left) + Percentage (Right)
             stat_col = (255, 100, 100) if self.failed else ((0, 255, 180) if self.restart else (0, 246, 246))
-            engine.draw_text(self.phase_title or self.status, engine.font_item, mx + 24, bot_y + 6, *stat_col)
+            engine.draw_text(self.phase_title or self.status, engine.font_item, mx + 24, bot_y + 8, *stat_col)
 
             pct_val = int(min(1.0, max(0.0, self.progress_pct)) * 100)
             pct_txt = f"{pct_val}%"
-            engine.draw_text(pct_txt, engine.font_item, mx + mw - 24, bot_y + 6, 255, 215, 0, right_align=True)
+            engine.draw_text(pct_txt, engine.font_title, mx + mw - 24, bot_y + 8, 255, 215, 0, right_align=True)
 
             # Row 2: Clean Glowing Progress Bar
             pbar_x = mx + 24
-            pbar_y = bot_y + 32
+            pbar_y = bot_y + 38
             pbar_w = mw - 48
             pbar_h = 14
             engine.fill_rect(pbar_x, pbar_y, pbar_w, pbar_h, 20, 28, 46, 255)
@@ -359,25 +359,25 @@ class UpdateModal(BaseModal):
                 if fill_w < pbar_w - 4:
                     engine.fill_rect(pbar_x + fill_w - 4, pbar_y + 1, 4, pbar_h - 2, 255, 255, 255, 255)
 
-            # Row 3: Current file & step details (below the bar, separated)
+            # Row 3: Current file & step details (strictly spaced below the bar)
             if self.failed or self.restart:
-                engine.draw_text("[A/B] OK", engine.font_sub, mx + mw - 24, bot_y + 52, 220, 235, 255, right_align=True)
+                engine.draw_text("[A/B] OK", engine.font_sub, mx + mw - 24, bot_y + 64, 220, 235, 255, right_align=True)
             elif self.status:
-                engine.draw_text(self.status, engine.font_sub, mx + 24, bot_y + 52, 140, 170, 205)
+                engine.draw_text(self.status, engine.font_sub, mx + 24, bot_y + 64, 140, 170, 205)
         else:
             labels = self.get_labels()
             bw = (mw - 48 - (len(labels) - 1) * 14) // len(labels)
-            bh = 50
+            bh = 52
             for i, lbl in enumerate(labels):
                 bx = mx + 24 + i * (bw + 14)
                 sel = (i == self.selected_opt)
                 if sel:
-                    engine.fill_rect(bx, bot_y + 10, bw, bh, 0, 140, 150, 255)
-                    engine.draw_rect(bx, bot_y + 10, bw, bh, 0, 246, 246, 255, thickness=2)
-                    engine.draw_text(lbl, engine.font_badge, bx + bw // 2, bot_y + 10 + bh // 2,
+                    engine.fill_rect(bx, bot_y + 16, bw, bh, 0, 140, 150, 255)
+                    engine.draw_rect(bx, bot_y + 16, bw, bh, 0, 246, 246, 255, thickness=2)
+                    engine.draw_text(lbl, engine.font_badge, bx + bw // 2, bot_y + 16 + bh // 2,
                                      255, 255, 255, center_x=True, center_y=True)
                 else:
-                    engine.fill_rect(bx, bot_y + 10, bw, bh, 20, 28, 46, 255)
-                    engine.draw_rect(bx, bot_y + 10, bw, bh, 40, 55, 80, 255, thickness=1)
-                    engine.draw_text(lbl, engine.font_badge, bx + bw // 2, bot_y + 10 + bh // 2,
+                    engine.fill_rect(bx, bot_y + 16, bw, bh, 20, 28, 46, 255)
+                    engine.draw_rect(bx, bot_y + 16, bw, bh, 40, 55, 80, 255, thickness=1)
+                    engine.draw_text(lbl, engine.font_badge, bx + bw // 2, bot_y + 16 + bh // 2,
                                      190, 205, 225, center_x=True, center_y=True)
