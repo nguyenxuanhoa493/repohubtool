@@ -607,6 +607,13 @@ def apply_update(manifest, files):
     for f in ordered:
         src = os.path.join(STAGING_DIR, f["path"])
         dst = os.path.join(APP_DIR, f["path"])
+        # Khong ghi de settings.json neu da ton tai tren may de bao toan cau hinh nguoi dung
+        if f["path"] == "settings.json" and os.path.exists(dst):
+            try:
+                os.remove(src)
+            except OSError:
+                pass
+            continue
         try:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             os.replace(src, dst)
