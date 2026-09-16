@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ==============================================================================
-# RETROHUB - WEB GAME MANAGER (PORT 8090)
-# Quản lý kho game qua Web: Đổi tên, Cào ảnh bìa (Scrape Art), Chuyển hệ máy, Tải ROM
+# RETROHUB - WEB GAME MANAGER & MEDIA CENTER (PORT 8090)
+# 1. Quản lý game: Đổi tên, Chuyển hệ, Xóa ROM, Cào ảnh Box Art, Sao lưu Save, Cheat Code, Logs
+# 2. Tải game online: Kho 40,000+ ROMs từ Catalog DB, lọc hệ máy / danh mục, tải trực tiếp về thẻ nhớ
+# 3. Quản lý playlist YouTube: Quản lý danh sách phát / chủ đề tìm kiếm, video Yêu thích, tìm kiếm video online
 # Hoàn toàn thuần Python stdlib - Zero external dependencies - Siêu nhẹ, mượt mà
 # ==============================================================================
 
@@ -30,33 +32,75 @@ except Exception:
 
 PORT = 8090
 
-try:
-    from rh import state
-    from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
-        list_save_backups, restore_save_backup, delete_save_backup)
-    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
-    from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
-        clear_log, get_log_size_str, get_device_id, sync_retroarch_logging)
-    from rh.boxart_scraper import cleanup_rom_directory_images
-    from rh.media import save_boxart_png
-except ImportError:
-    _cur_d = os.path.dirname(os.path.abspath(__file__))
-    if _cur_d not in sys.path:
-        sys.path.insert(0, _cur_d)
-    from rh import state
-    from rh.save_manager import (scan_all_saves, get_saves_stats, create_save_backup,
-        list_save_backups, restore_save_backup, delete_save_backup)
-    from rh.cheat_manager import get_cheats_status, count_cheats, cheat_runner, check_or_download_single_cheat
-    from rh.logger import (upload_log_to_telegram, generate_debug_report, LOG_FILE,
-        clear_log, get_log_size_str, get_device_id, sync_retroarch_logging)
-    from rh.boxart_scraper import cleanup_rom_directory_images
-    from rh.media import save_boxart_png
+_cur_d = os.path.dirname(os.path.abspath(__file__))
+if _cur_d not in sys.path:
+    sys.path.insert(0, _cur_d)
 
-# Xác định đường dẫn thẻ nhớ
-SDCARD_PATH = os.environ.get("SDCARD_PATH") or ("/mnt/SDCARD" if os.path.isdir("/mnt/SDCARD") else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_mock_sdcard"))
-ROMS_DIR = os.path.join(SDCARD_PATH, "Roms")
-IMGS_DIR = os.path.join(SDCARD_PATH, "Imgs")
-EMUS_DIR = os.path.join(SDCARD_PATH, "Emus")
+try:
+    from rh import state, yt
+    from rh.paths import (
+        SDCARD_PATH,
+        ROMS_DIR,
+        IMGS_DIR,
+        EMUS_DIR,
+        APP_DIR,
+        resolve_rom_dir,
+        YT_HISTORY_FILE,
+        YT_FAVORITES_FILE,
+        get_yt_cache_dir,
+    )
+    from rh.save_manager import (
+        scan_all_saves,
+        get_saves_stats,
+        create_save_backup,
+        list_save_backups,
+        restore_save_backup,
+        delete_save_backup,
+    )
+    from rh.cheat_manager import (
+        get_cheats_status,
+        count_cheats,
+        cheat_runner,
+        check_or_download_single_cheat,
+    )
+    from rh.logger import (
+        upload_log_to_telegram,
+        generate_debug_report,
+        LOG_FILE,
+        clear_log,
+        get_log_size_str,
+        get_device_id,
+        sync_retroarch_logging,
+    )
+    from rh.boxart_scraper import cleanup_rom_directory_images
+    from rh.media import save_boxart_png
+    import db
+except ImportError:
+    # Standalone mock fallbacks
+    SDCARD_PATH = os.environ.get("SDCARD_PATH") or (
+        "/mnt/SDCARD"
+        if os.path.isdir("/mnt/SDCARD")
+        else os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "_mock_sdcard",
+        )
+    )
+    ROMS_DIR = os.path.join(SDCARD_PATH, "Roms")
+    IMGS_DIR = os.path.join(SDCARD_PATH, "Imgs")
+    EMUS_DIR = os.path.join(SDCARD_PATH, "Emus")
+    APP_DIR = os.path.dirname(os.path.abspath(__file__))
+    YT_HISTORY_FILE = os.path.join(APP_DIR, "yt_history.json")
+    YT_FAVORITES_FILE = os.path.join(
+        SDCARD_PATH, ".retrohub", "yt_favorites.json"
+    )
+
+    def resolve_rom_dir(sys_code):
+        return os.path.join(ROMS_DIR, sys_code)
+
+    def get_yt_cache_dir():
+        return os.path.join(SDCARD_PATH, ".retrohub", "cache", "yt_thumbs")
+
+    import db
 
 # Tên các hệ máy chuẩn
 SYSTEM_NAMES = {
@@ -98,13 +142,13 @@ SYSTEM_NAMES = {
 
 # Mapping sang tên hệ máy chuẩn trên thumbnails.libretro.com
 LIBRETRO_MAP = {
-    "GBA": "Nintendo - Game Boy Advance",
-    "GBC": "Nintendo - Game Boy Color",
-    "GB": "Nintendo - Game Boy",
     "FC": "Nintendo - Nintendo Entertainment System",
     "NES": "Nintendo - Nintendo Entertainment System",
     "SFC": "Nintendo - Super Nintendo Entertainment System",
     "SNES": "Nintendo - Super Nintendo Entertainment System",
+    "GBA": "Nintendo - Game Boy Advance",
+    "GBC": "Nintendo - Game Boy Color",
+    "GB": "Nintendo - Game Boy",
     "N64": "Nintendo - Nintendo 64",
     "NDS": "Nintendo - Nintendo DS",
     "MD": "Sega - Mega Drive - Genesis",
@@ -121,1429 +165,1691 @@ LIBRETRO_MAP = {
     "WS": "Bandai - WonderSwan",
     "WSC": "Bandai - WonderSwan Color",
     "NGP": "SNK - Neo Geo Pocket",
+    "MAME": "FBNeo - Arcade Games",
+    "ARCADE": "FBNeo - Arcade Games",
+    "CPS1": "Capcom - CP System I",
+    "CPS2": "Capcom - CP System II",
+    "CPS3": "Capcom - CP System III",
     "NEOGEO": "SNK - Neo Geo",
     "ATARI2600": "Atari - 2600",
     "ATARI7800": "Atari - 7800",
     "LYNX": "Atari - Lynx",
-    "FBNEO": "FBNeo - Arcade Games",
-    "MAME": "MAME",
-    "ARCADE": "FBNeo - Arcade Games",
-    "CPS1": "FBNeo - Arcade Games",
-    "CPS2": "FBNeo - Arcade Games",
-    "CPS3": "FBNeo - Arcade Games",
 }
-
-_LIBRETRO_INDEX_CACHE = {}
-
-def get_catalog_db_path():
-    # 1. Tìm trực tiếp database sqlite3
-    candidates = [
-        os.path.join(SDCARD_PATH, "Apps", "RetroHub", "catalog", "roms_store.sqlite3"),
-        os.path.join(SDCARD_PATH, "RetroHub", "catalog", "roms_store.sqlite3"),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "catalog", "roms_store.sqlite3"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog", "roms_store.sqlite3"),
-        "/tmp/roms_store.sqlite3",
-    ]
-    for c in candidates:
-        if os.path.isfile(c) and os.path.getsize(c) > 1000000:
-            return c
-
-    # 2. Tìm file nén .sqlite3.gz để giải nén tức thì vào /tmp
-    gz_candidates = [
-        os.path.join(SDCARD_PATH, "Apps", "RetroHub", "catalog", "roms_store.sqlite3.gz"),
-        os.path.join(SDCARD_PATH, "RetroHub", "catalog", "roms_store.sqlite3.gz"),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "catalog", "roms_store.sqlite3.gz"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog", "roms_store.sqlite3.gz"),
-    ]
-    for gz in gz_candidates:
-        if os.path.isfile(gz):
-            try:
-                import gzip
-                out_tmp = "/tmp/roms_store.sqlite3"
-                if not os.path.isfile(out_tmp) or os.path.getsize(out_tmp) < 1000000:
-                    with gzip.open(gz, "rb") as f_in, open(out_tmp, "wb") as f_out:
-                        shutil.copyfileobj(f_in, f_out)
-                return out_tmp
-            except Exception as e:
-                print(f"Error decompressing {gz}: {e}")
-    return None
-
-STOP_WORDS = {
-    'of', 'the', 'a', 'an', 'and', 'in', 'on', 'to', 'for', 'at', 'by', 'from',
-    'with', 'de', 'der', 'die', 'das', 'le', 'la', 'les',
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
-}
-
-def search_catalog_db(sys_code, query, filename="", max_results=8):
-    db_p = get_catalog_db_path()
-    if not db_p:
-        return []
-    try:
-        import sqlite3
-        conn = sqlite3.connect(db_p, timeout=5)
-        cur = conn.cursor()
-
-        if filename:
-            try:
-                cur.execute(
-                    "SELECT g.title, g.img_url FROM game_sources s "
-                    "JOIN games g ON s.game_id = g.id "
-                    "WHERE s.filename = ? AND g.img_url IS NOT NULL AND g.img_url != '' LIMIT 1",
-                    (filename,)
-                )
-                r = cur.fetchone()
-                if r and r[1] and "no-image" not in r[1].lower():
-                    conn.close()
-                    return [{"title": r[0], "type": "Catalog DB", "url": r[1]}]
-            except Exception:
-                pass
-
-        sys_aliases = [sys_code.upper()]
-        if sys_code.upper() in ("NES", "FC"):
-            sys_aliases = ["FC", "NES"]
-        elif sys_code.upper() in ("SNES", "SFC"):
-            sys_aliases = ["SFC", "SNES"]
-        elif sys_code.upper() in ("GENESIS", "MD"):
-            sys_aliases = ["MD", "GENESIS"]
-        elif sys_code.upper() in ("PS1", "PS"):
-            sys_aliases = ["PS", "PS1"]
-        elif sys_code.upper() in ("MAME", "ARCADE", "FBNEO", "NEOGEO", "CPS1", "CPS2", "CPS3"):
-            sys_aliases = ["MAME", "FBNEO", "ARCADE", "NEOGEO", "CPS1", "CPS2", "CPS3"]
-
-        clean_q = re.sub(r'\(.*?\)|\[.*?\]', '', query).strip()
-        words = [w.lower() for w in clean_q.split() if w]
-        if not words:
-            words = [w.lower() for w in query.strip().split() if w]
-        if not words:
-            conn.close()
-            return []
-
-        sig_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
-        if not sig_words:
-            sig_words = words
-
-        placeholders = ",".join("?" * len(sys_aliases))
-
-        def execute_query(w_list, use_sys=True):
-            if use_sys:
-                sql = f"SELECT title, img_url FROM games WHERE sys_code IN ({placeholders}) AND img_url IS NOT NULL AND img_url != ''"
-                params = list(sys_aliases)
-            else:
-                sql = "SELECT title, img_url FROM games WHERE img_url IS NOT NULL AND img_url != ''"
-                params = []
-            for w in w_list[:4]:
-                sql += " AND lower(title) LIKE ?"
-                params.append(f"%{w}%")
-            sql += f" LIMIT {max_results}"
-            cur.execute(sql, params)
-            return [r for r in cur.fetchall() if r[1] and "no-image" not in r[1].lower()]
-
-        rows = execute_query(sig_words, use_sys=True)
-        if not rows and len(sig_words) > 1:
-            rows = execute_query(sig_words[:2], use_sys=True)
-
-        if not rows and sys_code.upper() in ("MAME", "ARCADE", "FBNEO", "NEOGEO", "CPS1", "CPS2", "CPS3", "DC"):
-            rows = execute_query(sig_words[:2], use_sys=False)
-
-        conn.close()
-
-        results = []
-        for r in rows:
-            results.append({
-                "title": r[0],
-                "type": "Catalog DB",
-                "url": r[1]
-            })
-        return results
-    except Exception as e:
-        print(f"Error querying catalog db: {e}")
-        return []
-
-def get_libretro_file_list(sys_folder, category="Named_Boxarts", allow_fetch=True):
-    global _LIBRETRO_INDEX_CACHE
-    cache_key = f"{sys_folder}#{category}"
-    if cache_key in _LIBRETRO_INDEX_CACHE:
-        return _LIBRETRO_INDEX_CACHE[cache_key]
-
-    safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', cache_key)
-    tmp_path = f"/tmp/rh_{safe_name}.json"
-    if os.path.isfile(tmp_path):
-        try:
-            if time.time() - os.path.getmtime(tmp_path) < 7 * 86400:
-                with open(tmp_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    if data:
-                        _LIBRETRO_INDEX_CACHE[cache_key] = data
-                        return data
-        except Exception:
-            pass
-
-    if not allow_fetch:
-        return []
-
-    url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/{category}/"
-    html = ""
-    try:
-        res = subprocess.run(["curl", "-s", "--max-time", "6", url], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=7)
-        if res.returncode == 0 and res.stdout:
-            html = res.stdout.decode("utf-8", errors="ignore")
-    except Exception:
-        pass
-
-    if not html:
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"})
-            kwargs = {"timeout": 5}
-            if _SSL_CONTEXT:
-                kwargs["context"] = _SSL_CONTEXT
-            with urllib.request.urlopen(req, **kwargs) as resp:
-                html = resp.read().decode("utf-8", errors="ignore")
-        except Exception as e:
-            pass
-
-    if html:
-        pattern = re.compile(r'href=\"([^\"/]+\.png)\"')
-        files = pattern.findall(html)
-        decoded = [urllib.parse.unquote(f) for f in files]
-        if decoded:
-            _LIBRETRO_INDEX_CACHE[cache_key] = decoded
-            try:
-                with open(tmp_path, "w", encoding="utf-8") as f:
-                    json.dump(decoded, f)
-            except Exception:
-                pass
-            return decoded
-
-    return []
-
-def search_libretro_boxarts(sys_code, query, max_results=12, allow_fetch=True):
-    sys_folder = LIBRETRO_MAP.get(sys_code.upper())
-    if not sys_folder:
-        for k, v in LIBRETRO_MAP.items():
-            if k in sys_code.upper():
-                sys_folder = v
-                break
-    if not sys_folder:
-        return []
-
-    clean_q = re.sub(r'\(.*?\)|\[.*?\]', '', query).strip()
-    words = [w.lower() for w in clean_q.split() if w]
-    if not words:
-        words = [w.lower() for w in query.strip().split() if w]
-    if not words:
-        return []
-
-    sig_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
-    if not sig_words:
-        sig_words = words
-
-    def score(name):
-        pts = len(name)
-        if "(USA" in name or "(World" in name or "(En" in name:
-            pts -= 50
-        if "(Japan" in name and "japan" not in query.lower():
-            pts += 40
-        return pts
-
-    candidates = []
-
-    # Duyệt qua Named_Boxarts, nếu không có ảnh thì tìm tiếp trong Named_Snaps và Named_Titles
-    for cat in ["Named_Boxarts", "Named_Snaps", "Named_Titles"]:
-        files = get_libretro_file_list(sys_folder, category=cat, allow_fetch=allow_fetch)
-        if not files:
-            continue
-
-        matches = [f for f in files if all(w in f.lower() for w in words)]
-        if not matches and sig_words != words:
-            matches = [f for f in files if all(w in f.lower() for w in sig_words)]
-
-        if matches:
-            matches.sort(key=score)
-            cat_label = "Boxart" if cat == "Named_Boxarts" else ("Snap" if cat == "Named_Snaps" else "Title")
-            for m in matches[:max_results]:
-                boxart_url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/{cat}/{urllib.parse.quote(m)}"
-                candidates.append({
-                    "title": m[:-4],
-                    "type": f"Libretro {cat_label}",
-                    "url": boxart_url,
-                    "verified": True
-                })
-            if candidates:
-                break
-
-    if not candidates:
-        clean_name = query.replace("&", "_").replace("*", "_").replace("/", "_").replace(":", "_").replace("`", "_")
-        for suffix in ["", " (USA)", " (World)", " (USA, Europe)", " (Europe)", " (Japan)"]:
-            candidate_file = f"{clean_name}{suffix}.png"
-            boxart_url = f"http://thumbnails.libretro.com/{urllib.parse.quote(sys_folder)}/Named_Boxarts/{urllib.parse.quote(candidate_file)}"
-            candidates.append({
-                "title": f"{clean_name}{suffix}",
-                "type": "Libretro Boxart",
-                "url": boxart_url,
-                "verified": False
-            })
-
-    return candidates
-
-def is_url_alive(url, timeout=1.5):
-    """Kiểm tra nhanh xem URL ảnh có phản hồi 200/206/302 hay không (loại bỏ link chết, 404, 403 hotlink-block)."""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "image/*,*/*;q=0.8"
-    }
-    try:
-        req = urllib.request.Request(url, headers=headers, method="HEAD")
-        kwargs = {"timeout": timeout}
-        if _SSL_CONTEXT:
-            kwargs["context"] = _SSL_CONTEXT
-        with urllib.request.urlopen(req, **kwargs) as resp:
-            return resp.status in (200, 301, 302, 304)
-    except Exception:
-        try:
-            req = urllib.request.Request(url, headers={**headers, "Range": "bytes=0-64"})
-            kwargs = {"timeout": timeout}
-            if _SSL_CONTEXT:
-                kwargs["context"] = _SSL_CONTEXT
-            with urllib.request.urlopen(req, **kwargs) as resp:
-                return resp.status in (200, 206, 301, 302, 304)
-        except Exception:
-            return False
-
-def search_web_images(query, max_results=8):
-    """Tìm kiếm ảnh bìa trực tiếp từ Web Image Search (Bing), không bị chặn Captcha và không cần JS.
-    Tự động kiểm tra song song và loại bỏ toàn bộ liên kết chết (404, 403, timeout) trước khi trả về."""
-    try:
-        url = "https://www.bing.com/images/search?q=" + urllib.parse.quote(query)
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
-        req = urllib.request.Request(url, headers=headers)
-        kwargs = {"timeout": 6}
-        if _SSL_CONTEXT:
-            kwargs["context"] = _SSL_CONTEXT
-        with urllib.request.urlopen(req, **kwargs) as resp:
-            html = resp.read().decode("utf-8", errors="ignore")
-
-        items = []
-        seen = set()
-        matches = re.findall(r'&quot;murl&quot;:&quot;(https?://[^&]+)&quot;.*?&quot;t&quot;:&quot;([^&]+)&quot;', html)
-        for img_url, title in matches:
-            if img_url in seen:
-                continue
-            clean_title = re.sub(r'<.*?>', '', title).replace('&quot;', '"').replace('&amp;', '&').strip()
-            seen.add(img_url)
-            items.append({
-                "title": clean_title[:60] if clean_title else "Ảnh Web",
-                "type": "Web Search",
-                "url": img_url
-            })
-            if len(items) >= max_results + 4:
-                break
-
-        # Lọc bỏ link chết / 404 / lỗi hotlink bằng đa luồng song song
-        if items:
-            with ThreadPoolExecutor(max_workers=min(len(items), 8)) as executor:
-                alive_status = list(executor.map(lambda it: is_url_alive(it["url"]), items))
-            items = [it for it, ok in zip(items, alive_status) if ok]
-
-        return items[:max_results]
-    except Exception as e:
-        print(f"Error in search_web_images: {e}")
-        return []
-
-def clean_rom_title(filename):
-    """Làm sạch tên file ROM để tối ưu từ khóa tìm kiếm ảnh bìa."""
-    base = os.path.splitext(filename)[0] if "." in filename else filename
-    # Loại bỏ số thứ tự đánh dấu release ở đầu: ví dụ "0032 - ", "0247 - ", "4. "
-    base = re.sub(r'^\s*\d{1,4}\s*[\.\-]+\s*', '', base)
-    # Loại bỏ các tag đóng mở ngoặc: (USA), [!], (E)(Eurasia), (Topo shop), [Gamefall21]
-    base = re.sub(r'\[.*?\]|\(.*?\)', ' ', base)
-    # Chuẩn hóa dấu phân cách thành dấu cách trước khi lọc từ khóa
-    base = re.sub(r'[_\.\+]+', ' ', base)
-    base = re.sub(r'[-–—]+', ' ', base)
-    # Loại bỏ các mã ID game PSP/PSX: ví dụ UCUS98653, ULES12345, SLUS, SLES, SCUS, NPUB, NPUZ...
-    base = re.sub(r'\b[A-Za-z]{3,4}\d{4,5}\b', ' ', base)
-    # Loại bỏ các mã CRC/hash 8 ký tự hex: ví dụ 7F746677, 864E835C
-    base = re.sub(r'\b[0-9A-Fa-f]{8}\b', ' ', base)
-    # Loại bỏ các tag nhóm dịch / scene / hack
-    base = re.sub(r'\b(viet[\s\-_]*hoa|vh|vie|aowvn|gamefall\d*|topo[\s\-_]*shop|4fun|eur|usa|jap|jpn|pal|ntsc|multi\d*|goomba|razor1911|dump)\b', ' ', base, flags=re.IGNORECASE)
-    # Tách các từ viết dính liền phổ biến
-    base = re.sub(r'\bGodofWar\b', 'God of War', base, flags=re.IGNORECASE)
-    base = re.sub(r'\bChainsofOlympus\b', 'Chains of Olympus', base, flags=re.IGNORECASE)
-    base = re.sub(r'\bGhostofSparta\b', 'Ghost of Sparta', base, flags=re.IGNORECASE)
-    base = re.sub(r'\bPrinceofPersia\b', 'Prince of Persia', base, flags=re.IGNORECASE)
-    base = re.sub(r'\bMetalSlug\b', 'Metal Slug', base, flags=re.IGNORECASE)
-    base = re.sub(r'\b(PSP|PS1|PS2|GBA|NDS|SNES|NES|MD|GENESIS)\b', ' ', base, flags=re.IGNORECASE)
-    return re.sub(r'\s+', ' ', base).strip()
-
-def extract_jar_icon(jar_path, target_png):
-    """Trích xuất icon gốc từ file .jar của game Java J2ME."""
-    if not jar_path or not os.path.isfile(jar_path):
-        return False
-    try:
-        import zipfile
-        with zipfile.ZipFile(jar_path, 'r') as z:
-            icon_name = None
-            if 'META-INF/MANIFEST.MF' in z.namelist():
-                try:
-                    mf = z.read('META-INF/MANIFEST.MF').decode('utf-8', errors='ignore')
-                    for line in mf.splitlines():
-                        if 'MIDlet-' in line and '.png' in line.lower():
-                            parts = [p.strip().lstrip('/') for p in line.split(',') if '.png' in p.lower()]
-                            if parts and parts[0] in z.namelist():
-                                icon_name = parts[0]
-                                break
-                except Exception:
-                    pass
-            if not icon_name:
-                for n in ('icon.png', 'i.png', 'res/icon.png', 'icons/icon.png'):
-                    if n in z.namelist():
-                        icon_name = n
-                        break
-            if not icon_name:
-                for n in z.namelist():
-                    if 'icon' in n.lower() and n.lower().endswith('.png'):
-                        icon_name = n
-                        break
-            if icon_name:
-                raw_bytes = z.read(icon_name)
-                if raw_bytes and len(raw_bytes) > 32:
-                    os.makedirs(os.path.dirname(target_png), exist_ok=True)
-                    save_boxart_png(raw_bytes, target_png)
-                    return True
-    except Exception:
-        pass
-    return False
-
-def find_best_boxart(sys_code, clean_title, filename="", fast_only=False):
-    """Tìm ảnh bìa phù hợp nhất theo thứ tự ưu tiên tốc độ:
-    1. SQLite Catalog DB (siêu nhanh ~1ms, ảnh chất lượng cao / Việt hóa)
-    2. Libretro CDN index cache (~5ms, ảnh chính thức từ thumbnails.libretro.com)
-    3. Web Images (Bing) nếu 2 nguồn trên không có và fast_only=False (~1-3s)
-    """
-    # 1. SQLite Catalog DB
-    try:
-        db_res = search_catalog_db(sys_code, clean_title, filename=filename, max_results=1)
-        if db_res and db_res[0].get("url"):
-            return db_res[0]["url"], "Catalog DB"
-    except Exception as e:
-        print(f"find_best_boxart db error: {e}")
-
-    # 2. Libretro CDN index cache
-    try:
-        lr_res = search_libretro_boxarts(sys_code, clean_title, max_results=3, allow_fetch=True)
-        for it in lr_res:
-            u = it.get("url")
-            if not u:
-                continue
-            if it.get("verified"):
-                return u, it.get("type", "Libretro")
-            elif is_url_alive(u, timeout=1.0):
-                return u, it.get("type", "Libretro")
-    except Exception as e:
-        print(f"find_best_boxart libretro error: {e}")
-
-    # 3. Web Images Search (Bing)
-    if not fast_only:
-        try:
-            web_q = f"{clean_title} {sys_code} boxart cover"
-            web_res = search_web_images(web_q, max_results=2)
-            if web_res and web_res[0].get("url"):
-                return web_res[0]["url"], "Web Search"
-        except Exception as e:
-            print(f"find_best_boxart web error: {e}")
-
-    return None, None
 
 # Đuôi file ROM hợp lệ thường gặp
 VALID_EXTS = {
-    ".zip", ".7z", ".rar", ".chd", ".iso", ".cue", ".bin", ".pbp",
-    ".gba", ".gbc", ".gb", ".nes", ".sfc", ".smc", ".md", ".smd", ".gen",
-    ".n64", ".z64", ".v64", ".nds", ".cso", ".pce", ".ws", ".wsc",
-    ".ngp", ".ngc", ".p8", ".jar", ".a26", ".a78", ".lnx"
+    ".zip",
+    ".7z",
+    ".rar",
+    ".chd",
+    ".iso",
+    ".cue",
+    ".bin",
+    ".pbp",
+    ".gba",
+    ".gbc",
+    ".gb",
+    ".nes",
+    ".sfc",
+    ".smc",
+    ".md",
+    ".smd",
+    ".gen",
+    ".n64",
+    ".z64",
+    ".v64",
+    ".nds",
+    ".cso",
+    ".pce",
+    ".ws",
+    ".wsc",
+    ".ngp",
+    ".ngc",
+    ".p8",
+    ".jar",
+    ".a26",
+    ".a78",
+    ".lnx",
 }
 
-def is_valid_rom_file(fname, sys_dir=""):
-    """Kiểm tra file ROM hợp lệ. Chỉ chấp nhận đuôi .png đối với hệ máy PICO-8."""
-    name, ext = os.path.splitext(fname)
-    ext_l = ext.lower()
-    if ext_l in VALID_EXTS:
-        return True
-    if ext_l == ".png":
-        sys_code = sys_dir.upper()
-        if "(" in sys_code and sys_code.endswith(")"):
-            sys_code = sys_code[sys_code.rfind("(") + 1:-1].strip().upper()
-        return sys_code == "PICO8"
-    return False
 
-def download_image_to_file(img_url, target_path, timeout=15):
-    """Tải file ảnh từ URL (HTTP/HTTPS), bỏ qua lỗi kiểm tra SSL trên hệ máy cầm tay.
-    Thử urllib với unverified SSL trước, nếu gặp lỗi thì fallback sang curl -k.
-    Chuyển đổi chuẩn xác sang PNG để hiển thị hoàn hảo trên giao diện máy."""
-    if img_url.startswith("//"):
-        img_url = "https:" + img_url
+def get_catalog_db_path():
+  candidates = [
+      os.path.join(
+          SDCARD_PATH, "Apps", "RetroHub", "catalog", "roms_store.sqlite3"
+      ),
+      os.path.join(SDCARD_PATH, "RetroHub", "catalog", "roms_store.sqlite3"),
+      os.path.join(
+          os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+          "catalog",
+          "roms_store.sqlite3",
+      ),
+      os.path.join(
+          os.path.dirname(os.path.abspath(__file__)),
+          "catalog",
+          "roms_store.sqlite3",
+      ),
+  ]
+  for p in candidates:
+    if os.path.isfile(p):
+      return p
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        "Referer": img_url,
+  ensure_catalog_extracted()
+  for p in candidates:
+    if os.path.isfile(p):
+      return p
+  return None
+
+
+def ensure_catalog_extracted():
+  gz_candidates = [
+      os.path.join(
+          SDCARD_PATH, "Apps", "RetroHub", "catalog", "roms_store.sqlite3.gz"
+      ),
+      os.path.join(SDCARD_PATH, "RetroHub", "catalog", "roms_store.sqlite3.gz"),
+      os.path.join(
+          os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+          "catalog",
+          "roms_store.sqlite3.gz",
+      ),
+      os.path.join(
+          os.path.dirname(os.path.abspath(__file__)),
+          "catalog",
+          "roms_store.sqlite3.gz",
+      ),
+  ]
+  for gz_p in gz_candidates:
+    if os.path.isfile(gz_p):
+      out_db = gz_p[:-3]
+      if not os.path.isfile(out_db) or os.path.getsize(out_db) < 1000:
+        try:
+          import gzip
+
+          print(f"[*] Đang giải nén database từ {gz_p}...")
+          with gzip.open(gz_p, "rb") as f_in, open(out_db, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+          print(f"[+] Đã giải nén database thành công: {out_db}")
+          return out_db
+        except Exception as e:
+          print(f"[-] Lỗi giải nén catalog db: {e}")
+  return None
+
+
+def search_catalog_db(sys_code, query, filename="", max_results=8):
+  db_p = get_catalog_db_path()
+  if not db_p or not os.path.isfile(db_p):
+    return []
+
+  candidates = []
+  clean_q = re.sub(r"[^\w\s]", " ", query).strip()
+
+  try:
+    conn = db.get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT title, img_url FROM games WHERE sys_code = ? AND (clean_title"
+        " LIKE ? OR title LIKE ?) AND img_url IS NOT NULL AND img_url != ''"
+        " LIMIT ?",
+        (sys_code, f"%{clean_q}%", f"%{query}%", max_results),
+    )
+    rows = cur.fetchall()
+    for r in rows:
+      if r["img_url"]:
+        candidates.append({
+            "title": r["title"],
+            "url": r["img_url"],
+            "type": "Catalog DB",
+        })
+
+    if filename and len(candidates) < max_results:
+      cur.execute(
+          "SELECT g.title, g.img_url FROM games g JOIN game_sources s ON"
+          " s.game_id = g.id WHERE g.sys_code = ? AND s.filename LIKE ? AND"
+          " g.img_url IS NOT NULL AND g.img_url != '' LIMIT ?",
+          (sys_code, f"%{filename}%", max_results - len(candidates)),
+      )
+      rows = cur.fetchall()
+      for r in rows:
+        if r["img_url"]:
+          candidates.append({
+              "title": r["title"],
+              "url": r["img_url"],
+              "type": "Catalog DB",
+          })
+    conn.close()
+  except Exception as e:
+    print(f"Error querying catalog db: {e}")
+
+  return candidates
+
+
+# Quản lý Background Download cho Online Store
+STORE_DOWNLOADS = {}
+STORE_DOWNLOADS_LOCK = threading.Lock()
+
+
+def background_download_store_game(
+    dl_id, sys_code, game_title, rom_url, filename, img_url
+):
+  with STORE_DOWNLOADS_LOCK:
+    STORE_DOWNLOADS[dl_id] = {
+        "id": dl_id,
+        "title": game_title,
+        "sys_code": sys_code,
+        "filename": filename,
+        "status": "downloading",
+        "progress_pct": 0,
+        "speed_str": "0 KB/s",
+        "downloaded_bytes": 0,
+        "total_bytes": 0,
+        "error_msg": "",
     }
 
-    raw_data = None
-    # 1. Thử urllib.request với unverified SSL context
+  try:
+    target_rom_dir = resolve_rom_dir(sys_code)
+  except Exception:
+    target_rom_dir = os.path.join(ROMS_DIR, sys_code)
+  os.makedirs(target_rom_dir, exist_ok=True)
+  target_rom_path = os.path.join(target_rom_dir, filename)
+
+  target_img_dir = os.path.join(IMGS_DIR, sys_code)
+  os.makedirs(target_img_dir, exist_ok=True)
+  base_name = os.path.splitext(filename)[0]
+  target_img_path = os.path.join(target_img_dir, base_name + ".png")
+
+  # Tải ảnh Box Art nếu có
+  if img_url:
     try:
-        req = urllib.request.Request(img_url, headers=headers)
-        kwargs = {"timeout": timeout}
-        if _SSL_CONTEXT:
-            kwargs["context"] = _SSL_CONTEXT
-        with urllib.request.urlopen(req, **kwargs) as resp:
-            if resp.status in (200, 206):
-                data = resp.read()
-                if len(data) > 32:
-                    raw_data = data
-    except Exception:
+      download_image_to_file(img_url, target_img_path, timeout=12)
+    except Exception as e:
+      print(f"Store download boxart error: {e}")
+
+  # Tải ROM
+  temp_rom_path = target_rom_path + ".tmp_dl"
+  try:
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        ),
+        "Referer": rom_url,
+    }
+    req = urllib.request.Request(rom_url, headers=headers)
+    kwargs = {"timeout": 30}
+    if _SSL_CONTEXT:
+      kwargs["context"] = _SSL_CONTEXT
+
+    with urllib.request.urlopen(req, **kwargs) as resp:
+      total_sz = int(resp.headers.get("Content-Length", 0))
+      with STORE_DOWNLOADS_LOCK:
+        STORE_DOWNLOADS[dl_id]["total_bytes"] = total_sz
+
+      downloaded = 0
+      t_last = time.time()
+      b_last = 0
+
+      with open(temp_rom_path, "wb") as out_f:
+        while True:
+          chunk = resp.read(65536)
+          if not chunk:
+            break
+          out_f.write(chunk)
+          downloaded += len(chunk)
+
+          now = time.time()
+          if now - t_last >= 0.4:
+            speed = (downloaded - b_last) / max(0.001, now - t_last)
+            speed_str = (
+                f"{speed / (1024*1024):.1f} MB/s"
+                if speed > 1024 * 1024
+                else f"{speed // 1024} KB/s"
+            )
+            pct = int((downloaded / total_sz) * 100) if total_sz > 0 else 50
+            with STORE_DOWNLOADS_LOCK:
+              STORE_DOWNLOADS[dl_id]["progress_pct"] = pct
+              STORE_DOWNLOADS[dl_id]["downloaded_bytes"] = downloaded
+              STORE_DOWNLOADS[dl_id]["speed_str"] = speed_str
+            t_last = now
+            b_last = downloaded
+
+    if os.path.exists(temp_rom_path):
+      os.replace(temp_rom_path, target_rom_path)
+
+    with STORE_DOWNLOADS_LOCK:
+      STORE_DOWNLOADS[dl_id]["status"] = "completed"
+      STORE_DOWNLOADS[dl_id]["progress_pct"] = 100
+  except Exception as e:
+    print(f"Store download ROM error: {e}")
+    if os.path.exists(temp_rom_path):
+      try:
+        os.remove(temp_rom_path)
+      except Exception:
         pass
+    with STORE_DOWNLOADS_LOCK:
+      STORE_DOWNLOADS[dl_id]["status"] = "error"
+      STORE_DOWNLOADS[dl_id]["error_msg"] = str(e)
 
-    # 2. Fallback sang curl -k (hỗ trợ TLS, tự bỏ qua xác thực chứng chỉ CA)
-    if not raw_data:
-        try:
-            cmd = [
-                "curl", "-k", "-s", "-L",
-                "--max-time", str(timeout),
-                "-A", headers["User-Agent"],
-                img_url
-            ]
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout + 2)
-            if res.returncode == 0 and res.stdout and len(res.stdout) > 32:
-                raw_data = res.stdout
-        except Exception:
-            pass
 
-    if raw_data:
-        os.makedirs(os.path.dirname(target_path), exist_ok=True)
-        try:
-            save_boxart_png(raw_data, target_path)
-            return True, None
-        except Exception:
-            try:
-                with open(target_path, "wb") as f:
-                    f.write(raw_data)
-                return True, None
-            except Exception as e:
-                return False, str(e)
-
-    return False, "Không thể tải ảnh từ URL này (vui lòng kiểm tra lại đường dẫn ảnh hoặc kết nối Wi-Fi của máy)"
-
-def format_size(bytes_val):
-    for unit in ['B', 'KB', 'MB', 'GB']:
-        if bytes_val < 1024.0:
-            return f"{bytes_val:.1f} {unit}"
-        bytes_val /= 1024.0
-    return f"{bytes_val:.1f} TB"
-
+# Helper kiểm tra dung lượng thẻ nhớ
 def get_sd_storage():
+  try:
+    st = shutil.disk_usage(SDCARD_PATH)
+    free_gb = st.free / (1024**3)
+    total_gb = st.total / (1024**3)
+    used_gb = st.used / (1024**3)
+    return {
+        "free_gb": f"{free_gb:.2f} GB",
+        "total_gb": f"{total_gb:.2f} GB",
+        "used_gb": f"{used_gb:.2f} GB",
+        "pct_used": int((st.used / st.total) * 100),
+    }
+  except Exception:
+    return {
+        "free_gb": "N/A",
+        "total_gb": "N/A",
+        "used_gb": "N/A",
+        "pct_used": 0,
+    }
+
+
+def clean_rom_title(fname):
+  base = os.path.splitext(fname)[0]
+  base = re.sub(r"^\d+\s*[-–—.]\s*", "", base)
+  cleaned = re.sub(r"\(.*?\)|\[.*?\]", "", base).strip()
+  return cleaned if cleaned else base
+
+
+def search_libretro_boxarts(
+    sys_code, clean_title, max_results=8, allow_fetch=True
+):
+  libretro_sys = LIBRETRO_MAP.get(sys_code)
+  if not libretro_sys:
+    return []
+  enc_sys = urllib.parse.quote(libretro_sys)
+  enc_title = urllib.parse.quote(clean_title)
+  url = f"https://thumbnails.libretro.com/{enc_sys}/Named_Boxarts/{enc_title}.png"
+  return [{
+      "title": f"{clean_title} (Libretro)",
+      "url": url,
+      "type": "Libretro CDN",
+      "verified": False,
+  }]
+
+
+def search_web_images(query, max_results=8):
+  results = []
+  try:
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        )
+    }
+    url = (
+        "https://www.bing.com/images/search?q="
+        + urllib.parse.quote(query)
+        + "&FORM=HDRSC2"
+    )
+    req = urllib.request.Request(url, headers=headers)
+    kwargs = {"timeout": 6}
+    if _SSL_CONTEXT:
+      kwargs["context"] = _SSL_CONTEXT
+
+    with urllib.request.urlopen(req, **kwargs) as resp:
+      html_doc = resp.read().decode("utf-8", "ignore")
+
+    matches = re.findall(r'murl&quot;:&quot;(https?://[^&]+?)&quot;', html_doc)
+    for m in matches:
+      if m not in [r["url"] for r in results]:
+        results.append({"title": query, "url": m, "type": "Web Search"})
+        if len(results) >= max_results:
+          break
+  except Exception as e:
+    print(f"Web image search error: {e}")
+  return results
+
+
+def find_best_boxart(sys_code, clean_title, filename="", fast_only=False):
+  # 1. SQLite Catalog DB
+  try:
+    db_res = search_catalog_db(
+        sys_code, clean_title, filename=filename, max_results=1
+    )
+    if db_res and db_res[0].get("url"):
+      return db_res[0]["url"], "Catalog DB"
+  except Exception as e:
+    print(f"find_best_boxart db error: {e}")
+
+  # 2. Libretro CDN index cache
+  try:
+    lr_res = search_libretro_boxarts(
+        sys_code, clean_title, max_results=3, allow_fetch=True
+    )
+    if lr_res and lr_res[0].get("url"):
+      return lr_res[0]["url"], "Libretro CDN"
+  except Exception as e:
+    print(f"find_best_boxart libretro error: {e}")
+
+  # 3. Web Images Search
+  if not fast_only:
     try:
-        total, used, free = shutil.disk_usage(SDCARD_PATH)
-        return {
-            "total": format_size(total),
-            "used": format_size(used),
-            "free": format_size(free),
-            "pct": int((used / total) * 100) if total > 0 else 0
-        }
+      web_q = f"{clean_title} {sys_code} boxart cover"
+      web_res = search_web_images(web_q, max_results=2)
+      if web_res and web_res[0].get("url"):
+        return web_res[0]["url"], "Web Search"
+    except Exception as e:
+      print(f"find_best_boxart web error: {e}")
+
+  return None, None
+
+
+def is_valid_rom_file(fname, sys_dir=""):
+  name, ext = os.path.splitext(fname)
+  ext_l = ext.lower()
+  if ext_l in VALID_EXTS:
+    return True
+  if ext_l == ".png":
+    sys_code = sys_dir.upper()
+    if "(" in sys_code and sys_code.endswith(")"):
+      sys_code = sys_code[sys_code.rfind("(") + 1 : -1].strip().upper()
+    return sys_code == "PICO8"
+  return False
+
+
+def download_image_to_file(img_url, target_path, timeout=15):
+  if img_url.startswith("//"):
+    img_url = "https:" + img_url
+
+  headers = {
+      "User-Agent": (
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      ),
+      "Accept": (
+          "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+      ),
+      "Referer": img_url,
+  }
+
+  raw_data = None
+  try:
+    req = urllib.request.Request(img_url, headers=headers)
+    kwargs = {"timeout": timeout}
+    if _SSL_CONTEXT:
+      kwargs["context"] = _SSL_CONTEXT
+    with urllib.request.urlopen(req, **kwargs) as resp:
+      raw_data = resp.read()
+  except Exception as e:
+    # Fallback to curl
+    try:
+      cmd = ["curl", "-s", "-L", "-k", "--max-time", str(timeout), img_url]
+      res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      if res.returncode == 0 and len(res.stdout) > 64:
+        raw_data = res.stdout
     except Exception:
-        return {"total": "N/A", "used": "N/A", "free": "N/A", "pct": 0}
+      pass
+
+  if not raw_data or len(raw_data) < 64:
+    return False, "Empty or invalid image data"
+
+  try:
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    save_boxart_png(raw_data, target_path)
+    return True, ""
+  except Exception as e:
+    # Fallback direct write
+    try:
+      with open(target_path, "wb") as f:
+        f.write(raw_data)
+      return True, ""
+    except Exception as e2:
+      return False, str(e2)
+
+
+def extract_jar_icon(jar_path, target_png):
+  try:
+    import zipfile
+
+    with zipfile.ZipFile(jar_path, "r") as z:
+      icon_name = None
+      for n in ("icon.png", "i.png", "res/icon.png", "icons/icon.png"):
+        if n in z.namelist():
+          icon_name = n
+          break
+      if not icon_name:
+        for n in z.namelist():
+          if "icon" in n.lower() and n.lower().endswith(".png"):
+            icon_name = n
+            break
+      if icon_name:
+        raw_bytes = z.read(icon_name)
+        if raw_bytes and len(raw_bytes) > 32:
+          os.makedirs(os.path.dirname(target_png), exist_ok=True)
+          save_boxart_png(raw_bytes, target_png)
+          return True
+  except Exception:
+    pass
+  return False
+
 
 def list_all_systems():
-    os.makedirs(ROMS_DIR, exist_ok=True)
-    os.makedirs(IMGS_DIR, exist_ok=True)
-    systems = []
-    
-    found_dirs = set()
-    try:
-        for entry in sorted(os.listdir(ROMS_DIR)):
-            p = os.path.join(ROMS_DIR, entry)
-            if os.path.isdir(p) and not entry.startswith("."):
-                found_dirs.add(entry)
-    except OSError:
-        pass
-
-    for code, name in SYSTEM_NAMES.items():
-        if code in ("NES", "SNES", "GENESIS", "PS1"):
-            continue
-        code_upper = code.upper()
-        matched_dir = code
-        for d in found_dirs:
-            if d.upper() == code_upper or f"({code_upper})" in d.upper():
-                matched_dir = d
-                break
-        
-        rom_path = os.path.join(ROMS_DIR, matched_dir)
-        count = 0
-        if os.path.isdir(rom_path):
-            try:
-                count = len([f for f in os.listdir(rom_path) if not f.startswith(".") and is_valid_rom_file(f, matched_dir)])
-            except OSError:
-                count = 0
-
-        systems.append({
-            "code": code,
-            "dir": matched_dir,
-            "name": name,
-            "count": count
-        })
-    
-    known_matched = {s["dir"] for s in systems}
-    for d in sorted(found_dirs):
-        if d not in known_matched:
-            rom_path = os.path.join(ROMS_DIR, d)
-            cnt = 0
-            try:
-                cnt = len([f for f in os.listdir(rom_path) if not f.startswith(".") and is_valid_rom_file(f, d)])
-            except OSError:
-                cnt = 0
-            systems.append({
-                "code": d,
-                "dir": d,
-                "name": d,
-                "count": cnt
-            })
-
-    systems.sort(key=lambda s: (-1 if s["count"] > 0 else 1, s["name"]))
+  systems = []
+  if not os.path.isdir(ROMS_DIR):
     return systems
 
+  try:
+    dirs = sorted(os.listdir(ROMS_DIR))
+  except OSError:
+    dirs = []
+
+  for d in dirs:
+    if d.startswith("."):
+      continue
+    full_p = os.path.join(ROMS_DIR, d)
+    if os.path.isdir(full_p):
+      tag = d
+      if "(" in d and d.endswith(")"):
+        extracted = d[d.rfind("(") + 1 : -1].strip().upper()
+        if extracted:
+          tag = extracted
+      tag_u = tag.upper()
+
+      rom_count = 0
+      has_art_count = 0
+      img_d = os.path.join(IMGS_DIR, d)
+
+      scan_dirs = [full_p]
+      try:
+        for sub in sorted(os.listdir(full_p)):
+          sub_p = os.path.join(full_p, sub)
+          if os.path.isdir(sub_p) and not sub.startswith("."):
+            scan_dirs.append(sub_p)
+      except Exception:
+        pass
+
+      for s_dir in scan_dirs:
+        try:
+          for f in os.listdir(s_dir):
+            if is_valid_rom_file(f, d):
+              rom_count += 1
+              base = os.path.splitext(f)[0]
+              art_found = False
+              if os.path.isdir(img_d):
+                for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+                  if os.path.isfile(os.path.join(img_d, base + ext)):
+                    art_found = True
+                    break
+              if not art_found:
+                sub_media = os.path.join(s_dir, ".media", base + ".png")
+                if os.path.isfile(sub_media):
+                  art_found = True
+              if art_found:
+                has_art_count += 1
+        except Exception:
+          pass
+
+      name_display = SYSTEM_NAMES.get(tag_u, d)
+      systems.append({
+          "dir": d,
+          "tag": tag_u,
+          "name": name_display,
+          "count": rom_count,
+          "has_art_count": has_art_count,
+          "no_art_count": max(0, rom_count - has_art_count),
+      })
+  return systems
+
+
 def list_system_games(sys_dir):
-    rom_path = os.path.join(ROMS_DIR, sys_dir)
-    img_path = os.path.join(IMGS_DIR, sys_dir)
-    os.makedirs(rom_path, exist_ok=True)
-    os.makedirs(img_path, exist_ok=True)
+  games = []
+  rom_dir = os.path.join(ROMS_DIR, sys_dir)
+  img_dir = os.path.join(IMGS_DIR, sys_dir)
 
-    art_map = {}
-    if os.path.isdir(img_path):
-        try:
-            for f in os.listdir(img_path):
-                if not f.startswith(".") and os.path.splitext(f)[1].lower() in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
-                    base = os.path.splitext(f)[0].lower()
-                    art_map[base] = f
-        except OSError:
-            pass
-
-    games = []
-    if os.path.isdir(rom_path):
-        try:
-            for fname in sorted(os.listdir(rom_path)):
-                if fname.startswith("."):
-                    continue
-                full_p = os.path.join(rom_path, fname)
-                if not os.path.isfile(full_p):
-                    continue
-                name, ext = os.path.splitext(fname)
-                if not is_valid_rom_file(fname, sys_dir):
-                    continue
-                
-                try:
-                    st = os.stat(full_p)
-                    sz = st.st_size
-                    mtime = st.st_mtime
-                except OSError:
-                    sz = 0
-                    mtime = 0
-                
-                art_file = art_map.get(name.lower())
-                has_art = bool(art_file)
-                if has_art:
-                    art_full_path = os.path.join(img_path, art_file)
-                    try:
-                        art_mtime = int(os.path.getmtime(art_full_path))
-                    except OSError:
-                        art_mtime = int(time.time())
-                    art_url = f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(art_file)}?v={art_mtime}"
-                else:
-                    art_url = None
-
-                games.append({
-                    "filename": fname,
-                    "name": name,
-                    "ext": ext,
-                    "size_str": format_size(sz),
-                    "size_bytes": sz,
-                    "mtime": mtime,
-                    "has_art": has_art,
-                    "art_name": art_file,
-                    "art_url": art_url
-                })
-        except OSError as e:
-            print(f"Error listing games for {sys_dir}: {e}")
-
+  if not os.path.isdir(rom_dir):
     return games
 
+  scan_dirs = [rom_dir]
+  try:
+    for sub in sorted(os.listdir(rom_dir)):
+      sub_p = os.path.join(rom_dir, sub)
+      if os.path.isdir(sub_p) and not sub.startswith("."):
+        scan_dirs.append(sub_p)
+  except Exception:
+    pass
+
+  for s_dir in scan_dirs:
+    try:
+      files = sorted(os.listdir(s_dir))
+    except Exception:
+      files = []
+
+    for f in files:
+      if not is_valid_rom_file(f, sys_dir):
+        continue
+      full_f = os.path.join(s_dir, f)
+      try:
+        sz = os.path.getsize(full_f)
+      except Exception:
+        sz = 0
+      sz_str = (
+          f"{sz / (1024*1024):.1f} MB"
+          if sz > 1024 * 1024
+          else f"{sz // 1024} KB"
+      )
+
+      base = os.path.splitext(f)[0]
+      art_url = ""
+      has_art = False
+
+      if os.path.isdir(img_dir):
+        for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+          art_file = os.path.join(img_dir, base + ext)
+          if os.path.isfile(art_file):
+            has_art = True
+            art_url = f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base + ext)}?v={int(os.path.getmtime(art_file))}"
+            break
+
+      if not has_art:
+        sub_media = os.path.join(s_dir, ".media", base + ".png")
+        if os.path.isfile(sub_media):
+          has_art = True
+          art_url = f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base + '.png')}?v={int(os.path.getmtime(sub_media))}"
+
+      games.append({
+          "filename": f,
+          "title": clean_rom_title(f),
+          "size_str": sz_str,
+          "has_art": has_art,
+          "art_url": art_url,
+          "system": sys_dir,
+      })
+  return games
+
+
 def list_all_missing_art_games():
-    """Liệt kê toàn bộ các game trên thẻ nhớ chưa có ảnh bìa (boxart)."""
-    try:
-        cleanup_rom_directory_images()
-    except Exception:
-        pass
-    os.makedirs(ROMS_DIR, exist_ok=True)
-    os.makedirs(IMGS_DIR, exist_ok=True)
-    missing = []
-
-    try:
-        sys_dirs = sorted(os.listdir(ROMS_DIR))
-    except Exception:
-        sys_dirs = []
-
-    for sys_d in sys_dirs:
-        if sys_d.startswith("."):
-            continue
-        rom_p = os.path.join(ROMS_DIR, sys_d)
-        if not os.path.isdir(rom_p):
-            continue
-        img_p = os.path.join(IMGS_DIR, sys_d)
-        art_bases = set()
-        if os.path.isdir(img_p):
-            try:
-                for f in os.listdir(img_p):
-                    if not f.startswith(".") and os.path.splitext(f)[1].lower() in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
-                        art_bases.add(os.path.splitext(f)[0].lower())
-            except Exception:
-                pass
-
-        try:
-            for fname in sorted(os.listdir(rom_p)):
-                if fname.startswith("."):
-                    continue
-                full_p = os.path.join(rom_p, fname)
-                if not os.path.isfile(full_p):
-                    continue
-                name, ext = os.path.splitext(fname)
-                if not is_valid_rom_file(fname, sys_d):
-                    continue
-
-                if name.lower() not in art_bases:
-                    try:
-                        st = os.stat(full_p)
-                        sz = st.st_size
-                        mtime = st.st_mtime
-                    except OSError:
-                        sz = 0
-                        mtime = 0
-
-                    missing.append({
-                        "filename": fname,
-                        "name": name,
-                        "system": sys_d,
-                        "system_name": SYSTEM_NAMES.get(sys_d.upper(), sys_d),
-                        "ext": ext,
-                        "size_str": format_size(sz),
-                        "size_bytes": sz,
-                        "mtime": mtime,
-                        "has_art": False,
-                        "art_name": None,
-                        "art_url": None
-                    })
-        except Exception as e:
-            print(f"Error scanning missing art in {sys_d}: {e}")
-
-    return missing
+  missing = []
+  systems = list_all_systems()
+  for sys_info in systems:
+    s_dir = sys_info["dir"]
+    g_list = list_system_games(s_dir)
+    for g in g_list:
+      if not g["has_art"]:
+        missing.append(g)
+  return missing
 
 
+# ==============================================================================
+# HTTP HANDLER
+# ==============================================================================
 class GameWebHandler(BaseHTTPRequestHandler):
-    def log_message(self, format, *args):
-        pass
 
-    def send_json(self, data, status=200):
-        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(body)
+  def send_json(self, data, status_code=200):
+    body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+    self.send_response(status_code)
+    self.send_header("Content-Type", "application/json; charset=utf-8")
+    self.send_header("Content-Length", str(len(body)))
+    self.send_header("Access-Control-Allow-Origin", "*")
+    self.end_headers()
+    self.wfile.write(body)
 
-    def do_OPTIONS(self):
-        self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
+  def do_OPTIONS(self):
+    self.send_response(200)
+    self.send_header("Access-Control-Allow-Origin", "*")
+    self.send_header(
+        "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"
+    )
+    self.send_header("Access-Control-Allow-Headers", "Content-Type")
+    self.end_headers()
 
-    def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
-        path = parsed.path
-        query = urllib.parse.parse_qs(parsed.query)
+  def do_GET(self):
+    parsed = urllib.parse.urlparse(self.path)
+    path = parsed.path
+    query = urllib.parse.parse_qs(parsed.query)
 
-        if path in ("/", "/index.html"):
-            body = HTML_PAGE.encode("utf-8")
+    if path in ("/", "/index.html"):
+      body = HTML_PAGE.encode("utf-8")
+      self.send_response(200)
+      self.send_header("Content-Type", "text/html; charset=utf-8")
+      self.send_header("Content-Length", str(len(body)))
+      self.end_headers()
+      self.wfile.write(body)
+      return
+
+    if path == "/api/status":
+      st = get_sd_storage()
+      self.send_json({"ok": True, "storage": st})
+      return
+
+    if path == "/api/saves":
+      self.send_json({
+          "ok": True,
+          "stats": get_saves_stats(),
+          "backups": list_save_backups(),
+      })
+      return
+
+    if path == "/api/saves/download":
+      fname = query.get("file", [""])[0]
+      for b in list_save_backups():
+        if b["filename"] == fname and os.path.isfile(b["filepath"]):
+          try:
+            with open(b["filepath"], "rb") as f:
+              data = f.read()
             self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Content-Type", "application/zip")
+            self.send_header(
+                "Content-Disposition", f'attachment; filename="{fname}"'
+            )
+            self.send_header("Content-Length", str(len(data)))
             self.end_headers()
-            self.wfile.write(body)
+            self.wfile.write(data)
             return
+          except Exception as e:
+            print(f"Error downloading backup: {e}")
+      self.send_response(404)
+      self.end_headers()
+      return
 
-        if path == "/api/status":
-            st = get_sd_storage()
-            self.send_json({"ok": True, "storage": st})
-            return
+    if path == "/api/cheats/status":
+      self.send_json({
+          "ok": True,
+          "status": get_cheats_status(),
+          "runner": cheat_runner.get_state(),
+      })
+      return
 
-        if path == "/api/saves":
-            self.send_json({
-                "ok": True,
-                "stats": get_saves_stats(),
-                "backups": list_save_backups()
-            })
-            return
+    if path == "/api/logs/download":
+      try:
+        rep_path = generate_debug_report()
+        if os.path.isfile(rep_path):
+          with open(rep_path, "rb") as f:
+            data = f.read()
+          self.send_response(200)
+          self.send_header("Content-Type", "text/plain; charset=utf-8")
+          self.send_header(
+              "Content-Disposition",
+              f'attachment; filename="{os.path.basename(rep_path)}"',
+          )
+          self.send_header("Content-Length", str(len(data)))
+          self.end_headers()
+          self.wfile.write(data)
+          return
+      except Exception as e:
+        print(f"Error generating debug report: {e}")
+      self.send_response(404)
+      self.end_headers()
+      return
 
-        if path == "/api/saves/download":
-            fname = query.get("file", [""])[0]
-            for b in list_save_backups():
-                if b["filename"] == fname and os.path.isfile(b["filepath"]):
-                    try:
-                        with open(b["filepath"], "rb") as f:
-                            data = f.read()
-                        self.send_response(200)
-                        self.send_header("Content-Type", "application/zip")
-                        self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
-                        self.send_header("Content-Length", str(len(data)))
-                        self.end_headers()
-                        self.wfile.write(data)
-                        return
-                    except Exception as e:
-                        print(f"Error downloading backup: {e}")
-            self.send_response(404)
+    if path == "/api/logs/status":
+      dev_id = getattr(state, "device_id", "") or get_device_id()
+      self.send_json({
+          "ok": True,
+          "enable_logging": getattr(state, "enable_logging", False),
+          "device_id": dev_id,
+          "log_size": get_log_size_str(),
+      })
+      return
+
+    if path == "/api/systems":
+      systems = list_all_systems()
+      no_art_games = list_all_missing_art_games()
+      self.send_json(
+          {"ok": True, "systems": systems, "no_art_count": len(no_art_games)}
+      )
+      return
+
+    if path == "/api/games":
+      sys_dir = query.get("system", [""])[0]
+      if sys_dir == "__no_art__":
+        games = list_all_missing_art_games()
+        self.send_json({"ok": True, "system": "__no_art__", "games": games})
+        return
+      if not sys_dir:
+        self.send_json({"ok": False, "error": "Missing system parameter"}, 400)
+        return
+      games = list_system_games(sys_dir)
+      self.send_json({"ok": True, "system": sys_dir, "games": games})
+      return
+
+    if path.startswith("/art/"):
+      parts = path.split("/", 3)
+      if len(parts) >= 4:
+        sys_dir = urllib.parse.unquote(parts[2])
+        art_fname = urllib.parse.unquote(parts[3])
+        art_full = os.path.join(IMGS_DIR, sys_dir, art_fname)
+        if os.path.isfile(art_full):
+          ext = os.path.splitext(art_fname)[1].lower()
+          mime = "image/png" if ext == ".png" else "image/jpeg"
+          try:
+            with open(art_full, "rb") as f:
+              data = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-cache, must-revalidate")
             self.end_headers()
+            self.wfile.write(data)
             return
+          except Exception as e:
+            print(f"Error serving art: {e}")
+      self.send_response(404)
+      self.end_headers()
+      return
 
-        if path == "/api/cheats/status":
-            self.send_json({
-                "ok": True,
-                "status": get_cheats_status(),
-                "runner": cheat_runner.get_state()
-            })
-            return
+    if path == "/api/scrape/search":
+      sys_code = query.get("system", [""])[0].upper()
+      q_name = query.get("query", [""])[0].strip()
+      fast_mode = query.get("fast", ["0"])[0] in ("1", "true", "yes")
+      if not q_name:
+        self.send_json({"ok": False, "error": "Query required"}, 400)
+        return
 
-        if path == "/api/logs/download":
+      candidates = []
+      seen_urls = set()
+
+      db_results = search_catalog_db(sys_code, q_name, max_results=6)
+      for item in db_results:
+        if item["url"] not in seen_urls:
+          candidates.append(item)
+          seen_urls.add(item["url"])
+
+      allow_fetch = len(candidates) < 6
+      libretro_results = search_libretro_boxarts(
+          sys_code, q_name, max_results=8, allow_fetch=allow_fetch
+      )
+      for item in libretro_results:
+        if item["url"] not in seen_urls:
+          candidates.append(item)
+          seen_urls.add(item["url"])
+
+      if not fast_mode or len(candidates) == 0:
+        web_q = f"{q_name} {sys_code} boxart box art cover"
+        web_results = search_web_images(web_q, max_results=8)
+        for item in web_results:
+          if item["url"] not in seen_urls:
+            candidates.append(item)
+            seen_urls.add(item["url"])
+
+      self.send_json({
+          "ok": True,
+          "system": sys_code,
+          "query": q_name,
+          "candidates": candidates,
+      })
+      return
+
+    # ==================== STORE API ====================
+    if path == "/api/store/categories":
+      ensure_catalog_extracted()
+      counts = []
+      try:
+        counts = db.get_source_systems_counts("ALL")
+      except Exception as e:
+        print(f"Error get_source_systems_counts: {e}")
+
+      systems_data = []
+      for code, cnt in counts:
+        if code == "ALL":
+          continue
+        name = SYSTEM_NAMES.get(code, code)
+        systems_data.append({"code": code, "name": name, "count": cnt})
+
+      self.send_json({
+          "ok": True,
+          "categories": [
+              {
+                  "id": "HITS",
+                  "name": "Top 100 game hay nhất",
+                  "icon": "🌟",
+                  "desc": "Tuyển tập 100 game kinh điển nhiều lượt chơi nhất",
+              },
+              {
+                  "id": "VIET",
+                  "name": "Game Việt hóa",
+                  "icon": "🇻🇳",
+                  "desc": "Các bản dịch Tiếng Việt chất lượng cao",
+              },
+              {
+                  "id": "HACK",
+                  "name": "Kho game hack",
+                  "icon": "⚡",
+                  "desc": "Pokemon Custom, Mario Hacks, Romhacks",
+              },
+              {
+                  "id": "JAVA",
+                  "name": "Game Java (J2ME)",
+                  "icon": "📱",
+                  "desc": "2,800+ Game điện thoại di động Nokia cổ",
+              },
+              {
+                  "id": "RETROSTIC",
+                  "name": "Kho game RETROSTIC",
+                  "icon": "🕹️",
+                  "desc": "Kho tổng hợp đa hệ máy phong phú",
+              },
+              {
+                  "id": "ARCHIVE",
+                  "name": "Kho Archive.org",
+                  "icon": "🏛️",
+                  "desc": "Kho lưu trữ Internet Archive bảo tồn game",
+              },
+          ],
+          "systems": systems_data,
+      })
+      return
+
+    if path == "/api/store/games":
+      source_type = query.get("source_type", ["ALL"])[0]
+      sys_code = query.get("system", ["ALL"])[0]
+      query_str = query.get("query", [""])[0].strip()
+      sort_by = query.get("sort", ["downloads"])[0]
+      try:
+        page = int(query.get("page", ["1"])[0])
+        limit = int(query.get("limit", ["40"])[0])
+      except ValueError:
+        page = 1
+        limit = 40
+      offset = (page - 1) * limit
+
+      ensure_catalog_extracted()
+      games = []
+      try:
+        if query_str:
+          games = db.search_games_fts(
+              query_str,
+              sys_code=sys_code,
+              limit=limit,
+              source_type=source_type,
+          )
+        else:
+          games = db.get_games_page(
+              source_type=source_type,
+              sys_code=sys_code,
+              sort_by=sort_by,
+              limit=limit,
+              offset=offset,
+          )
+      except Exception as e:
+        print(f"Error get store games: {e}")
+        games = []
+
+      for g in games:
+        g_sys = g.get("sys_code", "")
+        g_fn = g.get("filename", "")
+        is_installed = False
+        if g_sys and g_fn:
+          try:
+            r_dir = resolve_rom_dir(g_sys)
+            if os.path.isfile(os.path.join(r_dir, g_fn)):
+              is_installed = True
+          except Exception:
+            pass
+        g["is_installed"] = is_installed
+
+      self.send_json({
+          "ok": True,
+          "page": page,
+          "limit": limit,
+          "games": games,
+          "count": len(games),
+      })
+      return
+
+    if path == "/api/store/download/status":
+      with STORE_DOWNLOADS_LOCK:
+        active_list = list(STORE_DOWNLOADS.values())
+      self.send_json({"ok": True, "downloads": active_list})
+      return
+
+    # ==================== YOUTUBE API ====================
+    if path == "/api/youtube/playlists":
+      history = []
+      favorites = []
+      try:
+        history = yt.load_search_history() or []
+      except Exception as e:
+        print(f"Error loading yt history: {e}")
+      try:
+        favorites = yt.load_favorites() or []
+      except Exception as e:
+        print(f"Error loading yt favorites: {e}")
+
+      self.send_json({
+          "ok": True,
+          "playlists": history,
+          "favorites": favorites,
+          "favorites_count": len(favorites),
+      })
+      return
+
+    if path == "/api/youtube/favorites":
+      favorites = []
+      try:
+        favorites = yt.load_favorites() or []
+      except Exception as e:
+        print(f"Error loading yt favorites: {e}")
+      self.send_json(
+          {"ok": True, "favorites": favorites, "count": len(favorites)}
+      )
+      return
+
+    if path == "/api/youtube/search":
+      q = query.get("q", [""])[0].strip()
+      try:
+        limit = int(query.get("limit", ["24"])[0])
+      except ValueError:
+        limit = 24
+
+      videos = []
+      if q.lower() in ("trending", "thịnh hành", "top"):
+        videos = yt.get_trending(limit=limit) or []
+      elif q:
+        videos = yt.search_youtube(q, limit=limit) or []
+
+      self.send_json(
+          {"ok": True, "query": q, "videos": videos, "count": len(videos)}
+      )
+      return
+
+    self.send_response(404)
+    self.end_headers()
+
+  def do_POST(self):
+    parsed = urllib.parse.urlparse(self.path)
+    path = parsed.path
+    query = urllib.parse.parse_qs(parsed.query)
+    content_len = int(self.headers.get("Content-Length", 0))
+
+    if path == "/api/saves/backup":
+      try:
+        note = ""
+        if content_len > 0:
+          try:
+            payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+            note = payload.get("note", "")
+          except Exception:
+            pass
+        ok, res, st = create_save_backup(note=note)
+        if ok:
+          self.send_json({
+              "ok": True,
+              "message": "Đã tạo bản sao lưu thành công!",
+              "backup": st,
+          })
+        else:
+          self.send_json({"ok": False, "error": res}, 500)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/saves/restore":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        fname = payload.get("filename", "")
+        found = None
+        for b in list_save_backups():
+          if b["filename"] == fname:
+            found = b["filepath"]
+            break
+        if not found:
+          self.send_json(
+              {"ok": False, "error": "Không tìm thấy file sao lưu"}, 404
+          )
+          return
+        ok, cnt, err = restore_save_backup(found)
+        if ok:
+          self.send_json(
+              {"ok": True, "message": f"Khôi phục thành công {cnt} files save!"}
+          )
+        else:
+          self.send_json({"ok": False, "error": err}, 500)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/saves/delete":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        fname = payload.get("filename", "")
+        found = None
+        for b in list_save_backups():
+          if b["filename"] == fname:
+            found = b["filepath"]
+            break
+        if found:
+          delete_save_backup(found)
+          self.send_json({"ok": True, "message": "Đã xóa bản sao lưu!"})
+        else:
+          self.send_json({"ok": False, "error": "File không tồn tại"}, 404)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/cheats/download":
+      mode = "installed"
+      if "mode" in query:
+        mode = query.get("mode", ["installed"])[0]
+      elif content_len > 0:
+        try:
+          payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+          mode = payload.get("mode", "installed")
+        except Exception:
+          pass
+      if mode not in ("installed", "all"):
+        mode = "installed"
+
+      if cheat_runner.is_running():
+        self.send_json({"ok": True, "message": "Đang xử lý tải kho Cheat..."})
+      else:
+        cheat_runner.start(mode=mode)
+        if mode == "installed":
+          msg = "Đã bắt đầu tải Cheat cho các game đang có trên thẻ nhớ!"
+        else:
+          msg = "Đã bắt đầu tải toàn bộ kho Cheat Libretro (~37MB)!"
+        self.send_json({"ok": True, "message": msg})
+      return
+
+    if path == "/api/cheats/single":
+      try:
+        payload = {}
+        if content_len > 0:
+          try:
+            payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+          except Exception:
+            payload = {}
+        system = payload.get("system") or query.get("system", [""])[0]
+        filename = payload.get("filename") or query.get("filename", [""])[0]
+        if not system or not filename:
+          self.send_json(
+              {"ok": False, "error": "Thiếu thông tin system hoặc filename"},
+              400,
+          )
+          return
+        res = check_or_download_single_cheat(system, filename)
+        self.send_json({
+            "ok": res.get("ok", False),
+            "result": res,
+            "message": res.get("message", ""),
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/cheats/stop":
+      cheat_runner.request_stop()
+      self.send_json({"ok": True, "message": "Đã gửi lệnh dừng tải!"})
+      return
+
+    if path == "/api/logs/send-telegram":
+      try:
+        payload = {}
+        if content_len > 0:
+          try:
+            payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+          except Exception:
+            payload = {}
+        user_note = (
+            payload.get("note", "").strip() or "Gửi từ RetroHub Web Manager"
+        )
+        ok, res = upload_log_to_telegram(note=user_note)
+        if ok:
+          self.send_json({
+              "ok": True,
+              "message": "Đã gửi nhật ký thành công vào Telegram của tác giả!",
+          })
+        else:
+          self.send_json({"ok": False, "error": str(res)}, 500)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/logs/toggle":
+      state.enable_logging = not getattr(state, "enable_logging", False)
+      state.save_settings()
+      try:
+        sync_retroarch_logging(state.enable_logging)
+      except Exception:
+        pass
+      self.send_json({
+          "ok": True,
+          "enable_logging": state.enable_logging,
+          "message": (
+              "Đã BẬT ghi nhật ký"
+              if state.enable_logging
+              else "Đã TẮT ghi nhật ký"
+          ),
+      })
+      return
+
+    if path == "/api/logs/clear":
+      clear_log()
+      self.send_json({
+          "ok": True,
+          "log_size": get_log_size_str(),
+          "message": "Đã làm sạch toàn bộ nhật ký!",
+      })
+      return
+
+    if path == "/api/rename":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        sys_dir = payload.get("system", "").strip()
+        old_f = payload.get("old_filename", "").strip()
+        new_f = payload.get("new_filename", "").strip()
+
+        if not sys_dir or not old_f or not new_f:
+          self.send_json(
+              {"ok": False, "error": "Thiếu thông tin tham số"}, 400
+          )
+          return
+
+        old_rom_path = os.path.join(ROMS_DIR, sys_dir, old_f)
+        new_rom_path = os.path.join(ROMS_DIR, sys_dir, new_f)
+
+        if not os.path.isfile(old_rom_path):
+          self.send_json(
+              {"ok": False, "error": f"Không tìm thấy file {old_f}"}, 404
+          )
+          return
+        if os.path.exists(new_rom_path) and old_rom_path != new_rom_path:
+          self.send_json(
+              {"ok": False, "error": f"Tên mới {new_f} đã tồn tại!"}, 400
+          )
+          return
+
+        os.rename(old_rom_path, new_rom_path)
+
+        old_base = os.path.splitext(old_f)[0]
+        new_base = os.path.splitext(new_f)[0]
+        renamed_art = False
+        img_dir = os.path.join(IMGS_DIR, sys_dir)
+        if os.path.isdir(img_dir):
+          for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+            old_art = os.path.join(img_dir, old_base + ext)
+            if os.path.isfile(old_art):
+              new_art = os.path.join(img_dir, new_base + ext)
+              try:
+                os.rename(old_art, new_art)
+                renamed_art = True
+              except Exception as e:
+                print(f"Error renaming art: {e}")
+              break
+
+        self.send_json({
+            "ok": True,
+            "message": (
+                f"Đã đổi tên thành công: {new_f}"
+                + (" (kèm ảnh bìa)" if renamed_art else "")
+            ),
+            "renamed_art": renamed_art,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/move":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        from_sys = payload.get("from_system", "").strip()
+        to_sys = payload.get("to_system", "").strip()
+        fname = payload.get("filename", "").strip()
+
+        if not from_sys or not to_sys or not fname:
+          self.send_json(
+              {"ok": False, "error": "Thiếu thông tin hệ máy hoặc tệp"}, 400
+          )
+          return
+
+        src_rom = os.path.join(ROMS_DIR, from_sys, fname)
+        dst_dir = os.path.join(ROMS_DIR, to_sys)
+        os.makedirs(dst_dir, exist_ok=True)
+        dst_rom = os.path.join(dst_dir, fname)
+
+        if not os.path.isfile(src_rom):
+          self.send_json(
+              {"ok": False, "error": f"Không tìm thấy file nguồn {fname}"}, 404
+          )
+          return
+        if os.path.exists(dst_rom):
+          self.send_json(
+              {"ok": False, "error": f"File {fname} đã tồn tại ở hệ máy đích!"},
+              400,
+          )
+          return
+
+        shutil.move(src_rom, dst_rom)
+
+        moved_art = False
+        base = os.path.splitext(fname)[0]
+        src_img_dir = os.path.join(IMGS_DIR, from_sys)
+        dst_img_dir = os.path.join(IMGS_DIR, to_sys)
+        os.makedirs(dst_img_dir, exist_ok=True)
+        for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+          src_art = os.path.join(src_img_dir, base + ext)
+          if os.path.isfile(src_art):
+            dst_art = os.path.join(dst_img_dir, base + ext)
             try:
-                rep_path = generate_debug_report()
-                if os.path.isfile(rep_path):
-                    with open(rep_path, "rb") as f:
-                        data = f.read()
-                    self.send_response(200)
-                    self.send_header("Content-Type", "text/plain; charset=utf-8")
-                    self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(rep_path)}"')
-                    self.send_header("Content-Length", str(len(data)))
-                    self.end_headers()
-                    self.wfile.write(data)
-                    return
+              shutil.move(src_art, dst_art)
+              moved_art = True
             except Exception as e:
-                print(f"Error generating debug report: {e}")
-            self.send_response(404)
-            self.end_headers()
-            return
+              print(f"Error moving art: {e}")
+            break
 
-        if path == "/api/logs/status":
-            dev_id = getattr(state, "device_id", "") or get_device_id()
-            self.send_json({
-                "ok": True,
-                "enable_logging": getattr(state, "enable_logging", False),
-                "device_id": dev_id,
-                "log_size": get_log_size_str()
-            })
-            return
+        self.send_json({
+            "ok": True,
+            "message": (
+                f"Đã chuyển {fname} sang {to_sys}"
+                + (" (kèm ảnh bìa)" if moved_art else "")
+            ),
+            "moved_art": moved_art,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-        if path == "/api/systems":
-            systems = list_all_systems()
-            no_art_games = list_all_missing_art_games()
-            self.send_json({
-                "ok": True,
-                "systems": systems,
-                "no_art_count": len(no_art_games)
-            })
-            return
+    if path == "/api/delete":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        sys_dir = payload.get("system", "").strip()
+        fname = payload.get("filename", "").strip()
+        del_art = payload.get("delete_art", True)
 
-        if path == "/api/games":
-            sys_dir = query.get("system", [""])[0]
-            if sys_dir == "__no_art__":
-                games = list_all_missing_art_games()
-                self.send_json({"ok": True, "system": "__no_art__", "games": games})
-                return
-            if not sys_dir:
-                self.send_json({"ok": False, "error": "Missing system parameter"}, 400)
-                return
-            games = list_system_games(sys_dir)
-            self.send_json({"ok": True, "system": sys_dir, "games": games})
-            return
+        rom_p = os.path.join(ROMS_DIR, sys_dir, fname)
+        if os.path.isfile(rom_p):
+          os.remove(rom_p)
 
-        if path.startswith("/art/"):
-            parts = path.split("/", 3)
-            if len(parts) >= 4:
-                sys_dir = urllib.parse.unquote(parts[2])
-                art_fname = urllib.parse.unquote(parts[3])
-                art_full = os.path.join(IMGS_DIR, sys_dir, art_fname)
-                if os.path.isfile(art_full):
-                    ext = os.path.splitext(art_fname)[1].lower()
-                    mime = "image/png" if ext == ".png" else "image/jpeg"
-                    try:
-                        with open(art_full, "rb") as f:
-                            data = f.read()
-                        self.send_response(200)
-                        self.send_header("Content-Type", mime)
-                        self.send_header("Content-Length", str(len(data)))
-                        self.send_header("Cache-Control", "no-cache, must-revalidate")
-                        self.end_headers()
-                        self.wfile.write(data)
-                        return
-                    except Exception as e:
-                        print(f"Error serving art: {e}")
-            self.send_response(404)
-            self.end_headers()
-            return
-
-        if path == "/api/scrape/search":
-            sys_code = query.get("system", [""])[0].upper()
-            q_name = query.get("query", [""])[0].strip()
-            fast_mode = query.get("fast", ["0"])[0] in ("1", "true", "yes")
-            if not q_name:
-                self.send_json({"ok": False, "error": "Query required"}, 400)
-                return
-
-            candidates = []
-            seen_urls = set()
-
-            # 1. Tìm trong SQLite Catalog DB (ảnh bìa chất lượng cao / Việt hóa) (~1ms)
-            db_results = search_catalog_db(sys_code, q_name, max_results=6)
-            for item in db_results:
-                if item["url"] not in seen_urls:
-                    candidates.append(item)
-                    seen_urls.add(item["url"])
-
-            # 2. Tìm trong Libretro Thumbnails CDN chính thức (~5ms)
-            allow_fetch = len(candidates) < 6
-            libretro_results = search_libretro_boxarts(sys_code, q_name, max_results=8, allow_fetch=allow_fetch)
-            for item in libretro_results:
-                if item["url"] not in seen_urls:
-                    candidates.append(item)
-                    seen_urls.add(item["url"])
-
-            # 3. Tìm kiếm Web Images (Bing) nếu không bật fast_mode hoặc DB/Libretro chưa có ảnh
-            if not fast_mode or len(candidates) == 0:
-                web_q = f"{q_name} {sys_code} boxart box art cover"
-                web_results = search_web_images(web_q, max_results=8)
-                for item in web_results:
-                    if item["url"] not in seen_urls:
-                        candidates.append(item)
-                        seen_urls.add(item["url"])
-
-            self.send_json({
-                "ok": True,
-                "system": sys_code,
-                "query": q_name,
-                "candidates": candidates
-            })
-            return
-
-        self.send_response(404)
-        self.end_headers()
-
-    def do_POST(self):
-        parsed = urllib.parse.urlparse(self.path)
-        path = parsed.path
-        query = urllib.parse.parse_qs(parsed.query)
-
-        content_len = int(self.headers.get("Content-Length", 0))
-
-        if path == "/api/saves/backup":
-            try:
-                note = ""
-                if content_len > 0:
-                    try:
-                        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                        note = payload.get("note", "")
-                    except Exception:
-                        pass
-                ok, res, st = create_save_backup(note=note)
-                if ok:
-                    self.send_json({"ok": True, "message": "Đã tạo bản sao lưu thành công!", "backup": st})
-                else:
-                    self.send_json({"ok": False, "error": res}, 500)
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
-
-        if path == "/api/saves/restore":
-            try:
-                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                fname = payload.get("filename", "")
-                found = None
-                for b in list_save_backups():
-                    if b["filename"] == fname:
-                        found = b["filepath"]
-                        break
-                if not found:
-                    self.send_json({"ok": False, "error": "Không tìm thấy file sao lưu"}, 404)
-                    return
-                ok, cnt, err = restore_save_backup(found)
-                if ok:
-                    self.send_json({"ok": True, "message": f"Khôi phục thành công {cnt} files save!"})
-                else:
-                    self.send_json({"ok": False, "error": err}, 500)
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
-
-        if path == "/api/saves/delete":
-            try:
-                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                fname = payload.get("filename", "")
-                found = None
-                for b in list_save_backups():
-                    if b["filename"] == fname:
-                        found = b["filepath"]
-                        break
-                if found:
-                    delete_save_backup(found)
-                    self.send_json({"ok": True, "message": "Đã xóa bản sao lưu!"})
-                else:
-                    self.send_json({"ok": False, "error": "File không tồn tại"}, 404)
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
-
-        if path == "/api/cheats/download":
-            mode = "installed"
-            if "mode" in query:
-                mode = query.get("mode", ["installed"])[0]
-            elif content_len > 0:
-                try:
-                    payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                    mode = payload.get("mode", "installed")
-                except Exception:
-                    pass
-            if mode not in ("installed", "all"):
-                mode = "installed"
-
-            if cheat_runner.is_running():
-                self.send_json({"ok": True, "message": "Đang xử lý tải kho Cheat..."})
-            else:
-                cheat_runner.start(mode=mode)
-                if mode == "installed":
-                    msg = "Đã bắt đầu tải Cheat cho các game đang có trên thẻ nhớ!"
-                else:
-                    msg = "Đã bắt đầu tải toàn bộ kho Cheat Libretro (~37MB)!"
-                self.send_json({"ok": True, "message": msg})
-            return
-
-        if path == "/api/cheats/single":
-            try:
-                payload = {}
-                if content_len > 0:
-                    try:
-                        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                    except Exception:
-                        payload = {}
-                system = payload.get("system") or query.get("system", [""])[0]
-                filename = payload.get("filename") or query.get("filename", [""])[0]
-                if not system or not filename:
-                    self.send_json({"ok": False, "error": "Thiếu thông tin system hoặc filename"}, 400)
-                    return
-                res = check_or_download_single_cheat(system, filename)
-                self.send_json({"ok": res.get("ok", False), "result": res, "message": res.get("message", "")})
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
-
-        if path == "/api/cheats/stop":
-            cheat_runner.request_stop()
-            self.send_json({"ok": True, "message": "Đã gửi lệnh dừng tải!"})
-            return
-
-        if path == "/api/logs/send-telegram":
-            try:
-                payload = {}
-                if content_len > 0:
-                    try:
-                        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                    except Exception:
-                        payload = {}
-                user_note = payload.get("note", "").strip() or "Gửi từ RetroHub Web Manager"
-                ok, res = upload_log_to_telegram(note=user_note)
-                if ok:
-                    self.send_json({"ok": True, "message": "Đã gửi nhật ký thành công vào Telegram của tác giả!"})
-                else:
-                    self.send_json({"ok": False, "error": str(res)}, 500)
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
-
-        if path == "/api/logs/toggle":
-            state.enable_logging = not getattr(state, "enable_logging", False)
-            state.save_settings()
-            try:
-                sync_retroarch_logging(state.enable_logging)
-            except Exception:
+        if del_art:
+          base = os.path.splitext(fname)[0]
+          img_d = os.path.join(IMGS_DIR, sys_dir)
+          for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
+            art_p = os.path.join(img_d, base + ext)
+            if os.path.isfile(art_p):
+              try:
+                os.remove(art_p)
+              except Exception:
                 pass
+
+        self.send_json({"ok": True, "message": f"Đã xóa {fname}"})
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/cleanup_rom_images":
+      try:
+        cleaned = cleanup_rom_directory_images()
+        self.send_json({
+            "ok": True,
+            "cleaned_count": cleaned,
+            "message": (
+                f"Đã dọn dẹp {cleaned} tệp/thư mục ảnh trùng trong ROMs"
+            ),
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/scrape/auto":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        sys_dir = payload.get("system", "").strip()
+        fname = payload.get("filename", "").strip()
+        query_str = payload.get("query", "").strip()
+        fast_only = payload.get("fast", True)
+
+        if not sys_dir or not fname:
+          self.send_json(
+              {
+                  "ok": False,
+                  "error": "Thiếu dữ liệu cào ảnh (system hoặc filename)",
+              },
+              400,
+          )
+          return
+
+        if not query_str:
+          query_str = clean_rom_title(fname)
+
+        base_name = os.path.splitext(fname)[0]
+        target_img_dir = os.path.join(IMGS_DIR, sys_dir)
+        os.makedirs(target_img_dir, exist_ok=True)
+        target_art = os.path.join(target_img_dir, base_name + ".png")
+
+        # 1. Trích xuất icon gốc từ JAR nếu là game Java
+        if fname.lower().endswith(".jar") or sys_dir.upper() == "JAVA":
+          rom_path = os.path.join(ROMS_DIR, sys_dir, fname)
+          if not os.path.isfile(rom_path):
+            for res_dir in ("240320", "320240", "128128", "176208", "640360"):
+              cand = os.path.join(ROMS_DIR, sys_dir, res_dir, fname)
+              if os.path.isfile(cand):
+                rom_path = cand
+                break
+          if extract_jar_icon(rom_path, target_art):
+            now_ts = int(time.time())
             self.send_json({
                 "ok": True,
-                "enable_logging": state.enable_logging,
-                "message": "Đã BẬT ghi nhật ký" if state.enable_logging else "Đã TẮT ghi nhật ký"
+                "source": "JAR Icon",
+                "image_url": "",
+                "art_url": (
+                    f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
+                ),
             })
             return
 
-        if path == "/api/logs/clear":
-            clear_log()
-            self.send_json({
-                "ok": True,
-                "log_size": get_log_size_str(),
-                "message": "Đã làm sạch toàn bộ nhật ký!"
-            })
-            return
+        best_url, src_type = find_best_boxart(
+            sys_dir, query_str, filename=fname, fast_only=fast_only
+        )
+        if not best_url:
+          self.send_json(
+              {
+                  "ok": False,
+                  "error": "Không tìm thấy ảnh bìa phù hợp",
+                  "not_found": True,
+              },
+              404,
+          )
+          return
 
-        if path == "/api/rename":
+        for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
+          old_f = os.path.join(target_img_dir, base_name + old_ext)
+          if os.path.isfile(old_f):
             try:
-                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                sys_dir = payload.get("system", "").strip()
-                old_f = payload.get("old_filename", "").strip()
-                new_f = payload.get("new_filename", "").strip()
-                
-                if not sys_dir or not old_f or not new_f:
-                    self.send_json({"ok": False, "error": "Thiếu thông tin tham số"}, 400)
-                    return
+              os.remove(old_f)
+            except Exception:
+              pass
 
-                old_rom_path = os.path.join(ROMS_DIR, sys_dir, old_f)
-                new_rom_path = os.path.join(ROMS_DIR, sys_dir, new_f)
+        success, err_msg = download_image_to_file(
+            best_url, target_art, timeout=12
+        )
+        if success:
+          try:
+            os.utime(target_art, None)
+          except Exception:
+            pass
+          now_ts = int(time.time())
+          self.send_json({
+              "ok": True,
+              "source": src_type,
+              "image_url": best_url,
+              "art_url": (
+                  f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
+              ),
+          })
+          return
+        else:
+          self.send_json(
+              {"ok": False, "error": f"Lỗi tải ảnh: {err_msg}"}, 500
+          )
+          return
+      except Exception as e:
+        self.send_json({"ok": False, "error": f"Lỗi tải ảnh: {e}"}, 500)
+      return
 
-                if not os.path.isfile(old_rom_path):
-                    self.send_json({"ok": False, "error": f"Không tìm thấy file {old_f}"}, 404)
-                    return
-                if os.path.exists(new_rom_path) and old_rom_path != new_rom_path:
-                    self.send_json({"ok": False, "error": f"Tên mới {new_f} đã tồn tại!"}, 400)
-                    return
+    if path == "/api/upload_art":
+      sys_dir = query.get("system", [""])[0]
+      fname = query.get("filename", [""])[0]
+      if not sys_dir or not fname:
+        self.send_json(
+            {"ok": False, "error": "Missing system or filename"}, 400
+        )
+        return
 
-                os.rename(old_rom_path, new_rom_path)
+      base_name = os.path.splitext(fname)[0]
+      target_img_dir = os.path.join(IMGS_DIR, sys_dir)
+      os.makedirs(target_img_dir, exist_ok=True)
+      target_art = os.path.join(target_img_dir, base_name + ".png")
 
-                old_base = os.path.splitext(old_f)[0]
-                new_base = os.path.splitext(new_f)[0]
-                renamed_art = False
-                img_dir = os.path.join(IMGS_DIR, sys_dir)
-                if os.path.isdir(img_dir):
-                    for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
-                        old_art = os.path.join(img_dir, old_base + ext)
-                        if os.path.isfile(old_art):
-                            new_art = os.path.join(img_dir, new_base + ext)
-                            try:
-                                os.rename(old_art, new_art)
-                                renamed_art = True
-                            except Exception as e:
-                                print(f"Error renaming art: {e}")
-                            break
+      for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
+        old_f = os.path.join(target_img_dir, base_name + old_ext)
+        if os.path.isfile(old_f):
+          try:
+            os.remove(old_f)
+          except Exception:
+            pass
 
-                self.send_json({
-                    "ok": True,
-                    "message": f"Đã đổi tên thành công: {new_f}" + (" (kèm ảnh bìa)" if renamed_art else ""),
-                    "renamed_art": renamed_art
-                })
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
+      try:
+        data = self.rfile.read(content_len)
+        with open(target_art, "wb") as f:
+          f.write(data)
+        try:
+          os.utime(target_art, None)
+        except Exception:
+          pass
+        now_ts = int(time.time())
+        self.send_json({
+            "ok": True,
+            "message": "Đã tải lên ảnh bìa thành công!",
+            "art_url": (
+                f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
+            ),
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-        if path == "/api/move":
-            try:
-                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                from_sys = payload.get("from_system", "").strip()
-                to_sys = payload.get("to_system", "").strip()
-                fname = payload.get("filename", "").strip()
+    if path == "/api/upload_rom":
+      sys_dir = query.get("system", [""])[0]
+      fname = query.get("filename", [""])[0]
+      if not sys_dir or not fname:
+        self.send_json(
+            {"ok": False, "error": "Missing system or filename"}, 400
+        )
+        return
 
-                if not from_sys or not to_sys or not fname:
-                    self.send_json({"ok": False, "error": "Thiếu thông tin hệ máy hoặc tệp"}, 400)
-                    return
+      target_rom_dir = os.path.join(ROMS_DIR, sys_dir)
+      os.makedirs(target_rom_dir, exist_ok=True)
+      target_rom = os.path.join(target_rom_dir, fname)
 
-                src_rom = os.path.join(ROMS_DIR, from_sys, fname)
-                dst_dir = os.path.join(ROMS_DIR, to_sys)
-                os.makedirs(dst_dir, exist_ok=True)
-                dst_rom = os.path.join(dst_dir, fname)
+      try:
+        chunk_size = 65536
+        remaining = content_len
+        with open(target_rom, "wb") as f:
+          while remaining > 0:
+            to_read = min(chunk_size, remaining)
+            chunk = self.rfile.read(to_read)
+            if not chunk:
+              break
+            f.write(chunk)
+            remaining -= len(chunk)
+        self.send_json(
+            {"ok": True, "message": f"Đã tải lên game {fname} thành công!"}
+        )
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-                if not os.path.isfile(src_rom):
-                    self.send_json({"ok": False, "error": f"Không tìm thấy file nguồn {fname}"}, 404)
-                    return
-                if os.path.exists(dst_rom):
-                    self.send_json({"ok": False, "error": f"File {fname} đã tồn tại ở hệ máy đích!"}, 400)
-                    return
+    # ==================== STORE POST API ====================
+    if path == "/api/store/download":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        game_id = payload.get("game_id")
+        sys_code = payload.get("sys_code", "").strip()
+        rom_url = payload.get("rom_url", "").strip()
+        filename = payload.get("filename", "").strip()
+        img_url = payload.get("img_url", "").strip()
+        title = payload.get("title", "").strip() or filename
 
-                shutil.move(src_rom, dst_rom)
+        if not sys_code:
+          self.send_json({"ok": False, "error": "Thiếu mã hệ máy"}, 400)
+          return
 
-                moved_art = False
-                base = os.path.splitext(fname)[0]
-                src_img_dir = os.path.join(IMGS_DIR, from_sys)
-                dst_img_dir = os.path.join(IMGS_DIR, to_sys)
-                os.makedirs(dst_img_dir, exist_ok=True)
-                for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
-                    src_art = os.path.join(src_img_dir, base + ext)
-                    if os.path.isfile(src_art):
-                        dst_art = os.path.join(dst_img_dir, base + ext)
-                        try:
-                            shutil.move(src_art, dst_art)
-                            moved_art = True
-                        except Exception as e:
-                            print(f"Error moving art: {e}")
-                        break
+        if not rom_url and game_id:
+          mirrors = db.get_game_mirrors(game_id)
+          if mirrors:
+            rom_url = mirrors[0]["rom_url"]
+            if not filename:
+              filename = mirrors[0]["filename"]
 
-                self.send_json({
-                    "ok": True,
-                    "message": f"Đã chuyển {fname} sang {to_sys}" + (" (kèm ảnh bìa)" if moved_art else ""),
-                    "moved_art": moved_art
-                })
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
+        if not rom_url:
+          self.send_json(
+              {"ok": False, "error": "Không tìm thấy link tải ROM"}, 400
+          )
+          return
 
-        if path == "/api/delete":
-            try:
-                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                sys_dir = payload.get("system", "").strip()
-                fname = payload.get("filename", "").strip()
-                del_art = payload.get("delete_art", True)
+        if not filename:
+          filename = (
+              os.path.basename(urllib.parse.urlparse(rom_url).path)
+              or f"{title}.zip"
+          )
 
-                rom_p = os.path.join(ROMS_DIR, sys_dir, fname)
-                if os.path.isfile(rom_p):
-                    os.remove(rom_p)
-                
-                if del_art:
-                    base = os.path.splitext(fname)[0]
-                    img_d = os.path.join(IMGS_DIR, sys_dir)
-                    for ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
-                        art_p = os.path.join(img_d, base + ext)
-                        if os.path.isfile(art_p):
-                            try:
-                                os.remove(art_p)
-                            except Exception:
-                                pass
+        dl_id = f"dl_{int(time.time() * 1000)}_{sys_code}"
+        threading.Thread(
+            target=background_download_store_game,
+            args=(dl_id, sys_code, title, rom_url, filename, img_url),
+            daemon=True,
+        ).start()
 
-                self.send_json({"ok": True, "message": f"Đã xóa {fname}"})
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
+        self.send_json({
+            "ok": True,
+            "download_id": dl_id,
+            "message": f"Đang bắt đầu tải game {title} về máy...",
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-        if path == "/api/cleanup_rom_images":
-            try:
-                cleaned = cleanup_rom_directory_images()
-                self.send_json({"ok": True, "cleaned_count": cleaned, "message": f"Đã dọn dẹp {cleaned} tệp/thư mục ảnh trùng trong ROMs"})
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
+    # ==================== YOUTUBE POST API ====================
+    if path == "/api/youtube/playlists/save":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        playlists = payload.get("playlists", [])
+        yt.save_search_history(playlists)
+        self.send_json(
+            {"ok": True, "message": "Đã lưu danh sách playlist YouTube!"}
+        )
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-        if path == "/api/scrape/auto":
-            try:
-                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                sys_dir = payload.get("system", "").strip()
-                fname = payload.get("filename", "").strip()
-                query_str = payload.get("query", "").strip()
-                fast_only = payload.get("fast", True)
+    if path == "/api/youtube/playlists/add":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        name = payload.get("name", "").strip()
+        if not name:
+          self.send_json({"ok": False, "error": "Tên playlist trống"}, 400)
+          return
+        cur_list = yt.load_search_history() or []
+        if name in cur_list:
+          cur_list.remove(name)
+        cur_list.insert(0, name)
+        yt.save_search_history(cur_list)
+        self.send_json({
+            "ok": True,
+            "message": f"Đã thêm playlist: {name}",
+            "playlists": cur_list,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-                if not sys_dir or not fname:
-                    self.send_json({"ok": False, "error": "Thiếu dữ liệu cào ảnh (system hoặc filename)"}, 400)
-                    return
+    if path == "/api/youtube/playlists/delete":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        name = payload.get("name", "").strip()
+        cur_list = yt.remove_search_history_item(name)
+        self.send_json({
+            "ok": True,
+            "message": f"Đã xóa playlist: {name}",
+            "playlists": cur_list,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-                if not query_str:
-                    query_str = clean_rom_title(fname)
+    if path == "/api/youtube/favorites/add":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        video = payload.get("video")
+        if not video or not video.get("id"):
+          self.send_json(
+              {"ok": False, "error": "Thiếu dữ liệu video hợp lệ"}, 400
+          )
+          return
+        favs = yt.load_favorites() or []
+        favs = [v for v in favs if v.get("id") != video.get("id")]
+        favs.insert(0, video)
+        yt.save_favorites(favs)
+        self.send_json({
+            "ok": True,
+            "message": "Đã thêm video vào Yêu thích!",
+            "favorites": favs,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-                base_name = os.path.splitext(fname)[0]
-                target_img_dir = os.path.join(IMGS_DIR, sys_dir)
-                os.makedirs(target_img_dir, exist_ok=True)
-                target_art = os.path.join(target_img_dir, base_name + ".png")
+    if path == "/api/youtube/favorites/remove":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        v_id = payload.get("id", "").strip()
+        favs = yt.load_favorites() or []
+        favs = [v for v in favs if v.get("id") != v_id]
+        yt.save_favorites(favs)
+        self.send_json({
+            "ok": True,
+            "message": "Đã xóa video khỏi Yêu thích!",
+            "favorites": favs,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-                # 1. Trích xuất icon gốc trực tiếp từ file jar nếu là game Java J2ME
-                if fname.lower().endswith(".jar") or sys_dir.upper() == "JAVA":
-                    rom_path = os.path.join(ROMS_DIR, sys_dir, fname)
-                    if not os.path.isfile(rom_path):
-                        for res_dir in ("240320", "320240", "128128", "176208", "640360"):
-                            cand = os.path.join(ROMS_DIR, sys_dir, res_dir, fname)
-                            if os.path.isfile(cand):
-                                rom_path = cand
-                                break
-                    if extract_jar_icon(rom_path, target_art):
-                        now_ts = int(time.time())
-                        self.send_json({
-                            "ok": True,
-                            "source": "JAR Icon",
-                            "image_url": "",
-                            "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
-                        })
-                        return
+    if path == "/api/youtube/cache/clear":
+      try:
+        cache_dir = get_yt_cache_dir()
+        c = 0
+        freed = 0
+        if os.path.isdir(cache_dir):
+          for f in os.listdir(cache_dir):
+            p = os.path.join(cache_dir, f)
+            if os.path.isfile(p):
+              try:
+                sz = os.path.getsize(p)
+                os.remove(p)
+                c += 1
+                freed += sz
+              except Exception:
+                pass
+        freed_mb = f"{freed / (1024*1024):.1f} MB"
+        self.send_json({
+            "ok": True,
+            "message": (
+                f"Đã xóa sạch {c} ảnh thumbnail YouTube, giải phóng"
+                f" {freed_mb}!"
+            ),
+            "cleared_count": c,
+            "freed_bytes": freed,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
 
-                best_url, src_type = find_best_boxart(sys_dir, query_str, filename=fname, fast_only=fast_only)
-                if not best_url:
-                    self.send_json({"ok": False, "error": "Không tìm thấy ảnh bìa phù hợp", "not_found": True}, 404)
-                    return
-
-                # Xóa các file ảnh định dạng cũ (.jpg, .jpeg, .webp, .bmp) nếu có
-                for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
-                    old_f = os.path.join(target_img_dir, base_name + old_ext)
-                    if os.path.isfile(old_f):
-                        try:
-                            os.remove(old_f)
-                        except Exception:
-                            pass
-
-                success, err_msg = download_image_to_file(best_url, target_art, timeout=12)
-                if success:
-                    try:
-                        os.utime(target_art, None)
-                    except Exception:
-                        pass
-                    now_ts = int(time.time())
-                    self.send_json({
-                        "ok": True,
-                        "source": src_type,
-                        "image_url": best_url,
-                        "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
-                    })
-                    return
-                else:
-                    self.send_json({"ok": False, "error": f"Lỗi tải ảnh: {err_msg}"}, 500)
-                    return
-            except Exception as e:
-                self.send_json({"ok": False, "error": f"Lỗi xử lý cào ảnh tự động: {e}"}, 500)
-            return
-
-        if path == "/api/scrape/apply":
-            try:
-                payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
-                sys_dir = payload.get("system", "").strip()
-                fname = payload.get("filename", "").strip()
-                img_url = payload.get("image_url", "").strip()
-
-                if not sys_dir or not fname or not img_url:
-                    self.send_json({"ok": False, "error": "Thiếu dữ liệu cào ảnh"}, 400)
-                    return
-
-                if img_url.startswith("//"):
-                    img_url = "https:" + img_url
-
-                base_name = os.path.splitext(fname)[0]
-                target_img_dir = os.path.join(IMGS_DIR, sys_dir)
-                os.makedirs(target_img_dir, exist_ok=True)
-                target_art = os.path.join(target_img_dir, base_name + ".png")
-
-                # Xóa các file ảnh định dạng cũ (.jpg, .jpeg, .webp, .bmp) nếu có
-                for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
-                    old_f = os.path.join(target_img_dir, base_name + old_ext)
-                    if os.path.isfile(old_f):
-                        try:
-                            os.remove(old_f)
-                        except Exception:
-                            pass
-
-                success, err_msg = download_image_to_file(img_url, target_art, timeout=15)
-                if success:
-                    try:
-                        os.utime(target_art, None)
-                    except Exception:
-                        pass
-                    now_ts = int(time.time())
-                    self.send_json({
-                        "ok": True,
-                        "message": f"Đã tải và gán ảnh bìa thành công cho {fname}!",
-                        "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
-                    })
-                    return
-                else:
-                    self.send_json({"ok": False, "error": f"Lỗi tải ảnh: {err_msg}"}, 500)
-                    return
-            except Exception as e:
-                self.send_json({"ok": False, "error": f"Lỗi tải ảnh: {e}"}, 500)
-            return
-
-        if path == "/api/upload_art":
-            sys_dir = query.get("system", [""])[0]
-            fname = query.get("filename", [""])[0]
-            if not sys_dir or not fname:
-                self.send_json({"ok": False, "error": "Missing system or filename"}, 400)
-                return
-
-            base_name = os.path.splitext(fname)[0]
-            target_img_dir = os.path.join(IMGS_DIR, sys_dir)
-            os.makedirs(target_img_dir, exist_ok=True)
-            target_art = os.path.join(target_img_dir, base_name + ".png")
-
-            # Xóa các file ảnh định dạng cũ (.jpg, .jpeg, .webp, .bmp) nếu có
-            for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
-                old_f = os.path.join(target_img_dir, base_name + old_ext)
-                if os.path.isfile(old_f):
-                    try:
-                        os.remove(old_f)
-                    except Exception:
-                        pass
-
-            try:
-                data = self.rfile.read(content_len)
-                with open(target_art, "wb") as f:
-                    f.write(data)
-                try:
-                    os.utime(target_art, None)
-                except Exception:
-                    pass
-                now_ts = int(time.time())
-                self.send_json({
-                    "ok": True,
-                    "message": "Đã tải lên ảnh bìa thành công!",
-                    "art_url": f"/art/{urllib.parse.quote(sys_dir)}/{urllib.parse.quote(base_name + '.png')}?v={now_ts}"
-                })
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
-
-        if path == "/api/upload_rom":
-            sys_dir = query.get("system", [""])[0]
-            fname = query.get("filename", [""])[0]
-            if not sys_dir or not fname:
-                self.send_json({"ok": False, "error": "Missing system or filename"}, 400)
-                return
-
-            target_rom_dir = os.path.join(ROMS_DIR, sys_dir)
-            os.makedirs(target_rom_dir, exist_ok=True)
-            target_rom = os.path.join(target_rom_dir, fname)
-
-            try:
-                chunk_size = 65536
-                remaining = content_len
-                with open(target_rom, "wb") as f:
-                    while remaining > 0:
-                        to_read = min(chunk_size, remaining)
-                        chunk = self.rfile.read(to_read)
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        remaining -= len(chunk)
-                self.send_json({"ok": True, "message": f"Đã tải lên game {fname} thành công!"})
-            except Exception as e:
-                self.send_json({"ok": False, "error": str(e)}, 500)
-            return
-
-        self.send_response(404)
-        self.end_headers()
+    self.send_response(404)
+    self.end_headers()
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
-    daemon_threads = True
-    allow_reuse_address = True
+  daemon_threads = True
+  allow_reuse_address = True
 
 
+# ==============================================================================
+# EMBEDDED FRONTEND HTML / CSS / JS
+# ==============================================================================
 HTML_PAGE = r"""<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RetroHub - Web Game Manager</title>
+    <title>RetroHub - Web Manager</title>
     <style>
         :root {
             --bg-main: #0b0f19;
             --bg-card: #151d2f;
             --bg-card-hover: #1e293b;
             --bg-sidebar: #0f172a;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --accent: #00d2ff;
+            --primary: #38bdf8;
+            --primary-hover: #0284c7;
+            --accent: #00f6f6;
             --accent-green: #10b981;
+            --accent-gold: #ffcf3c;
             --danger: #ef4444;
             --danger-hover: #dc2626;
             --text-main: #f8fafc;
@@ -1552,29 +1858,57 @@ HTML_PAGE = r"""<!DOCTYPE html>
             --radius: 10px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; }
+        body { background: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         
+        /* Header & Navigation */
         header {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
-            padding: 12px 24px;
+            padding: 8px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 100;
+            gap: 16px;
         }
-        .logo-box { display: flex; align-items: center; gap: 12px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo-box { display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .logo-box h1 { font-size: 20px; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .badge-device { background: #1e293b; color: #38bdf8; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; border: 1px solid #0284c7; }
-        .header-stats { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-sub); }
-        .stat-badge { background: #1e293b; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); }
+
+        .main-nav { display: flex; gap: 6px; align-items: center; background: #070a12; padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+        .nav-tab {
+            background: transparent;
+            color: var(--text-sub);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .nav-tab:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+        .nav-tab.active { background: #1e293b; color: var(--primary); border: 1px solid #0284c7; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+
+        .header-stats { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-sub); }
+        .stat-badge { background: #1e293b; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; }
         .stat-badge strong { color: #38bdf8; }
 
-        .app-container { display: flex; flex: 1; overflow: hidden; }
+        /* Views Container */
+        .tab-view { display: none; flex: 1; min-height: 0; }
+        .tab-view.active { display: flex; }
+
+        .app-container { display: flex; flex: 1; overflow: hidden; width: 100%; }
         
+        /* Sidebar */
         aside {
             width: 280px;
             background: var(--bg-sidebar);
@@ -1582,8 +1916,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            flex-shrink: 0;
         }
-        .sidebar-header { padding: 14px 16px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-sub); letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+        .sidebar-header { padding: 14px 16px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-sub); letter-spacing: 0.5px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .sys-item {
             padding: 12px 16px;
             display: flex;
@@ -1596,53 +1931,57 @@ HTML_PAGE = r"""<!DOCTYPE html>
         .sys-item:hover { background: #1e293b; }
         .sys-item.active { background: #1e293b; border-left-color: var(--primary); font-weight: 600; color: #38bdf8; }
         .sys-item .count { background: #334155; color: #cbd5e1; font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
-        .sys-item.active .count { background: var(--primary); color: #fff; }
+        .sys-item.active .count { background: #0284c7; color: #fff; }
 
-        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 24px; }
-        
-        .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
-        .search-box { position: relative; flex: 1; max-width: 400px; }
+        /* Main Content */
+        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 18px 24px; background: var(--bg-main); }
+        .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .search-box { flex: 1; min-width: 220px; position: relative; }
         .search-box input {
             width: 100%;
-            background: #1e293b;
+            background: #0f172a;
             border: 1px solid var(--border);
-            padding: 10px 14px 10px 36px;
             border-radius: 8px;
+            padding: 9px 12px 9px 36px;
             color: #fff;
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
+            transition: border-color 0.2s;
         }
-        .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,0.25); }
-        .search-icon { position: absolute; left: 12px; top: 12px; color: var(--text-sub); }
+        .search-box input:focus { border-color: var(--primary); }
+        .search-icon { position: absolute; left: 12px; top: 11px; width: 14px; height: 14px; opacity: 0.5; }
+        .search-icon::before { content: "🔍"; font-size: 13px; }
 
+        /* Buttons */
         .btn {
-            background: var(--primary);
+            background: #0284c7;
             color: #fff;
             border: none;
-            padding: 9px 16px;
+            padding: 8px 16px;
             border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: background 0.15s;
+            transition: all 0.15s ease;
         }
-        .btn:hover { background: var(--primary-hover); }
-        .btn-green { background: var(--accent-green); }
-        .btn-green:hover { background: #059669; }
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: var(--danger-hover); }
-        .btn-secondary { background: #334155; color: #e2e8f0; }
-        .btn-secondary:hover { background: #475569; }
-        .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+        .btn:hover { background: #0369a1; filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+        .btn-secondary { background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #334155; color: #fff; }
+        .btn-green { background: #059669; }
+        .btn-green:hover { background: #047857; }
+        .btn-danger { background: #dc2626; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-gold { background: #d97706; }
+        .btn-gold:hover { background: #b45309; }
+        .btn-batch { background: linear-gradient(135deg, #0284c7, #6366f1); border: none; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-        }
+        /* Grids */
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
         .game-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -1650,344 +1989,268 @@ HTML_PAGE = r"""<!DOCTYPE html>
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: transform 0.15s, border-color 0.15s;
+            transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
         }
-        .game-card:hover { transform: translateY(-3px); border-color: #475569; background: var(--bg-card-hover); }
-        
+        .game-card:hover { transform: translateY(-3px); border-color: #0284c7; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
         .art-box {
-            width: 100%;
-            height: 200px;
-            background: #090d16;
             position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #070a12;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
-            cursor: pointer;
+            border-bottom: 1px solid var(--border);
         }
-        .art-img {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            display: block;
-            margin: auto;
-            padding: 6px;
-            border-radius: 4px;
-            transition: transform 0.2s ease;
-        }
-        .art-box:hover .art-img {
-            transform: scale(1.03);
-        }
-        .art-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: #64748b;
-            text-align: center;
-            user-select: none;
-        }
-        .art-sys-svg {
-            width: 54px;
-            height: 54px;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
-            transition: transform 0.2s, filter 0.2s;
-        }
-        .art-box:hover .art-sys-svg {
-            transform: scale(1.08);
-            filter: drop-shadow(0 6px 14px rgba(56, 189, 248, 0.25));
-        }
-        .btn-action-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        .btn-action-icon svg {
-            flex-shrink: 0;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        .art-btn-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(11, 15, 25, 0.75);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            opacity: 0;
-            transition: opacity 0.15s;
-        }
-        .art-box:hover .art-btn-overlay { opacity: 1; }
+        .art-box img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .game-info { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+        .game-title { font-size: 13px; font-weight: 700; color: #f1f5f9; line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .game-meta { font-size: 11px; color: var(--text-sub); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .badge-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        .badge-viet { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .badge-hack { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+        .badge-top { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+        .badge-installed { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 11px; font-weight: 700; }
 
-        .game-info { padding: 12px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; gap: 8px; }
-        .game-title { font-size: 13px; font-weight: 600; line-height: 1.35; color: #f1f5f9; word-break: break-word; }
-        .game-meta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-sub); }
-        .game-actions { display: flex; gap: 6px; margin-top: 6px; border-top: 1px solid #1e293b; padding-top: 8px; }
+        .game-actions { display: flex; gap: 4px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px; }
+        .game-actions .btn { flex: 1; justify-content: center; }
 
+        /* Modals */
         .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            padding: 16px;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 200;
         }
+        .modal-backdrop.show { display: flex; }
         .modal-box {
-            background: #1e293b;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 540px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            background: #0f172a; border: 1px solid var(--border); border-radius: 12px;
+            padding: 20px; width: 92vw; max-width: 520px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; }
-        .modal-header h3 { font-size: 17px; font-weight: 700; color: #38bdf8; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .modal-header h3 { font-size: 16px; color: #fff; }
         .modal-close { background: none; border: none; font-size: 20px; color: var(--text-sub); cursor: pointer; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 12px; font-weight: 600; color: var(--text-sub); }
+        .modal-close:hover { color: #fff; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; }
         .form-group input, .form-group select {
-            background: #0f172a;
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            outline: none;
+            width: 100%; background: #0b0f19; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px; outline: none;
         }
         .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
 
-        .scrape-candidates {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 10px;
-            max-height: 310px;
-            overflow-y: auto;
-            padding: 4px;
-        }
-        .scrape-card {
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 8px 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            background: #0f172a;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            position: relative;
-        }
-        .scrape-card:hover {
-            border-color: var(--primary);
-            background: #1e293b;
-            transform: translateY(-2px);
-        }
-        .scrape-img {
-            width: 100%;
-            height: 125px;
-            object-fit: contain;
-            background: #020617;
-            border-radius: 4px;
-        }
-        .scrape-title {
-            font-size: 11px;
-            font-weight: 500;
-            text-align: center;
-            color: #e2e8f0;
-            width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .scrape-tag {
-            font-size: 10px;
-            background: rgba(56, 189, 248, 0.15);
-            color: #38bdf8;
-            padding: 2px 6px;
-            border-radius: 4px;
-            text-align: center;
-        }
+        /* Progress Bar */
+        .progress-bar-bg { background: #1e293b; border-radius: 999px; overflow: hidden; }
+        .progress-bar-fill { background: #0284c7; height: 100%; transition: width 0.2s ease; }
 
-        .sys-item-special {
-            background: rgba(245, 158, 11, 0.08);
-            border-left-color: #f59e0b !important;
-            font-weight: 600;
-        }
-        .sys-item-special:hover {
-            background: rgba(245, 158, 11, 0.16);
-        }
-        .sys-item-special.active {
-            background: rgba(245, 158, 11, 0.25) !important;
-            border-left-color: #f59e0b !important;
-        }
-        .count-warn {
-            background: rgba(245, 158, 11, 0.25) !important;
-            color: #fbbf24 !important;
-            font-weight: 700;
-        }
-        .btn-batch {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: #fff;
-            font-weight: 600;
-            border: none;
-            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
-        }
-        .btn-batch:hover {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-        }
-        .badge-sys-pill {
-            background: rgba(56, 189, 248, 0.15);
-            color: #38bdf8;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-            display: inline-block;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            height: 10px;
-            background: #0b0f19;
-            border-radius: 5px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
-            width: 0%;
-            transition: width 0.2s ease;
-        }
-        .batch-log-item {
-            font-size: 11px;
-            padding: 5px 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .game-card.is-scraping {
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
-            transform: translateY(-2px);
-        }
-        .game-card.is-success {
-            border-color: #10b981 !important;
-            box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
-        }
-        @keyframes pulseScrape {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.18); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
-        .scrape-spinner {
-            display: inline-block;
-            animation: pulseScrape 0.9s infinite;
-        }
-
+        /* Toast */
         #toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #1e293b;
-            color: #fff;
-            border: 1px solid var(--primary);
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            font-size: 13px;
-            font-weight: 600;
-            display: none;
-            z-index: 300;
-            animation: fadeIn 0.2s ease;
+            position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff;
+            border: 1px solid var(--primary); padding: 12px 20px; border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); font-size: 13px; font-weight: 600;
+            display: none; z-index: 300; animation: fadeIn 0.2s ease;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        @media (max-width: 768px) {
+        /* YouTube Specific */
+        .yt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+        .yt-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden; display: flex; flex-direction: column; transition: transform 0.15s, border-color 0.15s;
+        }
+        .yt-card:hover { transform: translateY(-3px); border-color: #ef4444; }
+        .yt-thumb-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden; }
+        .yt-thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+        .yt-dur-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        
+        .yt-playlist-item {
+            padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+            border-radius: 8px; cursor: pointer; margin-bottom: 4px; transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        .yt-playlist-item:hover { background: #1e293b; }
+        .yt-playlist-item.active { background: #1e293b; border-color: #ef4444; color: #f87171; font-weight: 700; }
+
+        @media (max-width: 860px) {
+            header { flex-direction: column; align-items: stretch; gap: 10px; }
+            .header-left { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .main-nav { width: 100%; justify-content: space-around; overflow-x: auto; }
             .app-container { flex-direction: column; }
             aside { width: 100%; height: 60px; flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); }
             .sys-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
             .sys-item.active { border-bottom-color: var(--primary); border-left-color: transparent; }
             .sidebar-header { display: none; }
-            .scrape-candidates { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo-box">
-            <h1>RetroHub</h1>
-            <span class="badge-device">Web Manager</span>
+        <div class="header-left">
+            <div class="logo-box" onclick="switchMainTab('games')">
+                <h1>RetroHub</h1>
+                <span class="badge-device">Web Manager</span>
+            </div>
+            <nav class="main-nav">
+                <button id="nav-btn-games" class="nav-tab active" onclick="switchMainTab('games')">
+                    <span>🎮</span> Quản lý game
+                </button>
+                <button id="nav-btn-store" class="nav-tab" onclick="switchMainTab('store')">
+                    <span>⚡</span> Tải game online
+                </button>
+                <button id="nav-btn-youtube" class="nav-tab" onclick="switchMainTab('youtube')">
+                    <span>📺</span> Quản lý playlist YouTube
+                </button>
+            </nav>
         </div>
         <div class="header-stats">
             <div class="stat-badge" id="storage-stat">Bộ nhớ: <strong>Đang đọc...</strong></div>
             <button class="btn btn-sm btn-secondary" onclick="openSavesCheatsModal('saves')">Save & Cheats</button>
-            <button class="btn btn-sm btn-secondary" onclick="loadSystems(true)">Nạp lại</button>
+            <button class="btn btn-sm btn-secondary" onclick="reloadCurrentView()">Nạp lại</button>
         </div>
     </header>
 
-    <div class="app-container">
-        <aside id="sidebar">
-            <div class="sidebar-header">Hệ máy trên thẻ nhớ</div>
-            <div id="systems-list"></div>
-        </aside>
+    <!-- ================================================================= -->
+    <!-- TAB 1: QUẢN LÝ GAME TRÊN THẺ NHỚ -->
+    <!-- ================================================================= -->
+    <div id="tab-view-games" class="tab-view active">
+        <div class="app-container">
+            <aside id="sidebar">
+                <div class="sidebar-header">Hệ máy trên thẻ nhớ</div>
+                <div id="systems-list"></div>
+            </aside>
 
-        <main>
-            <div class="toolbar">
-                <div class="search-box">
-                    <span class="search-icon"></span>
-                    <input type="text" id="search-input" placeholder="Tìm game trong hệ..." oninput="filterGames()">
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="file" id="rom-file-input-direct" multiple style="display:none" onchange="handleDirectRomFiles(event)">
-                    <button id="btn-batch-scrape-top" class="btn btn-batch" style="display:none;" onclick="toggleDirectBatchScrape()">Cào toàn bộ ảnh</button>
-                    <button class="btn btn-green" onclick="handleUploadRomClick()">+ Tải ROM lên</button>
-                </div>
-            </div>
-
-            <div id="batch-inline-bar" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                <div style="flex:1; min-width:0;">
-                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
-                        <span id="batch-inline-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Đang tự động cào ảnh...</span>
-                        <span id="batch-inline-pct" style="color:#10b981; font-weight:700;">0%</span>
+            <main>
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="search-icon"></span>
+                        <input type="text" id="search-input" placeholder="Tìm game trong hệ..." oninput="filterGames()">
                     </div>
-                    <div class="progress-bar-bg" style="height: 8px;">
-                        <div id="batch-inline-fill" class="progress-bar-fill" style="width:0%;"></div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="file" id="rom-file-input-direct" multiple style="display:none" onchange="handleDirectRomFiles(event)">
+                        <button id="btn-batch-scrape-top" class="btn btn-batch" style="display:none;" onclick="toggleDirectBatchScrape()">Cào toàn bộ ảnh</button>
+                        <button class="btn btn-green" onclick="handleUploadRomClick()">+ Tải ROM lên</button>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-secondary" onclick="stopDirectBatchScrape()">Dừng cào</button>
-            </div>
 
-            <div id="games-container" class="games-grid"></div>
-            <div id="empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
-                <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">(Trống)</div>
-                <p>Không có game nào trong hệ máy này hoặc chưa tìm thấy tệp phù hợp.</p>
-            </div>
-        </main>
+                <div id="batch-inline-bar" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
+                            <span id="batch-inline-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Đang tự động cào ảnh...</span>
+                            <span id="batch-inline-pct" style="color:#10b981; font-weight:700;">0%</span>
+                        </div>
+                        <div class="progress-bar-bg" style="height: 8px;">
+                            <div id="batch-inline-fill" class="progress-bar-fill" style="width:0%;"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="stopDirectBatchScrape()">Dừng cào</button>
+                </div>
+
+                <div id="games-container" class="games-grid"></div>
+                <div id="empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
+                    <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">(Trống)</div>
+                    <p>Không có game nào trong hệ máy này hoặc chưa tìm thấy tệp phù hợp.</p>
+                </div>
+            </main>
+        </div>
     </div>
 
+    <!-- ================================================================= -->
+    <!-- TAB 2: TẢI GAME ONLINE (ROMS STORE) -->
+    <!-- ================================================================= -->
+    <div id="tab-view-store" class="tab-view">
+        <div class="app-container">
+            <aside id="store-sidebar">
+                <div class="sidebar-header">Danh mục tuyển chọn</div>
+                <div id="store-categories-list"></div>
+                <div class="sidebar-header" style="margin-top:10px;">Kho hệ máy (40,000+ Game)</div>
+                <div id="store-systems-list"></div>
+            </aside>
+
+            <main>
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="search-icon"></span>
+                        <input type="text" id="store-search-input" placeholder="Tìm kiếm trong 40,000+ game..." onkeydown="if(event.key==='Enter') executeStoreSearch()">
+                    </div>
+                    <select id="store-sort-select" onchange="executeStoreSearch()" style="background:#0f172a; border:1px solid var(--border); color:#fff; border-radius:8px; padding:8px 12px; font-size:12px; outline:none;">
+                        <option value="downloads">Lượt tải nhiều nhất</option>
+                        <option value="rating">Đánh giá cao nhất</option>
+                        <option value="title">Tên A-Z</option>
+                    </select>
+                    <button class="btn btn-green" onclick="executeStoreSearch()">Tìm kiếm</button>
+                </div>
+
+                <div id="store-download-banner" style="display:none; background: #0f172a; border: 1px solid #0284c7; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:6px;">
+                        <span id="store-dl-title" style="color:#38bdf8;">Đang tải game về máy...</span>
+                        <span id="store-dl-pct" style="color:#10b981;">0%</span>
+                    </div>
+                    <div class="progress-bar-bg" style="height: 8px; margin-bottom:6px;">
+                        <div id="store-dl-bar" class="progress-bar-fill" style="width:0%;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-sub);">
+                        <span id="store-dl-speed">Tốc độ: 0 KB/s</span>
+                        <span id="store-dl-status">Đang kết nối server...</span>
+                    </div>
+                </div>
+
+                <div id="store-games-container" class="games-grid"></div>
+                <div id="store-loading" style="display:none; text-align:center; padding: 40px; color: var(--primary);">
+                    <div style="font-size: 14px; font-weight: 700;">Đang nạp kho game trực tuyến...</div>
+                </div>
+                <div id="store-empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
+                    <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">Không tìm thấy game</div>
+                    <p>Hãy thử từ khóa khác hoặc chuyển sang hệ máy khác trong danh sách.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: QUẢN LÝ PLAYLIST YOUTUBE -->
+    <!-- ================================================================= -->
+    <div id="tab-view-youtube" class="tab-view">
+        <div class="app-container">
+            <aside id="yt-sidebar" style="width: 320px;">
+                <div class="sidebar-header">
+                    <span>Playlist & Chủ đề</span>
+                    <button class="btn btn-sm btn-green" onclick="openAddPlaylistModal()">+ Thêm</button>
+                </div>
+                <div id="yt-playlists-list" style="padding: 10px;"></div>
+                
+                <div style="margin-top: auto; padding: 14px; border-top: 1px solid var(--border);">
+                    <button class="btn btn-sm btn-secondary" style="width: 100%; justify-content: center;" onclick="clearYouTubeCache()">
+                        🗑️ Dọn cache ảnh YouTube
+                    </button>
+                </div>
+            </aside>
+
+            <main>
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="search-icon"></span>
+                        <input type="text" id="yt-search-input" placeholder="Tìm kiếm video trên YouTube..." onkeydown="if(event.key==='Enter') executeYouTubeSearch()">
+                    </div>
+                    <button class="btn btn-danger" onclick="executeYouTubeSearch()">Tìm video</button>
+                    <button class="btn btn-secondary" onclick="addCurrentSearchAsPlaylist()">+ Lưu từ khóa làm Playlist</button>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 id="yt-current-title" style="font-size:15px; color:#fff;">Trending YouTube</h3>
+                    <span id="yt-video-count" style="font-size:12px; color:var(--text-sub);">0 video</span>
+                </div>
+
+                <div id="yt-videos-container" class="yt-grid"></div>
+                <div id="yt-loading" style="display:none; text-align:center; padding: 40px; color: #ef4444;">
+                    <div style="font-size: 14px; font-weight: 700;">Đang kết nối YouTube InnerTube...</div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODALS -->
+    <!-- ================================================================= -->
     <div class="modal-backdrop" id="modal-rename">
         <div class="modal-box">
             <div class="modal-header">
@@ -2040,26 +2303,21 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 <input type="text" id="scrape-query" style="flex:1; background:#0f172a; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:6px; font-size:14px;" placeholder="Nhập từ khóa tìm kiếm ảnh..." onkeydown="if(event.key==='Enter') executeScrapeSearch()">
                 <button class="btn btn-sm" onclick="executeScrapeSearch()">Tìm ảnh</button>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-sub); margin-top: 2px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-sub); margin-top: 4px;">
                 <span>Nguồn: RetroHub Catalog DB & Libretro Thumbnails CDN</span>
-                <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="openGoogleImageSearch()">Mở Google Images</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openGoogleImageSearch()">Google Images ↗</button>
             </div>
-            
-            <div id="scrape-results" class="scrape-candidates"></div>
+            <div id="scrape-results" class="games-grid" style="grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); margin: 12px 0; max-height: 280px; overflow-y: auto;"></div>
 
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 6px; padding: 10px; margin-top: 6px;">
-                <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;">Dán ảnh trực tiếp từ Clipboard (Ctrl+V) hoặc dán link:</div>
+                <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;">Dán ảnh từ Clipboard (Ctrl+V) hoặc dán link:</div>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="scrape-direct-url" style="flex:1; background:#0b0f19; border:1px solid var(--border); color:#fff; padding:6px 10px; border-radius:6px; font-size:12px;" placeholder="Nhấn Ctrl+V để dán ảnh đã copy, hoặc dán link https://..." onkeydown="if(event.key==='Enter') submitDirectArtUrl()">
+                    <input type="text" id="scrape-direct-url" style="flex:1; background:#0b0f19; border:1px solid var(--border); color:#fff; padding:6px 10px; border-radius:6px; font-size:12px;" placeholder="Dán link https://... hoặc bấm Ctrl+V" onkeydown="if(event.key==='Enter') submitDirectArtUrl()">
                     <button class="btn btn-sm btn-green" onclick="submitDirectArtUrl()">Gán link</button>
-                    <button class="btn btn-sm btn-secondary" onclick="pasteAndApplyArt()" title="Dán ảnh hoặc link từ Clipboard">Dán từ Clipboard</button>
-                </div>
-                <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
-                    <em>Bạn có thể click chuột phải vào bất kỳ ảnh nào chọn <strong>"Sao chép hình ảnh" (Copy Image)</strong> hoặc chụp màn hình rồi bấm <strong>Ctrl+V</strong> vào đây để gán ngay!</em>
                 </div>
             </div>
 
-            <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
                 <label class="btn btn-sm btn-secondary" style="margin:0; cursor:pointer;">
                     Tải ảnh từ máy
                     <input type="file" id="art-file-input" accept="image/*" style="display:none" onchange="uploadCustomArt(event)">
@@ -2069,203 +2327,59 @@ HTML_PAGE = r"""<!DOCTYPE html>
         </div>
     </div>
 
-    <div class="modal-backdrop" id="modal-select-upload-sys">
-        <div class="modal-box" style="max-width: 440px; width: 92vw;">
+    <!-- Modal Thêm Playlist YouTube -->
+    <div class="modal-backdrop" id="modal-add-playlist">
+        <div class="modal-box">
             <div class="modal-header">
-                <h3>Chọn hệ máy để tải ROM</h3>
-                <button class="modal-close" onclick="closeModal('modal-select-upload-sys')">&times;</button>
+                <h3>Thêm Playlist / Chủ đề YouTube</h3>
+                <button class="modal-close" onclick="closeModal('modal-add-playlist')">&times;</button>
             </div>
             <div class="form-group">
-                <label>Bạn đang ở tab tổng hợp, vui lòng chọn hệ máy đích:</label>
-                <select id="modal-upload-sys-select"></select>
+                <label>Tên Playlist hoặc Từ khóa / Tên Kênh</label>
+                <input type="text" id="new-playlist-name" placeholder="Ví dụ: Nhạc Trẻ Remix 2026, Phim Hoạt Hình, MixiGaming...">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
-                <button class="btn btn-secondary" onclick="closeModal('modal-select-upload-sys')">Hủy</button>
-                <button class="btn btn-green" onclick="confirmSystemAndBrowseFiles()">Chọn tệp ROM -></button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-add-playlist')">Hủy</button>
+                <button class="btn btn-green" onclick="submitAddPlaylist()">Thêm vào danh sách</button>
             </div>
         </div>
     </div>
 
-    <div class="modal-backdrop" id="modal-upload-progress">
-        <div class="modal-box" style="max-width: 560px; width: 92vw;">
-            <div class="modal-header">
-                <h3 id="upload-prog-title">Đang tải ROM lên thiết bị</h3>
-                <button class="modal-close" onclick="cancelOrCloseUpload()">&times;</button>
-            </div>
-
-            <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 12px;" id="upload-prog-sub">
-                Hệ máy đích: <strong id="upload-target-name" style="color:#38bdf8;"></strong>
-            </div>
-
-            <div style="background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
-                    <span id="upload-current-fname" style="color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;">Chuẩn bị tải lên...</span>
-                    <span id="upload-current-pct" style="color:#38bdf8; font-weight:700;">0%</span>
-                </div>
-                <div class="progress-bar-bg" style="height: 12px; margin-bottom: 6px;">
-                    <div id="upload-file-progress-bar" class="progress-bar-fill" style="width:0%;"></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-sub);">
-                    <span id="upload-file-size-info">0 / 0 MB</span>
-                    <span id="upload-batch-count-info">Tệp 1 / 1</span>
-                </div>
-            </div>
-
-            <div id="upload-overall-box" style="margin-bottom: 12px; display:none;">
-                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:600; margin-bottom:4px;">
-                    <span style="color:var(--text-sub);">Tổng tiến độ các tệp:</span>
-                    <span id="upload-overall-pct" style="color:#10b981; font-weight:700;">0%</span>
-                </div>
-                <div class="progress-bar-bg" style="height: 6px;">
-                    <div id="upload-overall-progress-bar" class="progress-bar-fill" style="width:0%; background: #10b981;"></div>
-                </div>
-            </div>
-
-            <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Danh sách tệp tải lên:</div>
-            <div id="upload-file-list" style="max-height: 160px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 6px; padding: 4px;"></div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
-                <div style="font-size: 11px; color: #94a3b8;" id="upload-status-footer">
-                    Vui lòng không tắt trình duyệt khi đang tải file lớn.
-                </div>
-                <button class="btn btn-secondary" id="btn-upload-cancel" onclick="cancelOrCloseUpload()">Hủy bỏ</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-backdrop" id="modal-preview-art" onclick="if(event.target===this) closeModal('modal-preview-art')">
-        <div class="modal-box" style="max-width: 600px; width: auto; max-height: 92vh; padding: 14px; background: rgba(15, 23, 42, 0.98); border: 1px solid var(--border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
-                <h4 id="preview-art-title" style="font-size: 13px; font-weight:600; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%;">Boxart</h4>
-                <button class="modal-close" onclick="closeModal('modal-preview-art')">&times;</button>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: center; max-height: 75vh; overflow: hidden; border-radius: 6px; background: #070a12; padding: 4px;">
-                <img id="preview-art-img" src="" alt="Full Boxart" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 4px;">
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 10px;">
-                <a id="preview-art-link" href="" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 11px;">Mở ảnh gốc trong tab mới ↗</a>
-                <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-preview-art')">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Quản lý Save Game & Cheat Code -->
+    <!-- Modal Save & Cheats -->
     <div class="modal-backdrop" id="modal-saves-cheats">
         <div class="modal-box" style="max-width: 780px; width: 92vw;">
             <div class="modal-header">
-                <h3>Quản lý Save Game & Kho Cheat Code</h3>
+                <h3>Quản lý Save Game, Cheat Code & Logs</h3>
                 <button class="modal-close" onclick="closeModal('modal-saves-cheats')">&times;</button>
             </div>
-
-            <!-- Tabs -->
-            <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; padding-bottom: 8px;">
-                <button id="tab-btn-saves" class="btn btn-sm" onclick="switchSavesCheatsTab('saves')">Sao lưu & Khôi phục Save</button>
-                <button id="tab-btn-cheats" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('cheats')">Kho Cheat Code (Libretro)</button>
+            <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                <button id="tab-btn-saves" class="btn btn-sm" onclick="switchSavesCheatsTab('saves')">Sao lưu Save</button>
+                <button id="tab-btn-cheats" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('cheats')">Kho Cheat Code</button>
                 <button id="tab-btn-logs" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('logs')">Gửi Log & Chẩn đoán</button>
             </div>
-
-            <!-- Tab 1: Saves -->
             <div id="tab-content-saves">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
-                    <div>
-                        <div style="font-size: 13px; font-weight: 700; color: #fff;">File Save trên thẻ nhớ</div>
-                        <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;" id="saves-summary-text">Đang quét save...</div>
-                    </div>
-                    <button class="btn btn-sm btn-green" onclick="createSaveBackupWeb()">+ Tạo bản sao lưu (.zip)</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span id="saves-stats-text" style="font-size: 12px; color: var(--text-sub);">Đang tải thống kê...</span>
+                    <button class="btn btn-sm btn-green" onclick="createSaveBackupWeb()">+ Tạo bản sao lưu mới</button>
                 </div>
-
-                <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #38bdf8;">Các bản sao lưu đã tạo:</div>
-                <div id="backups-list-table" style="max-height: 320px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 6px;"></div>
+                <div id="backups-list-table" style="max-height: 280px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 6px;"></div>
             </div>
-
-            <!-- Tab 2: Cheats -->
-            <div id="tab-content-cheats" style="display: none;">
-                <div style="background: #0f172a; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <div>
-                            <div style="font-size: 14px; font-weight: 700; color: #fff;">Kho Cheat Code Libretro Official</div>
-                            <div style="font-size: 12px; color: #38bdf8; margin-top: 3px;" id="cheats-status-text">Đang kiểm tra trạng thái...</div>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button id="btn-cheats-installed" class="btn btn-sm btn-green" onclick="startCheatsDownloadWeb()">Tải mã Cheat cho game trên máy</button>
-                        </div>
-                    </div>
-
-                    <div id="cheats-progress-box" style="display:none; margin-top: 14px;">
-                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
-                            <span id="cheats-prog-status" style="color:#38bdf8;">Đang tải gói Cheat...</span>
-                            <span id="cheats-prog-pct" style="color:#10b981; font-weight:700;">0%</span>
-                        </div>
-                        <div class="progress-bar-bg" style="height: 10px; margin-bottom: 8px;">
-                            <div id="cheats-prog-fill" class="progress-bar-fill" style="width:0%;"></div>
-                        </div>
-                        <div style="display: flex; justify-content: flex-end;">
-                            <button class="btn btn-sm btn-secondary" onclick="stopCheatsDownloadWeb()">Dừng tải</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 8px; padding: 12px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">Hướng dẫn bật Cheat khi đang chơi game:</div>
-                    <ul style="font-size: 11px; color: #cbd5e1; line-height: 1.8; margin-left: 20px;">
-                        <li>Khi đang trong game, bấm nút <strong>Menu</strong> (hoặc tổ hợp <strong>Select + X</strong>) để mở Quick Menu của RetroArch.</li>
-                        <li>Vào mục <strong>Cheats</strong> -> Chọn <strong>Load Cheat File (Replace)</strong>.</li>
-                        <li>Chọn hệ máy tương ứng và chọn tệp Cheat của game đang chơi.</li>
-                        <li>Bật <em>(Enabled)</em> các mã muốn dùng (Bất tử máu, Max Tiền, Đi xuyên tường...) rồi chọn <strong>Apply Changes</strong>.</li>
-                    </ul>
+            <div id="tab-content-cheats" style="display:none;">
+                <div id="cheats-status-box" style="padding: 12px; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; margin-bottom: 12px;">Đang đọc kho cheat...</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-sm btn-green" onclick="downloadCheatsWeb('installed')">Tải Cheat cho game hiện có</button>
+                    <button class="btn btn-sm btn-secondary" onclick="downloadCheatsWeb('all')">Tải toàn bộ kho Cheat (~37MB)</button>
                 </div>
             </div>
-
-            <!-- Tab 3: Logs -->
-            <div id="tab-content-logs" style="display: none;">
-                <div style="background: #0f172a; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                        <div>
-                            <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">Nhật ký & Chẩn đoán Hệ thống</div>
-                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">Tự động thu thập thông số phần cứng & lỗi crash để hỗ trợ kỹ thuật</div>
-                        </div>
-                        <div style="background: #1e293b; border: 1px solid #0284c7; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #38bdf8;">
-                            Mã máy: <span id="web-log-device-id" style="color: #34d399;">...</span>
-                        </div>
-                    </div>
-
-                    <!-- Toggle & Clear Section -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #0b0f19; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-                        <div>
-                            <div style="font-size: 12px; font-weight: 600; color: #fff;">
-                                Trạng thái ghi log: <span id="web-log-status-badge" style="color: #10b981; font-weight: 700;">ĐANG BẬT</span>
-                            </div>
-                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">
-                                Dung lượng tệp log: <span id="web-log-size" style="color: #f59e0b; font-weight: 600;">0 KB</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button id="btn-toggle-log-web" class="btn btn-sm btn-secondary" onclick="toggleLoggingWeb()">Tắt ghi log</button>
-                            <button id="btn-clear-log-web" class="btn btn-sm btn-secondary" style="color: #f87171;" onclick="clearLogWeb()">Làm sạch log</button>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 12px; font-weight: 600; color: #94a3b8; display: block; margin-bottom: 4px;">Ghi chú sự cố bạn đang gặp phải (tùy chọn):</label>
-                        <input type="text" id="log-user-note" placeholder="Ví dụ: Game PS1 không có âm thanh, hoặc lỗi văng game..." style="width: 100%; padding: 8px 12px; background: #0b0f19; border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 12px; outline: none; box-sizing: border-box;">
-                    </div>
-
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button id="btn-send-log-tg" class="btn btn-sm btn-batch" onclick="sendLogTelegramWeb()">Gửi Log vào Telegram tác giả</button>
-                        <a href="/api/logs/download" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>Tải file báo cáo (.txt) về máy</a>
-                    </div>
-
-                    <div id="log-send-status-box" style="display: none; margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 12px;"></div>
+            <div id="tab-content-logs" style="display:none;">
+                <div style="padding: 12px; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; margin-bottom: 12px;">
+                    <div>Thiết bị: <strong id="web-log-device-id" style="color:#38bdf8;">...</strong> | Kích thước: <strong id="web-log-size">...</strong></div>
                 </div>
-
-                <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 8px; padding: 12px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #34d399; margin-bottom: 4px;">Bảo mật & Riêng tư:</div>
-                    <div style="font-size: 11px; color: #94a3b8; line-height: 1.6;">
-                        Báo cáo này cũng được tự động lưu dự phòng tại <code>/mnt/SDCARD/RetroHub_Debug_Report.txt</code>. Nhật ký hoàn toàn KHÔNG chứa mật khẩu Wi-Fi hoặc thông tin cá nhân của bạn.
-                    </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-sm btn-batch" onclick="sendLogTelegramWeb()">Gửi Log lên Telegram tác giả</button>
+                    <a href="/api/logs/download" class="btn btn-sm btn-secondary" download>Tải file báo cáo (.txt)</a>
                 </div>
             </div>
-
             <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
                 <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-saves-cheats')">Đóng</button>
             </div>
@@ -2274,1196 +2388,786 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
     <div id="toast"></div>
 
+    <!-- ================================================================= -->
+    <!-- JAVASCRIPT APP LOGIC -->
+    <!-- ================================================================= -->
     <script>
+        let currentTab = 'games';
         let allSystems = [];
         let currentSystem = null;
         let currentGames = [];
         let selectedGame = null;
-        let selectedGameSystem = null;
-        let selectedCardIdx = null;
-        let noArtTotalCount = 0;
 
-        const ICONS = {
-            palette: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.992 6.844 17.5 2 12 2z"></path></svg>`,
-            edit: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
-            move: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><polyline points="9 14 12 11 15 14"></polyline></svg>`,
-            trash: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
-            zap: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
-            spinner: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="scrape-spinner"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`,
-            alert: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
-        };
+        let storeCategories = [];
+        let storeSystems = [];
+        let currentStoreCategory = 'HITS';
+        let currentStoreSystem = 'ALL';
+        let storeGames = [];
+        let storeDlInterval = null;
 
-        function getPlaceholderSvg(sys) {
-            const s = (sys || '').toUpperCase();
-            if (['GBA', 'GBC', 'GB', 'WS', 'WSC', 'NGP', 'GG'].includes(s)) {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <rect x="14" y="6" width="36" height="52" rx="6" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <rect x="19" y="12" width="26" height="20" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                    <rect x="22" y="14" width="20" height="16" rx="1" fill="#1e293b" opacity="0.6"/>
-                    <path d="M21 41h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="42" cy="39" r="2.2" fill="#ef4444"/>
-                    <circle cx="37" cy="44" r="2.2" fill="#ef4444"/>
-                    <line x1="38" y1="51" x2="42" y2="48" stroke="#475569" stroke-width="1.5"/>
-                    <line x1="41" y1="53" x2="45" y2="50" stroke="#475569" stroke-width="1.5"/>
-                </svg>`;
-            }
-            if (['FC', 'NES'].includes(s)) {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <rect x="8" y="18" width="48" height="28" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <rect x="12" y="22" width="40" height="20" rx="1" fill="#0f172a"/>
-                    <path d="M16 32h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="square"/>
-                    <rect x="27" y="33" width="3.5" height="1.5" fill="#ef4444"/>
-                    <rect x="32" y="33" width="3.5" height="1.5" fill="#ef4444"/>
-                    <circle cx="42" cy="32" r="2.5" fill="#ef4444"/>
-                    <circle cx="48" cy="32" r="2.5" fill="#ef4444"/>
-                </svg>`;
-            }
-            if (['SFC', 'SNES'].includes(s)) {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <rect x="8" y="20" width="48" height="24" rx="12" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <path d="M15 32h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
-                    <line x1="27" y1="34" x2="30" y2="31" stroke="#64748b" stroke-width="1.8"/>
-                    <line x1="32" y1="34" x2="35" y2="31" stroke="#64748b" stroke-width="1.8"/>
-                    <circle cx="46" cy="27" r="2" fill="#3b82f6"/>
-                    <circle cx="41" cy="32" r="2" fill="#eab308"/>
-                    <circle cx="51" cy="32" r="2" fill="#ef4444"/>
-                    <circle cx="46" cy="37" r="2" fill="#22c55e"/>
-                </svg>`;
-            }
-            if (['PS', 'PS1', 'PSP'].includes(s)) {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <path d="M14 20c-5 0-8 4-8 12 0 7 3 14 7 14 3 0 4-5 6-9h16c2 4 3 9 6 9 4 0 7-7 7-14 0-8-3-12-8-12-3 0-5 2-8 2h-4c-3 0-5-2-8-2z" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <circle cx="15" cy="28" r="1.5" fill="#94a3b8"/><circle cx="11" cy="32" r="1.5" fill="#94a3b8"/>
-                    <circle cx="19" cy="32" r="1.5" fill="#94a3b8"/><circle cx="15" cy="36" r="1.5" fill="#94a3b8"/>
-                    <circle cx="49" cy="28" r="1.5" fill="#10b981"/><circle cx="45" cy="32" r="1.5" fill="#ec4899"/>
-                    <circle cx="53" cy="32" r="1.5" fill="#ef4444"/><circle cx="49" cy="36" r="1.5" fill="#3b82f6"/>
-                    <circle cx="25" cy="38" r="3.5" fill="#0f172a" stroke="#334155"/>
-                    <circle cx="39" cy="38" r="3.5" fill="#0f172a" stroke="#334155"/>
-                </svg>`;
-            }
-            if (['MAME', 'ARCADE', 'CPS1', 'CPS2', 'CPS3', 'NEOGEO'].includes(s)) {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <path d="M14 6h36l-4 44H18L14 6z" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <path d="M14 6h36v8H14z" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                    <line x1="20" y1="10" x2="44" y2="10" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-                    <rect x="18" y="17" width="28" height="18" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                    <polygon points="15,41 49,41 51,54 13,54" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                    <line x1="23" y1="46" x2="23" y2="50" stroke="#94a3b8" stroke-width="2"/>
-                    <circle cx="23" cy="45" r="2.8" fill="#ef4444"/>
-                    <circle cx="33" cy="46" r="1.4" fill="#3b82f6"/><circle cx="38" cy="46" r="1.4" fill="#ef4444"/><circle cx="43" cy="46" r="1.4" fill="#eab308"/>
-                    <circle cx="33" cy="50" r="1.4" fill="#3b82f6"/><circle cx="38" cy="50" r="1.4" fill="#ef4444"/><circle cx="43" cy="50" r="1.4" fill="#eab308"/>
-                </svg>`;
-            }
-            if (['MD', 'GENESIS', 'SEGACD', 'MS', 'SS', 'DC'].includes(s)) {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <path d="M8 26c0-9 8-16 24-16s24 7 24 16c0 10-6 16-12 16-5 0-7-4-12-4s-7 4-12 4c-6 0-12-6-12-16z" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <circle cx="19" cy="27" r="7" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                    <path d="M15 27h8m-4-4v8" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-                    <circle cx="40" cy="31" r="2.2" fill="#64748b"/>
-                    <circle cx="45" cy="28" r="2.2" fill="#64748b"/>
-                    <circle cx="49" cy="24" r="2.2" fill="#64748b"/>
-                </svg>`;
-            }
-            if (s === 'NDS') {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <rect x="16" y="8" width="32" height="22" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <rect x="21" y="12" width="22" height="14" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                    <line x1="16" y1="32" x2="48" y2="32" stroke="#334155" stroke-width="2"/>
-                    <rect x="16" y="34" width="32" height="22" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <rect x="21" y="38" width="22" height="14" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                </svg>`;
-            }
-            if (s === 'JAVA') {
-                return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                    <rect x="18" y="6" width="28" height="52" rx="5" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                    <line x1="28" y1="10" x2="36" y2="10" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
-                    <rect x="22" y="14" width="20" height="17" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                    <rect x="28" y="34" width="8" height="6" rx="2" fill="#334155" stroke="#64748b" stroke-width="1"/>
-                    <circle cx="32" cy="37" r="1" fill="#38bdf8"/>
-                    <circle cx="24" cy="44" r="1" fill="#64748b"/><circle cx="32" cy="44" r="1" fill="#64748b"/><circle cx="40" cy="44" r="1" fill="#64748b"/>
-                    <circle cx="24" cy="49" r="1" fill="#64748b"/><circle cx="32" cy="49" r="1" fill="#64748b"/><circle cx="40" cy="49" r="1" fill="#64748b"/>
-                    <circle cx="24" cy="53" r="1" fill="#64748b"/><circle cx="32" cy="53" r="1" fill="#64748b"/><circle cx="40" cy="53" r="1" fill="#64748b"/>
-                </svg>`;
-            }
-            return `<svg class="art-sys-svg" viewBox="0 0 64 64" fill="none">
-                <rect x="8" y="16" width="48" height="30" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2"/>
-                <rect x="12" y="20" width="40" height="22" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
-                <path d="M16 31h8m-4-4v8" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
-                <rect x="28" y="33" width="3" height="1.5" rx="0.5" fill="#64748b"/>
-                <rect x="33" y="33" width="3" height="1.5" rx="0.5" fill="#64748b"/>
-                <circle cx="44" cy="27" r="1.8" fill="#ef4444"/>
-                <circle cx="40" cy="31" r="1.8" fill="#3b82f6"/>
-                <circle cx="48" cy="31" r="1.8" fill="#22c55e"/>
-                <circle cx="44" cy="35" r="1.8" fill="#eab308"/>
-            </svg>`;
-        }
+        let ytPlaylists = [];
+        let currentYtTab = 'trending';
+        let ytVideos = [];
 
-        function showToast(msg, isErr=false) {
-            const t = document.getElementById("toast");
+        function showToast(msg) {
+            const t = document.getElementById('toast');
             t.innerText = msg;
-            t.style.borderColor = isErr ? "var(--danger)" : "var(--primary)";
-            t.style.display = "block";
-            setTimeout(() => { t.style.display = "none"; }, 3500);
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
         }
 
         function closeModal(id) {
-            document.getElementById(id).style.display = "none";
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('show');
+        }
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('show');
         }
 
-        function openArtPreview(url, title) {
-            if (!url) return;
-            document.getElementById("preview-art-img").src = url;
-            document.getElementById("preview-art-title").innerText = title || "Xem Boxart";
-            document.getElementById("preview-art-link").href = url;
-            document.getElementById("modal-preview-art").style.display = "flex";
+        function switchMainTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+
+            const btn = document.getElementById(`nav-btn-${tab}`);
+            const view = document.getElementById(`tab-view-${tab}`);
+            if (btn) btn.classList.add('active');
+            if (view) view.classList.add('active');
+
+            if (tab === 'games') {
+                if (!allSystems.length) loadSystems();
+            } else if (tab === 'store') {
+                if (!storeCategories.length) loadStoreInit();
+            } else if (tab === 'youtube') {
+                if (!ytPlaylists.length) loadYouTubeInit();
+            }
         }
 
-        async function loadStatus() {
+        function reloadCurrentView() {
+            loadStorageStatus();
+            if (currentTab === 'games') loadSystems(true);
+            else if (currentTab === 'store') loadStoreGames();
+            else if (currentTab === 'youtube') loadYouTubeVideos(currentYtTab);
+        }
+
+        async function loadStorageStatus() {
             try {
-                const res = await fetch("/api/status");
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                if (data.ok && data.storage) {
+                    document.getElementById('storage-stat').innerHTML = `Bộ nhớ: <strong>Trống ${data.storage.free_gb}</strong> / ${data.storage.total_gb}`;
+                }
+            } catch (e) {}
+        }
+
+        // ==================== QUẢN LÝ GAME (GAMES MANAGER) ====================
+        async function loadSystems(forceSelectFirst = false) {
+            try {
+                const res = await fetch('/api/systems');
                 const data = await res.json();
                 if (data.ok) {
-                    document.getElementById("storage-stat").innerHTML = `Thẻ nhớ: <strong>${data.storage.free}</strong> trống / ${data.storage.total} (${data.storage.pct}% dùng)`;
-                }
-            } catch (e) {
-                console.error("Status error:", e);
-            }
-        }
-
-        function updateNoArtBadge() {
-            const badgeEl = document.getElementById("no-art-count-badge");
-            if (badgeEl) {
-                badgeEl.innerText = noArtTotalCount;
-                if (noArtTotalCount <= 0) {
-                    badgeEl.classList.remove("count-warn");
-                } else {
-                    badgeEl.classList.add("count-warn");
-                }
-            }
-            const topBtn = document.getElementById("btn-batch-scrape-top");
-            if (topBtn && !isBatchScraping) {
-                if (currentSystem === '__no_art__') {
-                    if (noArtTotalCount > 0) {
-                        topBtn.style.display = "inline-flex";
-                        topBtn.innerText = `Cào toàn bộ (${noArtTotalCount})`;
-                        topBtn.className = "btn btn-batch";
-                    } else {
-                        topBtn.style.display = "none";
-                    }
-                } else {
-                    const remainingInSys = currentGames.filter(g => !g.has_art).length;
-                    if (remainingInSys > 0) {
-                        topBtn.style.display = "inline-flex";
-                        topBtn.innerText = `Cào toàn bộ (${remainingInSys})`;
-                        topBtn.className = "btn btn-batch";
-                    } else {
-                        topBtn.style.display = "none";
-                    }
-                }
-            }
-        }
-
-        async function loadSystems(refresh=false) {
-            try {
-                const res = await fetch("/api/systems?_t=" + Date.now());
-                const data = await res.json();
-                if (data.ok) {
-                    allSystems = data.systems;
-                    noArtTotalCount = data.no_art_count || 0;
-                    renderSystems();
-                    if (!currentSystem) {
-                        if (allSystems.length > 0) {
-                            selectSystem(allSystems[0].dir);
-                        }
-                    } else if (refresh) {
-                        selectSystem(currentSystem);
+                    allSystems = data.systems || [];
+                    renderSystemsList(data.no_art_count || 0);
+                    if (allSystems.length > 0 && (!currentSystem || forceSelectFirst)) {
+                        selectSystem(allSystems[0].dir);
                     }
                 }
             } catch (e) {
-                showToast("Lỗi kết nối tới RetroHub Web Server!", true);
+                console.error('Error loading systems:', e);
             }
-            loadStatus();
         }
 
-        function renderSystems() {
-            const listEl = document.getElementById("systems-list");
-            let html = `
-                <div class="sys-item sys-item-special ${currentSystem === '__no_art__' ? 'active' : ''}" onclick="selectSystem('__no_art__')">
-                    <span>Chưa có Boxart</span>
-                    <span id="no-art-count-badge" class="count ${noArtTotalCount > 0 ? 'count-warn' : ''}">${noArtTotalCount}</span>
-                </div>
-            `;
-            html += allSystems.map(s => `
-                <div class="sys-item ${currentSystem === s.dir ? 'active' : ''}" onclick="selectSystem('${s.dir}')">
+        function renderSystemsList(noArtCount) {
+            const listEl = document.getElementById('systems-list');
+            let html = '';
+            if (noArtCount > 0) {
+                html += `<div class="sys-item ${currentSystem === '__no_art__' ? 'active' : ''}" onclick="selectSystem('__no_art__')">
+                    <span style="color:#f59e0b;">⚠️ Thiếu ảnh bìa</span>
+                    <span class="count" style="background:#b45309; color:#fff;">${noArtCount}</span>
+                </div>`;
+            }
+            allSystems.forEach(s => {
+                const activeCls = (currentSystem === s.dir) ? 'active' : '';
+                html += `<div class="sys-item ${activeCls}" onclick="selectSystem('${s.dir}')">
                     <span>${s.name}</span>
                     <span class="count">${s.count}</span>
-                </div>
-            `).join('');
+                </div>`;
+            });
             listEl.innerHTML = html;
         }
 
         async function selectSystem(sysDir) {
             currentSystem = sysDir;
-            renderSystems();
-            document.getElementById("search-input").value = "";
-            const cont = document.getElementById("games-container");
-            cont.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-sub);">Đang tải danh sách game...</div>`;
-            document.getElementById("empty-state").style.display = "none";
-
-            const inlineBar = document.getElementById("batch-inline-bar");
-            if (inlineBar && !isBatchScraping) {
-                inlineBar.style.display = "none";
-            }
-
+            renderSystemsList();
             try {
-                const res = await fetch(`/api/games?system=${encodeURIComponent(sysDir)}&_t=${Date.now()}`);
+                const res = await fetch(`/api/games?system=${encodeURIComponent(sysDir)}`);
                 const data = await res.json();
                 if (data.ok) {
-                    currentGames = data.games;
-                    if (sysDir === "__no_art__") {
-                        noArtTotalCount = currentGames.length;
-                    }
-                    renderGames(currentGames);
-                    updateNoArtBadge();
+                    currentGames = data.games || [];
+                    renderGamesGrid(currentGames);
                 }
             } catch (e) {
-                showToast("Lỗi tải danh sách game!", true);
+                console.error('Error loading games:', e);
             }
         }
 
-        function renderGames(games) {
-            const cont = document.getElementById("games-container");
-            const emptyEl = document.getElementById("empty-state");
-            if (games.length === 0) {
-                cont.innerHTML = "";
-                emptyEl.style.display = "block";
+        function renderGamesGrid(games) {
+            const container = document.getElementById('games-container');
+            const emptyEl = document.getElementById('empty-state');
+            if (!games || games.length === 0) {
+                container.innerHTML = '';
+                emptyEl.style.display = 'block';
                 return;
             }
-            emptyEl.style.display = "none";
-            const isNoArtView = currentSystem === "__no_art__";
-            cont.innerHTML = games.map((g, idx) => {
-                const gSys = g.system || currentSystem;
-                return `
-                <div class="game-card" id="game-card-${idx}">
-                    <div class="art-box" id="art-box-${idx}">
-                        ${g.has_art ? `<img class="art-img" src="${g.art_url}" loading="lazy" alt="${g.name}" onclick="openArtPreview('${g.art_url}', '${escapeJs(g.name)}')" title="Nhấp để xem ảnh đầy đủ">` : `
-                            <div class="art-placeholder" onclick="openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})" title="Nhấp để cào ảnh">
-                                ${getPlaceholderSvg(gSys)}
-                                <span style="font-size:11px; font-weight:500;">Chưa có ảnh bìa</span>
-                            </div>
-                        `}
-                        <div class="art-btn-overlay">
-                            <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(g.filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
-                        </div>
-                    </div>
+            emptyEl.style.display = 'none';
+            let html = '';
+            games.forEach((g, idx) => {
+                const artHtml = g.has_art ? `<img src="${g.art_url}" loading="lazy" alt="${g.title}">` : `<div style="font-size:32px;">🎮</div>`;
+                html += `<div class="game-card">
+                    <div class="art-box">${artHtml}</div>
                     <div class="game-info">
-                        <div>
-                            <div class="game-title" title="${g.filename}">${g.name}</div>
-                            ${isNoArtView ? `
-                                <div style="margin-top: 4px;">
-                                    <span class="badge-sys-pill" title="${g.system_name || gSys}">${g.system_name || gSys}</span>
-                                </div>
-                            ` : ''}
-                            <div class="game-meta" style="margin-top: 6px;">
-                                <span>${g.ext.toUpperCase()}</span>
-                                <span>${g.size_str}</span>
-                            </div>
+                        <div class="game-title" title="${g.filename}">${g.title}</div>
+                        <div class="game-meta">
+                            <span>${g.system}</span>
+                            <span>${g.size_str}</span>
                         </div>
                         <div class="game-actions">
-                            <button class="btn btn-secondary btn-sm btn-action-icon" style="flex:1" onclick="openRenameModal('${escapeJs(g.filename)}', '${gSys}')">${ICONS.edit} <span>Sửa</span></button>
-                            <button class="btn btn-secondary btn-sm btn-action-icon" style="flex:1" onclick="openMoveModal('${escapeJs(g.filename)}', '${gSys}')">${ICONS.move} <span>Chuyển</span></button>
-                            <button class="btn btn-secondary btn-sm btn-action-icon" onclick="downloadGameCheat('${escapeJs(g.filename)}', '${gSys}')" title="Mã Cheat">${ICONS.zap}</button>
-                            <button class="btn btn-danger btn-sm btn-action-icon" onclick="deleteGame('${escapeJs(g.filename)}', '${gSys}')" title="Xóa game">${ICONS.trash}</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openScrapeModal('${g.system}', '${encodeURIComponent(g.filename)}')">Cào ảnh</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openRenameModal('${g.system}', '${encodeURIComponent(g.filename)}')">Đổi tên</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openMoveModal('${g.system}', '${encodeURIComponent(g.filename)}')">Chuyển</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteGame('${g.system}', '${encodeURIComponent(g.filename)}')">Xóa</button>
                         </div>
                     </div>
-                </div>
-            `}).join('');
+                </div>`;
+            });
+            container.innerHTML = html;
         }
 
         function filterGames() {
-            const q = document.getElementById("search-input").value.toLowerCase().trim();
+            const q = document.getElementById('search-input').value.toLowerCase().trim();
             if (!q) {
-                renderGames(currentGames);
+                renderGamesGrid(currentGames);
                 return;
             }
-            const filtered = currentGames.filter(g => g.name.toLowerCase().includes(q) || g.filename.toLowerCase().includes(q));
-            renderGames(filtered);
+            const filtered = currentGames.filter(g => g.title.toLowerCase().includes(q) || g.filename.toLowerCase().includes(q));
+            renderGamesGrid(filtered);
         }
 
-        function escapeJs(str) {
-            return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        // ==================== TẢI GAME ONLINE (ROMS STORE) ====================
+        async function loadStoreInit() {
+            try {
+                const res = await fetch('/api/store/categories');
+                const data = await res.json();
+                if (data.ok) {
+                    storeCategories = data.categories || [];
+                    storeSystems = data.systems || [];
+                    renderStoreSidebar();
+                    loadStoreGames();
+                }
+            } catch (e) {
+                console.error('Error loadStoreInit:', e);
+            }
         }
 
-        function openRenameModal(filename, gameSystem) {
-            selectedGame = filename;
-            selectedGameSystem = gameSystem || currentSystem;
-            document.getElementById("rename-old").value = filename;
-            document.getElementById("rename-new").value = filename;
-            document.getElementById("modal-rename").style.display = "flex";
-            document.getElementById("rename-new").focus();
+        function renderStoreSidebar() {
+            const catList = document.getElementById('store-categories-list');
+            let htmlCat = '';
+            storeCategories.forEach(c => {
+                const active = (currentStoreCategory === c.id && currentStoreSystem === 'ALL') ? 'active' : '';
+                htmlCat += `<div class="sys-item ${active}" onclick="selectStoreCategory('${c.id}')">
+                    <span>${c.icon} ${c.name}</span>
+                </div>`;
+            });
+            catList.innerHTML = htmlCat;
+
+            const sysList = document.getElementById('store-systems-list');
+            let htmlSys = '';
+            storeSystems.forEach(s => {
+                const active = (currentStoreSystem === s.code) ? 'active' : '';
+                htmlSys += `<div class="sys-item ${active}" onclick="selectStoreSystem('${s.code}')">
+                    <span>${s.name}</span>
+                    <span class="count">${s.count}</span>
+                </div>`;
+            });
+            sysList.innerHTML = htmlSys;
+        }
+
+        function selectStoreCategory(catId) {
+            currentStoreCategory = catId;
+            currentStoreSystem = 'ALL';
+            document.getElementById('store-search-input').value = '';
+            renderStoreSidebar();
+            loadStoreGames();
+        }
+
+        function selectStoreSystem(sysCode) {
+            currentStoreSystem = sysCode;
+            currentStoreCategory = 'ALL';
+            document.getElementById('store-search-input').value = '';
+            renderStoreSidebar();
+            loadStoreGames();
+        }
+
+        async function loadStoreGames() {
+            const container = document.getElementById('store-games-container');
+            const loading = document.getElementById('store-loading');
+            const emptyEl = document.getElementById('store-empty-state');
+
+            container.innerHTML = '';
+            loading.style.display = 'block';
+            emptyEl.style.display = 'none';
+
+            const sort = document.getElementById('store-sort-select').value;
+            const q = document.getElementById('store-search-input').value.trim();
+
+            let url = `/api/store/games?source_type=${currentStoreCategory}&system=${currentStoreSystem}&sort=${sort}&limit=60`;
+            if (q) url += `&query=${encodeURIComponent(q)}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                loading.style.display = 'none';
+                if (data.ok && data.games && data.games.length > 0) {
+                    storeGames = data.games;
+                    renderStoreGrid(storeGames);
+                } else {
+                    emptyEl.style.display = 'block';
+                }
+            } catch (e) {
+                loading.style.display = 'none';
+                emptyEl.style.display = 'block';
+            }
+        }
+
+        function executeStoreSearch() {
+            loadStoreGames();
+        }
+
+        function renderStoreGrid(games) {
+            const container = document.getElementById('store-games-container');
+            let html = '';
+            games.forEach((g, idx) => {
+                const imgUrl = g.img_url ? `<img src="${g.img_url}" loading="lazy" alt="${g.title}">` : `<div style="font-size:32px;">🕹️</div>`;
+                const isViet = g.is_viet ? `<span class="badge-tag badge-viet">VIỆT HÓA</span>` : '';
+                const isHack = g.is_hack ? `<span class="badge-tag badge-hack">HACK</span>` : '';
+                const isHit = g.is_hit ? `<span class="badge-tag badge-top">TOP</span>` : '';
+
+                const actionBtn = g.is_installed 
+                    ? `<span class="badge-tag badge-installed">✓ Đã có trên thẻ</span>`
+                    : `<button class="btn btn-sm btn-green" id="btn-store-dl-${g.id}" onclick="downloadStoreGame(${g.id}, '${g.sys_code}', '${encodeURIComponent(g.title)}', '${encodeURIComponent(g.rom_url || '')}', '${encodeURIComponent(g.filename || '')}', '${encodeURIComponent(g.img_url || '')}')">⬇️ Tải về máy</button>`;
+
+                html += `<div class="game-card">
+                    <div class="art-box">${imgUrl}</div>
+                    <div class="game-info">
+                        <div style="display:flex; gap:4px; margin-bottom:4px; flex-wrap:wrap;">${isViet}${isHack}${isHit}</div>
+                        <div class="game-title" title="${g.title}">${g.title}</div>
+                        <div class="game-meta">
+                            <span>${g.sys_code}</span>
+                            <span>${g.file_size_str || ''}</span>
+                        </div>
+                        <div class="game-actions" style="margin-top:10px;">
+                            ${actionBtn}
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function downloadStoreGame(id, sysCode, titleEnc, romUrlEnc, fnameEnc, imgUrlEnc) {
+            const title = decodeURIComponent(titleEnc);
+            const romUrl = decodeURIComponent(romUrlEnc);
+            const fname = decodeURIComponent(fnameEnc);
+            const imgUrl = decodeURIComponent(imgUrlEnc);
+
+            const btn = document.getElementById(`btn-store-dl-${id}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Đang tải...';
+            }
+
+            try {
+                const res = await fetch('/api/store/download', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        game_id: id,
+                        sys_code: sysCode,
+                        title: title,
+                        rom_url: romUrl,
+                        filename: fname,
+                        img_url: imgUrl
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`Bắt đầu tải: ${title}`);
+                    startStoreDownloadPolling();
+                } else {
+                    alert('Lỗi: ' + (data.error || 'Không thể tải'));
+                    if (btn) { btn.disabled = false; btn.innerText = '⬇️ Tải về máy'; }
+                }
+            } catch (e) {
+                alert('Lỗi kết nối: ' + e);
+                if (btn) { btn.disabled = false; btn.innerText = '⬇️ Tải về máy'; }
+            }
+        }
+
+        function startStoreDownloadPolling() {
+            const banner = document.getElementById('store-download-banner');
+            banner.style.display = 'block';
+
+            if (storeDlInterval) clearInterval(storeDlInterval);
+            storeDlInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/store/download/status');
+                    const data = await res.json();
+                    if (data.ok && data.downloads && data.downloads.length > 0) {
+                        const active = data.downloads[data.downloads.length - 1];
+                        document.getElementById('store-dl-title').innerText = `Đang tải: ${active.title} (${active.sys_code})`;
+                        document.getElementById('store-dl-pct').innerText = `${active.progress_pct}%`;
+                        document.getElementById('store-dl-bar').style.width = `${active.progress_pct}%`;
+                        document.getElementById('store-dl-speed').innerText = `Tốc độ: ${active.speed_str || '0 KB/s'}`;
+                        document.getElementById('store-dl-status').innerText = active.status === 'completed' ? '✓ Đã tải xong và lưu vào thẻ nhớ!' : (active.status === 'error' ? 'Lỗi tải' : 'Đang nhận tệp...');
+
+                        if (active.status === 'completed' || active.status === 'error') {
+                            clearInterval(storeDlInterval);
+                            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+                            loadStoreGames();
+                            loadSystems();
+                        }
+                    } else {
+                        clearInterval(storeDlInterval);
+                        banner.style.display = 'none';
+                    }
+                } catch (e) {}
+            }, 1000);
+        }
+
+        // ==================== QUẢN LÝ YOUTUBE ====================
+        async function loadYouTubeInit() {
+            try {
+                const res = await fetch('/api/youtube/playlists');
+                const data = await res.json();
+                if (data.ok) {
+                    ytPlaylists = data.playlists || [];
+                    renderYouTubePlaylists(data.favorites_count || 0);
+                    loadYouTubeVideos('trending');
+                }
+            } catch (e) {
+                console.error('Error loadYouTubeInit:', e);
+            }
+        }
+
+        function renderYouTubePlaylists(favCount = 0) {
+            const listEl = document.getElementById('yt-playlists-list');
+            let html = '';
+            
+            // Item 1: Trending
+            html += `<div class="yt-playlist-item ${currentYtTab === 'trending' ? 'active' : ''}" onclick="selectYouTubePlaylist('trending')">
+                <span>🔥 Trending YouTube</span>
+            </div>`;
+
+            // Item 2: Favorites
+            html += `<div class="yt-playlist-item ${currentYtTab === 'favorites' ? 'active' : ''}" onclick="selectYouTubePlaylist('favorites')">
+                <span>⭐ Video Yêu thích</span>
+                <span class="count" style="background:#b45309; color:#fff; font-size:11px; padding:2px 7px; border-radius:10px;">${favCount}</span>
+            </div>`;
+
+            // Custom playlists
+            ytPlaylists.forEach(q => {
+                const active = (currentYtTab === q) ? 'active' : '';
+                html += `<div class="yt-playlist-item ${active}" onclick="selectYouTubePlaylist('${q.replace(/'/g, "\\'")}')">
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">${q}</span>
+                    <button class="btn btn-sm btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deletePlaylist(event, '${q.replace(/'/g, "\\'")}')">&times;</button>
+                </div>`;
+            });
+
+            listEl.innerHTML = html;
+        }
+
+        function selectYouTubePlaylist(q) {
+            currentYtTab = q;
+            renderYouTubePlaylists();
+            loadYouTubeVideos(q);
+        }
+
+        async function loadYouTubeVideos(query) {
+            const container = document.getElementById('yt-videos-container');
+            const loading = document.getElementById('yt-loading');
+            const countEl = document.getElementById('yt-video-count');
+            const titleEl = document.getElementById('yt-current-title');
+
+            container.innerHTML = '';
+            loading.style.display = 'block';
+
+            if (query === 'favorites') {
+                titleEl.innerText = '⭐ Video Yêu thích';
+                try {
+                    const res = await fetch('/api/youtube/favorites');
+                    const data = await res.json();
+                    loading.style.display = 'none';
+                    if (data.ok) {
+                        ytVideos = data.favorites || [];
+                        countEl.innerText = `${ytVideos.length} video`;
+                        renderYouTubeGrid(ytVideos, true);
+                    }
+                } catch (e) { loading.style.display = 'none'; }
+                return;
+            }
+
+            titleEl.innerText = (query === 'trending') ? '🔥 Trending YouTube' : `📺 Playlist: ${query}`;
+            try {
+                const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(query)}&limit=24`);
+                const data = await res.json();
+                loading.style.display = 'none';
+                if (data.ok && data.videos) {
+                    ytVideos = data.videos;
+                    countEl.innerText = `${ytVideos.length} video`;
+                    renderYouTubeGrid(ytVideos, false);
+                }
+            } catch (e) {
+                loading.style.display = 'none';
+            }
+        }
+
+        function executeYouTubeSearch() {
+            const q = document.getElementById('yt-search-input').value.trim();
+            if (!q) return;
+            currentYtTab = q;
+            renderYouTubePlaylists();
+            loadYouTubeVideos(q);
+        }
+
+        function renderYouTubeGrid(videos, isFavList = false) {
+            const container = document.getElementById('yt-videos-container');
+            if (!videos || videos.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-sub);">Chưa có video nào.</div>';
+                return;
+            }
+
+            let html = '';
+            videos.forEach(v => {
+                const favBtn = isFavList 
+                    ? `<button class="btn btn-sm btn-danger" onclick="removeFromFavorites('${v.id}')">❌ Xóa khỏi Yêu thích</button>`
+                    : `<button class="btn btn-sm btn-gold" onclick="addToFavorites('${v.id}', '${encodeURIComponent(v.title)}', '${encodeURIComponent(v.channel || '')}', '${encodeURIComponent(v.duration || '')}', '${encodeURIComponent(v.thumb || '')}')">⭐ Lưu yêu thích</button>`;
+
+                html += `<div class="yt-card">
+                    <div class="yt-thumb-box">
+                        <img src="${v.thumb}" loading="lazy" alt="${v.title}">
+                        <span class="yt-dur-badge">${v.duration || 'Video'}</span>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-title" title="${v.title}">${v.title}</div>
+                        <div class="game-meta">
+                            <span>${v.channel || 'YouTube'}</span>
+                            <span>${v.age || ''}</span>
+                        </div>
+                        <div class="game-actions" style="margin-top:10px;">
+                            ${favBtn}
+                            <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="btn btn-sm btn-secondary">Xem ↗</a>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function openAddPlaylistModal() {
+            document.getElementById('new-playlist-name').value = '';
+            openModal('modal-add-playlist');
+        }
+
+        async function submitAddPlaylist() {
+            const name = document.getElementById('new-playlist-name').value.trim();
+            if (!name) return;
+            try {
+                const res = await fetch('/api/youtube/playlists/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    closeModal('modal-add-playlist');
+                    showToast(`Đã thêm playlist ${name}!`);
+                    ytPlaylists = data.playlists || [];
+                    selectYouTubePlaylist(name);
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function deletePlaylist(e, name) {
+            e.stopPropagation();
+            if (!confirm(`Bạn có chắc muốn xóa playlist "${name}"?`)) return;
+            try {
+                const res = await fetch('/api/youtube/playlists/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`Đã xóa playlist ${name}!`);
+                    ytPlaylists = data.playlists || [];
+                    selectYouTubePlaylist('trending');
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function addToFavorites(id, titleEnc, channelEnc, durEnc, thumbEnc) {
+            const video = {
+                id: id,
+                title: decodeURIComponent(titleEnc),
+                channel: decodeURIComponent(channelEnc),
+                duration: decodeURIComponent(durEnc),
+                thumb: decodeURIComponent(thumbEnc)
+            };
+            try {
+                const res = await fetch('/api/youtube/favorites/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({video: video})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã lưu video vào Yêu thích!');
+                    loadYouTubeInit();
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function removeFromFavorites(id) {
+            try {
+                const res = await fetch('/api/youtube/favorites/remove', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: id})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã xóa khỏi Yêu thích!');
+                    loadYouTubeVideos('favorites');
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        function addCurrentSearchAsPlaylist() {
+            const q = document.getElementById('yt-search-input').value.trim();
+            if (!q) return;
+            document.getElementById('new-playlist-name').value = q;
+            submitAddPlaylist();
+        }
+
+        async function clearYouTubeCache() {
+            if (!confirm('Dọn dẹp toàn bộ bộ nhớ đệm ảnh thumbnail YouTube trên thẻ nhớ?')) return;
+            try {
+                const res = await fetch('/api/youtube/cache/clear', {method: 'POST'});
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Đã dọn dẹp cache YouTube!');
+                    loadStorageStatus();
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        // ==================== MODALS & HELPERS ====================
+        function openRenameModal(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            selectedGame = {system: sys, filename: fn};
+            document.getElementById('rename-old').value = fn;
+            document.getElementById('rename-new').value = fn;
+            openModal('modal-rename');
         }
 
         async function submitRename() {
-            const newName = document.getElementById("rename-new").value.trim();
-            if (!newName || newName === selectedGame) {
-                closeModal("modal-rename");
-                return;
-            }
-            const targetSys = selectedGameSystem || currentSystem;
+            if (!selectedGame) return;
+            const newName = document.getElementById('rename-new').value.trim();
+            if (!newName) return;
             try {
-                const res = await fetch("/api/rename", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
+                const res = await fetch('/api/rename', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        system: targetSys,
-                        old_filename: selectedGame,
+                        system: selectedGame.system,
+                        old_filename: selectedGame.filename,
                         new_filename: newName
                     })
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    showToast(data.message);
-                    closeModal("modal-rename");
-                    if (currentSystem === "__no_art__") {
-                        loadSystems(true);
-                    } else {
-                        selectSystem(currentSystem);
-                    }
-                } else {
-                    showToast(data.error, true);
-                }
-            } catch (e) {
-                showToast("Lỗi khi đổi tên game!", true);
-            }
+                    closeModal('modal-rename');
+                    showToast(data.message || 'Đổi tên thành công!');
+                    selectSystem(selectedGame.system);
+                } else { alert('Lỗi: ' + (data.error || 'Không thể đổi tên')); }
+            } catch (e) { alert('Lỗi kết nối: ' + e); }
         }
 
-        function openMoveModal(filename, gameSystem) {
-            selectedGame = filename;
-            selectedGameSystem = gameSystem || currentSystem;
-            document.getElementById("move-game").value = filename;
-            const sel = document.getElementById("move-target-sys");
-            sel.innerHTML = allSystems.filter(s => s.dir !== selectedGameSystem).map(s => `
-                <option value="${s.dir}">${s.name} (${s.dir})</option>
-            `).join('');
-            document.getElementById("modal-move").style.display = "flex";
+        function openMoveModal(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            selectedGame = {system: sys, filename: fn};
+            document.getElementById('move-game').value = `${fn} (${sys})`;
+            const sel = document.getElementById('move-target-sys');
+            let opts = '';
+            allSystems.forEach(s => {
+                if (s.dir !== sys) opts += `<option value="${s.dir}">${s.name} (${s.dir})</option>`;
+            });
+            sel.innerHTML = opts;
+            openModal('modal-move');
         }
 
         async function submitMove() {
-            const targetSys = document.getElementById("move-target-sys").value;
+            if (!selectedGame) return;
+            const targetSys = document.getElementById('move-target-sys').value;
             if (!targetSys) return;
-            const fromSys = selectedGameSystem || currentSystem;
             try {
-                const res = await fetch("/api/move", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
+                const res = await fetch('/api/move', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        from_system: fromSys,
+                        from_system: selectedGame.system,
                         to_system: targetSys,
-                        filename: selectedGame
+                        filename: selectedGame.filename
                     })
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    showToast(data.message);
-                    closeModal("modal-move");
-                    loadSystems(true);
-                } else {
-                    showToast(data.error, true);
-                }
-            } catch (e) {
-                showToast("Lỗi khi chuyển hệ máy!", true);
-            }
+                    closeModal('modal-move');
+                    showToast(data.message || 'Chuyển hệ máy thành công!');
+                    loadSystems();
+                } else { alert('Lỗi: ' + (data.error || 'Không thể chuyển')); }
+            } catch (e) { alert('Lỗi kết nối: ' + e); }
         }
 
-        async function deleteGame(filename, gameSystem) {
-            if (!confirm(`Bạn có chắc chắn muốn xóa game "${filename}" khỏi thẻ nhớ không?`)) return;
-            const targetSys = gameSystem || selectedGameSystem || currentSystem;
+        async function deleteGame(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            if (!confirm(`Bạn có chắc chắn muốn xóa game "${fn}" khỏi thẻ nhớ?`)) return;
             try {
-                const res = await fetch("/api/delete", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        system: targetSys,
-                        filename: filename,
-                        delete_art: true
-                    })
+                const res = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({system: sys, filename: fn, delete_art: true})
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    showToast(data.message);
-                    loadSystems(true);
-                } else {
-                    showToast(data.error, true);
-                }
-            } catch (e) {
-                showToast("Lỗi khi xóa game!", true);
-            }
+                    showToast(`Đã xóa ${fn}`);
+                    selectSystem(sys);
+                } else { alert('Lỗi: ' + (data.error || 'Không thể xóa')); }
+            } catch (e) { alert('Lỗi: ' + e); }
         }
 
-        function cleanGameQuery(filename) {
-            let base = filename.replace(/\.[^/.]+$/, "");
-            base = base.replace(/[_\.\+]+/g, " ");
-            base = base.replace(/\s*[\(\[][^\)\]]*[\)\]]\s*/g, " ");
-            base = base.replace(/\b(EUR|USA|JAP|JPN|PAL|NTSC|MULTi\d*|Goomba|Razor1911|Dump)\b/gi, " ");
-            base = base.replace(/[-–—]\s*[a-zA-Z0-9]+$/g, " ");
-            base = base.replace(/\b(PSP|PS1|PS2|GBA|NDS|SNES|NES|MD|GENESIS)\b/gi, " ");
-            base = base.replace(/[-–—]+/g, " ");
-            return base.replace(/\s+/g, " ").trim();
-        }
-
-        function openScrapeModal(filename, gameSystem, cardIdx=null) {
-            selectedGame = filename;
-            selectedGameSystem = gameSystem || currentSystem;
-            selectedCardIdx = cardIdx;
-            const cleanName = cleanGameQuery(filename);
-            document.getElementById("scrape-query").value = cleanName;
-            document.getElementById("scrape-direct-url").value = "";
-            document.getElementById("scrape-results").innerHTML = "";
-            document.getElementById("modal-scrape").style.display = "flex";
+        function openScrapeModal(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            selectedGame = {system: sys, filename: fn};
+            document.getElementById('scrape-query').value = cleanRomTitle(fn);
+            document.getElementById('scrape-results').innerHTML = '';
+            openModal('modal-scrape');
             executeScrapeSearch();
         }
 
-        function updateCardArtSuccess(idx, filename, gSys, newArtUrl) {
-            if (idx === null || idx === undefined) return;
-            const cardEl = document.getElementById(`game-card-${idx}`);
-            const artBoxEl = document.getElementById(`art-box-${idx}`);
-            if (artBoxEl) {
-                artBoxEl.innerHTML = `
-                    <img class="art-img" src="${newArtUrl}" loading="lazy" alt="${filename}" onclick="openArtPreview('${newArtUrl}', '${escapeJs(filename)}')" title="Nhấp để xem ảnh đầy đủ">
-                    <div class="art-btn-overlay">
-                        <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
-                    </div>
-                `;
-            }
-            if (cardEl) {
-                cardEl.classList.remove("is-scraping");
-                cardEl.classList.add("is-success");
-            }
-            if (currentGames[idx]) {
-                currentGames[idx].has_art = true;
-                currentGames[idx].art_url = newArtUrl;
-            }
-            if (noArtTotalCount > 0) {
-                noArtTotalCount--;
-                updateNoArtBadge();
-            }
+        function cleanRomTitle(fn) {
+            let base = fn.replace(/\.[^/.]+$/, "");
+            base = base.replace(/^\d+\s*[-–—.]\s*/, "");
+            return base.replace(/\(.*?\)|\[.*?\]/g, "").trim();
         }
-
-        function openGoogleImageSearch() {
-            const q = document.getElementById("scrape-query").value.trim();
-            const targetSys = selectedGameSystem || currentSystem || '';
-            const url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q + ' ' + targetSys + ' box art cover')}`;
-            window.open(url, '_blank');
-        }
-
-        async function submitDirectArtUrl() {
-            const url = document.getElementById("scrape-direct-url").value.trim();
-            if (!url) {
-                showToast("Vui lòng dán đường dẫn ảnh hợp lệ!", true);
-                return;
-            }
-            await applyScrapedArt(url);
-        }
-
-        async function uploadBlobArt(fileOrBlob) {
-            const targetSys = selectedGameSystem || currentSystem;
-            try {
-                showToast("Đang tải ảnh từ Clipboard lên máy...");
-                const res = await fetch(`/api/upload_art?system=${encodeURIComponent(targetSys)}&filename=${encodeURIComponent(selectedGame)}`, {
-                    method: "POST",
-                    headers: {"Content-Type": fileOrBlob.type || "image/png"},
-                    body: fileOrBlob
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showToast(data.message || "Đã lưu ảnh bìa từ Clipboard thành công!");
-                    closeModal("modal-scrape");
-                    const newArtUrl = `/art/${encodeURIComponent(targetSys)}/${encodeURIComponent(selectedGame.replace(/\.[^/.]+$/, "") + '.png')}?v=${Date.now()}`;
-                    if (selectedCardIdx !== null) {
-                        updateCardArtSuccess(selectedCardIdx, selectedGame, targetSys, newArtUrl);
-                    } else {
-                        if (currentSystem === "__no_art__") {
-                            loadSystems(true);
-                        } else {
-                            selectSystem(currentSystem);
-                        }
-                    }
-                } else {
-                    showToast(data.error || "Lỗi tải ảnh lên!", true);
-                }
-            } catch (err) {
-                showToast("Lỗi khi tải ảnh từ Clipboard lên máy!", true);
-            }
-        }
-
-        async function pasteAndApplyArt() {
-            try {
-                if (navigator.clipboard && navigator.clipboard.read) {
-                    try {
-                        const items = await navigator.clipboard.read();
-                        for (const item of items) {
-                            for (const type of item.types) {
-                                if (type.startsWith("image/")) {
-                                    const blob = await item.getType(type);
-                                    showToast("Đã đọc được ảnh từ Clipboard! Đang lưu...");
-                                    await uploadBlobArt(blob);
-                                    return;
-                                }
-                            }
-                        }
-                    } catch (readErr) {}
-                }
-
-                if (navigator.clipboard && navigator.clipboard.readText) {
-                    try {
-                        const text = await navigator.clipboard.readText();
-                        const trimmed = (text || "").trim();
-                        if (trimmed && (trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
-                            document.getElementById("scrape-direct-url").value = trimmed;
-                            showToast("Đã lấy link ảnh từ Clipboard, đang tải...");
-                            await applyScrapedArt(trimmed);
-                            return;
-                        }
-                    } catch (textErr) {}
-                }
-
-                const inputEl = document.getElementById("scrape-direct-url");
-                if (inputEl) {
-                    inputEl.focus();
-                    inputEl.select();
-                }
-                showToast("Nhấn phím Ctrl+V ngay trên bàn phím để dán trực tiếp ảnh vào đây!", false);
-            } catch (e) {
-                showToast("Nhấn phím Ctrl+V để dán trực tiếp ảnh từ Clipboard!", false);
-            }
-        }
-
-        window.addEventListener("paste", async (e) => {
-            const modal = document.getElementById("modal-scrape");
-            if (modal && modal.style.display === "flex") {
-                const activeEl = document.activeElement;
-                if (activeEl && activeEl.id === "scrape-query") return;
-
-                const clipboardData = e.clipboardData || window.clipboardData;
-                if (!clipboardData) return;
-
-                const items = clipboardData.items;
-                if (items && items.length > 0) {
-                    for (let i = 0; i < items.length; i++) {
-                        if (items[i].type && items[i].type.startsWith("image/")) {
-                            const file = items[i].getAsFile();
-                            if (file) {
-                                e.preventDefault();
-                                showToast("Đã nhận ảnh trực tiếp từ Clipboard! Đang lưu...");
-                                await uploadBlobArt(file);
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                const text = clipboardData.getData("text")?.trim() || "";
-                if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
-                    e.preventDefault();
-                    document.getElementById("scrape-direct-url").value = text;
-                    showToast("Đã nhận link ảnh từ Clipboard! Đang tải...");
-                    applyScrapedArt(text);
-                }
-            }
-        });
-
-        window.addEventListener("dragover", (e) => {
-            const modal = document.getElementById("modal-scrape");
-            if (modal && modal.style.display === "flex") {
-                e.preventDefault();
-            }
-        });
-        window.addEventListener("drop", async (e) => {
-            const modal = document.getElementById("modal-scrape");
-            if (modal && modal.style.display === "flex") {
-                e.preventDefault();
-                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    const file = e.dataTransfer.files[0];
-                    if (file && file.type && file.type.startsWith("image/")) {
-                        showToast("Đã nhận ảnh kéo thả! Đang lưu...");
-                        await uploadBlobArt(file);
-                    }
-                }
-            }
-        });
 
         async function executeScrapeSearch() {
-            const q = document.getElementById("scrape-query").value.trim();
-            if (!q) return;
-            const targetSys = selectedGameSystem || currentSystem;
-            const resBox = document.getElementById("scrape-results");
-            resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--text-sub);">Đang tìm ảnh trong kho dữ liệu...</div>`;
-
+            if (!selectedGame) return;
+            const q = document.getElementById('scrape-query').value.trim();
+            const resBox = document.getElementById('scrape-results');
+            resBox.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-sub);">Đang tìm ảnh...</div>';
             try {
-                const res = await fetch(`/api/scrape/search?system=${encodeURIComponent(targetSys)}&query=${encodeURIComponent(q)}`);
+                const res = await fetch(`/api/scrape/search?system=${encodeURIComponent(selectedGame.system)}&query=${encodeURIComponent(q)}`);
                 const data = await res.json();
                 if (data.ok && data.candidates && data.candidates.length > 0) {
-                    resBox.innerHTML = data.candidates.map((c, idx) => `
-                        <div class="scrape-card" onclick="applyScrapedArt('${escapeJs(c.url)}')">
-                            <img class="scrape-img" src="${c.url}" loading="lazy" onerror="handleScrapeImgError(this)" alt="${c.title}">
-                            <span class="scrape-title" title="${c.title}">${c.title}</span>
-                            <span class="scrape-tag">${c.type}</span>
-                        </div>
-                    `).join('');
+                    let html = '';
+                    data.candidates.forEach(c => {
+                        html += `<div class="game-card" style="cursor:pointer;" onclick="applyScrapedArt('${encodeURIComponent(c.url)}')">
+                            <div class="art-box"><img src="${c.url}" loading="lazy" alt="Boxart"></div>
+                            <div style="padding:6px; font-size:10px; color:var(--text-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.type || 'Boxart'}</div>
+                        </div>`;
+                    });
+                    resBox.innerHTML = html;
                 } else {
-                    resBox.innerHTML = `
-                        <div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--text-sub);">
-                            <div style="margin-bottom:8px; font-size:13px;">Chưa tìm thấy ảnh phù hợp với từ khóa này.</div>
-                            <div style="font-size:12px;">Bạn có thể chỉnh từ khóa ngắn gọn hơn, bấm <strong>"Mở Google Images"</strong> hoặc <strong>"Tải ảnh từ máy"</strong>!</div>
-                        </div>
-                    `;
+                    resBox.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-sub);">Không tìm thấy ảnh. Hãy thử nhập từ khóa khác hoặc dán link bên dưới.</div>';
                 }
             } catch (e) {
-                resBox.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:25px; color:var(--danger);">Lỗi khi tìm ảnh bìa! Vui lòng thử lại.</div>`;
+                resBox.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#ef4444;">Lỗi tìm ảnh: ' + e + '</div>';
             }
         }
 
-        function handleScrapeImgError(img) {
-            const card = img.closest('.scrape-card');
-            if (card) {
-                card.remove();
-            }
-        }
-
-        async function applyScrapedArt(url) {
-            const targetSys = selectedGameSystem || currentSystem;
+        async function applyScrapedArt(urlEnc) {
+            if (!selectedGame) return;
+            const url = decodeURIComponent(urlEnc);
             try {
-                const res = await fetch("/api/scrape/apply", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
+                const res = await fetch('/api/scrape/auto', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        system: targetSys,
-                        filename: selectedGame,
-                        image_url: url
+                        system: selectedGame.system,
+                        filename: selectedGame.filename,
+                        query: document.getElementById('scrape-query').value.trim(),
+                        fast: false
                     })
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    showToast(data.message);
-                    closeModal("modal-scrape");
-                    const newArtUrl = `/art/${encodeURIComponent(targetSys)}/${encodeURIComponent(selectedGame.replace(/\.[^/.]+$/, "") + '.png')}?v=${Date.now()}`;
-                    if (selectedCardIdx !== null) {
-                        updateCardArtSuccess(selectedCardIdx, selectedGame, targetSys, newArtUrl);
-                    } else {
-                        if (currentSystem === "__no_art__") {
-                            loadSystems(true);
-                        } else {
-                            selectSystem(currentSystem);
-                        }
-                    }
-                } else {
-                    showToast(data.error, true);
-                }
-            } catch (e) {
-                showToast("Lỗi khi áp dụng ảnh bìa!", true);
-            }
+                    closeModal('modal-scrape');
+                    showToast('Đã gán ảnh bìa thành công!');
+                    selectSystem(selectedGame.system);
+                } else { alert('Lỗi gán ảnh: ' + (data.error || 'Thất bại')); }
+            } catch (e) { alert('Lỗi: ' + e); }
         }
 
-        async function uploadCustomArt(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const targetSys = selectedGameSystem || currentSystem;
-            try {
-                const res = await fetch(`/api/upload_art?system=${encodeURIComponent(targetSys)}&filename=${encodeURIComponent(selectedGame)}`, {
-                    method: "POST",
-                    headers: {"Content-Type": file.type || "application/octet-stream"},
-                    body: file
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showToast(data.message);
-                    closeModal("modal-scrape");
-                    const newArtUrl = `/art/${encodeURIComponent(targetSys)}/${encodeURIComponent(selectedGame.replace(/\.[^/.]+$/, "") + '.png')}?v=${Date.now()}`;
-                    if (selectedCardIdx !== null) {
-                        updateCardArtSuccess(selectedCardIdx, selectedGame, targetSys, newArtUrl);
-                    } else {
-                        if (currentSystem === "__no_art__") {
-                            loadSystems(true);
-                        } else {
-                            selectSystem(currentSystem);
-                        }
-                    }
-                } else {
-                    showToast(data.error, true);
-                }
-            } catch (err) {
-                showToast("Lỗi tải ảnh lên!", true);
-            }
+        async function submitDirectArtUrl() {
+            const url = document.getElementById('scrape-direct-url').value.trim();
+            if (!url || !selectedGame) return;
+            applyScrapedArt(encodeURIComponent(url));
         }
 
-        // ==========================================
-        // TÍNH NĂNG CÀO TOÀN BỘ TRỰC TIẾP (KHÔNG MODAL - UPDATE LIVE LIST)
-        // ==========================================
-        let isBatchScraping = false;
-        let stopBatchRequested = false;
-
-        async function toggleDirectBatchScrape() {
-            if (isBatchScraping) {
-                stopDirectBatchScrape();
-                return;
-            }
-            startDirectBatchScrape();
-        }
-
-        function stopDirectBatchScrape() {
-            if (isBatchScraping) {
-                stopBatchRequested = true;
-                const statusEl = document.getElementById("batch-inline-status");
-                if (statusEl) statusEl.innerText = "Đang dừng cào...";
-                const topBtn = document.getElementById("btn-batch-scrape-top");
-                if (topBtn) topBtn.innerText = "Đang dừng...";
-            }
-        }
-
-        function updateCardArtFailure(idx, filename, gSys, reason="Không tìm thấy") {
-            if (idx === null || idx === undefined) return;
-            const cardEl = document.getElementById(`game-card-${idx}`);
-            const artBoxEl = document.getElementById(`art-box-${idx}`);
-            if (cardEl) {
-                cardEl.classList.remove("is-scraping");
-            }
-            if (artBoxEl) {
-                artBoxEl.innerHTML = `
-                    <div class="art-placeholder" onclick="openScrapeModal('${escapeJs(filename)}', '${gSys}', ${idx})" title="Nhấp để cào ảnh">
-                        ${ICONS.alert}
-                        <span style="font-size:11px; color:#f59e0b;">${reason}</span>
-                    </div>
-                    <div class="art-btn-overlay">
-                        <button class="btn btn-sm btn-green btn-action-icon" onclick="event.stopPropagation(); openScrapeModal('${escapeJs(filename)}', '${gSys}', ${idx})">${ICONS.palette} <span>Cào Art</span></button>
-                    </div>
-                `;
-            }
-        }
-
-        function setCardArtScraping(idx, label="Đang cào ảnh...") {
-            if (idx === null || idx === undefined) return;
-            const cardEl = document.getElementById(`game-card-${idx}`);
-            const artBoxEl = document.getElementById(`art-box-${idx}`);
-            if (cardEl) {
-                cardEl.classList.add("is-scraping");
-            }
-            if (artBoxEl) {
-                artBoxEl.innerHTML = `
-                    <div class="art-placeholder" style="color:#38bdf8;">
-                        ${ICONS.spinner}
-                        <span style="font-size:11px;">${label}</span>
-                    </div>
-                `;
-            }
-        }
-
-        async function startDirectBatchScrape() {
-            const targets = [];
-            for (let i = 0; i < currentGames.length; i++) {
-                if (!currentGames[i].has_art) {
-                    targets.push({ game: currentGames[i], index: i });
-                }
-            }
-
-            if (targets.length === 0) {
-                showToast("Tất cả game trong danh sách hiện tại đều đã có ảnh bìa!");
-                return;
-            }
-
-            isBatchScraping = true;
-            stopBatchRequested = false;
-
-            const inlineBar = document.getElementById("batch-inline-bar");
-            inlineBar.style.display = "flex";
-            const statusText = document.getElementById("batch-inline-status");
-            const pctText = document.getElementById("batch-inline-pct");
-            const fillBar = document.getElementById("batch-inline-fill");
-            const topBtn = document.getElementById("btn-batch-scrape-top");
-
-            if (topBtn) {
-                topBtn.innerText = `Dừng cào (${targets.length})`;
-                topBtn.className = "btn btn-danger";
-            }
-
-            const total = targets.length;
-            let completedCount = 0;
-            let successCount = 0;
-
-            function renderProgress(titleName, gSysName) {
-                const pct = Math.round((completedCount / total) * 100);
-                pctText.innerText = `${pct}%`;
-                fillBar.style.width = `${pct}%`;
-                if (titleName) {
-                    statusText.innerHTML = `[${completedCount}/${total}] Đang xử lý: <strong>${titleName}</strong> (${gSysName}) &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
-                } else {
-                    statusText.innerHTML = `[${completedCount}/${total}] Đang xử lý... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount} ảnh</span>`;
-                }
-            }
-
-            // Giai đoạn 1: Tốc độ cao (Catalog DB & CDN Libretro) - 4 workers song song
-            const fastQueue = [...targets];
-            const notFoundList = [];
-            const CONCURRENCY = 4;
-
-            async function fastWorker() {
-                while (fastQueue.length > 0 && !stopBatchRequested) {
-                    const item = fastQueue.shift();
-                    const { game: g, index: idx } = item;
-                    const gSys = g.system || currentSystem;
-                    const gSysName = g.system_name || gSys;
-                    const cleanTitle = cleanGameQuery(g.filename);
-
-                    setCardArtScraping(idx, "Đang cào nhanh...");
-                    renderProgress(g.name, gSysName);
-
-                    try {
-                        const res = await fetch("/api/scrape/auto", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                system: gSys,
-                                filename: g.filename,
-                                query: cleanTitle,
-                                fast: true
-                            })
-                        });
-                        const data = await res.json();
-                        if (data.ok && data.art_url) {
-                            successCount++;
-                            updateCardArtSuccess(idx, g.filename, gSys, data.art_url);
-                        } else {
-                            notFoundList.push(item);
-                        }
-                    } catch (err) {
-                        console.error("Fast worker error:", err);
-                        notFoundList.push(item);
-                    }
-
-                    completedCount++;
-                    renderProgress(g.name, gSysName);
-                }
-            }
-
-            const fastWorkers = [];
-            const numWorkers = Math.min(CONCURRENCY, fastQueue.length);
-            for (let w = 0; w < numWorkers; w++) {
-                fastWorkers.push(fastWorker());
-            }
-            await Promise.all(fastWorkers);
-
-            // Giai đoạn 2: Web Search cho các game còn lại chưa tìm thấy
-            if (!stopBatchRequested && notFoundList.length > 0) {
-                statusText.innerHTML = `Tìm kiếm Web sâu cho ${notFoundList.length} game còn lại... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
-                const deepQueue = [...notFoundList];
-                notFoundList.length = 0;
-
-                async function deepWorker() {
-                    while (deepQueue.length > 0 && !stopBatchRequested) {
-                        const item = deepQueue.shift();
-                        const { game: g, index: idx } = item;
-                        const gSys = g.system || currentSystem;
-                        const gSysName = g.system_name || gSys;
-                        const cleanTitle = cleanGameQuery(g.filename);
-
-                        setCardArtScraping(idx, "Đang tìm Web...");
-                        statusText.innerHTML = `Tìm Web: <strong>${g.name}</strong> (${gSysName})... &bull; <span style="color:#10b981; font-weight:600;">Đã xong ${successCount}/${total}</span>`;
-
-                        try {
-                            const res = await fetch("/api/scrape/auto", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    system: gSys,
-                                    filename: g.filename,
-                                    query: cleanTitle,
-                                    fast: false
-                                })
-                            });
-                            const data = await res.json();
-                            if (data.ok && data.art_url) {
-                                successCount++;
-                                updateCardArtSuccess(idx, g.filename, gSys, data.art_url);
-                            } else {
-                                updateCardArtFailure(idx, g.filename, gSys, "Không tìm thấy");
-                            }
-                        } catch (err) {
-                            updateCardArtFailure(idx, g.filename, gSys, "Lỗi cào ảnh");
-                        }
-                    }
-                }
-
-                const deepWorkers = [];
-                const numDeepWorkers = Math.min(2, deepQueue.length);
-                for (let w = 0; w < numDeepWorkers; w++) {
-                    deepWorkers.push(deepWorker());
-                }
-                await Promise.all(deepWorkers);
-            } else if (notFoundList.length > 0) {
-                for (const item of notFoundList) {
-                    const gSys = item.game.system || currentSystem;
-                    updateCardArtFailure(item.index, item.game.filename, gSys, "Chưa có ảnh");
-                }
-            }
-
-            fillBar.style.width = "100%";
-            pctText.innerText = "100%";
-            isBatchScraping = false;
-
-            if (topBtn) {
-                topBtn.innerText = "Cào toàn bộ ảnh";
-                topBtn.className = "btn btn-batch";
-            }
-
-            if (stopBatchRequested) {
-                statusText.innerText = `Đã dừng. Cập nhật thành công ${successCount}/${total} ảnh bìa.`;
-                showToast(`Đã dừng: Cập nhật thành công ${successCount} ảnh!`);
-            } else {
-                statusText.innerText = `Hoàn tất! Đã cập nhật ${successCount}/${total} ảnh bìa vào danh sách.`;
-                showToast(`Hoàn tất: Đã cào xong ${successCount}/${total} ảnh bìa!`);
-            }
-
-            updateNoArtBadge();
-
-            setTimeout(() => {
-                if (!isBatchScraping) {
-                    inlineBar.style.display = "none";
-                }
-            }, 5000);
-        }
-
-        // ==========================================
-        // TÍNH NĂNG TẢI ROM LÊN (CHỌN FILE LUÔN & SHOW TIẾN ĐỘ)
-        // ==========================================
-        let pendingUploadSystem = null;
-        let currentUploadXhr = null;
-        let isUploadingRom = false;
-
-        function formatBytes(bytes) {
-            if (!bytes || bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        function openGoogleImageSearch() {
+            if (!selectedGame) return;
+            const q = document.getElementById('scrape-query').value.trim() + ' ' + selectedGame.system + ' boxart cover';
+            window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q), '_blank');
         }
 
         function handleUploadRomClick() {
-            if (!currentSystem || currentSystem === '__no_art__') {
-                const sel = document.getElementById("modal-upload-sys-select");
-                sel.innerHTML = allSystems.map(s => `
-                    <option value="${s.dir}">${s.name} (${s.dir})</option>
-                `).join('');
-                document.getElementById("modal-select-upload-sys").style.display = "flex";
-            } else {
-                pendingUploadSystem = currentSystem;
-                document.getElementById("rom-file-input-direct").click();
-            }
-        }
-
-        function confirmSystemAndBrowseFiles() {
-            const sel = document.getElementById("modal-upload-sys-select");
-            pendingUploadSystem = sel.value;
-            closeModal("modal-select-upload-sys");
-            document.getElementById("rom-file-input-direct").click();
-        }
-
-        function cancelOrCloseUpload() {
-            if (isUploadingRom) {
-                if (!confirm("Đang tải tệp lên thiết bị. Bạn có chắc muốn hủy bỏ không?")) {
-                    return;
-                }
-                isUploadingRom = false;
-                if (currentUploadXhr) {
-                    currentUploadXhr.abort();
-                }
-            }
-            document.getElementById("modal-upload-progress").style.display = "none";
-            loadSystems(true);
-        }
-
-        function uploadSingleRomFile(file, targetSys, onProgress) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                currentUploadXhr = xhr;
-                xhr.open("POST", `/api/upload_rom?system=${encodeURIComponent(targetSys)}&filename=${encodeURIComponent(file.name)}`, true);
-                xhr.setRequestHeader("Content-Type", "application/octet-stream");
-
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        onProgress(e.loaded, e.total);
-                    }
-                };
-
-                xhr.onload = () => {
-                    currentUploadXhr = null;
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const res = JSON.parse(xhr.responseText);
-                            resolve(res);
-                        } catch (err) {
-                            resolve({ok: true});
-                        }
-                    } else {
-                        reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
-                    }
-                };
-
-                xhr.onerror = () => {
-                    currentUploadXhr = null;
-                    reject(new Error("Lỗi mạng khi tải lên!"));
-                };
-
-                xhr.onabort = () => {
-                    currentUploadXhr = null;
-                    reject(new Error("Đã hủy tải"));
-                };
-
-                xhr.send(file);
-            });
+            document.getElementById('rom-file-input-direct').click();
         }
 
         async function handleDirectRomFiles(e) {
-            const files = Array.from(e.target.files);
-            e.target.value = '';
-            if (files.length === 0) return;
-
-            const targetSys = pendingUploadSystem || currentSystem;
-            if (!targetSys || targetSys === '__no_art__') {
-                showToast("Vui lòng chọn hệ máy đích!", true);
-                return;
-            }
-
-            const sysObj = allSystems.find(s => s.dir === targetSys);
-            const sysName = sysObj ? sysObj.name : targetSys;
-
-            // Mở modal hiển thị tiến độ
-            document.getElementById("upload-target-name").innerText = `${sysName} (${targetSys})`;
-            document.getElementById("upload-prog-title").innerText = `Đang tải ${files.length} ROM lên thiết bị`;
-            document.getElementById("btn-upload-cancel").innerText = "Hủy bỏ";
-            document.getElementById("btn-upload-cancel").className = "btn btn-secondary";
-            document.getElementById("upload-status-footer").innerText = "Vui lòng không tắt trình duyệt khi đang tải file lớn.";
-            
-            const overallBox = document.getElementById("upload-overall-box");
-            if (files.length > 1) {
-                overallBox.style.display = "block";
-                document.getElementById("upload-overall-pct").innerText = "0%";
-                document.getElementById("upload-overall-progress-bar").style.width = "0%";
-            } else {
-                overallBox.style.display = "none";
-            }
-
-            // Render danh sách file ban đầu
-            const fileListEl = document.getElementById("upload-file-list");
-            fileListEl.innerHTML = files.map((f, i) => `
-                <div id="upload-item-${i}" class="batch-log-item">
-                    <span id="upload-item-icon-${i}" style="width:20px; text-align:center;">[ ]</span>
-                    <span style="color:#e2e8f0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${f.name}">${f.name}</span>
-                    <span style="color:var(--text-sub); font-size:10px;">${formatBytes(f.size)}</span>
-                    <span id="upload-item-status-${i}" style="color:var(--text-sub); font-size:10px; width:65px; text-align:right;">Chờ...</span>
-                </div>
-            `).join('');
-
-            document.getElementById("modal-upload-progress").style.display = "flex";
-            isUploadingRom = true;
-
-            let successCount = 0;
+            const files = e.target.files;
+            if (!files || files.length === 0 || !currentSystem) return;
             for (let i = 0; i < files.length; i++) {
-                if (!isUploadingRom) break;
                 const f = files[i];
-
-                // Cập nhật thông tin file hiện tại
-                document.getElementById("upload-current-fname").innerText = f.name;
-                document.getElementById("upload-current-pct").innerText = "0%";
-                document.getElementById("upload-file-progress-bar").style.width = "0%";
-                document.getElementById("upload-file-size-info").innerText = `0 / ${formatBytes(f.size)}`;
-                document.getElementById("upload-batch-count-info").innerText = `Tệp ${i + 1} / ${files.length}`;
-
-                const itemIcon = document.getElementById(`upload-item-icon-${i}`);
-                const itemStatus = document.getElementById(`upload-item-status-${i}`);
-                if (itemIcon) itemIcon.innerText = "...";
-                if (itemStatus) {
-                    itemStatus.innerText = "0%";
-                    itemStatus.style.color = "#38bdf8";
-                }
-
+                showToast(`Đang tải lên ${f.name}...`);
                 try {
-                    await uploadSingleRomFile(f, targetSys, (loaded, total) => {
-                        const pct = Math.round((loaded / total) * 100);
-                        document.getElementById("upload-current-pct").innerText = `${pct}%`;
-                        document.getElementById("upload-file-progress-bar").style.width = `${pct}%`;
-                        document.getElementById("upload-file-size-info").innerText = `${formatBytes(loaded)} / ${formatBytes(total)}`;
-                        if (itemStatus) itemStatus.innerText = `${pct}%`;
+                    await fetch(`/api/upload_rom?system=${encodeURIComponent(currentSystem)}&filename=${encodeURIComponent(f.name)}`, {
+                        method: 'POST',
+                        body: f
                     });
-
-                    successCount++;
-                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#10b981; font-weight:bold;">OK</span>`;
-                    if (itemStatus) {
-                        itemStatus.innerText = "Xong";
-                        itemStatus.style.color = "#10b981";
-                    }
-                } catch (err) {
-                    if (itemIcon) itemIcon.innerHTML = `<span style="color:#ef4444; font-weight:bold;">ERR</span>`;
-                    if (itemStatus) {
-                        itemStatus.innerText = "Lỗi";
-                        itemStatus.style.color = "#ef4444";
-                    }
-                }
-
-                if (files.length > 1) {
-                    const overallPct = Math.round(((i + 1) / files.length) * 100);
-                    document.getElementById("upload-overall-pct").innerText = `${overallPct}%`;
-                    document.getElementById("upload-overall-progress-bar").style.width = `${overallPct}%`;
-                }
+                } catch (err) {}
             }
-
-            isUploadingRom = false;
-            document.getElementById("upload-current-pct").innerText = "100%";
-            document.getElementById("upload-file-progress-bar").style.width = "100%";
-            document.getElementById("btn-upload-cancel").innerText = "Đóng";
-            document.getElementById("btn-upload-cancel").className = "btn btn-green";
-            document.getElementById("upload-prog-title").innerText = `Hoàn tất tải lên (${successCount}/${files.length} ROM)`;
-            document.getElementById("upload-status-footer").innerText = `Đã tải lên ${successCount} tệp thành công vào hệ máy ${sysName}.`;
-            showToast(`Đã tải lên ${successCount} tệp ROM thành công!`);
-
-            if (currentSystem === targetSys) {
-                selectSystem(currentSystem);
-            } else {
-                loadSystems(true);
-            }
+            showToast('Tải ROMs thành công!');
+            selectSystem(currentSystem);
         }
 
-        // -------------------------------------------------------------
-        // SAVE GAMES & CHEATS MANAGER WEB JS
-        // -------------------------------------------------------------
-        let cheatsPollTimer = null;
-
+        // ==================== SAVE & CHEATS MODAL ====================
         function openSavesCheatsModal(tab = 'saves') {
-            document.getElementById('modal-saves-cheats').classList.add('active');
             switchSavesCheatsTab(tab);
+            openModal('modal-saves-cheats');
         }
 
         function switchSavesCheatsTab(tab) {
-            const tabBtnSaves = document.getElementById('tab-btn-saves');
-            const tabBtnCheats = document.getElementById('tab-btn-cheats');
-            const tabBtnLogs = document.getElementById('tab-btn-logs');
-            const contentSaves = document.getElementById('tab-content-saves');
-            const contentCheats = document.getElementById('tab-content-cheats');
-            const contentLogs = document.getElementById('tab-content-logs');
-
-            tabBtnSaves.className = (tab === 'saves') ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
-            tabBtnCheats.className = (tab === 'cheats') ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
-            tabBtnLogs.className = (tab === 'logs') ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
-
-            contentSaves.style.display = (tab === 'saves') ? 'block' : 'none';
-            contentCheats.style.display = (tab === 'cheats') ? 'block' : 'none';
-            contentLogs.style.display = (tab === 'logs') ? 'block' : 'none';
-
-            if (tab === 'saves') {
-                loadSavesData();
-            } else if (tab === 'cheats') {
-                loadCheatsData();
-            } else if (tab === 'logs') {
-                loadLogsData();
-            }
+            ['saves', 'cheats', 'logs'].forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const c = document.getElementById(`tab-content-${t}`);
+                if (btn) btn.className = (t === tab) ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
+                if (c) c.style.display = (t === tab) ? 'block' : 'none';
+            });
+            if (tab === 'saves') loadSavesData();
+            else if (tab === 'cheats') loadCheatsData();
         }
 
         async function loadSavesData() {
@@ -3471,309 +3175,120 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 const res = await fetch('/api/saves');
                 const data = await res.json();
                 if (data.ok) {
-                    const st = data.stats || {};
-                    const totFiles = st.total_files || 0;
-                    const totMb = ((st.total_bytes || 0) / (1024 * 1024)).toFixed(2);
-                    document.getElementById('saves-summary-text').innerText = `${totFiles} file save (${totMb} MB) — ${st.types?.srm || 0} .srm / ${st.types?.state || 0} states`;
-
-                    const backups = data.backups || [];
-                    const tableBox = document.getElementById('backups-list-table');
-                    if (backups.length === 0) {
-                        tableBox.innerHTML = '<div style="text-align:center; padding: 24px; color: var(--text-sub); font-size:12px;">Chưa có bản sao lưu nào. Hãy bấm "+ Tạo bản sao lưu" ở trên!</div>';
+                    document.getElementById('saves-stats-text').innerText = `Tổng cộng ${data.stats ? data.stats.total_files : 0} file save trên thẻ nhớ.`;
+                    const box = document.getElementById('backups-list-table');
+                    if (!data.backups || data.backups.length === 0) {
+                        box.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:12px;">Chưa có bản sao lưu nào. Hãy bấm "+ Tạo bản sao lưu mới" ở trên!</div>';
                         return;
                     }
-
                     let html = '';
-                    for (const b of backups) {
-                        const mb = (b.size / (1024 * 1024)).toFixed(2);
-                        const sizeStr = mb >= 1.0 ? `${mb} MB` : `${(b.size / 1024).toFixed(1)} KB`;
-                        html += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px;">
-                            <div style="min-width: 0; flex: 1;">
-                                <div style="font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${b.filename}</div>
-                                <div style="font-size: 11px; color: var(--text-sub);">${b.date_str} • ${b.file_count} files • ${sizeStr}</div>
+                    data.backups.forEach(b => {
+                        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid var(--border); font-size:12px;">
+                            <div>
+                                <strong style="color:#38bdf8;">${b.created_at || b.filename}</strong>
+                                <span style="color:var(--text-sub); margin-left:8px;">(${b.size_str})</span>
                             </div>
-                            <div style="display: flex; gap: 6px; align-items: center; margin-left: 10px;">
-                                <a href="/api/saves/download?file=${encodeURIComponent(b.filename)}" class="btn btn-sm btn-secondary" style="font-size: 11px;" download>Tải zip</a>
-                                <button class="btn btn-sm btn-green" style="font-size: 11px;" onclick="restoreSaveBackupWeb('${b.filename}')">Khôi phục</button>
-                                <button class="btn btn-sm btn-secondary" style="font-size: 11px; color: #ef4444;" onclick="deleteSaveBackupWeb('${b.filename}')">Xóa</button>
+                            <div style="display:flex; gap:6px;">
+                                <a href="/api/saves/download?file=${encodeURIComponent(b.filename)}" class="btn btn-sm btn-secondary" download>Tải về (.zip)</a>
+                                <button class="btn btn-sm btn-green" onclick="restoreSaveBackupWeb('${b.filename}')">Khôi phục</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteSaveBackupWeb('${b.filename}')">Xóa</button>
                             </div>
                         </div>`;
-                    }
-                    tableBox.innerHTML = html;
+                    });
+                    box.innerHTML = html;
                 }
-            } catch (e) {
-                console.error('Error loading saves:', e);
-            }
+            } catch (e) {}
         }
 
         async function createSaveBackupWeb() {
             try {
-                showToast('Đang nén file sao lưu save game...');
-                const res = await fetch('/api/saves/backup', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({note: 'Web Backup'})
-                });
+                const res = await fetch('/api/saves/backup', {method: 'POST'});
                 const data = await res.json();
                 if (data.ok) {
-                    showToast('Đã tạo bản sao lưu save thành công!');
+                    showToast('Đã tạo bản sao lưu thành công!');
                     loadSavesData();
-                } else {
-                    alert('Lỗi: ' + (data.error || 'Không thể tạo sao lưu'));
                 }
-            } catch (e) {
-                alert('Lỗi mạng: ' + e);
-            }
+            } catch (e) { alert('Lỗi: ' + e); }
         }
 
-        async function restoreSaveBackupWeb(filename) {
-            if (!confirm(`Bạn có chắc muốn khôi phục bản sao lưu "${filename}" về thẻ nhớ?`)) return;
+        async function restoreSaveBackupWeb(fn) {
+            if (!confirm(`Khôi phục dữ liệu từ bản sao lưu "${fn}"?`)) return;
             try {
-                showToast('Đang khôi phục save game...');
                 const res = await fetch('/api/saves/restore', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({filename: filename})
+                    body: JSON.stringify({filename: fn})
                 });
                 const data = await res.json();
-                if (data.ok) {
-                    showToast(data.message || 'Đã khôi phục save thành công!');
-                } else {
-                    alert('Lỗi: ' + (data.error || 'Không thể khôi phục'));
-                }
-            } catch (e) {
-                alert('Lỗi mạng: ' + e);
-            }
+                if (data.ok) showToast(data.message || 'Khôi phục thành công!');
+                else alert('Lỗi: ' + data.error);
+            } catch (e) { alert('Lỗi: ' + e); }
         }
 
-        async function deleteSaveBackupWeb(filename) {
-            if (!confirm(`Xóa bản sao lưu "${filename}"?`)) return;
+        async function deleteSaveBackupWeb(fn) {
+            if (!confirm(`Xóa bản sao lưu "${fn}"?`)) return;
             try {
                 const res = await fetch('/api/saves/delete', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({filename: filename})
+                    body: JSON.stringify({filename: fn})
                 });
                 const data = await res.json();
-                if (data.ok) {
-                    showToast('Đã xóa bản sao lưu');
-                    loadSavesData();
-                }
-            } catch (e) {
-                alert('Lỗi mạng: ' + e);
-            }
+                if (data.ok) { showToast('Đã xóa bản sao lưu!'); loadSavesData(); }
+            } catch (e) { alert('Lỗi: ' + e); }
         }
 
         async function loadCheatsData() {
             try {
                 const res = await fetch('/api/cheats/status');
                 const data = await res.json();
-                if (data.ok) {
-                    const st = data.status || {};
-                    const runner = data.runner || {};
-                    const statusEl = document.getElementById('cheats-status-text');
-                    const progBox = document.getElementById('cheats-progress-box');
-
-                    if (st.installed) {
-                        statusEl.innerText = `Đã cài đặt: ${st.count} mã Cheat (.cht) trong RetroArch.`;
-                    } else {
-                        statusEl.innerText = 'Chưa có mã Cheat nào trên máy.';
-                    }
-
-                    if (runner.running) {
-                        progBox.style.display = 'block';
-                        document.getElementById('cheats-prog-pct').innerText = `${runner.progress_pct}%`;
-                        document.getElementById('cheats-prog-fill').style.width = `${runner.progress_pct}%`;
-                        document.getElementById('cheats-prog-status').innerText = runner.status_msg || 'Đang xử lý...';
-
-                        if (!cheatsPollTimer) {
-                            cheatsPollTimer = setInterval(loadCheatsData, 1000);
-                        }
-                    } else {
-                        progBox.style.display = 'none';
-                        if (cheatsPollTimer) {
-                            clearInterval(cheatsPollTimer);
-                            cheatsPollTimer = null;
-                        }
-                    }
+                if (data.ok && data.status) {
+                    document.getElementById('cheats-status-box').innerHTML = `Đã cài đặt: <strong>${data.status.installed_count}</strong> file cheat trên máy. Tổng kho Libretro: <strong>${data.status.total_available}</strong> game hỗ trợ cheat.`;
                 }
-            } catch (e) {
-                console.error('Error loading cheats:', e);
-            }
+            } catch (e) {}
         }
 
-        async function startCheatsDownloadWeb(mode = 'installed') {
+        async function downloadCheatsWeb(mode) {
             try {
-                const res = await fetch(`/api/cheats/download?mode=${encodeURIComponent(mode)}`, {
+                const res = await fetch('/api/cheats/download', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({mode: mode})
                 });
                 const data = await res.json();
-                showToast(data.message || 'Bắt đầu tải kho Cheat...');
-                loadCheatsData();
-            } catch (e) {
-                alert('Lỗi: ' + e);
-            }
-        }
-
-        async function downloadGameCheat(filename, sys) {
-            showToast('Đang kiểm tra Cheat cho ' + filename + '...');
-            try {
-                const res = await fetch('/api/cheats/single', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({filename: filename, system: sys})
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showToast(data.message || 'Game đã có file Cheat sẵn sàng!');
-                } else {
-                    if (confirm((data.message || 'Chưa có file Cheat.') + '\n\nBạn có muốn tải Cheat thông minh cho các game đang có ngay không?')) {
-                        startCheatsDownloadWeb('installed');
-                    }
-                }
-            } catch (e) {
-                alert('Lỗi: ' + e);
-            }
-        }
-
-        async function stopCheatsDownloadWeb() {
-            try {
-                await fetch('/api/cheats/stop', {method: 'POST'});
-                showToast('Đã dừng tải Cheat');
-                loadCheatsData();
-            } catch (e) {
-                alert('Lỗi: ' + e);
-            }
-        }
-
-        async function loadLogsData() {
-            try {
-                const res = await fetch('/api/logs/status');
-                const data = await res.json();
-                if (data.ok) {
-                    const devEl = document.getElementById('web-log-device-id');
-                    const sizeEl = document.getElementById('web-log-size');
-                    const badgeEl = document.getElementById('web-log-status-badge');
-                    const btnToggle = document.getElementById('btn-toggle-log-web');
-
-                    if (devEl) devEl.innerText = data.device_id || 'RH-0000';
-                    if (sizeEl) sizeEl.innerText = data.log_size || '0 B';
-
-                    if (data.enable_logging) {
-                        if (badgeEl) {
-                            badgeEl.innerText = 'ĐANG BẬT';
-                            badgeEl.style.color = '#10b981';
-                        }
-                        if (btnToggle) {
-                            btnToggle.innerText = 'Tắt ghi log';
-                            btnToggle.className = 'btn btn-sm btn-secondary';
-                        }
-                    } else {
-                        if (badgeEl) {
-                            badgeEl.innerText = 'ĐÃ TẮT';
-                            badgeEl.style.color = '#ef4444';
-                        }
-                        if (btnToggle) {
-                            btnToggle.innerText = 'Bật ghi log';
-                            btnToggle.className = 'btn btn-sm btn-green';
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error('Error loading logs data:', e);
-            }
-        }
-
-        async function toggleLoggingWeb() {
-            try {
-                const res = await fetch('/api/logs/toggle', {method: 'POST'});
-                const data = await res.json();
-                if (data.ok) {
-                    showToast(data.message || 'Đã thay đổi trạng thái ghi log');
-                    loadLogsData();
-                }
-            } catch (e) {
-                alert('Lỗi: ' + e);
-            }
-        }
-
-        async function clearLogWeb() {
-            if (!confirm('Bạn có chắc muốn làm sạch toàn bộ tệp nhật ký trên máy?')) return;
-            try {
-                const res = await fetch('/api/logs/clear', {method: 'POST'});
-                const data = await res.json();
-                if (data.ok) {
-                    showToast('Đã làm sạch nhật ký thành công!');
-                    loadLogsData();
-                }
-            } catch (e) {
-                alert('Lỗi: ' + e);
-            }
+                if (data.ok) showToast(data.message || 'Đang tải kho cheat...');
+            } catch (e) { alert('Lỗi: ' + e); }
         }
 
         async function sendLogTelegramWeb() {
-            const btn = document.getElementById('btn-send-log-tg');
-            const statusBox = document.getElementById('log-send-status-box');
-            const noteInput = document.getElementById('log-user-note');
-            const note = (noteInput ? noteInput.value : '').trim();
-
-            btn.disabled = true;
-            btn.innerText = 'Đang gửi nhật ký...';
-            statusBox.style.display = 'block';
-            statusBox.style.background = '#1e293b';
-            statusBox.style.color = '#38bdf8';
-            statusBox.style.border = '1px solid #0284c7';
-            statusBox.innerText = 'Đang đóng gói dữ liệu chẩn đoán và tải lên Telegram bot... Vui lòng đợi vài giây.';
-
             try {
-                const res = await fetch('/api/logs/send-telegram', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({note: note})
-                });
+                const res = await fetch('/api/logs/send-telegram', {method: 'POST'});
                 const data = await res.json();
-                if (data.ok) {
-                    statusBox.style.background = '#064e3b';
-                    statusBox.style.color = '#34d399';
-                    statusBox.style.border = '1px solid #059669';
-                    statusBox.innerText = (data.message || 'Đã gửi nhật ký thành công!');
-                    showToast('Gửi log lên Telegram thành công!');
-                } else {
-                    statusBox.style.background = '#450a0a';
-                    statusBox.style.color = '#f87171';
-                    statusBox.style.border = '1px solid #dc2626';
-                    statusBox.innerText = 'Lỗi: ' + (data.error || 'Không thể gửi log');
-                }
-            } catch (err) {
-                statusBox.style.background = '#450a0a';
-                statusBox.style.color = '#f87171';
-                statusBox.style.border = '1px solid #dc2626';
-                statusBox.innerText = 'Lỗi kết nối máy chủ: ' + err;
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'Gửi Log vào Telegram tác giả';
-            }
+                if (data.ok) showToast('Đã gửi nhật ký lên Telegram tác giả!');
+                else alert('Lỗi: ' + data.error);
+            } catch (e) { alert('Lỗi: ' + e); }
         }
 
+        // Khởi động trang web
+        loadStorageStatus();
         loadSystems();
     </script>
 </body>
 </html>
 """
 
+
 def run_server():
-    server_address = ("0.0.0.0", PORT)
-    httpd = ThreadedHTTPServer(server_address, GameWebHandler)
-    print(f"[*] RetroHub Web Game Manager running at http://0.0.0.0:{PORT}")
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        httpd.server_close()
+  server_address = ("0.0.0.0", PORT)
+  httpd = ThreadedHTTPServer(server_address, GameWebHandler)
+  print(f"[*] RetroHub Web Game Manager running at http://0.0.0.0:{PORT}")
+  try:
+    httpd.serve_forever()
+  except KeyboardInterrupt:
+    pass
+  finally:
+    httpd.server_close()
+
 
 if __name__ == "__main__":
-    run_server()
+  run_server()
