@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.24", "2026-09-16",
+     ("Auto-open Remote SSH Tunnel for Telegram & dynamically show sub-guides only when services are ON",
+      "Tự động mở SSH Internet Online khi gửi Telegram & chỉ hiển thị hướng dẫn khi dịch vụ tương ứng được BẬT"),
+     [("Dynamic Sub-Guide Visibility: Guide rows and sub-actions now only appear when their parent service is turned ON, keeping the dashboard clean and uncluttered.",
+       "Hiển thị hướng dẫn động theo trạng thái: Các mục hướng dẫn và thao tác con chỉ xuất hiện khi dịch vụ cha tương ứng được BẬT, giúp menu luôn gọn gàng và tinh tế."),
+      ("Auto Remote SSH Online Tunnel: When sending SSH info to Telegram, RetroHub now automatically establishes an online Internet tunnel (Pinggy) so you can SSH and SCP into the device from anywhere over the Internet.",
+       "Tự động mở SSH Internet khi gửi Telegram: Khi bấm gửi thông tin sang Telegram, RetroHub tự động khởi tạo đường hầm SSH Internet (Pinggy), cung cấp đầy đủ lệnh SSH và SCP từ xa qua Internet kèm IP nội mạng.")]),
+
     ("2.23", "2026-09-16",
      ("Service Dashboard & SSH Telegram enhancements (Comprehensive connection info sent to bot, clean menu hierarchy & Web Game Manager priority)",
       "Nâng cấp Quản lý Dịch vụ & Gửi thông tin SSH qua Telegram (Tổng hợp đầy đủ thông tin IP/SSH/Web Manager, tối ưu thứ tự & phân cấp menu)"),
