@@ -1,12 +1,12 @@
 {
-  "version": "2.17",
+  "version": "2.18",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-16T14:36:11+0700",
+  "built": "2026-09-16T17:16:03+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm",
-    "en": "Integrate full-featured OTA UpdateModal dialog, fix manual update check in Settings & optimize background self-updater"
+    "vi": "Sửa triệt để lỗi khởi động văng app (ImportError modals) & bổ sung cơ chế Tự động cứu hộ (Emergency Self-Healing)",
+    "en": "Fix startup crash on boot (ImportError modals) & introduce launcher Emergency Self-Healing auto-recovery"
   },
   "remove": [
     "app.pyc",
@@ -373,8 +373,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 8361,
-      "sha256": "6d2d9117c49e0716c4285ef7d2744f9e8860f51872039e933689d66f9f93d0ae"
+      "size": 9500,
+      "sha256": "decf7c94701a00dbe57c60c216e10ea8bc8177c7e74dab98455ab28cc6763045"
     },
     {
       "path": "led_daemon.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "b034acf892782ceff0d283eaf045f10f54b1b90d6d04724ac51ee96ad704a160"
+      "sha256": "1a7b68baa587b820672da05b35aecbc6cd609fa3866c94b3f9a5528568992a45"
     },
     {
       "path": "rh/yt.py",
