@@ -518,8 +518,8 @@
     },
     {
       "path": "rh/modals/__init__.py",
-      "size": 476,
-      "sha256": "6873a331619047b057ace3e2102e537981787c5d73f45f28f7d567aa9daf7895"
+      "size": 377,
+      "sha256": "e4a3a5e94287f980269a946c84636dc4bd8cedc8813ac977313e4cf6b6939a47"
     },
     {
       "path": "rh/modals/alphabet.py",
