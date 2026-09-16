@@ -24,6 +24,8 @@ from .ui.boxart import (SYS_BADGE, resolve_game_img_path,
 from .ui.toast import ToastManager
 from .inputs import InputManager
 from .downloader import dl_state, pop_notification
+from .updater import check_for_update
+from .modals.update import UpdateModal
 
 
 class RetroHubEngine:
@@ -64,6 +66,7 @@ class RetroHubEngine:
         self.screen_stack = []
         self.active_modal = None
         self.modal_stack = []
+        self.update_modal = UpdateModal(self)
 
         # Activity tracking
         self.last_user_activity_time = time.time()
@@ -300,6 +303,22 @@ class RetroHubEngine:
             if init_screen:
                 self.push_screen(init_screen)
         print(f"[DEBUG ENGINE] Screen stack: {self.screen_stack}, current: {self.current_screen_name}")
+
+        # Auto background update check
+        if getattr(state, "auto_update", True):
+            def _bg_auto_update_check():
+                import time as _t
+                _t.sleep(2.5)
+                try:
+                    found = check_for_update(force=False)
+                    if found and self.running:
+                        manifest, files = found
+                        self.open_modal(self.update_modal, {"manifest": manifest, "files": files})
+                except Exception as e:
+                    print(f"[ENGINE] Auto update check error: {e}")
+
+            import threading as _th
+            _th.Thread(target=_bg_auto_update_check, daemon=True).start()
 
         header_h = 64
         foot_h = 56

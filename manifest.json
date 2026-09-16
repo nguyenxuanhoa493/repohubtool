@@ -1,12 +1,12 @@
 {
-  "version": "2.16",
+  "version": "2.17",
   "full_release_version": "1.63",
   "python": "any",
-  "built": "2026-09-16T13:35:13+0700",
+  "built": "2026-09-16T14:36:11+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Nâng cấp Web Game Manager: Bổ sung 3 menu chính (Quản lý game, Tải game online từ kho 40.000+ ROMs về thẻ nhớ, Quản lý playlist và video yêu thích YouTube trực tuyến)",
-    "en": "Upgrade Web Game Manager: Added 3 main menus (Game Manager, Download Online Games directly to SD card from 40k+ catalog, and YouTube Playlist & Favorites Manager)"
+    "vi": "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm",
+    "en": "Integrate full-featured OTA UpdateModal dialog, fix manual update check in Settings & optimize background self-updater"
   },
   "remove": [
     "app.pyc",
@@ -443,8 +443,8 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 17452,
-      "sha256": "6495f147ccf8e5e6b0144f0e39db83cf4f024457c895fd5b8915794e6113f1ee"
+      "size": 18259,
+      "sha256": "96a4d36d08a50fe31a6704d369a4f040fde3f0c7eac7edd27f0f2ef71d62a90c"
     },
     {
       "path": "rh/env.py",
@@ -518,8 +518,8 @@
     },
     {
       "path": "rh/modals/__init__.py",
-      "size": 71,
-      "sha256": "b53779651f22eaa1f5c73cd0edab8f113eaab09358508f9aeb90562a0c0687c8"
+      "size": 476,
+      "sha256": "6873a331619047b057ace3e2102e537981787c5d73f45f28f7d567aa9daf7895"
     },
     {
       "path": "rh/modals/alphabet.py",
@@ -550,6 +550,11 @@
       "path": "rh/modals/netplay.py",
       "size": 20581,
       "sha256": "580e081674a1f13de14b35b1204586e2115fab4e27d3ec263e6ed7f071963133"
+    },
+    {
+      "path": "rh/modals/update.py",
+      "size": 9213,
+      "sha256": "ebb0a4ed070c0783b05879016e713dd1d157efdabbb3b87a27861460a40bb0f5"
     },
     {
       "path": "rh/neterrors.py",
@@ -613,8 +618,8 @@
     },
     {
       "path": "rh/screens/settings.py",
-      "size": 7273,
-      "sha256": "7ca05031a23cdd91bef21580b3431b7cc77dab01de540e29a9b1396eb6748987"
+      "size": 7568,
+      "sha256": "4cd72a390537290d3ffd5b4d5a5422dacfe4a95286f9bd4d026cd076149a7994"
     },
     {
       "path": "rh/screens/splash.py",
@@ -689,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "b8af4f554e1328b3cd32cce937250111e9cc56d4f1c28603d93aff7b42f1c6e2"
+      "sha256": "b034acf892782ceff0d283eaf045f10f54b1b90d6d04724ac51ee96ad704a160"
     },
     {
       "path": "rh/yt.py",
@@ -1087,6 +1092,6 @@
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
     }
   ],
-  "notes": "Nâng cấp Web Game Manager: Bổ sung 3 menu chính (Quản lý game, Tải game online từ kho 40.000+ ROMs về thẻ nhớ, Quản lý playlist và video yêu thích YouTube trực tuyến)",
-  "notes_en": "Upgrade Web Game Manager: Added 3 main menus (Game Manager, Download Online Games directly to SD card from 40k+ catalog, and YouTube Playlist & Favorites Manager)"
+  "notes": "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm",
+  "notes_en": "Integrate full-featured OTA UpdateModal dialog, fix manual update check in Settings & optimize background self-updater"
 }
