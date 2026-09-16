@@ -191,6 +191,9 @@ if [ "$1" = "--led-daemon" ]; then
     exec "$PY" led_daemon.py
 fi
 
+# Bao ve may khoi loi Kernel Panic khi tat man hinh lau (TrimUI deep suspend bug)
+touch /tmp/stay_alive 2>/dev/null
+
 while true; do
     rm -f /tmp/launch_game.sh
     "$PY" app.py 2>> "$ERRLOG"
@@ -199,6 +202,8 @@ while true; do
     if [ -f /tmp/launch_game.sh ]; then
         sh /tmp/launch_game.sh
         rm -f /tmp/launch_game.sh
+        # Giu cờ stay_alive khi quay lai app
+        touch /tmp/stay_alive 2>/dev/null
         # Don dep phong va tunnel Netplay sau khi thoat game
         if [ -f /tmp/netplay_info.json ] || [ -f /tmp/netplay_tunnel.pid ]; then
             "$PY" -c "from rh.netplay import stop_netplay_tunnel; stop_netplay_tunnel()" 2>/dev/null || true
@@ -230,6 +235,7 @@ while true; do
 done
 
 # Khi thoat han RetroHub ra he dieu hanh, huy phong va dong tunnel neu con ton tai
+rm -f /tmp/stay_alive 2>/dev/null
 if [ -f /tmp/netplay_info.json ] || [ -f /tmp/netplay_tunnel.pid ]; then
     "$PY" -c "from rh.netplay import stop_netplay_tunnel; stop_netplay_tunnel()" 2>/dev/null || true
     pkill -9 -f 'localhost:55435' 2>/dev/null || true

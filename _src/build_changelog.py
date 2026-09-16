@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.22", "2026-09-16",
+     ("Fix system crash & reboot when screen is turned off for a long time on TrimUI (Integrated stay_alive system flag)",
+      "Khắc phục triệt để lỗi sập/tự khởi động lại (Reboot) khi tắt màn hình lâu trên TrimUI (Tích hợp cơ chế cờ stay_alive bảo vệ Kernel)"),
+     [("Fix TrimUI Deep Suspend Kernel Panic: Resolved a critical firmware kernel crash where wake-up from Deep Suspend triggered I2C and Bluetooth interrupt panics on Allwinner A133+ chipsets.",
+       "Khắc phục lỗi Kernel Panic khi thức dậy: Xử lý triệt để sự cố xung đột ngắt phần cứng I2C và Bluetooth của nhân Linux TrimUI khi hệ thống thức dậy từ trạng thái ngủ sâu (Deep Suspend)."),
+      ("Integrated stay_alive Flag: RetroHub and emulator launchers now automatically manage the /tmp/stay_alive system flag, keeping the CPU in safe idle while fully powering off the screen backlight to save battery.",
+       "Tích hợp cờ hệ thống stay_alive: RetroHub cùng toàn bộ trình khởi chạy giả lập tự động duy trì cờ /tmp/stay_alive, giúp tắt đen màn hình tiết kiệm pin an toàn mà không rơi vào trạng thái ngủ sâu lỗi của kernel."),
+      ("Instant Wake-Up & Zero Reboot: Screen turns back on instantly upon pressing the Power button without any system reboot or lag.",
+       "Bật sáng tức thì & Chấm dứt Reboot: Màn hình sáng lại ngay lập tức khi nhấn phím nguồn, trải nghiệm mượt mà và chấm dứt 100% hiện tượng tự khởi động lại.")]),
+
     ("2.21", "2026-09-16",
      ("Web Game Manager: YouTube Playlist Import (Extract full video list from URL/ID, auto-create category & sync to RetroHub)",
       "Web Game Manager: Nhập trọn bộ Playlist YouTube từ liên kết (Trích xuất toàn bộ video, tự động tạo chủ đề và đồng bộ tức thì lên RetroHub)"),

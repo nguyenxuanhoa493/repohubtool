@@ -73,6 +73,13 @@ class RetroHubEngine:
 
     def init_sdl(self):
         """Initialize SDL2 subsystems, window, renderer, and controllers."""
+        # Bao ve chong loi crash/reboot do deep suspend tren TrimUI
+        try:
+            with open("/tmp/stay_alive", "w") as f:
+                pass
+        except Exception:
+            pass
+
         sdl2.SDL_SetHint(b"SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", b"1")
         sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK | sdl2.SDL_INIT_GAMECONTROLLER)
         sdlttf.TTF_Init()
@@ -439,3 +446,8 @@ class RetroHubEngine:
         if self.window:
             sdl2.SDL_DestroyWindow(self.window)
         sdl2.SDL_Quit()
+        try:
+            if os.path.exists("/tmp/stay_alive"):
+                os.remove("/tmp/stay_alive")
+        except Exception:
+            pass

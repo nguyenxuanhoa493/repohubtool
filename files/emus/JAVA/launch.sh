@@ -115,9 +115,11 @@ case "$ROM_PATH" in
         ;;
 esac
 
+touch /tmp/stay_alive 2>/dev/null
 echo "Executing FreeJ2ME: ./java -jar freej2me-sdl.jar \"$RUN_JAR\" $W $H 100"
 /mnt/SDCARD/Emus/JAVA/zulu17/bin/java -jar /mnt/SDCARD/Emus/JAVA/zulu17/bin/freej2me-sdl.jar "$RUN_JAR" "$W" "$H" 100
 GAME_EXIT_CODE=$?
+rm -f /tmp/stay_alive 2>/dev/null
 
 # Post-game safe sync: write user saves and configs back to persistent storage and SD card
 echo "Game exited with code $GAME_EXIT_CODE. Performing safe save game persistence..."
