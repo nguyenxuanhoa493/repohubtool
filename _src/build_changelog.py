@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.26", "2026-09-16",
+     ("Redesign Full-Screen Update Modal with rich release details, smooth scrolling & unified i18n review",
+      "Tái thiết kế Modal Cập nhật dạng Toàn màn hình (Full-Screen) hiển thị chi tiết nội dung, cuộn mượt mà & chuẩn hóa i18n"),
+     [("Full-Screen OTA Update Dashboard: Redesigned the update dialog into a spacious full-screen layout with version comparison tags, download size summary, release timestamp, and safety protection notice.",
+       "Giao diện Cập nhật Toàn màn hình: Tái thiết kế Modal cập nhật sang dạng bảng điều khiển toàn màn hình hiện đại, chia cột thông tin phiên bản, dung lượng tải, thời gian phát hành và ghi chú bảo vệ dữ liệu."),
+      ("Scrollable Changelog & Dynamic Progress: Integrated D-pad [▲▼] scrolling for long release notes, stylish bullet highlights, and a real-time progress bar during download and installation.",
+       "Cuộn nội dung nâng cấp & Thanh tiến trình động: Hỗ trợ phím điều hướng [▲▼] cuộn đọc toàn bộ ghi chú cập nhật dài, nổi bật các điểm mới và hiển thị thanh tiến trình cài đặt trực quan."),
+      ("Unified UI i18n Review: Cleaned up and standardized all interface titles, modal headers, and localization strings across screens and dialogs.",
+       "Chuẩn hóa toàn bộ UI và Đa ngôn ngữ: Rà soát và chuẩn hóa 100% tiêu đề bảng hướng dẫn, modal và chuỗi ngôn ngữ trên toàn bộ các màn hình.")]),
+
     ("2.25", "2026-09-16",
      ("Fix OTA Update restart freeze (Auto-exit & restart RetroHub seamlessly after installation finishes)",
       "Khắc phục triệt để hiện tượng treo màn hình 'Installed. Restarting' sau khi cập nhật OTA (Tự động khởi động lại liền mạch)"),

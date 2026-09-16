@@ -422,15 +422,19 @@ TEXTS = {
         # Missing Network Keys
         "net_ssh_toggle": "SSH Server (OpenSSH, cổng 22)",
         "net_ssh_guide": "   - Hướng dẫn kết nối SSH",
+        "net_ssh_guide_title": "HƯỚNG DẪN KẾT NỐI SSH",
         "net_ssh_telegram": "   - Gửi thông tin SSH qua Telegram",
         "net_sftp_toggle": "SFTP Server (Truyền file / Web)",
         "net_sftp_guide": "   - Hướng dẫn kết nối SFTP",
+        "net_sftp_guide_title": "HƯỚNG DẪN SFTPGO",
         "net_adb_toggle": "USB ADB Debug (Cổng 5037)",
         "net_mtp_toggle": "USB MTP (Truyền file qua cáp Type-C)",
         "net_stream_toggle": "Stream màn hình (Web / OBS / Quay video)",
         "net_stream_guide": "   - Hướng dẫn xem Stream màn hình",
+        "net_stream_guide_title": "HƯỚNG DẪN STREAMING",
         "net_gameweb_toggle": "Quản lý Game qua Web (Cổng 8090)",
         "net_gameweb_guide": "   - Hướng dẫn Quản lý Game qua Web",
+        "net_gameweb_guide_title": "HƯỚNG DẪN GAMEWEB 8090",
 
         # Missing Settings Keys
         "set_title": "CÀI ĐẶT HỆ THỐNG",
@@ -892,15 +896,19 @@ TEXTS = {
         # Missing Network Keys
         "net_ssh_toggle": "SSH Server (OpenSSH, port 22)",
         "net_ssh_guide": "   - SSH Connection Guide",
+        "net_ssh_guide_title": "SSH CONNECTION GUIDE",
         "net_ssh_telegram": "   - Send SSH Info to Telegram",
         "net_sftp_toggle": "SFTP Server (File Transfer / Web)",
         "net_sftp_guide": "   - SFTP Connection Guide",
+        "net_sftp_guide_title": "SFTPGO CONNECTION GUIDE",
         "net_adb_toggle": "USB ADB Debug (Port 5037)",
         "net_mtp_toggle": "USB MTP (File Transfer via Type-C)",
         "net_stream_toggle": "Screen Streamer (Web / OBS / Record)",
         "net_stream_guide": "   - Screen Streaming Guide",
+        "net_stream_guide_title": "SCREEN STREAMING GUIDE",
         "net_gameweb_toggle": "Web Game Manager (Port 8090)",
         "net_gameweb_guide": "   - Web Game Manager Guide",
+        "net_gameweb_guide_title": "WEB GAME MANAGER (8090) GUIDE",
 
         # Missing Settings Keys
         "set_title": "SYSTEM SETTINGS",
