@@ -2,7 +2,7 @@
   "version": "2.19",
   "full_release_version": "2.19",
   "python": "any",
-  "built": "2026-09-16T17:51:38+0700",
+  "built": "2026-09-16T18:07:20+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa triệt để lỗi văng app khi vào Sảnh game (Netplay), tối ưu nạp danh sách phòng Cloudflare & tự động khởi chạy game độc lập",
@@ -688,8 +688,8 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 26294,
-      "sha256": "e25c5410579e536604bf131c1120c213e3e5ed83d7caa99efafea930e67d03b6"
+      "size": 26655,
+      "sha256": "6c4a63a1c61e957af830680869162a8939c7476e1721cc54ff876595b15a2426"
     },
     {
       "path": "rh/version.py",

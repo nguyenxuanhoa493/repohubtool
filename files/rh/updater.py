@@ -98,26 +98,32 @@ def base_url():
 def candidate_base_urls(rel_path=""):
     """Danh sach base URL de thu theo thu tu uu tien (jsDelivr CDN -> ghproxy -> GitHub Raw).
 
-    Neu rel_path thuoc cac kieu file bi CDN chan (nhu .jar, .zip), se bo qua jsDelivr
-    de tranh loi 403 va chuyen thang sang mirror ho tro file lon/nhi phan.
+    Voi manifest.json va cac file metadata json, luon uu tien lay truc tiep tu GHProxy & GitHub Raw
+    de tranh bi tinh trang CDN cache cu khien khong nhan dien duoc ban cap nhat moi nhat.
     """
     custom = (getattr(state, "update_url", "") or "").rstrip("/")
     if custom:
         candidates = []
-        if "raw.githubusercontent.com" in custom and not rel_path.lower().endswith(CDN_EXCLUDED_EXTS):
-            parts = custom.replace("https://raw.githubusercontent.com/", "").strip("/").split("/", 2)
-            if len(parts) == 3:
-                candidates.append("https://cdn.jsdelivr.net/gh/%s/%s@%s" % (parts[0], parts[1], parts[2]))
         if "raw.githubusercontent.com" in custom:
+            candidates.append(custom)
             candidates.append("https://ghproxy.net/" + custom)
-        candidates.append(custom)
+            if not rel_path.lower().endswith(CDN_EXCLUDED_EXTS) and "manifest" not in rel_path.lower():
+                parts = custom.replace("https://raw.githubusercontent.com/", "").strip("/").split("/", 2)
+                if len(parts) == 3:
+                    candidates.append("https://cdn.jsdelivr.net/gh/%s/%s@%s" % (parts[0], parts[1], parts[2]))
+        else:
+            candidates.append(custom)
         return candidates
 
     candidates = []
-    if not rel_path.lower().endswith(CDN_EXCLUDED_EXTS):
+    # Uu tien GHProxy va GitHub Raw cho manifest.json de lay thong tin cap nhat real-time
+    if rel_path.lower().endswith(CDN_EXCLUDED_EXTS) or "manifest" in rel_path.lower() or rel_path.lower().endswith(".json"):
+        candidates.append(GHPROXY_BASE_URL)
+        candidates.append(UPDATE_BASE_URL)
+    else:
         candidates.append(CDN_BASE_URL)
-    candidates.append(GHPROXY_BASE_URL)
-    candidates.append(UPDATE_BASE_URL)
+        candidates.append(GHPROXY_BASE_URL)
+        candidates.append(UPDATE_BASE_URL)
     return candidates
 
 
