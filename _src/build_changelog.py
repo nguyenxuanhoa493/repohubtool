@@ -26,6 +26,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.25", "2026-09-16",
+     ("Fix OTA Update restart freeze (Auto-exit & restart RetroHub seamlessly after installation finishes)",
+      "Khắc phục triệt để hiện tượng treo màn hình 'Installed. Restarting' sau khi cập nhật OTA (Tự động khởi động lại liền mạch)"),
+     [("Seamless OTA Auto-Restart: Resolved the issue where UpdateModal paused indefinitely on 'Installed. Restarting...'. The engine now automatically exits smoothly after 1.2s, allowing launch.sh to immediately restart RetroHub with the new build.",
+       "Tự động khởi động lại sau cập nhật OTA: Khắc phục sự cố UpdateModal dừng vô hạn ở thông báo 'Đã cài đặt. Đang khởi động lại...'. Ứng dụng tự động thoát và bàn giao cho launch.sh khởi động lại phiên bản mới ngay lập tức mà không cần người dùng phải bấm thêm phím.")]),
+
     ("2.24", "2026-09-16",
      ("Auto-open Remote SSH Tunnel for Telegram & dynamically show sub-guides only when services are ON",
       "Tự động mở SSH Internet Online khi gửi Telegram & chỉ hiển thị hướng dẫn khi dịch vụ tương ứng được BẬT"),
