@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.32", "2026-09-17",
+     ("Multi-layer Secret Obfuscation for Telegram & AI Keys, added Secret Management CLI utility",
+      "Bảo mật & Mã hóa đa tầng Token/AI Key trong toàn bộ ứng dụng, bổ sung công cụ quản lý Secret"),
+     [("Multi-layer Secret Key Obfuscation: Implemented symmetric multi-stage encryption (cyclic Salt XOR + Byte Inversion + Base85) in rh.security, completely eliminating hardcoded plaintext Telegram tokens across netplay, services, logger, and OTA modules.",
+       "Bảo mật & Mã hóa đa tầng Secret Key: Tích hợp module mã hóa đa tầng (XOR Salt tuần hoàn + Đảo mảng byte + Base85) trong rh.security, loại bỏ hoàn toàn các chuỗi plaintext token nhạy cảm trong toàn bộ codebase (netplay, services, logger, OTA)."),
+      ("Secret Management & AI Key Integration: Created rh.secrets with lazy RAM decryption for Telegram tokens and dynamic AI API keys (Gemini, OpenAI, Groq), preventing memory inspection and unauthorized token extraction.",
+       "Quản lý Secret & Sẵn sàng tích hợp AI Key: Xây dựng module rh.secrets với cơ chế giải mã tức thời trên RAM khi cần dùng, hỗ trợ cấu hình nhanh API Key cho các mô hình AI mà không để lộ khóa bí mật."),
+      ("CLI Secret Encryption Utility: Added _src/encrypt_secret.py to quickly encode and embed new API credentials and secrets from the terminal.",
+       "Tiện ích CLI mã hóa Secret: Bổ sung công cụ dòng lệnh _src/encrypt_secret.py giúp mã hóa và gắn khóa API / token mới một cách an toàn và nhanh chóng.")]),
+
     ("2.31", "2026-09-17",
      ("Side-by-side Boot Splash Manager & Live Preview, Save Game Backup & Restore, Boxart Scraper Modal, SSH Telegram Confirm Modal",
       "Nâng cấp Đổi ảnh khởi động Side-by-Side & Live Preview, Quản lý Sao lưu Save Game, Modal Cào Boxart, Modal xác nhận SSH Telegram"),

@@ -1,12 +1,12 @@
 {
-  "version": "2.31",
-  "full_release_version": "2.31",
+  "version": "2.32",
+  "full_release_version": "2.32",
   "python": "any",
-  "built": "2026-09-17T21:38:00+0700",
+  "built": "2026-09-17T22:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Nâng cấp Đổi ảnh khởi động Side-by-Side & Live Preview, Quản lý Sao lưu Save Game, Modal Cào Boxart, Modal xác nhận SSH Telegram",
-    "en": "Side-by-side Boot Splash Manager & Live Preview, Save Game Backup & Restore, Boxart Scraper Modal, SSH Telegram Confirm Modal"
+    "vi": "Bảo mật & Mã hóa đa tầng Token/AI Key trong toàn bộ ứng dụng, bổ sung công cụ quản lý Secret",
+    "en": "Multi-layer Secret Obfuscation for Telegram & AI Keys, added Secret Management CLI utility"
   },
   "remove": [
     "app.pyc",
@@ -508,8 +508,8 @@
     },
     {
       "path": "rh/logger.py",
-      "size": 35827,
-      "sha256": "e83f47d6568d35f2d976a2b7b88f6ec1b67ef20af30dbd5dc07f5a478903298f"
+      "size": 35817,
+      "sha256": "ef4a409fd8fb09707c85dc6214d59a8334938a7e7373c01add9095f1e33a4731"
     },
     {
       "path": "rh/media.py",
@@ -563,8 +563,8 @@
     },
     {
       "path": "rh/netplay.py",
-      "size": 13475,
-      "sha256": "8026dcc259e3dbe109d6365cfe069e8f5a0708549cd38ad99ad9fcf35efeb896"
+      "size": 13489,
+      "sha256": "8617ce2695b18ba2c68c9bea667cfdb8220fec082a51ca7567e777ddfedf8e86"
     },
     {
       "path": "rh/paths.py",
@@ -642,9 +642,19 @@
       "sha256": "76041f496d9674f81b2781ee978e5571ab12007348a2ddaad4d47ca25925d847"
     },
     {
+      "path": "rh/secrets.py",
+      "size": 629,
+      "sha256": "e54c8a2f9cbc67aed74a7197bd6678d67e590bada3664b7022ac5e4ed2c53221"
+    },
+    {
+      "path": "rh/security.py",
+      "size": 1222,
+      "sha256": "6282b96bc6de27107bdf7f93deca4417e962cefefb0d70e036b68f1c06a103ad"
+    },
+    {
       "path": "rh/services.py",
-      "size": 25491,
-      "sha256": "5ff5ecea8680f19096cdb8c79c418224ab4864575da3a246938ca0dd5367827e"
+      "size": 25477,
+      "sha256": "1b5e08439c14754cbfc548257331b025f4568e64ee98505405910a4f169d5d91"
     },
     {
       "path": "rh/splash.py",
@@ -694,7 +704,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "b679dc4bfcad2cbc0ac8d429d7901ed60dc728c7c7ea6b388ba00150942271c5"
+      "sha256": "3415c6e15e65a241b10112a83322c41574bdc9bb7debe2662a64dbea836c0296"
     },
     {
       "path": "rh/yt.py",

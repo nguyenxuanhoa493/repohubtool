@@ -5,10 +5,13 @@
 import os
 import json
 import ssl
+import sys
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
+sys.path.insert(0, os.path.join(ROOT, "files"))
+from rh.secrets import get_telegram_token
+
 TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
 
 def send_ota_notification(version=None, note_vi=None):
@@ -40,7 +43,8 @@ def send_ota_notification(version=None, note_vi=None):
     ]
     text = "\n".join(msg_lines)
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    token = get_telegram_token()
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         "chat_id": TELEGRAM_GROUP_CHAT_ID,
         "text": text,

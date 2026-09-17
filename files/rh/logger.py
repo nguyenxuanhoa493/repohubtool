@@ -27,8 +27,8 @@ except Exception:
     _SSL_CONTEXT = None
 
 from .paths import SDCARD_PATH, is_nextui
+from .secrets import get_telegram_token
 
-TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
 TELEGRAM_CHAT_ID = "663642384"
 
 LOG_DIR = os.path.join(SDCARD_PATH, "RetroHub", "logs")
@@ -879,7 +879,8 @@ def upload_log_to_telegram(note=""):
 
     body.extend(f"--{boundary}--\r\n".encode("utf-8"))
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
+    token = get_telegram_token()
+    url = f"https://api.telegram.org/bot{token}/sendDocument"
     req = urllib.request.Request(
         url,
         data=bytes(body),
