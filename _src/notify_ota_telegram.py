@@ -29,9 +29,8 @@ def send_ota_notification(version=None, note_vi=None):
         f"🚀 <b>[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)</b>",
         "",
         "✨ <b>Điểm mới & Tối ưu nổi bật:</b>",
-        "• 🔍 <b>Sửa lỗi Tìm kiếm Game Online:</b> Kết nối trực tiếp SQLite DAO FTS, hỗ trợ tìm kiếm đa từ khóa thông minh (multi-word AND), hiển thị mã hệ máy và chuẩn hóa nút Quay lại.",
-        "• 🖼️ <b>Tối ưu Cào ảnh bìa (Boxart):</b> Khắc phục lỗi tương thích tham số và unpack tuple trong Modal hành động khi bấm Tải bìa, kèm thông báo Toast thời gian thực.",
-        "• 📦 <b>Tự động Cào ảnh bù & Trích xuất Icon Java:</b> Tự động cào ảnh bìa fallback khi link gốc bị lỗi/placeholder và tự động trích xuất icon gốc từ file .jar của game Java J2ME.",
+        "• 💡 <b>Sửa lỗi văng app khi chọn Danh hiệu ứng LED:</b> Khắc phục triệt để sự cố crash ứng dụng khi vào Tiện ích ➔ Đèn LED ➔ Chọn bộ màu / danh hiệu ứng.",
+        "• ⚙️ <b>Đồng bộ trạng thái Daemon đèn LED:</b> Tự động kiểm chuẩn trạng thái tiến trình nền của đèn LED khi mở màn hình cài đặt, đảm bảo công tắc Bật/Tắt luôn hiển thị chính xác.",
         "",
         "📲 <b>Cách cập nhật:</b>",
         "Bật Wi-Fi trên máy cầm tay ➔ Mở <b>RetroHub</b> ➔ Ứng dụng sẽ tự động phát hiện và cập nhật tệp mới nhất!"

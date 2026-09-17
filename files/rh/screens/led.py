@@ -20,6 +20,7 @@ class LedScreen(BaseScreen):
 
     def on_enter(self, params=None):
         self.led_cfg = ledconf.load()
+        self.led_cfg = ledctl.reconcile(self.led_cfg)
         self.show_main()
 
     def show_main(self):

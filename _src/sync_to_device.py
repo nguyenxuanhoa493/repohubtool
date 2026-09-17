@@ -20,6 +20,7 @@ TARGET_FILES = [
     ("rh/updater.py", "rh/updater.py"),
     ("db.py", "db.py"),
     ("app.py", "app.py"),
+    ("led_daemon.py", "led_daemon.py"),
     ("gameweb.py", "gameweb.py"),
     ("launch.sh", "launch.sh"),
     ("../manifest.json", "manifest.json"),

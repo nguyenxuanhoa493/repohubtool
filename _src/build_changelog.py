@@ -26,6 +26,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.30", "2026-09-17",
+     ("Fix app crash when opening LED Effect / Theme selector, Synchronize LED daemon running state",
+      "Sửa lỗi văng app khi chọn Danh hiệu ứng đèn LED, Đồng bộ trạng thái Daemon đèn LED"),
+     [("Fix LED Effect & Theme Selector Crash: Resolved missing THEME_ORDER attribute error in rh.ledthemes that caused app crash when entering LED effect picker from Utilities > LED Lights.",
+       "Sửa lỗi văng app khi chọn Danh hiệu ứng đèn LED: Bổ sung định nghĩa THEME_ORDER trong rh.ledthemes, khắc phục hoàn toàn lỗi văng ứng dụng khi bấm chọn đổi bộ màu / danh hiệu ứng đèn LED."),
+      ("State Synchronization for LED Daemon: Integrated ledctl.reconcile on LED screen entry to ensure UI toggle state strictly mirrors background daemon process status.",
+       "Đồng bộ trạng thái Daemon đèn LED: Tự động kiểm chuẩn trạng thái tiến trình nền của đèn LED khi mở màn hình cài đặt, đảm bảo công tác Bật/Tắt luôn phản ánh chính xác trạng thái thực tế.")]),
+
     ("2.29", "2026-09-17",
      ("Fix Online Game Search (SQLite FTS), Optimize Boxart Download & Scraping Fallback, Auto-extract Java J2ME icons",
       "Sửa lỗi Tìm kiếm Game Online (FTS SQLite), Tối ưu Download & Cào Boxart ảnh bìa, Tự động trích xuất icon Java J2ME"),
