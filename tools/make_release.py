@@ -139,16 +139,17 @@ def step_4_package_dist():
 
     make_zip(os.path.join(dist_dir, f"RetroHub-{ver}-full.zip"), "Apps/RetroHub")
     make_zip(os.path.join(dist_dir, f"RetroHub-{ver}.zip"), "Apps/RetroHub")
-    make_zip(os.path.join(dist_dir, "RetroHub-HOTFIX.zip"), "Apps/RetroHub")
     make_zip(os.path.join(dist_dir, f"RetroHub-{ver}-NextUI.zip"), "Tools/tg5040/RetroHub.pak")
     make_zip(os.path.join(dist_dir, "RetroHub.pak.zip"), "Tools/tg5040/RetroHub.pak")
-    print("  -> Da tao day du cac goi zip: full, NextUI, HOTFIX.")
+    print("  -> Da tao day du cac goi zip: full, NextUI.")
 
 
 def step_5_build_site():
     print("[5/5] Cap nhat HTML landing page & changelog...")
     os.system(f"python3 {os.path.join(ROOT, '_src', 'build.py')}")
     os.system(f"python3 {os.path.join(ROOT, '_src', 'build_changelog.py')}")
+    os.system(f"python3 {os.path.join(ROOT, '_src', 'build_guide.py')}")
+    os.system(f"python3 {os.path.join(ROOT, '_src', 'build_java.py')}")
     print("  -> Hoan tat build site HTML!")
 
 
