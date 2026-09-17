@@ -82,6 +82,13 @@ try:
         uninstall_theme,
         get_theme_preview_path,
     )
+    from rh.icon_manager import (
+        load_icons_catalog,
+        install_icon_pack,
+        restore_stock_icons,
+        get_icon_preview_path,
+        has_stock_backup,
+    )
     import db
 except ImportError:
     # Standalone mock fallbacks
@@ -92,11 +99,23 @@ except ImportError:
             uninstall_theme,
             get_theme_preview_path,
         )
+        from rh.icon_manager import (
+            load_icons_catalog,
+            install_icon_pack,
+            restore_stock_icons,
+            get_icon_preview_path,
+            has_stock_backup,
+        )
     except Exception:
         def load_themes_catalog(): return []
         def install_theme(t): return False, "Not supported"
         def uninstall_theme(t): return False, "Not supported"
         def get_theme_preview_path(t): return None
+        def load_icons_catalog(): return []
+        def install_icon_pack(t): return False, "Not supported"
+        def restore_stock_icons(): return False, "Not supported"
+        def get_icon_preview_path(t): return None
+        def has_stock_backup(): return False
     SDCARD_PATH = os.environ.get("SDCARD_PATH") or (
         "/mnt/SDCARD"
         if os.path.isdir("/mnt/SDCARD")
@@ -894,6 +913,32 @@ class GameWebHandler(BaseHTTPRequestHandler):
       self.end_headers()
       return
 
+    if path == "/api/icons":
+      icons = load_icons_catalog()
+      self.send_json({"ok": True, "icons": icons, "total": len(icons), "has_backup": has_stock_backup()})
+      return
+
+    if path == "/api/icons/preview":
+      name = query.get("name", [""])[0] or query.get("folder", [""])[0]
+      if name:
+        prev_p = get_icon_preview_path(name)
+        if prev_p and os.path.isfile(prev_p):
+          try:
+            with open(prev_p, "rb") as pf:
+              img_data = pf.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.send_header("Content-Length", str(len(img_data)))
+            self.end_headers()
+            self.wfile.write(img_data)
+            return
+          except Exception as e:
+            print(f"Error streaming icon preview: {e}")
+      self.send_response(404)
+      self.end_headers()
+      return
+
     if path == "/api/saves":
       self.send_json({
           "ok": True,
@@ -1272,6 +1317,35 @@ class GameWebHandler(BaseHTTPRequestHandler):
           self.send_json({"ok": False, "error": "Thiếu tên thư mục theme!"}, 400)
           return
         ok, msg = uninstall_theme(folder)
+        if ok:
+          self.send_json({"ok": True, "message": msg})
+        else:
+          self.send_json({"ok": False, "error": msg}, 500)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/icons/install":
+      try:
+        payload = {}
+        if content_len > 0:
+          payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        folder = payload.get("folder") or payload.get("id") or query.get("folder", [""])[0]
+        if not folder:
+          self.send_json({"ok": False, "error": "Thiếu tên thư mục icon pack!"}, 400)
+          return
+        ok, msg = install_icon_pack({"folder": folder})
+        if ok:
+          self.send_json({"ok": True, "message": msg})
+        else:
+          self.send_json({"ok": False, "error": msg}, 500)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/icons/restore":
+      try:
+        ok, msg = restore_stock_icons()
         if ok:
           self.send_json({"ok": True, "message": msg})
         else:

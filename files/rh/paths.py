@@ -52,12 +52,14 @@ def get_roms_root():
                         return candidate
         except OSError:
             pass
+    return os.path.join(SDCARD_PATH, "Roms")
+
 ROMS_DIR = get_roms_root()
 IMGS_DIR = os.path.join(SDCARD_PATH, "Imgs")
 EMUS_DIR = os.path.join(SDCARD_PATH, "Emus")
 WEB_DIR = os.path.join(APP_DIR, "web")
 
-TEMP_DOWNLOAD_DIR = os.path.join(get_roms_root(), ".tmp_download")
+TEMP_DOWNLOAD_DIR = os.path.join(ROMS_DIR, ".tmp_download")
 STREAMER_SCRIPT = os.path.join(APP_DIR, "streamer.py")
 GAMEWEB_SCRIPT = os.path.join(APP_DIR, "gameweb.py")
 ASSETS_DIR = os.path.join(APP_DIR, "assets")
@@ -95,6 +97,30 @@ def _detect_themes_repo_dir():
     return os.path.join(SDCARD_PATH, "Themes_repo")
 
 LOCAL_THEMES_REPO_DIR = _detect_themes_repo_dir()
+
+# ------------------------------------------------------------------------------
+# Emu Icons Store & Backup Paths
+# ------------------------------------------------------------------------------
+EMU_THEME_DIR = os.path.join(EMUS_DIR, "_theme")
+EMU_THEMES_DIR = os.path.join(EMUS_DIR, "_themes")
+EMU_ICON_BACKUP_DIR = os.path.join(SDCARD_PATH, "System", "backup", "emu_icons_stock")
+EMU_ICON_BACKUP_MARKER = os.path.join(EMU_ICON_BACKUP_DIR, ".stock_icon_backup_done")
+ICONS_CATALOG_FILE = os.path.join(APP_DIR, "catalog", "icons_catalog.json")
+ACTIVE_ICON_PACK_FILE = os.path.join(SDCARD_PATH, "System", "etc", "active_icon_pack.json")
+
+def _detect_icons_repo_dir():
+    candidates = [
+        os.path.join(SDCARD_PATH, "EmuIcons_repo"),
+        os.path.join(APP_DIR, "EmuIcons"),
+        os.path.join(os.path.dirname(APP_DIR), "EmuIcons"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "EmuIcons"),
+    ]
+    for cand in candidates:
+        if os.path.isdir(cand):
+            return cand
+    return os.path.join(SDCARD_PATH, "EmuIcons_repo")
+
+LOCAL_ICONS_REPO_DIR = _detect_icons_repo_dir()
 
 
 
