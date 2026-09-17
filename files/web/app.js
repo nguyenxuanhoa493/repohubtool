@@ -353,6 +353,8 @@ let currentTab = 'games';
         }
 
         // ==================== TẢI GAME ONLINE (ROMS STORE) ====================
+        let storeSearchTimer = null;
+
         async function loadStoreInit() {
             try {
                 const res = await fetch('/api/store/categories');
@@ -370,25 +372,26 @@ let currentTab = 'games';
 
         function renderStoreSidebar() {
             const catList = document.getElementById('store-categories-list');
-            let htmlCat = '';
-            storeCategories.forEach(c => {
-                const active = (currentStoreCategory === c.id && currentStoreSystem === 'ALL') ? 'active' : '';
-                htmlCat += `<div class="sys-item ${active}" onclick="selectStoreCategory('${c.id}')">
-                    <span>${c.icon} ${c.name}</span>
-                </div>`;
-            });
-            catList.innerHTML = htmlCat;
+            if (catList) {
+                let htmlCat = '';
+                storeCategories.forEach(c => {
+                    const active = (currentStoreCategory === c.id) ? 'active' : '';
+                    htmlCat += `<div class="sys-item ${active}" onclick="selectStoreCategory('${c.id}')">
+                        <span>${c.icon || '📁'} ${c.name}</span>
+                    </div>`;
+                });
+                catList.innerHTML = htmlCat;
+            }
 
-            const sysList = document.getElementById('store-systems-list');
-            let htmlSys = '';
-            storeSystems.forEach(s => {
-                const active = (currentStoreSystem === s.code) ? 'active' : '';
-                htmlSys += `<div class="sys-item ${active}" onclick="selectStoreSystem('${s.code}')">
-                    <span>${s.name}</span>
-                    <span class="count">${s.count}</span>
-                </div>`;
-            });
-            sysList.innerHTML = htmlSys;
+            const sysFilter = document.getElementById('store-system-filter');
+            if (sysFilter && storeSystems.length) {
+                let opts = '<option value="ALL">Tất cả hệ máy</option>';
+                storeSystems.forEach(s => {
+                    const sel = (currentStoreSystem === s.code) ? 'selected' : '';
+                    opts += `<option value="${s.code}" ${sel}>${s.name} (${s.count})</option>`;
+                });
+                sysFilter.innerHTML = opts;
+            }
         }
 
         let currentStorePage = 1;
@@ -397,18 +400,23 @@ let currentTab = 'games';
 
         function selectStoreCategory(catId) {
             currentStoreCategory = catId;
-            currentStoreSystem = 'ALL';
-            document.getElementById('store-search-input').value = '';
+            const searchInput = document.getElementById('store-search-input');
+            if (searchInput) searchInput.value = '';
             renderStoreSidebar();
             resetAndLoadStore();
         }
 
-        function selectStoreSystem(sysCode) {
-            currentStoreSystem = sysCode;
-            currentStoreCategory = 'ALL';
-            document.getElementById('store-search-input').value = '';
-            renderStoreSidebar();
+        function changeStoreSystemFilter() {
+            const selectEl = document.getElementById('store-system-filter');
+            currentStoreSystem = selectEl ? selectEl.value : 'ALL';
             resetAndLoadStore();
+        }
+
+        function debounceStoreSearch() {
+            if (storeSearchTimer) clearTimeout(storeSearchTimer);
+            storeSearchTimer = setTimeout(() => {
+                resetAndLoadStore();
+            }, 300);
         }
 
         function executeStoreSearch() {
@@ -422,55 +430,35 @@ let currentTab = 'games';
             loadStoreGames(false);
         }
 
-        function loadMoreStoreGames() {
-            if (!isStoreLoading && storeHasMore) {
-                currentStorePage++;
-                loadStoreGames(true);
-            }
-        }
-
-        function handleStoreScroll(e) {
-            const el = e.target;
-            if (el.scrollHeight - el.scrollTop - el.clientHeight < 350) {
-                if (!isStoreLoading && storeHasMore) {
-                    currentStorePage++;
-                    loadStoreGames(true);
-                }
-            }
-        }
-
         async function loadStoreGames(isAppend = false) {
             if (isStoreLoading) return;
             isStoreLoading = true;
 
             const container = document.getElementById('store-games-container');
             const loading = document.getElementById('store-loading');
-            const loadingMore = document.getElementById('store-loading-more');
-            const emptyEl = document.getElementById('store-empty-state');
-            const loadMoreBtn = document.getElementById('store-load-more-btn-container');
+            const paginationEl = document.getElementById('store-pagination');
 
             if (!isAppend) {
-                container.innerHTML = '';
-                loading.style.display = 'block';
-                emptyEl.style.display = 'none';
-                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-            } else {
-                if (loadingMore) loadingMore.style.display = 'block';
-                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                if (container) container.innerHTML = '';
+                if (loading) loading.style.display = 'block';
+                if (paginationEl) paginationEl.innerHTML = '';
             }
 
-            const sort = document.getElementById('store-sort-select').value;
-            const q = document.getElementById('store-search-input').value.trim();
+            const sortSelect = document.getElementById('store-sort-select');
+            const sort = sortSelect ? sortSelect.value : 'downloads';
+            const searchInput = document.getElementById('store-search-input');
+            const q = searchInput ? searchInput.value.trim() : '';
+            const sysFilter = document.getElementById('store-system-filter');
+            const sys = sysFilter ? sysFilter.value : currentStoreSystem;
             const limit = 40;
 
-            let url = `/api/store/games?source_type=${currentStoreCategory}&system=${currentStoreSystem}&sort=${sort}&page=${currentStorePage}&limit=${limit}`;
+            let url = `/api/store/games?source_type=${encodeURIComponent(currentStoreCategory)}&system=${encodeURIComponent(sys)}&sort=${sort}&page=${currentStorePage}&limit=${limit}`;
             if (q) url += `&query=${encodeURIComponent(q)}`;
 
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                loading.style.display = 'none';
-                if (loadingMore) loadingMore.style.display = 'none';
+                if (loading) loading.style.display = 'none';
 
                 if (data.ok && data.games && data.games.length > 0) {
                     if (isAppend) {
@@ -480,33 +468,50 @@ let currentTab = 'games';
                         storeGames = data.games;
                         renderStoreGrid(storeGames, false);
                     }
-
-                    if (data.games.length < limit) {
-                        storeHasMore = false;
-                        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-                    } else {
-                        storeHasMore = true;
-                        if (loadMoreBtn) loadMoreBtn.style.display = 'block';
+                    if (paginationEl) {
+                        renderStorePagination(data.page || currentStorePage, data.games.length >= limit);
                     }
                 } else {
-                    storeHasMore = false;
-                    if (!isAppend) {
-                        emptyEl.style.display = 'block';
+                    if (!isAppend && container) {
+                        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px 20px; color:var(--text-sub);"><div style="font-size:36px; margin-bottom:10px;">🔍</div><div style="font-size:15px; font-weight:600; color:#fff;">Không tìm thấy game phù hợp</div><p style="font-size:12px; margin-top:6px;">Hãy thử tìm từ khóa khác (VD: Mario, Contra, Pokemon...)</p></div>';
                     }
-                    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                    if (paginationEl) paginationEl.innerHTML = '';
                 }
             } catch (e) {
-                loading.style.display = 'none';
-                if (loadingMore) loadingMore.style.display = 'none';
-                if (!isAppend) emptyEl.style.display = 'block';
-                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                console.error("loadStoreGames error:", e);
+                if (loading) loading.style.display = 'none';
+                if (!isAppend && container) {
+                    container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#ef4444;">Lỗi tải dữ liệu: ${e.message || e}</div>`;
+                }
             } finally {
                 isStoreLoading = false;
             }
         }
 
+        function renderStorePagination(currentPage, hasNext) {
+            const paginationEl = document.getElementById('store-pagination');
+            if (!paginationEl) return;
+            let html = '';
+            if (currentPage > 1) {
+                html += `<button class="btn btn-secondary" onclick="goToStorePage(${currentPage - 1})">⬅ Trang trước</button>`;
+            }
+            html += `<span style="display:flex; align-items:center; padding:0 12px; font-size:13px; font-weight:700; color:var(--text-sub);">Trang ${currentPage}</span>`;
+            if (hasNext) {
+                html += `<button class="btn btn-primary" onclick="goToStorePage(${currentPage + 1})">Trang sau ➡</button>`;
+            }
+            paginationEl.innerHTML = html;
+        }
+
+        function goToStorePage(page) {
+            currentStorePage = page;
+            loadStoreGames(false);
+            const mainEl = document.querySelector('#tab-view-store main');
+            if (mainEl) mainEl.scrollTop = 0;
+        }
+
         function renderStoreGrid(games, isAppend = false) {
             const container = document.getElementById('store-games-container');
+            if (!container) return;
             let html = '';
             games.forEach((g, idx) => {
                 const imgUrl = g.img_url ? `<img src="${g.img_url}" loading="lazy" alt="${g.title}">` : `<div style="font-size:32px;">🕹️</div>`;
@@ -580,8 +585,8 @@ let currentTab = 'games';
         }
 
         function startStoreDownloadPolling() {
-            const banner = document.getElementById('store-download-banner');
-            banner.style.display = 'block';
+            const banner = document.getElementById('store-active-downloads') || document.getElementById('store-download-banner');
+            if (banner) banner.style.display = 'block';
 
             if (storeDlInterval) clearInterval(storeDlInterval);
             storeDlInterval = setInterval(async () => {
@@ -589,47 +594,64 @@ let currentTab = 'games';
                     const res = await fetch('/api/store/download/status');
                     const data = await res.json();
                     if (data.ok && data.downloads && data.downloads.length > 0) {
-                        const active = data.downloads[data.downloads.length - 1];
-                        const pct = active.progress_pct || 0;
-                        document.getElementById('store-dl-title').innerText = `Đang tải: ${active.title} (${active.sys_code})`;
-                        document.getElementById('store-dl-pct').innerText = `${pct}%`;
-                        document.getElementById('store-dl-bar').style.width = `${pct}%`;
-                        
-                        let sizeInfo = '';
-                        if (active.total_bytes > 0) {
-                            const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
-                            const totMb = (active.total_bytes / (1024 * 1024)).toFixed(1);
-                            sizeInfo = ` (${curMb} / ${totMb} MB)`;
-                        } else if (active.downloaded_bytes > 0) {
-                            const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
-                            sizeInfo = ` (${curMb} MB)`;
-                        }
+                        const dlList = document.getElementById('store-dl-list');
+                        const speedEl = document.getElementById('store-dl-speed');
+                        let allDone = true;
+                        let html = '';
 
-                        document.getElementById('store-dl-speed').innerText = `Tốc độ: ${active.speed_str || '0 KB/s'}${sizeInfo}`;
-                        
-                        if (active.status === 'completed') {
-                            document.getElementById('store-dl-status').innerText = '✓ Đã tải xong và lưu vào thẻ nhớ!';
-                            document.getElementById('store-dl-status').style.color = '#34d399';
-                        } else if (active.status === 'error') {
-                            document.getElementById('store-dl-status').innerText = `❌ ${active.error_msg || 'Lỗi tải game'}`;
-                            document.getElementById('store-dl-status').style.color = '#f87171';
-                        } else {
-                            document.getElementById('store-dl-status').innerText = 'Đang nhận tệp...';
-                            document.getElementById('store-dl-status').style.color = 'var(--text-sub)';
-                        }
+                        data.downloads.forEach(active => {
+                            const pct = active.progress_pct || 0;
+                            let sizeInfo = '';
+                            if (active.total_bytes > 0) {
+                                const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
+                                const totMb = (active.total_bytes / (1024 * 1024)).toFixed(1);
+                                sizeInfo = ` (${curMb} / ${totMb} MB)`;
+                            } else if (active.downloaded_bytes > 0) {
+                                const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
+                                sizeInfo = ` (${curMb} MB)`;
+                            }
 
-                        if (active.status === 'completed' || active.status === 'error') {
+                            let statusText = 'Đang nhận tệp...';
+                            let statusColor = 'var(--text-sub)';
+                            if (active.status === 'completed') {
+                                statusText = '✓ Đã tải xong và lưu vào thẻ nhớ!';
+                                statusColor = '#34d399';
+                            } else if (active.status === 'error') {
+                                statusText = `❌ ${active.error_msg || 'Lỗi tải game'}`;
+                                statusColor = '#f87171';
+                            } else {
+                                allDone = false;
+                            }
+
+                            html += `<div style="margin-bottom:8px;">
+                                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                                    <span style="font-weight:700; color:#fff;">${active.title} (${active.sys_code})</span>
+                                    <span style="font-weight:700; color:#10b981;">${pct}%</span>
+                                </div>
+                                <div class="progress-bar-bg" style="height:6px; background:#1e293b; border-radius:4px; overflow:hidden; margin-bottom:4px;">
+                                    <div style="height:100%; width:${pct}%; background:linear-gradient(90deg, #10b981, #38bdf8); transition:width 0.2s;"></div>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:11px; color:${statusColor};">
+                                    <span>${statusText}</span>
+                                    <span>${active.speed_str || '0 KB/s'}${sizeInfo}</span>
+                                </div>
+                            </div>`;
+                        });
+
+                        if (dlList) dlList.innerHTML = html;
+
+                        if (allDone) {
                             clearInterval(storeDlInterval);
-                            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+                            setTimeout(() => { if (banner) banner.style.display = 'none'; }, 4000);
                             loadStoreGames(false);
-                            loadSystems();
+                            if (typeof loadSystems === 'function') loadSystems();
                         }
                     } else {
                         clearInterval(storeDlInterval);
-                        banner.style.display = 'none';
+                        if (banner) banner.style.display = 'none';
                     }
                 } catch (e) {}
-            }, 350);
+            }, 500);
         }
 
         // ==================== QUẢN LÝ YOUTUBE ====================

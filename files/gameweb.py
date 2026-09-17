@@ -1129,11 +1129,12 @@ class GameWebHandler(BaseHTTPRequestHandler):
       games = []
       try:
         if query_str:
+          eff_source = "ALL" if source_type in ("HITS", "ALL", "") else source_type
           games = db.search_games_fts(
               query_str,
               sys_code=sys_code,
               limit=limit,
-              source_type=source_type,
+              source_type=eff_source,
               offset=offset,
           )
         else:
