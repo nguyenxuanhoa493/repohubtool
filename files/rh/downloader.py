@@ -730,16 +730,32 @@ def start_download_thread(sys_code, game_info, background=False):
                 except Exception as e:
                     print(f"NAOMI/Atomiswave routing failed: {e}")
 
+            # Boxart download & fallback scraping
+            rom_base = os.path.splitext(os.path.basename(extracted_rom_path))[0]
+            target_img = os.path.join(img_dir, f"{rom_base}.png")
+            boxart_saved = False
+
             if is_real_boxart_url(img_url):
                 try:
-                    rom_base = os.path.splitext(os.path.basename(extracted_rom_path))[0]
-                    target_img = os.path.join(img_dir, f"{rom_base}.png")
                     img_req = urllib.request.Request(img_url, headers={"User-Agent": "Mozilla/5.0"})
                     with urllib.request.urlopen(img_req, context=ctx, timeout=15) as img_resp:
                         raw_img = img_resp.read()
-                        save_boxart_png(raw_img, target_img)
+                        if raw_img and save_boxart_png(raw_img, target_img):
+                            boxart_saved = True
                 except Exception as ie:
                     print(f"Boxart download exception: {ie}")
+
+            if not boxart_saved and not os.path.exists(target_img):
+                try:
+                    from .boxart_scraper import scrape_boxart_for_single_rom
+                    scrape_boxart_for_single_rom(
+                        target_sys,
+                        os.path.basename(extracted_rom_path),
+                        game_info.get("title", ""),
+                        extracted_rom_path
+                    )
+                except Exception as se:
+                    print(f"Boxart fallback scraping exception: {se}")
 
             dl_state["extracted_rom_path"] = extracted_rom_path
             # Report where the file actually landed. Rebuilding the path from

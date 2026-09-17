@@ -78,8 +78,14 @@
   .lang:hover{border-color:var(--accent-dim);color:var(--text);background:#14243d}
   .lang img{width:24px;height:16px;border-radius:3px;display:block}
 
-  header{padding:70px 0 52px;text-align:center;
+  header{padding:54px 0 52px;text-align:center;
     background:radial-gradient(900px 400px at 50% -140px,rgba(0,246,246,.16),transparent)}
+  .badge-hero{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;
+    background:rgba(0,246,246,.1);border:1px solid rgba(0,246,246,.38);color:var(--accent);
+    font-size:.86rem;font-weight:600;margin-bottom:20px;text-decoration:none;
+    transition:transform .18s,border-color .18s,background .18s;letter-spacing:.2px}
+  .badge-hero:hover{transform:translateY(-2px);background:rgba(0,246,246,.18);border-color:var(--accent)}
+  .badge-hero b{background:var(--accent);color:#04121b;padding:2px 8px;border-radius:999px;font-size:.76rem;font-weight:800}
   .logo{width:118px;height:118px;display:block;margin:0 auto;
     filter:drop-shadow(0 6px 22px rgba(0,246,246,.28));animation:float 5s ease-in-out infinite}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
@@ -97,8 +103,14 @@
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
+  .btn.hotfix{background:#ff9800;color:#120c00;border:1px solid #ffb74d}
+  .btn.hotfix:hover{background:#ffa726;filter:brightness(1.1);box-shadow:0 12px 28px rgba(255,152,0,.35)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
-  .sd-warn{margin:18px auto 0;max-width:760px;font-size:.88rem;color:#f4e3b8;
+  .hotfix-alert{margin:18px auto 0;max-width:760px;font-size:.9rem;color:#ffe0b2;
+    background:rgba(255,152,0,.12);border:1px solid rgba(255,152,0,.45);
+    border-radius:10px;padding:12px 18px;line-height:1.5;text-align:center}
+  .hotfix-alert b{color:#ffb74d}
+  .sd-warn{margin:12px auto 0;max-width:760px;font-size:.88rem;color:#f4e3b8;
     background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
     border-radius:10px;padding:10px 18px;line-height:1.5;text-align:center}
   .sd-warn b{color:var(--gold)}

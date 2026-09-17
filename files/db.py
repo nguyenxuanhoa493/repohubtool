@@ -10,8 +10,21 @@ def _find_db_path():
         "/mnt/SDCARD/RetroHub/catalog/roms_store.sqlite3",
     ]
     for p in candidates:
-        if os.path.isfile(p):
+        if os.path.isfile(p) and os.path.getsize(p) > 1000:
             return p
+    for p in candidates:
+        gz_p = p + ".gz"
+        if os.path.isfile(gz_p):
+            try:
+                import gzip
+                import shutil
+                print(f"[*] Extracting database from {gz_p}...")
+                with gzip.open(gz_p, "rb") as f_in, open(p, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                if os.path.isfile(p) and os.path.getsize(p) > 1000:
+                    return p
+            except Exception as e:
+                print(f"[-] Error extracting {gz_p}: {e}")
     return candidates[0]
 
 DB_PATH = _find_db_path()
@@ -406,10 +419,20 @@ def search_games_fts(query_str, sys_code="ALL", limit=100, source_type="ALL", of
     conn = get_db_connection()
     cursor = conn.cursor()
     clean_q = query_str.strip().replace("'", "").replace('"', '').strip()
-    like_term = f"%{clean_q}%"
-    
-    base_sql = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE (g.clean_title LIKE ? OR g.title LIKE ?)"
-    params = [like_term, like_term]
+    words = [w for w in clean_q.split() if w]
+    if not words:
+        conn.close()
+        return []
+
+    base_sql = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE "
+    where_clauses = []
+    params = []
+    for w in words:
+        term = f"%{w}%"
+        where_clauses.append("(g.clean_title LIKE ? OR g.title LIKE ? OR s.filename LIKE ?)")
+        params.extend([term, term, term])
+
+    base_sql += " AND ".join(where_clauses)
     if sys_code != "ALL":
         base_sql += " AND g.sys_code = ?"
         params.append(sys_code)
@@ -417,7 +440,7 @@ def search_games_fts(query_str, sys_code="ALL", limit=100, source_type="ALL", of
     base_sql += " ORDER BY g.download_count DESC, g.title ASC LIMIT ? OFFSET ?"
     params.append(limit)
     params.append(offset)
-    
+
     cursor.execute(base_sql, params)
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()

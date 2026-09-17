@@ -325,3 +325,31 @@ def get_games_for_view(src_code, sys_code, sort_by=None, category=None, **kwargs
         res.sort(key=lambda g: ((g.get("title") or "").strip().lower(), -int(g.get("download_count") or 0)))
 
     return res
+
+
+def search_catalog_games(query, sys_code="ALL", limit=200):
+    """Search online catalog games using SQLite DB with fallback to memory catalogs."""
+    if not query or not str(query).strip():
+        return []
+    clean_q = str(query).strip()
+    if db and os.path.exists(db.DB_PATH):
+        try:
+            return db.search_games_fts(clean_q, sys_code=sys_code, limit=limit)
+        except Exception as e:
+            print(f"DB search_games_fts error: {e}")
+
+    # Fallback to in-memory state.catalogs
+    q_lower = clean_q.lower()
+    results = []
+    for sc, sdata in state.catalogs.items():
+        if sys_code != "ALL" and sc != sys_code:
+            continue
+        for g in sdata.get("games", []):
+            if q_lower in g.get("_s_idx", ""):
+                g_copy = dict(g)
+                if "sys_code" not in g_copy:
+                    g_copy["sys_code"] = sc
+                results.append(g_copy)
+                if len(results) >= limit:
+                    return results
+    return results

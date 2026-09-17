@@ -8,7 +8,8 @@ from ..paths import SDCARD_PATH, resolve_rom_dir
 from ..i18n import tr
 from ..catalog import (get_source_systems_list, get_games_for_view, get_java_category_display_name,
                       get_java_category_list, get_system_display_name,
-                      scan_all_downloaded_games, alpha_index, clean_game_title)
+                      scan_all_downloaded_games, alpha_index, clean_game_title,
+                      search_catalog_games)
 from ..storage import human_bytes
 from ..ui.boxart import resolve_game_img_path
 from ..emulators import resolve as resolve_emulator
@@ -162,36 +163,32 @@ class StoreScreen(BaseScreen):
     def open_search_keyboard(self):
         def _on_search(query):
             self.search_query = query
-            if not query:
+            if not query or not query.strip():
                 return
             self.view_level = "search_results"
             self.selected_idx = 0
             self.scroll_top = 0
-            # Pre-indexed search in state.catalogs
-            q_lower = query.lower()
-            results = []
-            for sc, sdata in state.catalogs.items():
-                for g in sdata.get("games", []):
-                    if q_lower in g.get("_s_idx", ""):
-                        results.append((sc, g))
-                        if len(results) >= 200:
-                            break
+
+            results = search_catalog_games(query.strip(), limit=200)
 
             installed_games = scan_all_downloaded_games()
             installed_set = {(g.get("sys_code", "").upper(), g.get("filename", "").lower()) for g in installed_games}
             installed_bases = {(g.get("sys_code", "").upper(), os.path.splitext(g.get("filename", ""))[0].lower()) for g in installed_games}
 
             self.items = []
-            for sc, g in results:
+            for g in results:
+                sc = g.get("sys_code", "")
                 fn = g.get("filename", "")
                 sc_up = sc.upper()
                 fn_base = os.path.splitext(fn)[0].lower()
                 is_dl = (sc_up, fn.lower()) in installed_set or (sc_up, fn_base) in installed_bases
+                clean_title = clean_game_title(g.get("title", "Unknown"))
+                display_title = f"[{sc}] {clean_title}" if sc else clean_title
                 self.items.append({
-                    "id": f"sgame_{fn}",
+                    "id": f"sgame_{g.get('id', fn)}",
                     "game_info": g,
                     "sys_code": sc,
-                    "title": clean_game_title(g.get("title", "Unknown")),
+                    "title": display_title,
                     "downloaded": is_dl
                 })
             self.items.append({"id": "back", "title": tr("back_home")})
@@ -402,7 +399,7 @@ cd "{emu_dir or os.path.dirname(script_path)}"
             if it_id == "back":
                 if self.view_level == "games":
                     self.show_systems(self.current_source)
-                elif self.view_level == "systems":
+                elif self.view_level in ("systems", "java_cats", "search_results"):
                     self.show_menu()
                 else:
                     self.engine.pop_screen()

@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.29", "2026-09-17",
+     ("Fix Online Game Search (SQLite FTS), Optimize Boxart Download & Scraping Fallback, Auto-extract Java J2ME icons",
+      "Sửa lỗi Tìm kiếm Game Online (FTS SQLite), Tối ưu Download & Cào Boxart ảnh bìa, Tự động trích xuất icon Java J2ME"),
+     [("Fix Online Game Search: Restored real-time instant search in Store by routing queries directly to SQLite DAO (db.search_games_fts) instead of legacy empty catalogs dict. Enhanced query parsing to support multi-word AND search across game titles and filenames.",
+       "Sửa lỗi Tìm kiếm Game Online: Khắc phục triệt để lỗi tìm kiếm không ra kết quả trên màn hình Kho Game bằng cách kết nối trực tiếp cơ sở dữ liệu SQLite FTS (db.search_games_fts). Bổ sung thuật toán tách nhiều từ khóa (multi-word AND) bao phủ cả tiêu đề và tên tệp ROM."),
+      ("Robust Boxart Scraping & Action Modal: Fixed argument mismatch and tuple unpacking error in GameActionModal when triggering 'GET BOXART'. Users now receive real-time toast notifications with clear success/failure status.",
+       "Sửa lỗi & Tối ưu Cào ảnh bìa (Boxart): Khắc phục lỗi tương thích tham số và unpack tuple trong Modal hành động game khi bấm 'Tải bìa'. Bổ sung thông báo Toast trực quan thời gian thực về kết quả tìm ảnh."),
+      ("Automated Boxart Fallback & Java J2ME Icon Extraction: When downloading games, if the CDN boxart URL is invalid or placeholder, RetroHub now automatically scrapes boxarts (Libretro Thumbnails / Bing Images) and extracts original MANIFEST icons for Java J2ME (.jar) games.",
+       "Tự động Cào ảnh bù & Trích xuất Icon Game Java: Khi tải ROM game về máy, nếu link ảnh bìa từ server bị lỗi hoặc là ảnh giữ chỗ (placeholder), RetroHub tự động kích hoạt cào ảnh bìa dự phòng (Libretro / Bing) và tự trích xuất icon gốc từ file .jar của game Java J2ME.")]),
+
     ("2.28", "2026-09-17",
      ("RetroHub AI Web Assistant & Direct Shell Execution, Smart Exit & Service Manager, Sleep Overheating Prevention & Unified Game Modal",
       "Trợ lý RetroHub AI & Thực thi lệnh Web, Modal Thoát & Quản lý Dịch vụ thông minh, Chống nóng máy khi tắt màn hình & Hợp nhất Modal Tải Game"),
