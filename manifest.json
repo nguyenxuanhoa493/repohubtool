@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 3846,
-      "sha256": "eede2432cb1bcbe69c181fb7c11c8b6a34d8bfd65e1ef3aaecf1d6ea2dcd0c15"
+      "size": 3962,
+      "sha256": "6cb6f7d8c6539e87b2e941f8804ba72f28afb5975d94b3ff067d00227c4e92cc"
     },
     {
       "path": "assets/fallback.ttf",
@@ -227,6 +227,16 @@
       "sha256": "95cc00c7cdcc250ef7bf5b4af058e662a21cc4976ecf88da6eec5ba73b50b32f"
     },
     {
+      "path": "assets/icons_preview/Burst - Stock OS v1.1.0.png",
+      "size": 1110314,
+      "sha256": "77634f4032e58fe534f02e4a6374c57c8d0d2737dfebc1be5ebc7097ac90024f"
+    },
+    {
+      "path": "assets/icons_preview/Stock - TrimUI Stock OS 1.1.0.png",
+      "size": 811804,
+      "sha256": "f55281034f732a8762cdd9d10ce42b0e0383d68a1fb1f95fe1a46a648af174e6"
+    },
+    {
       "path": "assets/qr_bmc.png",
       "size": 2502,
       "sha256": "fc9c509a7fca1b576973c2fe4cf7a59ee4bc4106a164d4def92e8960c5e721a4"
@@ -240,6 +250,81 @@
       "path": "assets/qr_telegram.png",
       "size": 2310,
       "sha256": "f76660dd8339d043088f99f9d5dfd61aeff34135cdbaeff394e03b954ab40418"
+    },
+    {
+      "path": "assets/themes_preview/Animal Crossing - Alternate.png",
+      "size": 671615,
+      "sha256": "ef158aa8f8817edca9b2bed3fc256f2ed0643e722f69e13d8754539ba660cebe"
+    },
+    {
+      "path": "assets/themes_preview/Animal Crossing.png",
+      "size": 463160,
+      "sha256": "74941c8f7d552ed6dfeca7bdf0afee888bf3c3a7250b498a9c619394ecd06035"
+    },
+    {
+      "path": "assets/themes_preview/Assassins Creed - Alternate.png",
+      "size": 277839,
+      "sha256": "9e22b4e82ea6bd7d25d7bed1413df42266252bbeff010bc636963310fe9d8373"
+    },
+    {
+      "path": "assets/themes_preview/Assassins Creed.png",
+      "size": 490200,
+      "sha256": "c95784aa816f6c8da30feb1389f1c7dd975e50f9d8bfc2e0c0065758fcc4c33b"
+    },
+    {
+      "path": "assets/themes_preview/Attack on Titan - Attack.png",
+      "size": 546282,
+      "sha256": "e0d4635697957a3e995ae1762d048360962b7f308fe3ddace5c63db8adeb181b"
+    },
+    {
+      "path": "assets/themes_preview/Attack on Titan - Levi.png",
+      "size": 607640,
+      "sha256": "17f7ff0f2236e8c61c68dba352c0a58567402c92c23e49b04d07b5699d63f624"
+    },
+    {
+      "path": "assets/themes_preview/Attack on Titan - Mikasa.png",
+      "size": 643976,
+      "sha256": "193da27a9d4b4ec77ea19e359347ff04b0a545db7e704c09853df90628f00600"
+    },
+    {
+      "path": "assets/themes_preview/Attack on Titan.png",
+      "size": 563320,
+      "sha256": "b798f0395bd980a4e3254abf5f299c1f79edde8af75877b74c70c1490a769bbf"
+    },
+    {
+      "path": "assets/themes_preview/Baki the Grappler.png",
+      "size": 527975,
+      "sha256": "0e30142f68325a7e59fcb729406e39c05f7abd8a0edcabff447e88f6ce3c7487"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Black & Red.png",
+      "size": 278440,
+      "sha256": "d6c76083e9526f853cc989963b328bcd17a3d9bf158a7c750da2aad29a04d476"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Black.png",
+      "size": 78053,
+      "sha256": "1d1bf198c38c826b0b740b7554f091cef16f352e4ca991f02d0152d9feeb9154"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Canyon.png",
+      "size": 535244,
+      "sha256": "bba06d0e501e46e327269ff437a5b4a8613725e64182b97e71645f040f9ebceb"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Clouds.png",
+      "size": 258228,
+      "sha256": "ee28ff9ca0507e7027ba86c3f47b950dbd127a997c08b57725090b450f5dfeca"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Night Sky.png",
+      "size": 463114,
+      "sha256": "33bd7545a56bb1a2e1bb3926eb2f50ea56e6d2965f29faae3c54a8de4aa50588"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Prism.png",
+      "size": 214480,
+      "sha256": "027e23877201a0286ee6bc8cb4b24b28d24111486528fd493672249f1b72b6fe"
     },
     {
       "path": "assets/themes_preview/Basic - Space.png",
@@ -572,6 +657,11 @@
       "sha256": "f07202a2768e394565de470ca702fc365706838826e34a6cbcef35ab71295f27"
     },
     {
+      "path": "assets/themes_preview/PSP.png",
+      "size": 240652,
+      "sha256": "26d44d95e6a4a4ffbc6835d2f4922745df8f604d7370aabcbf748cb894154944"
+    },
+    {
       "path": "assets/themes_preview/Persona 3 - Memories.png",
       "size": 420407,
       "sha256": "d9d08a72311014dba9ad02dc9adec61f046a62e978c4b1b0f91cb90893c42781"
@@ -627,9 +717,159 @@
       "sha256": "ec9bf24cb9a790bf0c76f2b479bb422b6686b0c8a2e42d98d2f1c9e3e3d69d2d"
     },
     {
+      "path": "assets/themes_preview/Princess Mononoke - Alternate.png",
+      "size": 558166,
+      "sha256": "10bfc31e9e0dd8697e26a3b0c41318adb4eed53da6d6758cb6c29d01be46a77c"
+    },
+    {
+      "path": "assets/themes_preview/Princess Mononoke - Ashitaka.png",
+      "size": 706859,
+      "sha256": "d0f1bc849b18e6902628540a3a97f9220722523d6173f36ba7bdb2a9f6f67a0e"
+    },
+    {
       "path": "assets/themes_preview/Princess Mononoke.png",
       "size": 254360,
       "sha256": "d26f98433c6da611180a63ecfb09f9f7a33f0c56e1af70efd828bc930a58c464"
+    },
+    {
+      "path": "assets/themes_preview/Retro Game Corps.png",
+      "size": 108205,
+      "sha256": "b4f0a7c5db9420c340e494d68d818ad13993f8ef09e0e68fc46875f84117c701"
+    },
+    {
+      "path": "assets/themes_preview/Sanrio - Cinnamoroll.png",
+      "size": 175382,
+      "sha256": "d9b6c1d2a604e8ff7e92a86d25ff3db28eaf63894a9e7820d4711069f733e37c"
+    },
+    {
+      "path": "assets/themes_preview/Shrek & Miku.png",
+      "size": 398395,
+      "sha256": "9952f0f786a5e2082cb3a080e404519207261b122aee96571db62f9e1fdab18d"
+    },
+    {
+      "path": "assets/themes_preview/Skyrim.png",
+      "size": 578560,
+      "sha256": "c91ff32cfed61536a1c72022e6d77d017cd28b893497b047bdd6042153d5373f"
+    },
+    {
+      "path": "assets/themes_preview/Smash Bros - Alternate.png",
+      "size": 396176,
+      "sha256": "2ecf26ab5358ffc0270765641e44f804a52cec6b80283ac4b887b08b6dbe97ca"
+    },
+    {
+      "path": "assets/themes_preview/Smash Bros.png",
+      "size": 239067,
+      "sha256": "fea8d8fb976441b70535139336de467573612a2efa5ee4b0d88f197c402e9394"
+    },
+    {
+      "path": "assets/themes_preview/Spiderman - Alternate.png",
+      "size": 224411,
+      "sha256": "04e81a9e45529670e93c20badf432e824c770a2630c951578127f615cebf30cc"
+    },
+    {
+      "path": "assets/themes_preview/Spiderman - Venom.png",
+      "size": 618134,
+      "sha256": "dcaa00b6dbba7793dce9a8dac68f463bcb2c1caa0fa8bb4f9edb7065a48ec14f"
+    },
+    {
+      "path": "assets/themes_preview/Spiderman.png",
+      "size": 655990,
+      "sha256": "672111efe42d575fa9caba185aea1280f2d6dde07b974a787f90c50392e38264"
+    },
+    {
+      "path": "assets/themes_preview/Spirited Away - Alternate.png",
+      "size": 600069,
+      "sha256": "d5d72ab563ec692d991eca6fcfc04d179e7c9272513e3322b7e9103e6bff2953"
+    },
+    {
+      "path": "assets/themes_preview/Stalker.png",
+      "size": 622296,
+      "sha256": "39d8c81b5bc11e922cb0398e872dc356cdc104de15e2a66291b7b0e41520b8fb"
+    },
+    {
+      "path": "assets/themes_preview/Star Wars.png",
+      "size": 297891,
+      "sha256": "8cdaebd644fd4105abfa6022e26d8bca429b91743fd707ac964413d3e0496bea"
+    },
+    {
+      "path": "assets/themes_preview/Starfield.png",
+      "size": 518810,
+      "sha256": "ff9444f55a61ac0b30f931d0d50062faa5bf670be35996a074ca6316aea3991c"
+    },
+    {
+      "path": "assets/themes_preview/Steam Deck.png",
+      "size": 313160,
+      "sha256": "8815860642348a11ee06b687e04e6d4b7ada8ce89278f51409557475e2f29ec7"
+    },
+    {
+      "path": "assets/themes_preview/TRIMUI Blue.png",
+      "size": 151077,
+      "sha256": "315a306c98af80ad4769db7960737274e57c40dcdbc4da87723fd7378d7a4115"
+    },
+    {
+      "path": "assets/themes_preview/TRIMUI Energy.png",
+      "size": 81601,
+      "sha256": "65ff3fddcfc1462512edbe5ec1cd68afec2d408e842eaa1035b6304aa1c86eef"
+    },
+    {
+      "path": "assets/themes_preview/Totoro - Alternate.png",
+      "size": 494762,
+      "sha256": "b10572929f80110a50baa4e1ad66e7d28e294eaf9d7ed32bd07be5da95fab4f1"
+    },
+    {
+      "path": "assets/themes_preview/Totoro.png",
+      "size": 181948,
+      "sha256": "ea9bae5f9ddcabeea468ba958005eee5e8bfe0ddf869fb3588d831c3b1aed7d3"
+    },
+    {
+      "path": "assets/themes_preview/Wii.png",
+      "size": 142907,
+      "sha256": "ad87f0785230955b36e7a41e7a61da0d01b471c719e4f9df89f28c3c9b560707"
+    },
+    {
+      "path": "assets/themes_preview/Witcher 3 - Alternate.png",
+      "size": 523113,
+      "sha256": "38d8832c10d6460ed047b59d80f2564cf48910f8eb2c9b1b279272f0accb2bcc"
+    },
+    {
+      "path": "assets/themes_preview/Witcher 3.png",
+      "size": 563492,
+      "sha256": "ab8ec083877b06e730949fa5579d927357794b08f033d5fb297bc37f67a0adba"
+    },
+    {
+      "path": "assets/themes_preview/Xenoblade - Alternate.png",
+      "size": 284661,
+      "sha256": "629403e6c2884bc5aa40405772e23fa13b9a9bb8491e86279991b7a8b707bbfe"
+    },
+    {
+      "path": "assets/themes_preview/Xenoblade - Day.png",
+      "size": 406834,
+      "sha256": "2242ad91088002a005875e6b74bf4cdeb31843f97bec2628c4e3e41b58278fdb"
+    },
+    {
+      "path": "assets/themes_preview/Xenoblade - Night.png",
+      "size": 409411,
+      "sha256": "23843d54c5eb781576fb75afa515c8ac5f36754c80b5bd3c9279a4e3ac2e94a7"
+    },
+    {
+      "path": "assets/themes_preview/Xenoblade.png",
+      "size": 533615,
+      "sha256": "64081c2787960096a92bb43bd5da204eaca57511f7f38258712bc76bb3a2f69c"
+    },
+    {
+      "path": "assets/themes_preview/Your Lie in April.png",
+      "size": 500929,
+      "sha256": "e626bee0c6a5f1674ab261e2c3a61b8e595931c21c8f1dde9ce650f856d703ca"
+    },
+    {
+      "path": "assets/themes_preview/Yugioh - Alternate.png",
+      "size": 594407,
+      "sha256": "ac80c2ecd950fd116277096124b14b0812dce159440423b845dc5f9feba2ed48"
+    },
+    {
+      "path": "assets/themes_preview/Yugioh.png",
+      "size": 267663,
+      "sha256": "066d802e8ec8be12a4b61eb10884179692403799edd777ec83101dcbea0d86c0"
     },
     {
       "path": "bin/7zz-License.txt",
@@ -647,9 +887,14 @@
       "sha256": "1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6"
     },
     {
+      "path": "catalog/icons_catalog.json",
+      "size": 1927,
+      "sha256": "cdb9254f7f798db7f6349f77014d803e2e5c0cc51cf6ebac95cba6a97336342b"
+    },
+    {
       "path": "catalog/themes_catalog.json",
-      "size": 49522,
-      "sha256": "b98929372a2d9394484f38e3acd5cf30e2c4cf6c695c85298bcce81d74d59e55"
+      "size": 73346,
+      "sha256": "16536466ad014367883058ece74090baf18f504af7d0bb07dc370d80b3423244"
     },
     {
       "path": "config.json",
@@ -758,8 +1003,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 67039,
-      "sha256": "893f882e3668bd72b43eaf7ce9c680fd24ef71100f5ad68e3ece17887c2f086a"
+      "size": 69702,
+      "sha256": "24546c2851cf8f4784754f405a3373e82ed9b902e57f0d68783e28776a251586"
     },
     {
       "path": "icon.png",
@@ -853,8 +1098,13 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 56046,
-      "sha256": "8d80d0a458694c7c145a32045f09f95612a8280b791c931b008899be03ac496b"
+      "size": 58344,
+      "sha256": "790da5cc1f1d42d61038af99e370ffc7aea2328cc11f25ea14fb00256dd36440"
+    },
+    {
+      "path": "rh/icon_manager.py",
+      "size": 20970,
+      "sha256": "1e14c1d361bcab2cbe2faf5372542f3ab71f8977e244931c2ddb9a42c96aca07"
     },
     {
       "path": "rh/inputs.py",
@@ -963,8 +1213,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 6054,
-      "sha256": "adc8929e0b1fc2c99a1fd9f7362219a11648d51ee0215b221ddb7bba126dc7a5"
+      "size": 7223,
+      "sha256": "e4e06c1e054761a8f7d0da9f8458235a8162a08ef9105d2e0ed065e29d2dd774"
     },
     {
       "path": "rh/romfiles.py",
@@ -990,6 +1240,11 @@
       "path": "rh/screens/home.py",
       "size": 6079,
       "sha256": "36e26f5b5564b42fd838e20820e7943f0112227d8ae6b116437a2e44d189ac7b"
+    },
+    {
+      "path": "rh/screens/icon_store.py",
+      "size": 17831,
+      "sha256": "863bdd945c5c0e13c11c5140b0f645b85cf45b1dc3c44d4e598ec60543a534ca"
     },
     {
       "path": "rh/screens/keyboard.py",
@@ -1033,8 +1288,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 8748,
-      "sha256": "6b05d881baa456c9a6fe83a2b53190189faf85f2d5e6e0f4c6fcd54ca1ab8e01"
+      "size": 8942,
+      "sha256": "77e0706c945075d23c2fe2f6ee4b669f2712ef11d4c4341d658a72809269f215"
     },
     {
       "path": "rh/screens/youtube.py",
