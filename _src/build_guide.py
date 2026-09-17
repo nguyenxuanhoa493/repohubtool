@@ -290,7 +290,7 @@ def render_content_vi():
         <div class="step-card-clean highlight">
           <span class="step-num green">5</span>
           <h4>5. Tải RetroHub mới nhất</h4>
-          <p>Tải bản cài đặt RetroHub v{VERSION} mới nhất dành cho hệ điều hành của bạn:</p>
+          <p>Tải bản cài đặt RetroHub v{VERSION} mới nhất dành cho hệ điều hành gốc:</p>
           <div class="step-act">
             <a class="btn" style="display:block;padding:10px 14px;font-size:.88rem" href="{REL}/{VER_FULL}">
               Tải RetroHub (Stock) v{VERSION} ⤓
@@ -301,7 +301,7 @@ def render_content_vi():
         <div class="step-card-clean">
           <span class="step-num">6</span>
           <h4>6. Copy RetroHub vào Apps</h4>
-          <p>Giải nén file tải ở bước 5, copy thư mục <code>RetroHub</code> dán vào thư mục <code>/Apps/</code> trên thẻ nhớ (hoặc <code>/Tools/</code> nếu dùng NextUI).</p>
+          <p>Giải nén file tải ở bước 5, copy thư mục <code>RetroHub</code> dán vào thư mục <code>/Apps/</code> trên thẻ nhớ.</p>
         </div>
 
         <div class="step-card-clean highlight">
@@ -428,7 +428,7 @@ def render_content_en():
         <div class="step-card-clean highlight">
           <span class="step-num green">5</span>
           <h4>5. Download Latest RetroHub</h4>
-          <p>Download the latest RetroHub v{VERSION} installation package for your handheld OS:</p>
+          <p>Download the latest RetroHub v{VERSION} installation package for Stock OS:</p>
           <div class="step-act">
             <a class="btn" style="display:block;padding:10px 14px;font-size:.88rem" href="{REL}/{VER_FULL}">
               Download RetroHub (Stock) v{VERSION} ⤓
@@ -439,7 +439,7 @@ def render_content_en():
         <div class="step-card-clean">
           <span class="step-num">6</span>
           <h4>6. Copy RetroHub to Apps</h4>
-          <p>Extract the file from Step 5, copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card (or <code>/Tools/</code> for NextUI).</p>
+          <p>Extract the file from Step 5, copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card.</p>
         </div>
 
         <div class="step-card-clean highlight">
