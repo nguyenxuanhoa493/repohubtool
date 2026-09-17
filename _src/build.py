@@ -132,8 +132,8 @@ T = {
     "<b>Format SD card as exFAT:</b> Insert your MicroSD card into PC and format to <code>exFAT</code>.",
     "<b>Extract ROMs to SD card:</b> Extract all archive folders directly to the root of your SD card.",
     "<b>Reboot console to initialize:</b> Insert SD card into console and power on to initialize emulators.",
-    "<b>Download latest RetroHub:</b> Download <code>" + VER_FULL + "</code> (TrimUI) or <code>" + VER_NEXTUI + "</code> (NextUI).",
-    "<b>Copy RetroHub to SD card:</b> Copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card (or <code>/Tools/</code> for NextUI).",
+    "<b>Download latest RetroHub:</b> Download <code>" + VER_FULL + "</code>.",
+    "<b>Copy RetroHub to Apps:</b> Copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card.",
     "<b>Reboot & launch app:</b> Power on, open <b>Apps → RetroHub</b> to access 40,000+ games with auto-updates over Wi-Fi."
   ],
   "note": "You only install manually once. From then on, the app updates automatically over Wi-Fi on both TrimUI Stock OS and NextUI.",
@@ -192,8 +192,8 @@ T = {
     "<b>Format thẻ về exFAT:</b> Cắm thẻ nhớ MicroSD vào máy tính và định dạng chuẩn <code>exFAT</code>.",
     "<b>Giải nén ROM ra thẻ nhớ:</b> Giải nén toàn bộ tệp ROM vừa tải trực tiếp vào thư mục gốc của thẻ nhớ.",
     "<b>Khởi động lại máy để cài ROM:</b> Cắm thẻ vào máy cầm tay và bật nguồn để hệ thống nhận diện giả lập.",
-    "<b>Tải RetroHub mới nhất:</b> Tải bản <code>" + VER_FULL + "</code> (TrimUI Hệ gốc) hoặc <code>" + VER_NEXTUI + "</code> (NextUI).",
-    "<b>Copy RetroHub vào thẻ nhớ:</b> Chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ (hoặc <code>/Tools/</code> với NextUI).",
+    "<b>Tải RetroHub mới nhất:</b> Tải bản <code>" + VER_FULL + "</code>.",
+    "<b>Copy RetroHub vào Apps:</b> Chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ nhớ.",
     "<b>Khởi động lại & mở app:</b> Bật máy, vào <b>Apps → RetroHub</b> để sử dụng kho 40.000 game và tự động cập nhật qua Wi-Fi."
   ],
   "note": "Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới qua Wi-Fi mỗi lần mở và chỉ tải phần thay đổi cho cả TrimUI Stock OS lẫn NextUI.",
