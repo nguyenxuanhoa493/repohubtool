@@ -1,6 +1,6 @@
 {
   "version": "2.32",
-  "full_release_version": "2.32",
+  "full_release_version": "2.31",
   "python": "any",
   "built": "2026-09-17T22:15:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
@@ -203,8 +203,8 @@
     },
     {
       "path": "app.py",
-      "size": 3726,
-      "sha256": "1d3f4890b0ebeb18b8c86b00ec31257317dd53966c3febc048acf6af4c9a44a1"
+      "size": 3846,
+      "sha256": "eede2432cb1bcbe69c181fb7c11c8b6a34d8bfd65e1ef3aaecf1d6ea2dcd0c15"
     },
     {
       "path": "assets/fallback.ttf",
@@ -242,6 +242,396 @@
       "sha256": "f76660dd8339d043088f99f9d5dfd61aeff34135cdbaeff394e03b954ab40418"
     },
     {
+      "path": "assets/themes_preview/Basic - Space.png",
+      "size": 388799,
+      "sha256": "4ac986a5e41615797d36e5b3307c84e23c3370ab8a74bb424a515b26e010285b"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Triangles.png",
+      "size": 224063,
+      "sha256": "004ba3f03fd0cfab8f7212a0da6024f672cf628c488cf8b49af724b93d9a40fd"
+    },
+    {
+      "path": "assets/themes_preview/Basic - Yosemite.png",
+      "size": 581228,
+      "sha256": "652e618fd7dd62f429b0ac71b1d52c87fa38fca9469832b9235865004debd9e6"
+    },
+    {
+      "path": "assets/themes_preview/Batman.png",
+      "size": 273250,
+      "sha256": "1d6b9875366a145cf147dbb2bee5978a13418a5edd31dfe72eeb9a27ba2d902f"
+    },
+    {
+      "path": "assets/themes_preview/Berserk - Alternate.png",
+      "size": 271478,
+      "sha256": "eab91a32d67cebdac149ff0ba1144292d5982716ea52c3220cd9b627b74010f8"
+    },
+    {
+      "path": "assets/themes_preview/Berserk.png",
+      "size": 370119,
+      "sha256": "1b0ca14a33d75b783c1de1d8bc17727a3c4dea402bcdb0b78930fb672daa9402"
+    },
+    {
+      "path": "assets/themes_preview/Bleach - Ichigo.png",
+      "size": 322143,
+      "sha256": "f7fa4924dfc587a72fe3a10edff40ca6bb7ea3f4ac023a3de851d6f722fe23f5"
+    },
+    {
+      "path": "assets/themes_preview/Bleach.png",
+      "size": 212735,
+      "sha256": "14d572f71ba7cb137666a99838627efc1df9a367fb4c1f72831560518e822f7b"
+    },
+    {
+      "path": "assets/themes_preview/Bully.png",
+      "size": 404337,
+      "sha256": "8f17806788b2040e0e094f1235cf32ed4adf2e54673dba7389816e6416b60467"
+    },
+    {
+      "path": "assets/themes_preview/Castlevania - Alucard.png",
+      "size": 539191,
+      "sha256": "7b22d556818fcbaa398815b3d6204dace728ff6c5e1049e14f3f8ad39949d67e"
+    },
+    {
+      "path": "assets/themes_preview/Castlevania - Lords of Shadow.png",
+      "size": 409718,
+      "sha256": "806471e14d972af3a8429426afb61c23cf5ed80d317546c95b8c514be0fc1a69"
+    },
+    {
+      "path": "assets/themes_preview/Castlevania - Nocturne.png",
+      "size": 335954,
+      "sha256": "941914ac89729d0049c70d4589b943d736382f95f6669e82b31107e14ccb5933"
+    },
+    {
+      "path": "assets/themes_preview/Cowboy Bebop - Spike.png",
+      "size": 178263,
+      "sha256": "3f44c83c136fb31a59691b95b57b10601518a6c826fd83f6fae9e939d7b7c0d7"
+    },
+    {
+      "path": "assets/themes_preview/Cowboy Bebop.png",
+      "size": 378682,
+      "sha256": "76e947708250054c4a3e13068a49ab165adc8cb08362570b4c87192364c547ac"
+    },
+    {
+      "path": "assets/themes_preview/Cyberpunk 2077 - Alternate.png",
+      "size": 359946,
+      "sha256": "5e64ee6d5c76cf3d857c1a84bd28a6731cbcf3ed2072acd9391418adafaf3d2e"
+    },
+    {
+      "path": "assets/themes_preview/Digimon - Alternate.png",
+      "size": 552623,
+      "sha256": "66252b305922d363f4545f8dad02344ff3bcac30201fa6cc0c7771ba5eca398e"
+    },
+    {
+      "path": "assets/themes_preview/Digimon - Omnimon.png",
+      "size": 414290,
+      "sha256": "4bfd8f7a1794690e821a8787d0edd987964b8f45e44f149d21e1402abef3ebf4"
+    },
+    {
+      "path": "assets/themes_preview/Digimon.png",
+      "size": 484389,
+      "sha256": "d3e7a47004f213bd7cffdb7ffa90f6698c1a61556a5f53b839a64df5cfe8e183"
+    },
+    {
+      "path": "assets/themes_preview/Dragon Ball - Super Saiyans.png",
+      "size": 406178,
+      "sha256": "c1f801491839ba50dc84cb1cc64d82195440bda7dec5ec33f580ae574ebbf7d6"
+    },
+    {
+      "path": "assets/themes_preview/Dragon Ball - Ultra Instinct.png",
+      "size": 244683,
+      "sha256": "392af9d76b233c39ec111af33e219e4a7b13d9c73bd3dc8b318b39854c0949fb"
+    },
+    {
+      "path": "assets/themes_preview/Elden Ring - Malenia.png",
+      "size": 338850,
+      "sha256": "f924d3ac9cf3fb61830cb3c5c61eaca6d071dc5d1c1d067af370a09e9f312a38"
+    },
+    {
+      "path": "assets/themes_preview/Elden Ring.png",
+      "size": 415509,
+      "sha256": "d1e2382e2afa45e1ba0f5b442face0e7b835f7714b528363a03af0982fd69906"
+    },
+    {
+      "path": "assets/themes_preview/Evangelion - Asuka & Rei.png",
+      "size": 316635,
+      "sha256": "8a6a37993182f467c9d058789a59b5086aec240123353ed0ef30b0a3cfc3968a"
+    },
+    {
+      "path": "assets/themes_preview/Evangelion - NERV.png",
+      "size": 136240,
+      "sha256": "023ec7e95f879d62b8100ff74491ae0fd13cec3fc932e515c7f51d04e6f2761f"
+    },
+    {
+      "path": "assets/themes_preview/Final Fantasy - Airship.png",
+      "size": 404014,
+      "sha256": "2ab55d8e3793cb431611163b0e3bbaafded7bcb49f23635b5c5c51a557f04844"
+    },
+    {
+      "path": "assets/themes_preview/Final Fantasy IX - Vivi.png",
+      "size": 534777,
+      "sha256": "fbe3471beb4e8e7bc1602c43ee2a3f32cb523d5f288ddbd4004de8fed8e90335"
+    },
+    {
+      "path": "assets/themes_preview/Final Fantasy IX.png",
+      "size": 249342,
+      "sha256": "57c2772a13381579cd9139eb7a74978bd0da34de6b2cb2448f6c169edd79f944"
+    },
+    {
+      "path": "assets/themes_preview/Final Fantasy VII - Alternate.png",
+      "size": 409829,
+      "sha256": "7513a004e2404d666a2fc8b8d9089dbe8cac729568476248d6c736db54478dd9"
+    },
+    {
+      "path": "assets/themes_preview/Final Fantasy VII.png",
+      "size": 483338,
+      "sha256": "acef0591408a6f88130eec91f4cca4f70d82fa309d20bb4f7ba1768cedc69fc2"
+    },
+    {
+      "path": "assets/themes_preview/Final Fantasy XVI.png",
+      "size": 435700,
+      "sha256": "cdd3a04cb07cf11f9338e2faf14b3c26d7d4f300e587848279ee68eb3faa4d2e"
+    },
+    {
+      "path": "assets/themes_preview/Fire Emblem.png",
+      "size": 537575,
+      "sha256": "ece872b859650e3e1feb0a3ff7fd71e363fa183cba995526f005e50bb59f5c6f"
+    },
+    {
+      "path": "assets/themes_preview/Fullmetal Alchemist - Brothers.png",
+      "size": 185208,
+      "sha256": "7523b0bcf06e6b5555b282abadc633bfc99a968f6b235e4d729084f39544f298"
+    },
+    {
+      "path": "assets/themes_preview/God of War.png",
+      "size": 421326,
+      "sha256": "2dd95b397a3e141c5e4564ac1bead081bf5af296ffeaa5ab57d357ec3e85d709"
+    },
+    {
+      "path": "assets/themes_preview/Halo - Alternate.png",
+      "size": 550161,
+      "sha256": "c6e6b8756df1be104b64bd07c0ef062db5106da50421f4720233ae1e93bc07e1"
+    },
+    {
+      "path": "assets/themes_preview/Halo - Stealth.png",
+      "size": 269903,
+      "sha256": "04db064d5a7a466d99307d618e6ede1b0b2aac9b61b1aa66789e37f0f2126f0c"
+    },
+    {
+      "path": "assets/themes_preview/Harry Potter - Hogwarts.png",
+      "size": 414203,
+      "sha256": "bcee650da8bd346a6f5ae56a01bab3184d4a19c72916322bd0856b3b65821197"
+    },
+    {
+      "path": "assets/themes_preview/Helldivers 2.png",
+      "size": 432804,
+      "sha256": "7c3df0723ebeaf1f383a04e702d74eb513fb0d13473e5b3bff59592917c6fc9b"
+    },
+    {
+      "path": "assets/themes_preview/Howl's Moving Castle - Alternate.png",
+      "size": 400346,
+      "sha256": "0807ebb93993af5e31ae1dbe284d00194af31246bb3b771c7f3ea7ac2135635b"
+    },
+    {
+      "path": "assets/themes_preview/Howl's Moving Castle.png",
+      "size": 335942,
+      "sha256": "666ac993a49e56c2597209d4b325f47f0f104420e079dde268c9f311e5eb36f4"
+    },
+    {
+      "path": "assets/themes_preview/Initial D - Alternate.png",
+      "size": 367448,
+      "sha256": "16bc4ed300716c40739f9cfcd696099ffd97a71729bd856109ff4d4bd974ebae"
+    },
+    {
+      "path": "assets/themes_preview/Initial D - Trueno.png",
+      "size": 391582,
+      "sha256": "f528b0a84222b3fe7da9d59a8df7ad566e2b564b4669b4738f991bfd8f0840ed"
+    },
+    {
+      "path": "assets/themes_preview/Initial D.png",
+      "size": 367197,
+      "sha256": "8767019b17fef2b020d6424fc6430da327c7a73870c6d2908b08e38c3211eca7"
+    },
+    {
+      "path": "assets/themes_preview/Jujutsu Kaisen - Gojo.png",
+      "size": 376333,
+      "sha256": "1d854caadba1e7c927d586d32795c640d6e748218a9b8881532916d030fc9dbe"
+    },
+    {
+      "path": "assets/themes_preview/Jujutsu Kaisen - Yuji.png",
+      "size": 473406,
+      "sha256": "d4194a096da061f32403fdd8de7d48c1a2bfc96de3d35fb082290b01a811d84f"
+    },
+    {
+      "path": "assets/themes_preview/Jujutsu Kaisen - Yuta.png",
+      "size": 415334,
+      "sha256": "0240a303dbfa18e6e44ca23f1784d25034df2301eb5ec8a48979901936d402ea"
+    },
+    {
+      "path": "assets/themes_preview/Kill Bill.png",
+      "size": 176598,
+      "sha256": "9cfb70d2313c688ed6eec4d9065c39d20259b2039a88b3d0b1651324ea30fd08"
+    },
+    {
+      "path": "assets/themes_preview/Kingdom Hearts 2.png",
+      "size": 483257,
+      "sha256": "f9a07c9e715b0781dd62724d4758e89759db5946aebf3e24b4b4a9d39e52529e"
+    },
+    {
+      "path": "assets/themes_preview/Kingdom Hearts Birth By Sleep.png",
+      "size": 605677,
+      "sha256": "640abee8ed472e688348402f9ad979ed3c38192660853318016403e5642f39e1"
+    },
+    {
+      "path": "assets/themes_preview/Kingdom Hearts.png",
+      "size": 424614,
+      "sha256": "b235e056c4cc208a9df3ca9c6e6b7ab6ab041d42620ad381a121d8272ceff9dc"
+    },
+    {
+      "path": "assets/themes_preview/Legend of Zelda - Alternate.png",
+      "size": 448018,
+      "sha256": "1f74f7b7f93a741f9dde20882426ab9d9f4c5e7eacbc7a3941984b6153269c43"
+    },
+    {
+      "path": "assets/themes_preview/Lord of the Rings - Gandalf.png",
+      "size": 609742,
+      "sha256": "aa11ddb7bb5dc07008eb291bf8a352471a9dbbef14856bab539b9b159d83715b"
+    },
+    {
+      "path": "assets/themes_preview/Lord of the Rings.png",
+      "size": 601408,
+      "sha256": "e3c17c558012159167fe2298ccb333368d9661e654628f02c991619504854e60"
+    },
+    {
+      "path": "assets/themes_preview/MF Ghost.png",
+      "size": 545304,
+      "sha256": "c88a089c259719f5b8c8e177ae4ded3e30d37d4d371c5755fd9d65e572f4e93a"
+    },
+    {
+      "path": "assets/themes_preview/Mario - Alternate.png",
+      "size": 458061,
+      "sha256": "94ca05e39c78319f8f758bad0d89c659d29dbcf0e2097c77017b084989d9aaee"
+    },
+    {
+      "path": "assets/themes_preview/Mario.png",
+      "size": 477223,
+      "sha256": "b40c0e57c047f9be945a78d15aa0a45e65b428b9c38cb1f6cd8d4ddaadc48781"
+    },
+    {
+      "path": "assets/themes_preview/Metal Gear Rising.png",
+      "size": 453296,
+      "sha256": "60594cb7f30cdf2769b2fdd7de232b04799ecdaed9f900b857cc8c93c14dce6a"
+    },
+    {
+      "path": "assets/themes_preview/Metal Gear.png",
+      "size": 591573,
+      "sha256": "19eb7003beff178b15f736bc4b014fe1403a108c04af5001b5316f4c7f8cc666"
+    },
+    {
+      "path": "assets/themes_preview/Metaphor ReFantazio.png",
+      "size": 451894,
+      "sha256": "4963dbe88727ce0d23c541287d14cc7b67c166bddab4de70bc48fd6f0402b7f5"
+    },
+    {
+      "path": "assets/themes_preview/Metroid - Dread.png",
+      "size": 170614,
+      "sha256": "b300bc9b2ed079d16802a7b83f61edcb02363b411ade9ba18c159a9443c8a3b4"
+    },
+    {
+      "path": "assets/themes_preview/Naruto - Akatsuki.png",
+      "size": 528883,
+      "sha256": "d3ef874e10a03abe1b16dd53becfbaaec537d0d513b43d90c9bc4372d64d43aa"
+    },
+    {
+      "path": "assets/themes_preview/Nier Automata.png",
+      "size": 278880,
+      "sha256": "d553beef172c6adb023fadc150b31c3227580cdc63025e975782552700d683bb"
+    },
+    {
+      "path": "assets/themes_preview/One Piece - Cover.png",
+      "size": 655635,
+      "sha256": "a2811aa3f1d7c1b52619f25a834a69ad7ce7200a2756c77db551a50a521dc58d"
+    },
+    {
+      "path": "assets/themes_preview/One Piece - Gear 5.png",
+      "size": 427869,
+      "sha256": "62e7e570fcdce85b8d54a394afaef91891461ebc5e64479c953807a35fa79765"
+    },
+    {
+      "path": "assets/themes_preview/One Piece - Luffy.png",
+      "size": 340777,
+      "sha256": "e7ee41e447b79724b558fc4879682a033abaa3be99da3b6db617c33944d55b2d"
+    },
+    {
+      "path": "assets/themes_preview/One Piece - Straw Hats.png",
+      "size": 576662,
+      "sha256": "1214be838f6f45eda194193eda97d819e2e3aaf502e72f655a585c332685cc99"
+    },
+    {
+      "path": "assets/themes_preview/One-Punch Man.png",
+      "size": 492967,
+      "sha256": "f07202a2768e394565de470ca702fc365706838826e34a6cbcef35ab71295f27"
+    },
+    {
+      "path": "assets/themes_preview/Persona 3 - Memories.png",
+      "size": 420407,
+      "sha256": "d9d08a72311014dba9ad02dc9adec61f046a62e978c4b1b0f91cb90893c42781"
+    },
+    {
+      "path": "assets/themes_preview/Persona 5 - Alternate.png",
+      "size": 271383,
+      "sha256": "cc10ab07c151e84397ddedc4f2e4d11b63d8295c77c3073352fbaefba7ec2644"
+    },
+    {
+      "path": "assets/themes_preview/Persona 5 - Kasumi.png",
+      "size": 227847,
+      "sha256": "d5e2885f3b45fdd1ef20da6618ca2ff66a50441428b071ef4e6c7ce574529b03"
+    },
+    {
+      "path": "assets/themes_preview/Persona 5 - Ladies.png",
+      "size": 339513,
+      "sha256": "0c83f21bc762ffbc916f18fb4eeb049249db661d6590aa5c0117c87a8ed7849d"
+    },
+    {
+      "path": "assets/themes_preview/Persona 5.png",
+      "size": 324502,
+      "sha256": "220cbd91e6427cee15101d6e207182fae78004f69c2458819a57f20029817338"
+    },
+    {
+      "path": "assets/themes_preview/Playstation - Anniversary.png",
+      "size": 241161,
+      "sha256": "9d2322b3f70723f31c2a1d9892e8d94063496cf9f255fc501fd9a721e033dfab"
+    },
+    {
+      "path": "assets/themes_preview/Playstation.png",
+      "size": 201236,
+      "sha256": "a99976191a90aca3aee405861af73086384ca411253d5ce1750dd1f7312a15a0"
+    },
+    {
+      "path": "assets/themes_preview/Pokeball.png",
+      "size": 362027,
+      "sha256": "5a2cba2dce46b217eb614fc3c903981577b19bfafcb5990cb202ddce1f794a2a"
+    },
+    {
+      "path": "assets/themes_preview/Pokedex - Blue.png",
+      "size": 184418,
+      "sha256": "0684fcc9e769a93c30b2edcffff35dc0fa4033b1c6d37f9cbf337c8ac7c3c77e"
+    },
+    {
+      "path": "assets/themes_preview/Pokemon Sleep.png",
+      "size": 563642,
+      "sha256": "a4b5ace01691b975228fbfdf5428794eb494caee1289ac7bd4852f062d24b297"
+    },
+    {
+      "path": "assets/themes_preview/Pokemon Trainer Red.png",
+      "size": 452535,
+      "sha256": "ec9bf24cb9a790bf0c76f2b479bb422b6686b0c8a2e42d98d2f1c9e3e3d69d2d"
+    },
+    {
+      "path": "assets/themes_preview/Princess Mononoke.png",
+      "size": 254360,
+      "sha256": "d26f98433c6da611180a63ecfb09f9f7a33f0c56e1af70efd828bc930a58c464"
+    },
+    {
       "path": "bin/7zz-License.txt",
       "size": 6029,
       "sha256": "99df5a516035baca9f2e8095977599d4a4340f58ba900f870238943996014f53"
@@ -255,6 +645,11 @@
       "path": "bin/yt-dlp",
       "size": 3072469,
       "sha256": "1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6"
+    },
+    {
+      "path": "catalog/themes_catalog.json",
+      "size": 49522,
+      "sha256": "b98929372a2d9394484f38e3acd5cf30e2c4cf6c695c85298bcce81d74d59e55"
     },
     {
       "path": "config.json",
@@ -363,8 +758,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 184389,
-      "sha256": "8e237489958cfeca8730f744785f2529f07ae6bdae5b73e5c688a99261fce844"
+      "size": 67369,
+      "sha256": "96118bc493b104079f5e1faa4c63f803f95ca59e01a4684f88a15f36ab367d2c"
     },
     {
       "path": "icon.png",
@@ -458,8 +853,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 54284,
-      "sha256": "64cb5e5a856a5e84a2acd8548c800c5d9baef1ce338df9d1c36a657445b15cb8"
+      "size": 56046,
+      "sha256": "8d80d0a458694c7c145a32045f09f95612a8280b791c931b008899be03ac496b"
     },
     {
       "path": "rh/inputs.py",
@@ -568,8 +963,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 5168,
-      "sha256": "a92a701469bb78ac447f9332f5db6eb7d715f3acdffaec88ef5bf9268f181db9"
+      "size": 5944,
+      "sha256": "0eaaaf9001965bcb8f5ead9da9e2dc4404de76c6b930986643991569523fc06c"
     },
     {
       "path": "rh/romfiles.py",
@@ -632,9 +1027,14 @@
       "sha256": "d16c4c324338714e94c30c2881e232fc90e1a630057271c869d0b708509bf44e"
     },
     {
+      "path": "rh/screens/theme_store.py",
+      "size": 13196,
+      "sha256": "79be03bb38fcf505641d8e0317a78a835add46b76d0a9611213b757a609caf40"
+    },
+    {
       "path": "rh/screens/utilities.py",
-      "size": 8550,
-      "sha256": "712d14961ce84a6d1c2103a9d22dda68c61b84bcae3ccba13eadd5c7c39e3ee4"
+      "size": 8748,
+      "sha256": "6b05d881baa456c9a6fe83a2b53190189faf85f2d5e6e0f4c6fcd54ca1ab8e01"
     },
     {
       "path": "rh/screens/youtube.py",
@@ -675,6 +1075,11 @@
       "path": "rh/sysinfo.py",
       "size": 13527,
       "sha256": "67f4725333314c30623917d02ce90601dc92fc3a0f02ad05543d72e28731b31d"
+    },
+    {
+      "path": "rh/theme_manager.py",
+      "size": 9662,
+      "sha256": "5205879fd3e020150698d1e6088c077203e419567884b71b13c0b9adff87aa4d"
     },
     {
       "path": "rh/ui/__init__.py",
@@ -1130,6 +1535,21 @@
       "path": "vendor/sdl2/vulkan.py",
       "size": 1666,
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
+    },
+    {
+      "path": "web/app.js",
+      "size": 101319,
+      "sha256": "1e044f1833fa81d26ca192054020b45fd1c21e69005e486a16deb2290ac2398f"
+    },
+    {
+      "path": "web/index.html",
+      "size": 30246,
+      "sha256": "0b1c11961723633b9913324b5d53f1d2864d06235c526d14ffabcb14bffd7f3f"
+    },
+    {
+      "path": "web/style.css",
+      "size": 21441,
+      "sha256": "4f8b6b2a880987f5946f6e86f6044cc518889d2c6098a0476bc5eceb495a821c"
     },
     {
       "path": "yt.py",
