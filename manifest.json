@@ -1,12 +1,12 @@
 {
-  "version": "2.33",
-  "full_release_version": "2.33",
+  "version": "2.34",
+  "full_release_version": "2.34",
   "python": "any",
-  "built": "2026-09-18T00:45:00+0700",
+  "built": "2026-09-18T02:55:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Theme Store Grid 3x2 trực quan (STT, Tên, Trạng thái & Tải trực tiếp), Sửa lỗi Web Manager UI, Khung ảnh Boxart & Tìm kiếm Game Store",
-    "en": "Theme Store Grid 3x2 (Index, Title, Status & Direct Download), Fix Web Manager UI, Boxart Ratio & Online Game Search"
+    "vi": "Thêm Thư viện Theme, Thư viện Icon Giả Lập trực quan, Tải Online 1 chạm, Tự động Sao lưu & Khôi phục",
+    "en": "Theme Store & Emu Icon Store with 1-Click Online Install, Auto-Backup & Fail-Safe Recovery"
   },
   "remove": [
     "app.pyc",

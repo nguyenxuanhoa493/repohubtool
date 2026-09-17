@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.34", "2026-09-18",
+     ("Theme Store & Emu Icon Store with 1-Click Online Install, Auto-Backup & Fail-Safe Recovery",
+      "Thêm Thư viện Theme, Thư viện Icon Giả Lập trực quan, Tải Online 1 chạm, Tự động Sao lưu & Khôi phục"),
+     [("Theme Store & Emu Icon Store: Added full-featured Theme Store and Emu Icon Store to Utilities, providing a sleek 3x2 grid with sequence index, live preview, dynamic installed badge, and fast on-demand online download directly from GitHub CDN.",
+       "Thư viện Theme & Thư viện Icon: Bổ sung 2 tính năng Theme Store và Icon Store hoàn chỉnh trong Tiện ích hệ thống với giao diện lưới 3x2 trực quan, hiển thị STT (#1..#N), ảnh xem trước tức thì, nhãn trạng thái và tải trực tiếp từ CDN mạng tốc độ cao."),
+      ("1-Click Stock Backup & Fail-Safe Recovery: Automatically backs up original emulator icons and theme resources on first install, with intelligent 2-layer recovery (local backup restore and emergency stock zip extraction).",
+       "Sao lưu & Khôi phục An toàn 1 Chạm: Tự động sao lưu toàn bộ bộ icon gốc khi cài lần đầu, cơ chế khôi phục 2 lớp thông minh (khôi phục từ bản backup nội bộ hoặc tự động nạp gói zip dự phòng)."),
+      ("Optimized Online Download Engine: Added URL percent-encoding for spaces, bypass outdated SSL cert issues on embedded Linux, and direct chunked streaming with percentage & MB progress indicators.",
+       "Bộ máy Tải Online Tối ưu: Tự động mã hóa URL tên file, tương thích SSL trên hệ điều hành nhúng TrimUI, truyền phát dữ liệu theo luồng mượt mà kèm thanh tiến độ % và dung lượng chi tiết.")]),
+
     ("2.33", "2026-09-18",
      ("Theme Store Grid 3x2 (Index, Title, Status & Direct Download), Fix Web Manager UI, Boxart Ratio & Online Game Search",
       "Theme Store Grid 3x2 trực quan (STT, Tên, Trạng thái & Tải trực tiếp), Sửa lỗi Web Manager UI, Khung ảnh Boxart & Tìm kiếm Game Store"),
