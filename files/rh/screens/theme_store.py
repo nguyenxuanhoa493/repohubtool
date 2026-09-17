@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-"""Theme Store Screen: Full-screen 3x2 Grid UI, Live Previews, and On-Demand Download."""
-
 import os
 import math
+import threading
 from .. import state
 from ..paths import THEMES_DIR, SDCARD_PATH
 from ..i18n import tr
@@ -28,6 +26,10 @@ class ThemeStoreScreen(BaseScreen):
         self.filtered_items = []
         self.selected_idx = 0
         self.filter_mode = "all"  # "all", "installed", "available"
+        self.downloading_theme = False
+        self.dl_theme_info = {}
+        self.dl_pct = 0
+        self.dl_msg = ""
 
     def on_enter(self, params=None):
         self.refresh_catalog()
@@ -196,7 +198,7 @@ class ThemeStoreScreen(BaseScreen):
             return True
 
         # Uninstall Theme with X
-        if btn_x and 0 <= self.selected_idx < num_items:
+        if btn_x and 0 <= self.selected_idx < num_items and not self.downloading_theme:
             item = self.filtered_items[self.selected_idx]
             if item.get("is_installed"):
                 ok, msg = uninstall_theme(item.get("folder", ""))
@@ -205,12 +207,25 @@ class ThemeStoreScreen(BaseScreen):
                 return True
 
         # Download / Install with A
-        if btn_a and 0 <= self.selected_idx < num_items:
+        if btn_a and 0 <= self.selected_idx < num_items and not self.downloading_theme:
             item = self.filtered_items[self.selected_idx]
-            self.engine.toast(tr("theme_installing"))
-            ok, msg = install_theme(item)
-            self.engine.toast(msg)
-            self.refresh_catalog(force_reload=True)
+            self.downloading_theme = True
+            self.dl_theme_info = dict(item)
+            self.dl_pct = 5
+            self.dl_msg = tr("theme_installing")
+
+            def _bg_install():
+                def _on_prog(pct, msg):
+                    self.dl_pct = pct
+                    self.dl_msg = msg
+
+                ok, msg = install_theme(item, on_progress=_on_prog)
+                self.downloading_theme = False
+                if self.engine:
+                    self.engine.toast(msg, text_color=(0, 255, 160) if ok else (255, 100, 100))
+                self.refresh_catalog(force_reload=True)
+
+            threading.Thread(target=_bg_install, daemon=True).start()
             return True
 
         return False
@@ -312,5 +327,56 @@ class ThemeStoreScreen(BaseScreen):
                 engine.draw_text("☁", engine.font_badge,
                                  icon_x + icon_w // 2, icon_y + icon_h // 2,
                                  0, 230, 255, center_x=True, center_y=True)
+
+        # ----------------------------------------------------------------------
+        # 4. Live Download & Installation Progress Modal Overlay
+        # ----------------------------------------------------------------------
+        if self.downloading_theme:
+            # Dim Backdrop
+            engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 10, 14, 24, 210)
+
+            # Center Dialog Box
+            mw = 660
+            mh = 240
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            engine.fill_rect(mx, my, mw, mh, 18, 25, 42, 255)
+            engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
+
+            # Sub-Header
+            engine.fill_rect(mx + 2, my + 2, mw - 4, 44, 24, 36, 62, 255)
+            engine.draw_text("TIẾN ĐỘ TẢI & CÀI ĐẶT THEME", engine.font_sub, mx + 20, my + 24, 0, 246, 246, center_y=True)
+
+            # Theme Name
+            t_name = self.dl_theme_info.get("name", self.dl_theme_info.get("folder", "Theme"))
+            engine.draw_text(t_name[:40], engine.font_badge, mx + mw - 20, my + 24, 255, 215, 0, center_y=True, right_align=True)
+
+            # Progress Bar Track
+            bar_margin = 32
+            bar_w = mw - bar_margin * 2
+            bar_h = 26
+            bar_x = mx + bar_margin
+            bar_y = my + 110
+
+            pct = max(0, min(100, self.dl_pct))
+            msg_str = self.dl_msg or ("Đang xử lý..." if state.current_lang == "VI" else "Processing...")
+
+            engine.fill_rect(bar_x, bar_y, bar_w, bar_h, 12, 18, 32, 255)
+            engine.draw_rect(bar_x, bar_y, bar_w, bar_h, 45, 65, 105, 255, thickness=2)
+
+            fill_w = int((bar_w - 4) * (pct / 100.0))
+            if fill_w > 0:
+                engine.fill_rect(bar_x + 2, bar_y + 2, fill_w, bar_h - 4, 0, 230, 150, 255)
+
+            # Text Above Bar
+            engine.draw_text("Tiến trình cài đặt:", engine.font_sub, bar_x, bar_y - 18, 180, 205, 235, center_y=True)
+            engine.draw_text(f"{pct}%", engine.font_badge, bar_x + bar_w, bar_y - 18, 0, 255, 160, center_y=True, right_align=True)
+
+            # Text Below Bar
+            engine.draw_text(msg_str[:55], engine.font_sub, bar_x, bar_y + 36, 200, 220, 245)
+
+            # Note
+            engine.draw_text("💡 Vui lòng đợi trong giây lát, hệ thống đang giải nén giao diện...", engine.font_footer, mx + mw // 2, my + mh - 24, 150, 175, 205, center_x=True, center_y=True)
 
 

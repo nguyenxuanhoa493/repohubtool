@@ -106,6 +106,8 @@ class GameActionModal(BaseModal):
                 self.rom_path = os.path.join(r_dir, fname)
             elif dl_state.get("status") == "success":
                 downloaded = True
+                if dl_state.get("extracted_rom_path") and os.path.exists(dl_state.get("extracted_rom_path")):
+                    self.rom_path = dl_state.get("extracted_rom_path")
 
             if downloaded:
                 if not self.img_path:
@@ -115,6 +117,10 @@ class GameActionModal(BaseModal):
                     self.on_download_success_cb(self.sys_code, self.game_info)
                 if self.engine:
                     self.engine.toast("Tải game thành công!", text_color=(0, 255, 160))
+            elif dl_state.get("status") == "error":
+                err_msg = dl_state.get("msg") or ("Tải game thất bại!" if state.current_lang == "VI" else "Download failed!")
+                if self.engine:
+                    self.engine.toast(err_msg, text_color=(255, 100, 100))
 
     def handle_input(self, inputs):
         if not self.active:
@@ -156,7 +162,6 @@ class GameActionModal(BaseModal):
             if btn_a:
                 # Start download
                 msg = enqueue_download(self.sys_code, self.game_info)
-                start_next_queued(background=False)
                 self.was_downloading = True
                 if msg and self.engine:
                     self.engine.toast(msg)
@@ -278,11 +283,10 @@ class GameActionModal(BaseModal):
             elif act_id == "REGET":
                 # Re-download trigger
                 d_url = self.game_info.get("download_url") or self.game_info.get("url")
-                enqueue_download(self.sys_code, self.game_info)
-                start_next_queued(background=False)
+                msg = enqueue_download(self.sys_code, self.game_info)
                 self.was_downloading = True
                 if self.engine:
-                    self.engine.toast("Bắt đầu tải lại game...")
+                    self.engine.toast(msg or ("Bắt đầu tải lại game..." if state.current_lang == "VI" else "Re-downloading game..."))
                 return True
 
         return True

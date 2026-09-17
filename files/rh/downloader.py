@@ -160,28 +160,25 @@ def cancel_active_download():
     dl_state["msg"] = tr("dl_cancelled_toast")
 
 def start_download_thread(sys_code, game_info, background=False):
-    def worker():
-        dl_state["active"] = True
-        dl_state["cancel_requested"] = False
-        dl_state["title"] = game_info.get("title", "Game")
-        # Same precedence the rest of the UI uses. The DB and the pre-download
-        # probe both fill in file_size_str; `size` is only the legacy
-        # catalogs.json field, which DB-sourced games do not carry at all.
-        dl_state["size"] = (game_info.get("file_size_str")
-                            or game_info.get("size") or "0 MB").strip() or "0 MB"
-        dl_state["msg"] = "Đang kết nối máy chủ CDN..." if state.current_lang == "VI" else "Connecting to CDN..."
-        dl_state["progress_pct"] = 0
-        dl_state["downloaded_str"] = "0 MB"
-        dl_state["speed_str"] = "0 KB/s"
-        target_sys = game_info.get("sys_code", sys_code)
-        dl_state["sys_code"] = target_sys
-        dl_state["extracted_rom_path"] = None
-        dl_state["status"] = "downloading"
-        dl_state["selected_opt"] = 0
-        dl_state["is_background"] = bool(background)
-        dl_state["game_info"] = game_info
-        dl_state["img_url"] = game_info.get("img_url", "")
+    target_sys = game_info.get("sys_code", sys_code)
+    dl_state["active"] = True
+    dl_state["cancel_requested"] = False
+    dl_state["title"] = game_info.get("title", "Game")
+    dl_state["size"] = (game_info.get("file_size_str")
+                        or game_info.get("size") or "0 MB").strip() or "0 MB"
+    dl_state["msg"] = "Đang kết nối máy chủ CDN..." if state.current_lang == "VI" else "Connecting to CDN..."
+    dl_state["progress_pct"] = 0
+    dl_state["downloaded_str"] = "0 MB"
+    dl_state["speed_str"] = "0 KB/s"
+    dl_state["sys_code"] = target_sys
+    dl_state["extracted_rom_path"] = None
+    dl_state["status"] = "downloading"
+    dl_state["selected_opt"] = 0
+    dl_state["is_background"] = bool(background)
+    dl_state["game_info"] = game_info
+    dl_state["img_url"] = game_info.get("img_url", "")
 
+    def worker():
         # Khong co mang thi khong mirror nao chay duoc, ma vong thu lai van ngoi
         # het ~20s timeout roi moi chiu bao. Te hon: man xac nhan van hien dung
         # luong - no lay tu catalogue duoi the, khong phai vua hoi server - nen
@@ -401,6 +398,8 @@ def start_download_thread(sys_code, game_info, background=False):
                         last_part_error = {}
 
                         last_ui_update_time = [0.0]
+                        last_speed_time = [time.time()]
+                        last_speed_bytes = [0]
 
                         def chunk_worker(w_id):
                             nonlocal downloaded_total
@@ -455,6 +454,20 @@ def start_download_thread(sys_code, game_info, background=False):
                                                     with progress_lock:
                                                         downloaded_total += len(chunk)
                                                         now_ts = time.time()
+                                                        if now_ts - last_speed_time[0] >= 0.4:
+                                                            b_diff = downloaded_total - last_speed_bytes[0]
+                                                            t_diff = now_ts - last_speed_time[0]
+                                                            if t_diff > 0:
+                                                                bps = b_diff / t_diff
+                                                                if bps >= 1024 * 1024:
+                                                                    dl_state["speed_str"] = f"{bps / (1024*1024):.1f} MB/s"
+                                                                elif bps >= 1024:
+                                                                    dl_state["speed_str"] = f"{bps / 1024:.0f} KB/s"
+                                                                else:
+                                                                    dl_state["speed_str"] = f"{bps:.0f} B/s"
+                                                            last_speed_time[0] = now_ts
+                                                            last_speed_bytes[0] = downloaded_total
+
                                                         if now_ts - last_ui_update_time[0] > 0.08 or downloaded_total >= total_bytes:
                                                             pct = min(100, int((downloaded_total / total_bytes) * 100))
                                                             dl_state["progress_pct"] = pct
@@ -528,6 +541,8 @@ def start_download_thread(sys_code, game_info, background=False):
                                     pass
                             down_bytes = 0
                             last_s_update = 0.0
+                            last_sp_time = time.time()
+                            last_sp_bytes = 0
                             with open(tmp_zip_path, "wb") as f_out:
                                 while not dl_state["cancel_requested"]:
                                     chunk = resp.read(131072)
@@ -536,6 +551,20 @@ def start_download_thread(sys_code, game_info, background=False):
                                     f_out.write(chunk)
                                     down_bytes += len(chunk)
                                     now_s = time.time()
+                                    if now_s - last_sp_time >= 0.4:
+                                        b_diff = down_bytes - last_sp_bytes
+                                        t_diff = now_s - last_sp_time
+                                        if t_diff > 0:
+                                            bps = b_diff / t_diff
+                                            if bps >= 1024 * 1024:
+                                                dl_state["speed_str"] = f"{bps / (1024*1024):.1f} MB/s"
+                                            elif bps >= 1024:
+                                                dl_state["speed_str"] = f"{bps / 1024:.0f} KB/s"
+                                            else:
+                                                dl_state["speed_str"] = f"{bps:.0f} B/s"
+                                        last_sp_time = now_s
+                                        last_sp_bytes = down_bytes
+
                                     if now_s - last_s_update > 0.08 or (tot_len > 0 and down_bytes >= tot_len):
                                         if tot_len > 0:
                                             pct = int((down_bytes / tot_len) * 100)

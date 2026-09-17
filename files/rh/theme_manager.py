@@ -156,8 +156,6 @@ def download_file_with_progress(url: str, dest_path: str, on_progress: Optional[
 
 def install_theme(theme_info: Dict, on_progress: Optional[Callable[[int, str], None]] = None) -> Tuple[bool, str]:
     """Installs a theme on-demand by downloading zip archive from Git/CDN or local repo."""
-    ensure_default_theme_backup()
-    
     folder = theme_info.get("folder") or theme_info.get("id")
     if not folder:
         return False, "Tên theme không hợp lệ!" if state.current_lang == "VI" else "Invalid theme name!"
