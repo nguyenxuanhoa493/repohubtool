@@ -168,14 +168,14 @@ class GameActionModal(BaseModal):
                 if self.engine:
                     self.engine.toast("Đang tải ảnh bìa...")
                 def _bg_boxart_predl():
-                    ok, res = scrape_boxart_for_single_rom(self.sys_code, fname, g_title)
-                    if ok:
-                        self.img_path = res
+                    ok, res_path, msg = scrape_boxart_for_single_rom(self.sys_code, fname, g_title, self.rom_path)
+                    if ok and res_path:
+                        self.img_path = res_path
                         if self.engine:
-                            self.engine.toast("Đã tải xong ảnh bìa!")
+                            self.engine.toast("Đã tải xong ảnh bìa!" if state.current_lang == "VI" else "Boxart downloaded!")
                     else:
                         if self.engine:
-                            self.engine.toast(res)
+                            self.engine.toast(msg or ("Không tìm thấy ảnh bìa" if state.current_lang == "VI" else "No boxart found"))
                 threading.Thread(target=_bg_boxart_predl, daemon=True).start()
                 return True
             return True
@@ -251,14 +251,14 @@ class GameActionModal(BaseModal):
                 if self.engine:
                     self.engine.toast("Đang tải ảnh bìa..." if state.current_lang == "VI" else "Scraping Boxart...")
                 def _bg_boxart():
-                    ok, res = scrape_boxart_for_single_rom(self.sys_code, fname, g_title)
-                    if ok:
-                        self.img_path = res
+                    ok, res_path, msg = scrape_boxart_for_single_rom(self.sys_code, fname, g_title, self.rom_path)
+                    if ok and res_path:
+                        self.img_path = res_path
                         if self.engine:
                             self.engine.toast("Đã tải xong ảnh bìa!" if state.current_lang == "VI" else "Boxart downloaded!")
                     else:
                         if self.engine:
-                            self.engine.toast(res)
+                            self.engine.toast(msg or ("Không tìm thấy ảnh bìa" if state.current_lang == "VI" else "No boxart found"))
                 threading.Thread(target=_bg_boxart, daemon=True).start()
                 return True
             elif act_id == "NETPLAY":

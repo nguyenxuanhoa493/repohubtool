@@ -1,12 +1,12 @@
 {
-  "version": "2.28",
-  "full_release_version": "2.28",
+  "version": "2.29",
+  "full_release_version": "2.29",
   "python": "any",
-  "built": "2026-09-17T11:42:00+0700",
+  "built": "2026-09-17T14:10:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tích hợp Trợ lý RetroHub AI & Thực thi lệnh Web, Modal Thoát & Quản lý Dịch vụ thông minh, Chống nóng máy khi tắt màn hình, Hợp nhất Modal Tải Game",
-    "en": "Integrated RetroHub AI Assistant & Web Command Execution, Smart Exit & Service Manager, Sleep Overheating Prevention, Unified Game Download Modal"
+    "vi": "Sửa lỗi Tìm kiếm Game Online (FTS SQLite), Tối ưu Download & Cào Boxart ảnh bìa, Tự động trích xuất icon Java J2ME",
+    "en": "Fix Online Game Search (SQLite FTS), Optimize Boxart Download & Scraping Fallback, Auto-extract Java J2ME icons"
   },
   "remove": [
     "app.pyc",
@@ -263,8 +263,8 @@
     },
     {
       "path": "db.py",
-      "size": 20641,
-      "sha256": "a305d257b0ca7a51b0dbb7b93f8329847c1e81b1717f4f906c6448d43c47673d"
+      "size": 21465,
+      "sha256": "1ac126bdb62225e9992d3fba6675463bddf11d3e603abb64446729ac2ca65e8c"
     },
     {
       "path": "emus/JAVA/NOTICE.txt",
@@ -408,13 +408,13 @@
     },
     {
       "path": "rh/boxart_scraper.py",
-      "size": 30942,
-      "sha256": "a9115a215d543a90562b216d07d16fba719defec7f94374e2151095a99d512d2"
+      "size": 31766,
+      "sha256": "933f44a515245a7a0d4e43c14b3705a480b66b4f09f1aea78c3c8fcdd4aae7c3"
     },
     {
       "path": "rh/catalog.py",
-      "size": 13450,
-      "sha256": "2131828abbbb545cb6eb856849bf20a384567018187070d34e5653be906cfce0"
+      "size": 14465,
+      "sha256": "dfa47779147500433ad27ab42666902b087b2dbf72bdc8eb51393b3998848b98"
     },
     {
       "path": "rh/cheat_manager.py",
@@ -433,8 +433,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 41104,
-      "sha256": "479e299883831465cc8cd372425c4037934c1fa1d3ed4f5b946eee93a9f476d2"
+      "size": 41779,
+      "sha256": "1d18e7a2b142b8e9f0d31ac35ed870a73653c29a2e1ebb79c88a7cdeaddd717e"
     },
     {
       "path": "rh/emulators.py",
@@ -538,8 +538,8 @@
     },
     {
       "path": "rh/modals/game_action.py",
-      "size": 25936,
-      "sha256": "a73e5f07d73459de2c74c2570d13d3d2625e1f5a6a2cce2e6824e715ca501281"
+      "size": 26258,
+      "sha256": "e2218a53d7fc49c114115598736ced0cd30128f9f9adacf9f8f8b14b6eeb8a90"
     },
     {
       "path": "rh/modals/j2me.py",
@@ -628,8 +628,8 @@
     },
     {
       "path": "rh/screens/store.py",
-      "size": 21700,
-      "sha256": "d0350fb64ad33ae2f1a11c4deed027ed034c1c3b92f1beeea6cf2e39ae7fb5ee"
+      "size": 21644,
+      "sha256": "d16c4c324338714e94c30c2881e232fc90e1a630057271c869d0b708509bf44e"
     },
     {
       "path": "rh/screens/utilities.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "9fd6f2083b7d49c98de6b1f2a69aff9d81df8fcab44b56cff8f5e346bd3f7b38"
+      "sha256": "07c27678a1ca01eabd3c59c2b5f2603acf87c5b3b9bf96ce266db31f402f1ad9"
     },
     {
       "path": "rh/yt.py",

@@ -627,21 +627,41 @@ def count_missing_boxarts():
         return 0
 
 
-def scrape_boxart_for_single_rom(item, base_sd=None):
-    """Cào và lưu ảnh bìa cho một ROM cụ thể. Trả về (success, target_art_path, message)."""
+def scrape_boxart_for_single_rom(item_or_sys, filename="", title="", rom_path="", base_sd=None):
+    """Cào và lưu ảnh bìa cho một ROM cụ thể.
+    Hỗ trợ cả 2 cách gọi:
+      - scrape_boxart_for_single_rom(dict_item, base_sd=None)
+      - scrape_boxart_for_single_rom(sys_code, filename, title, rom_path="", base_sd=None)
+    Trả về (success, target_art_path, message).
+    """
     sd = base_sd or SDCARD_PATH
-    sys_code = item.get("sys_code") or ""
-    fname = item.get("filename") or ""
-    rom_path = item.get("rom_path") or ""
-    title = item.get("title") or ""
+    if isinstance(item_or_sys, dict):
+        item = item_or_sys
+        sys_code = item.get("sys_code") or ""
+        fname = item.get("filename") or ""
+        r_path = item.get("rom_path") or ""
+        g_title = item.get("title") or ""
+    else:
+        sys_code = str(item_or_sys or "")
+        fname = str(filename or "")
+        g_title = str(title or "")
+        r_path = str(rom_path or "")
 
-    rom_base = os.path.splitext(os.path.basename(rom_path or fname))[0]
-    base_name = rom_base or title
-    clean_title = clean_rom_title(fname or rom_base) or title or base_name
+    # Tự tìm đường dẫn ROM nếu chưa có
+    if not r_path and fname and sys_code:
+        r_dir = os.path.join(sd, "Roms", sys_code)
+        if os.path.isdir(r_dir):
+            cand = os.path.join(r_dir, fname)
+            if os.path.isfile(cand):
+                r_path = cand
+
+    rom_base = os.path.splitext(os.path.basename(r_path or fname))[0]
+    base_name = rom_base or g_title
+    clean_title = clean_rom_title(fname or rom_base) or g_title or base_name
 
     target_img_dir = os.path.join(sd, "Imgs", sys_code)
-    if rom_path:
-        parts = rom_path.replace("\\", "/").split("/")
+    if r_path:
+        parts = r_path.replace("\\", "/").split("/")
         if "Roms" in parts:
             idx = parts.index("Roms")
             if idx + 1 < len(parts):
@@ -654,16 +674,16 @@ def scrape_boxart_for_single_rom(item, base_sd=None):
     target_art = os.path.join(target_img_dir, f"{rom_base}.png")
 
     # 1. Trích xuất trực tiếp icon từ file .jar nếu là game Java J2ME
-    if ((rom_path and rom_path.lower().endswith(".jar")) or sys_code.upper() == "JAVA") and rom_path:
-        if extract_jar_icon(rom_path, target_art):
-            if title and title != rom_base:
+    if ((r_path and r_path.lower().endswith(".jar")) or sys_code.upper() in ("JAVA", "J2ME")) and r_path:
+        if extract_jar_icon(r_path, target_art):
+            if g_title and g_title != rom_base:
                 try:
-                    shutil.copyfile(target_art, os.path.join(target_img_dir, f"{title}.png"))
+                    shutil.copyfile(target_art, os.path.join(target_img_dir, f"{g_title}.png"))
                 except Exception:
                     pass
             return True, target_art, "Đã trích xuất icon Java J2ME thành công."
 
-    # 2. Tìm ảnh bìa online
+    # 2. Tìm ảnh bìa online (Catalog DB -> Libretro -> Web Search)
     best_url, src_type = find_best_boxart(sys_code, clean_title, filename=fname, fast_only=False)
     if best_url:
         for old_ext in (".jpg", ".jpeg", ".webp", ".bmp"):
@@ -676,9 +696,9 @@ def scrape_boxart_for_single_rom(item, base_sd=None):
 
         ok, err = download_image_to_file(best_url, target_art, timeout=10)
         if ok:
-            if title and title != rom_base:
+            if g_title and g_title != rom_base:
                 try:
-                    shutil.copyfile(target_art, os.path.join(target_img_dir, f"{title}.png"))
+                    shutil.copyfile(target_art, os.path.join(target_img_dir, f"{g_title}.png"))
                 except Exception:
                     pass
             return True, target_art, f"Đã tải ảnh bìa từ {src_type} thành công!"
