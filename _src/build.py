@@ -125,7 +125,7 @@ T = {
   "dl_sd_sub": "Full emulators & stock ROMs from DTH",
   "sd_warn": "💡 <b>Tip:</b> The Stock Full ROMs package is tailored for <b>TrimUI Brick Pro</b>. For <b>TrimUI Smart Pro</b> or NextUI, download standalone RetroHub above.",
   "sd_url": SD_FULL_URL,
-  "h_feat": "Highlights", "h_install": "Beginner Setup Guide (7 Steps)", "h_dl": "Download",
+  "h_feat": "Highlights", "h_install": "7-Step Setup Guide for TrimUI Brick Pro", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
   "steps": [
     "<b>Download Stock Full ROMs:</b> Download the full emulator base from <a href=\"https://github.com/DTH-RetroHandheld/assets_brickpro/releases\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--accent);text-decoration:underline\">DTH-RetroHandheld Releases</a>.",
@@ -185,7 +185,7 @@ T = {
   "dl_sd_sub": "Trọn bộ giả lập & ROM gốc từ DTH",
   "sd_warn": "💡 <b>Lưu ý:</b> Gói ROMs Stock Full trên dành riêng cho <b>TrimUI Brick Pro</b>. Người dùng <b>TrimUI Smart Pro</b> hoặc NextUI chỉ cần tải bản RetroHub ở trên.",
   "sd_url": SD_FULL_URL,
-  "h_feat": "Tính năng nổi bật", "h_install": "Hướng dẫn cài đặt cho người mới (7 Bước)", "h_dl": "Tải về",
+  "h_feat": "Tính năng nổi bật", "h_install": "7 Bước cài đặt trọn gói cho TrimUI Brick Pro", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
   "steps": [
     "<b>Tải ROMs Stock Full:</b> Tải trọn bộ giả lập và ROM gốc tại <a href=\"https://github.com/DTH-RetroHandheld/assets_brickpro/releases\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--accent);text-decoration:underline\">DTH-RetroHandheld Releases</a>.",
