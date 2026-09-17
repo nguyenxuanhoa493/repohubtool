@@ -2,11 +2,11 @@
   "version": "2.28",
   "full_release_version": "2.28",
   "python": "any",
-  "built": "2026-09-17T11:05:00+0700",
+  "built": "2026-09-17T11:42:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tối ưu hóa Modal Thoát & Quản lý Dịch vụ thông minh, Chống nóng máy khi tắt màn hình, Hợp nhất Modal Tải Game 2 cột & Chuẩn hóa Store i18n",
-    "en": "Smart Exit & Service Manager, Sleep Screen-off Overheating Prevention, Unified 2-Column Game Download Modal & Store i18n Standardization"
+    "vi": "Tích hợp Trợ lý RetroHub AI & Thực thi lệnh Web, Modal Thoát & Quản lý Dịch vụ thông minh, Chống nóng máy khi tắt màn hình, Hợp nhất Modal Tải Game",
+    "en": "Integrated RetroHub AI Assistant & Web Command Execution, Smart Exit & Service Manager, Sleep Overheating Prevention, Unified Game Download Modal"
   },
   "remove": [
     "app.pyc",
