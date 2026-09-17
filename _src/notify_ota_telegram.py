@@ -29,8 +29,11 @@ def send_ota_notification(version=None, note_vi=None):
         f"🚀 <b>[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)</b>",
         "",
         "✨ <b>Điểm mới & Tối ưu nổi bật:</b>",
-        "• 💡 <b>Sửa lỗi văng app khi chọn Danh hiệu ứng LED:</b> Khắc phục triệt để sự cố crash ứng dụng khi vào Tiện ích ➔ Đèn LED ➔ Chọn bộ màu / danh hiệu ứng.",
-        "• ⚙️ <b>Đồng bộ trạng thái Daemon đèn LED:</b> Tự động kiểm chuẩn trạng thái tiến trình nền của đèn LED khi mở màn hình cài đặt, đảm bảo công tắc Bật/Tắt luôn hiển thị chính xác.",
+        "• 🖼️ <b>Đổi ảnh khởi động Side-by-Side & Live Preview:</b> Bố cục 2 cột chuyên nghiệp, hiển thị trực tiếp ảnh xem trước thời gian thực, duyệt ảnh từ thẻ nhớ SD và khôi phục ảnh gốc 1 chạm.",
+        "• 💾 <b>Quản lý Sao lưu & Khôi phục Save Game:</b> Nén ZIP toàn bộ save (.srm, .sav, .state*) có gắn nhãn thời gian, duyệt lịch sử và khôi phục/xóa bản sao lưu dễ dàng.",
+        "• 🎨 <b>Modal Theo dõi Tiến trình Cào Boxart:</b> Hiển thị thanh tiến độ %, bộ đếm hoàn thành và tên game đang cào với 4 luồng xử lý song song.",
+        "• 🔒 <b>Xác nhận Gửi SSH qua Telegram:</b> Thêm hộp thoại xác nhận kèm thông tin IP máy trước khi gửi, triệt tiêu nguy cơ bấm nhầm.",
+        "• 🛡️ <b>Tối ưu Giao diện & Mã nguồn:</b> Chuẩn hóa thanh phím bấm có màu (A xanh, X cam, B đỏ), chống rách hình Framebuffer, tối ưu xử lý đồ họa.",
         "",
         "📲 <b>Cách cập nhật:</b>",
         "Bật Wi-Fi trên máy cầm tay ➔ Mở <b>RetroHub</b> ➔ Ứng dụng sẽ tự động phát hiện và cập nhật tệp mới nhất!"
