@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Theme Store Screen: Full-screen 3x2 Grid UI, Live Boxart Previews, and Immutable Stock Backup/Restore."""
+"""Theme Store Screen: Full-screen 3x2 Grid UI, Live Previews, and On-Demand Download."""
 
 import os
 import math
 from .. import state
-from ..paths import THEMES_DIR, THEME_BACKUP_DIR, SDCARD_PATH
+from ..paths import THEMES_DIR, SDCARD_PATH
 from ..i18n import tr
 from ..theme_manager import (
     load_themes_catalog,
     install_theme,
     uninstall_theme,
-    restore_default_theme,
     get_theme_preview_path,
-    ensure_default_theme_backup,
 )
 from .base import BaseScreen
 
@@ -32,8 +30,6 @@ class ThemeStoreScreen(BaseScreen):
         self.filter_mode = "all"  # "all", "installed", "available"
 
     def on_enter(self, params=None):
-        # Fast non-blocking check
-        ensure_default_theme_backup()
         self.refresh_catalog()
 
     def refresh_catalog(self, force_reload=False):
@@ -44,19 +40,6 @@ class ThemeStoreScreen(BaseScreen):
     def apply_filter(self):
         """Applies filter mode ('all', 'installed', 'available') to items list."""
         self.filtered_items = []
-
-        # 1. Special immutable restore action item is always at index 0
-        self.filtered_items.append({
-            "id": "restore_stock",
-            "type": "restore",
-            "name": tr("theme_restore_stock_item"),
-            "display_title": f"⭐ {tr('theme_restore_stock_item')}",
-            "label": tr("theme_btn_restore"),
-            "is_restore": True,
-            "is_installed": False,
-            "folder": "stock_backup",
-            "size_str": "Stock ROM",
-        })
 
         for t in self.raw_themes:
             is_inst = t.get("is_installed", False)
@@ -71,12 +54,9 @@ class ThemeStoreScreen(BaseScreen):
             item["label"] = lbl
             self.filtered_items.append(item)
 
-        # Number items nicely
-        num = 1
-        for it in self.filtered_items:
-            if it.get("type") == "theme":
-                it["display_title"] = f"{num}. {it.get('name', it.get('folder', ''))}"
-                num += 1
+        # Number items nicely (1 to N)
+        for idx, it in enumerate(self.filtered_items):
+            it["display_title"] = f"{idx + 1}. {it.get('name', it.get('folder', ''))}"
 
         if self.selected_idx >= len(self.filtered_items):
             self.selected_idx = max(0, len(self.filtered_items) - 1)
@@ -101,10 +81,8 @@ class ThemeStoreScreen(BaseScreen):
         item = self.filtered_items[self.selected_idx]
         actions = []
 
-        if item.get("type") == "restore":
-            actions.append(("A", tr("theme_btn_restore"), (255, 200, 0), (220, 225, 235), True))
-        elif item.get("is_installed"):
-            actions.append(("A", tr("theme_btn_install"), (0, 230, 150), (220, 225, 235), True))
+        if item.get("is_installed"):
+            actions.append(("A", tr("theme_btn_reinstall"), (0, 210, 255), (220, 225, 235), True))
             actions.append(("X", tr("theme_btn_uninstall"), (255, 75, 75), (220, 225, 235), True))
         else:
             actions.append(("A", tr("theme_btn_install"), (0, 230, 150), (220, 225, 235), True))
@@ -162,7 +140,6 @@ class ThemeStoreScreen(BaseScreen):
             if col > 0:
                 self.selected_idx -= 1
             else:
-                # Wrap to previous item or jump page
                 if self.selected_idx > 0:
                     self.selected_idx -= 1
                 else:
@@ -214,26 +191,20 @@ class ThemeStoreScreen(BaseScreen):
         # Uninstall Theme with X
         if btn_x and 0 <= self.selected_idx < num_items:
             item = self.filtered_items[self.selected_idx]
-            if item.get("type") == "theme" and item.get("is_installed"):
+            if item.get("is_installed"):
                 ok, msg = uninstall_theme(item.get("folder", ""))
                 self.engine.toast(msg)
                 self.refresh_catalog(force_reload=True)
                 return True
 
-        # Install or Restore with A
+        # Download / Install with A
         if btn_a and 0 <= self.selected_idx < num_items:
             item = self.filtered_items[self.selected_idx]
-            if item.get("type") == "restore":
-                ok, msg = restore_default_theme()
-                self.engine.toast(msg)
-                self.refresh_catalog(force_reload=True)
-                return True
-            elif item.get("type") == "theme":
-                self.engine.toast(tr("theme_installing"))
-                ok, msg = install_theme(item)
-                self.engine.toast(msg)
-                self.refresh_catalog(force_reload=True)
-                return True
+            self.engine.toast(tr("theme_installing"))
+            ok, msg = install_theme(item)
+            self.engine.toast(msg)
+            self.refresh_catalog(force_reload=True)
+            return True
 
         return False
 
@@ -270,7 +241,6 @@ class ThemeStoreScreen(BaseScreen):
         for slot_idx, item in enumerate(page_items):
             actual_idx = start_idx + slot_idx
             is_sel = (actual_idx == self.selected_idx)
-            is_restore = item.get("is_restore", False)
             is_inst = item.get("is_installed", False)
 
             col = slot_idx % self.COLS
@@ -284,22 +254,13 @@ class ThemeStoreScreen(BaseScreen):
             # ------------------------------------------------------------------
             if is_sel:
                 # Active Selection with Steam Cyan border & glow
-                if is_restore:
-                    engine.fill_rect(card_x, card_y, card_w, card_h, 45, 36, 18, 255)
-                    engine.draw_rect(card_x, card_y, card_w, card_h, 255, 215, 0, 255, thickness=3)
-                    engine.fill_rect(card_x + 3, card_y + 3, card_w - 6, 3, 255, 215, 0, 255)
-                else:
-                    engine.fill_rect(card_x, card_y, card_w, card_h, 26, 42, 70, 255)
-                    engine.draw_rect(card_x, card_y, card_w, card_h, 0, 246, 246, 255, thickness=3)
-                    engine.fill_rect(card_x + 3, card_y + 3, card_w - 6, 3, 0, 246, 246, 255)
+                engine.fill_rect(card_x, card_y, card_w, card_h, 26, 42, 70, 255)
+                engine.draw_rect(card_x, card_y, card_w, card_h, 0, 246, 246, 255, thickness=3)
+                engine.fill_rect(card_x + 3, card_y + 3, card_w - 6, 3, 0, 246, 246, 255)
             else:
                 # Idle Card
-                if is_restore:
-                    engine.fill_rect(card_x, card_y, card_w, card_h, 30, 24, 14, 255)
-                    engine.draw_rect(card_x, card_y, card_w, card_h, 140, 110, 30, 200, thickness=1)
-                else:
-                    engine.fill_rect(card_x, card_y, card_w, card_h, 18, 25, 40, 255)
-                    engine.draw_rect(card_x, card_y, card_w, card_h, 38, 52, 80, 255, thickness=1)
+                engine.fill_rect(card_x, card_y, card_w, card_h, 18, 25, 40, 255)
+                engine.draw_rect(card_x, card_y, card_w, card_h, 38, 52, 80, 255, thickness=1)
 
             # ------------------------------------------------------------------
             # 2. Preview Thumbnail Box
@@ -312,28 +273,16 @@ class ThemeStoreScreen(BaseScreen):
             engine.fill_rect(img_x, img_y, img_w, img_h, 10, 14, 22, 255)
             engine.draw_rect(img_x, img_y, img_w, img_h, 30, 42, 65, 255, thickness=1)
 
-            if is_restore:
-                # Golden Restore Stock Hero Card Visual
-                engine.fill_rect(img_x + 1, img_y + 1, img_w - 2, img_h - 2, 36, 28, 14, 255)
-                engine.draw_text("⭐", engine.font_title or engine.font_item,
-                                 img_x + img_w // 2, img_y + 55, 255, 215, 80, center_x=True, center_y=True)
-                engine.draw_text("KHÔI PHỤC GỐC" if state.current_lang == "VI" else "STOCK RESTORE",
-                                 engine.font_item, img_x + img_w // 2, img_y + 110,
-                                 255, 215, 100, center_x=True, center_y=True)
-                engine.draw_text("Bấm [A] để khôi phục theme xuất xưởng" if state.current_lang == "VI" else "Press [A] to restore stock themes",
-                                 engine.font_badge, img_x + img_w // 2, img_y + 155,
-                                 180, 190, 210, center_x=True, center_y=True)
+            prev_path = item.get("preview_path")
+            if prev_path and os.path.exists(prev_path):
+                engine.draw_proportional_boxart(prev_path, img_x + 2, img_y + 2, img_w - 4, img_h - 4)
             else:
-                prev_path = item.get("preview_path")
-                if prev_path and os.path.exists(prev_path):
-                    engine.draw_proportional_boxart(prev_path, img_x + 2, img_y + 2, img_w - 4, img_h - 4)
-                else:
-                    engine.draw_text("THEME PREVIEW", engine.font_badge,
-                                     img_x + img_w // 2, img_y + img_h // 2 - 10,
-                                     90, 115, 150, center_x=True, center_y=True)
-                    engine.draw_text(item.get("folder", ""), engine.font_badge,
-                                     img_x + img_w // 2, img_y + img_h // 2 + 15,
-                                     70, 90, 120, center_x=True, center_y=True)
+                engine.draw_text("THEME PREVIEW", engine.font_badge,
+                                 img_x + img_w // 2, img_y + img_h // 2 - 10,
+                                 90, 115, 150, center_x=True, center_y=True)
+                engine.draw_text(item.get("folder", ""), engine.font_badge,
+                                 img_x + img_w // 2, img_y + img_h // 2 + 15,
+                                 70, 90, 120, center_x=True, center_y=True)
 
             # ------------------------------------------------------------------
             # 3. Card Bottom Info (Title & Badges)
@@ -345,8 +294,6 @@ class ThemeStoreScreen(BaseScreen):
 
             if is_sel:
                 tr_c, tg_c, tb_c = (255, 255, 255)
-            elif is_restore:
-                tr_c, tg_c, tb_c = (255, 215, 100)
             else:
                 tr_c, tg_c, tb_c = (205, 218, 235)
 
@@ -358,12 +305,7 @@ class ThemeStoreScreen(BaseScreen):
             badge_w = 95
             badge_x = card_x + 10
 
-            if is_restore:
-                b_bg = (55, 42, 18)
-                b_border = (200, 160, 40)
-                b_text = (255, 215, 0)
-                b_label = "MẶC ĐỊNH" if state.current_lang == "VI" else "STOCK"
-            elif is_inst:
+            if is_inst:
                 b_bg = (15, 45, 30)
                 b_border = (0, 180, 100)
                 b_text = (0, 230, 150)
@@ -379,9 +321,10 @@ class ThemeStoreScreen(BaseScreen):
             engine.draw_text(b_label, engine.font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2,
                              b_text[0], b_text[1], b_text[2], center_x=True, center_y=True)
 
-            # Extra info (Size / Font) on the right side of the badge
+            # Extra info (Size) on the right side of the badge
             size_str = item.get("size_str", "")
             if size_str:
                 engine.draw_text(size_str, engine.font_badge, card_x + card_w - 12, badge_y + badge_h // 2,
                                  140, 160, 190, right_align=True, center_y=True)
+
 
