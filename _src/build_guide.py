@@ -19,7 +19,7 @@ from build import (
 )
 
 SECTIONS = [
-    ("quy-trinh", "7-Step Setup", "Quy trình 7 bước"),
+    ("quy-trinh", "7 Steps (Brick Pro)", "7 Bước (Brick Pro)"),
     ("cai-le", "Existing SD card?", "Dành cho thẻ cũ"),
     ("faq", "FAQ & Help", "Hỏi đáp & Lỗi"),
 ]
@@ -251,10 +251,10 @@ def render_content_vi():
     return f"""
   <!-- SECTION: QUY TRÌNH 7 BƯỚC -->
   <section id="quy-trinh" class="rise">
-    <h2>Quy trình 7 bước cho người mới</h2>
+    <h2>Quy trình 7 bước cho máy TrimUI Brick Pro</h2>
     <div class="step-box">
       <p class="step-desc" style="font-size:1.02rem;margin-bottom:20px">
-        Bạn mới mua máy hoặc có thẻ nhớ trắng tinh? Thực hiện theo đúng <b>7 bước ngắn gọn</b> sau để cài đặt toàn bộ hệ thống giả lập và RetroHub:
+        Bạn mới mua máy TrimUI Brick Pro hoặc có thẻ nhớ trắng tinh? Thực hiện theo đúng <b>7 bước ngắn gọn</b> sau để cài đặt toàn bộ hệ thống giả lập và RetroHub:
       </p>
 
       <div class="step-grid-7">
@@ -389,10 +389,10 @@ def render_content_en():
     return f"""
   <!-- SECTION: 7-STEP SETUP -->
   <section id="quy-trinh" class="rise">
-    <h2>7-Step Setup Guide for Beginners</h2>
+    <h2>7-Step Setup Guide for TrimUI Brick Pro</h2>
     <div class="step-box">
       <p class="step-desc" style="font-size:1.02rem;margin-bottom:20px">
-        Just got your handheld console or starting with a fresh SD card? Follow these <b>7 straightforward steps</b> to install full emulators and RetroHub:
+        Just got your TrimUI Brick Pro handheld or starting with a fresh SD card? Follow these <b>7 straightforward steps</b> to install full emulators and RetroHub:
       </p>
 
       <div class="step-grid-7">
