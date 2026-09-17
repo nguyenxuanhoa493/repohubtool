@@ -44,6 +44,7 @@ class UtilitiesScreen(BaseScreen):
 
         self.items = [
             {"id": "nav_splash", "title": tr("util_item_splash"), "label": tr("view")},
+            {"id": "nav_theme_store", "title": tr("util_item_theme_store"), "label": tr("view")},
             {"id": "nav_auto_scrape", "title": tr("util_auto_scrape"), "label": scrape_badge},
             {"id": "nav_save_manager", "title": tr("util_save_manager"), "label": tr("view")},
             {"id": "nav_cheats", "title": tr("util_cheat_title"), "label": cheat_badge},
@@ -124,6 +125,8 @@ class UtilitiesScreen(BaseScreen):
 
             if it_id == "nav_splash":
                 self.engine.push_screen("splash")
+            elif it_id == "nav_theme_store":
+                self.engine.push_screen("theme_store")
             elif it_id == "nav_auto_scrape":
                 self.engine.open_modal(BoxartScraperModal(self.engine))
             elif it_id == "nav_cheats":

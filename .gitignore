@@ -1,3 +1,8 @@
 __pycache__/
 .DS_Store
 catalog/roms_store.sqlite3
+
+# Ignore unzipped theme folders (to keep repo clean), only track zips
+Themes/*
+!Themes/zips/
+!Themes/zips/**

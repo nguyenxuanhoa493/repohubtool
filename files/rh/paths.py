@@ -75,6 +75,26 @@ SPLASH_TEMP_PREVIEW = "/tmp/splash_preview.png"
 SPLASH_TEMP_BMP = "/tmp/splash_preview.bmp"
 BOOTLOGO_BACKUP_FILE = os.path.join(SPLASH_BACKUP_DIR, "bootlogo_original.bmp")
 
+THEMES_DIR = os.path.join(SDCARD_PATH, "Themes")
+THEME_BACKUP_DIR = os.path.join(SDCARD_PATH, "System", "backup", "theme_stock")
+THEME_BACKUP_MARKER = os.path.join(THEME_BACKUP_DIR, ".stock_theme_backup_done")
+THEMES_CATALOG_FILE = os.path.join(APP_DIR, "catalog", "themes_catalog.json")
+
+def _detect_themes_repo_dir():
+    candidates = [
+        os.path.join(SDCARD_PATH, "Themes_repo"),
+        os.path.join(APP_DIR, "Themes"),
+        os.path.join(os.path.dirname(APP_DIR), "Themes"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Themes"),
+    ]
+    for cand in candidates:
+        if os.path.isdir(cand):
+            return cand
+    return os.path.join(SDCARD_PATH, "Themes_repo")
+
+LOCAL_THEMES_REPO_DIR = _detect_themes_repo_dir()
+
+
 
 def get_yt_cache_dir():
     """Persistent thumbnail directory on SDCARD with fallback to RAM tmpfs."""
