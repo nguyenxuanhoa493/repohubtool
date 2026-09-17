@@ -72,7 +72,14 @@ class ThemeStoreScreen(BaseScreen):
         elif self.filter_mode == "available":
             mode_str = tr("theme_filter_available")
 
-        return f"{tr('theme_store_title')} • [{mode_str}] • {cur_page}/{total_pages} ({total_items})"
+        cur_info = ""
+        if 0 <= self.selected_idx < total_items:
+            it = self.filtered_items[self.selected_idx]
+            name_str = it.get("name", it.get("folder", ""))
+            size_str = f" • {it.get('size_str')}" if it.get("size_str") else ""
+            cur_info = f" • #{self.selected_idx + 1} {name_str}{size_str}"
+
+        return f"{tr('theme_store_title')}{cur_info} • [{mode_str}] • {cur_page}/{total_pages}"
 
     def get_footer_actions(self):
         if not self.filtered_items or self.selected_idx < 0 or self.selected_idx >= len(self.filtered_items):
@@ -209,7 +216,7 @@ class ThemeStoreScreen(BaseScreen):
         return False
 
     def render(self, engine):
-        """Renders the full-screen 3x2 Grid UI."""
+        """Renders the full-screen 3x2 Grid UI (pure thumbnail gallery with corner icon)."""
         total_items = len(self.filtered_items)
         if total_items == 0:
             engine.draw_text(
@@ -223,7 +230,7 @@ class ThemeStoreScreen(BaseScreen):
             return
 
         # ----------------------------------------------------------------------
-        # 3x2 Grid Layout Calculations
+        # 3x2 Grid Layout Calculations (Full screen cards)
         # ----------------------------------------------------------------------
         page = self.selected_idx // self.ITEMS_PER_PAGE
         start_idx = page * self.ITEMS_PER_PAGE
@@ -236,7 +243,7 @@ class ThemeStoreScreen(BaseScreen):
 
         total_grid_w = state.SCREEN_W - (margin_x * 2)  # 1024 - 48 = 976
         card_w = (total_grid_w - (self.COLS - 1) * gap_x) // self.COLS  # ~314px
-        card_h = 308  # Height: 2 rows fit in 630px
+        card_h = 312  # 312 * 2 + 14 = 638px (fits perfectly in 768px height)
 
         for slot_idx, item in enumerate(page_items):
             actual_idx = start_idx + slot_idx
@@ -250,32 +257,31 @@ class ThemeStoreScreen(BaseScreen):
             card_y = start_y + row * (card_h + gap_y)
 
             # ------------------------------------------------------------------
-            # 1. Card Container & Borders
+            # 1. Card Container & Border
             # ------------------------------------------------------------------
             if is_sel:
                 # Active Selection with Steam Cyan border & glow
-                engine.fill_rect(card_x, card_y, card_w, card_h, 26, 42, 70, 255)
+                engine.fill_rect(card_x, card_y, card_w, card_h, 24, 40, 68, 255)
                 engine.draw_rect(card_x, card_y, card_w, card_h, 0, 246, 246, 255, thickness=3)
                 engine.fill_rect(card_x + 3, card_y + 3, card_w - 6, 3, 0, 246, 246, 255)
             else:
                 # Idle Card
-                engine.fill_rect(card_x, card_y, card_w, card_h, 18, 25, 40, 255)
-                engine.draw_rect(card_x, card_y, card_w, card_h, 38, 52, 80, 255, thickness=1)
+                engine.fill_rect(card_x, card_y, card_w, card_h, 16, 22, 36, 255)
+                engine.draw_rect(card_x, card_y, card_w, card_h, 36, 50, 78, 255, thickness=1)
 
             # ------------------------------------------------------------------
-            # 2. Preview Thumbnail Box
+            # 2. Maximize Full Thumbnail Image Area (Edge-to-Edge inside card)
             # ------------------------------------------------------------------
-            img_x = card_x + 6
-            img_y = card_y + 6
-            img_w = card_w - 12
-            img_h = 210
+            img_x = card_x + 4
+            img_y = card_y + 4
+            img_w = card_w - 8
+            img_h = card_h - 8
 
             engine.fill_rect(img_x, img_y, img_w, img_h, 10, 14, 22, 255)
-            engine.draw_rect(img_x, img_y, img_w, img_h, 30, 42, 65, 255, thickness=1)
 
             prev_path = item.get("preview_path")
             if prev_path and os.path.exists(prev_path):
-                engine.draw_proportional_boxart(prev_path, img_x + 2, img_y + 2, img_w - 4, img_h - 4)
+                engine.draw_proportional_boxart(prev_path, img_x, img_y, img_w, img_h)
             else:
                 engine.draw_text("THEME PREVIEW", engine.font_badge,
                                  img_x + img_w // 2, img_y + img_h // 2 - 10,
@@ -285,46 +291,26 @@ class ThemeStoreScreen(BaseScreen):
                                  70, 90, 120, center_x=True, center_y=True)
 
             # ------------------------------------------------------------------
-            # 3. Card Bottom Info (Title & Badges)
+            # 3. Status Icon in Bottom-Right Corner of Thumbnail
             # ------------------------------------------------------------------
-            title_y = card_y + 230
-            title_str = item.get("display_title", item.get("name", ""))
-            if len(title_str) > 23:
-                title_str = title_str[:21] + ".."
-
-            if is_sel:
-                tr_c, tg_c, tb_c = (255, 255, 255)
-            else:
-                tr_c, tg_c, tb_c = (205, 218, 235)
-
-            engine.draw_text(title_str, engine.font_item, card_x + 10, title_y, tr_c, tg_c, tb_c, center_y=True)
-
-            # Badge & Size info row
-            badge_y = card_y + 266
-            badge_h = 30
-            badge_w = 95
-            badge_x = card_x + 10
+            icon_w = 34
+            icon_h = 30
+            icon_x = card_x + card_w - icon_w - 8
+            icon_y = card_y + card_h - icon_h - 8
 
             if is_inst:
-                b_bg = (15, 45, 30)
-                b_border = (0, 180, 100)
-                b_text = (0, 230, 150)
-                b_label = tr("theme_installed_badge")
+                # Installed Status: Green badge with Checkmark
+                engine.fill_rect(icon_x, icon_y, icon_w, icon_h, 12, 45, 26, 225)
+                engine.draw_rect(icon_x, icon_y, icon_w, icon_h, 0, 230, 130, 255, thickness=1)
+                engine.draw_text("✓", engine.font_badge,
+                                 icon_x + icon_w // 2, icon_y + icon_h // 2,
+                                 0, 245, 150, center_x=True, center_y=True)
             else:
-                b_bg = (24, 38, 62)
-                b_border = (50, 80, 130)
-                b_text = (0, 230, 255)
-                b_label = tr("theme_not_installed_badge")
-
-            engine.fill_rect(badge_x, badge_y, badge_w, badge_h, b_bg[0], b_bg[1], b_bg[2], 255)
-            engine.draw_rect(badge_x, badge_y, badge_w, badge_h, b_border[0], b_border[1], b_border[2], 255, thickness=1)
-            engine.draw_text(b_label, engine.font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2,
-                             b_text[0], b_text[1], b_text[2], center_x=True, center_y=True)
-
-            # Extra info (Size) on the right side of the badge
-            size_str = item.get("size_str", "")
-            if size_str:
-                engine.draw_text(size_str, engine.font_badge, card_x + card_w - 12, badge_y + badge_h // 2,
-                                 140, 160, 190, right_align=True, center_y=True)
+                # Cloud Status: Subtle cyan badge with Cloud / Download indicator
+                engine.fill_rect(icon_x, icon_y, icon_w, icon_h, 16, 28, 48, 205)
+                engine.draw_rect(icon_x, icon_y, icon_w, icon_h, 0, 190, 240, 220, thickness=1)
+                engine.draw_text("☁", engine.font_badge,
+                                 icon_x + icon_w // 2, icon_y + icon_h // 2,
+                                 0, 230, 255, center_x=True, center_y=True)
 
 
