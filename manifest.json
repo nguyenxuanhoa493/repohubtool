@@ -1,12 +1,12 @@
 {
-  "version": "2.32",
-  "full_release_version": "2.31",
+  "version": "2.33",
+  "full_release_version": "2.33",
   "python": "any",
-  "built": "2026-09-17T22:15:00+0700",
+  "built": "2026-09-18T00:45:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Bảo mật & Mã hóa đa tầng Token/AI Key trong toàn bộ ứng dụng, bổ sung công cụ quản lý Secret",
-    "en": "Multi-layer Secret Obfuscation for Telegram & AI Keys, added Secret Management CLI utility"
+    "vi": "Theme Store Grid 3x2 trực quan (STT, Tên, Trạng thái & Tải trực tiếp), Sửa lỗi Web Manager UI, Khung ảnh Boxart & Tìm kiếm Game Store",
+    "en": "Theme Store Grid 3x2 (Index, Title, Status & Direct Download), Fix Web Manager UI, Boxart Ratio & Online Game Search"
   },
   "remove": [
     "app.pyc",
@@ -758,8 +758,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 67369,
-      "sha256": "96118bc493b104079f5e1faa4c63f803f95ca59e01a4684f88a15f36ab367d2c"
+      "size": 67039,
+      "sha256": "893f882e3668bd72b43eaf7ce9c680fd24ef71100f5ad68e3ece17887c2f086a"
     },
     {
       "path": "icon.png",
@@ -828,8 +828,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 41334,
-      "sha256": "cfe28e0392bf475f529a608fdbd3a4cc0cfdbc2b5010e2ab6b3b2a41ad0bd5d3"
+      "size": 43417,
+      "sha256": "2761fc884fe8753e9653b6bfc8a7ffd39dbb16829ae64f4219d228183130ec0e"
     },
     {
       "path": "rh/emulators.py",
@@ -933,8 +933,8 @@
     },
     {
       "path": "rh/modals/game_action.py",
-      "size": 26258,
-      "sha256": "e2218a53d7fc49c114115598736ced0cd30128f9f9adacf9f8f8b14b6eeb8a90"
+      "size": 26701,
+      "sha256": "41c308d05a23c189d90fe2dab0d5b252fb4a1464500d6a66c887eadf1537a24d"
     },
     {
       "path": "rh/modals/j2me.py",
@@ -963,8 +963,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 5944,
-      "sha256": "0eaaaf9001965bcb8f5ead9da9e2dc4404de76c6b930986643991569523fc06c"
+      "size": 6054,
+      "sha256": "adc8929e0b1fc2c99a1fd9f7362219a11648d51ee0215b221ddb7bba126dc7a5"
     },
     {
       "path": "rh/romfiles.py",
@@ -1028,8 +1028,8 @@
     },
     {
       "path": "rh/screens/theme_store.py",
-      "size": 13196,
-      "sha256": "79be03bb38fcf505641d8e0317a78a835add46b76d0a9611213b757a609caf40"
+      "size": 17824,
+      "sha256": "e35276c9a1bd950aeb0943eb5b2cd800f4e37b227e104c5f72fa85dc2895d184"
     },
     {
       "path": "rh/screens/utilities.py",
@@ -1078,8 +1078,8 @@
     },
     {
       "path": "rh/theme_manager.py",
-      "size": 9662,
-      "sha256": "5205879fd3e020150698d1e6088c077203e419567884b71b13c0b9adff87aa4d"
+      "size": 9623,
+      "sha256": "7cd7abced9f0fad257421826986d29d90b87c8c93260c8a1909596f3ec6dc959"
     },
     {
       "path": "rh/ui/__init__.py",
@@ -1109,7 +1109,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "3415c6e15e65a241b10112a83322c41574bdc9bb7debe2662a64dbea836c0296"
+      "sha256": "5fa15f66b98f61ed3fcab5413da25ab50e1e37730ea7df9d3a82494e9e3562cd"
     },
     {
       "path": "rh/yt.py",
@@ -1538,8 +1538,8 @@
     },
     {
       "path": "web/app.js",
-      "size": 101319,
-      "sha256": "1e044f1833fa81d26ca192054020b45fd1c21e69005e486a16deb2290ac2398f"
+      "size": 84839,
+      "sha256": "8a1581c5c1a7b83146eef7af03ba7c03a0664d6fc03915185dc54f4a75f634c6"
     },
     {
       "path": "web/index.html",
@@ -1548,8 +1548,8 @@
     },
     {
       "path": "web/style.css",
-      "size": 21441,
-      "sha256": "4f8b6b2a880987f5946f6e86f6044cc518889d2c6098a0476bc5eceb495a821c"
+      "size": 22992,
+      "sha256": "ad308e861446a6805cc7b99438ce74978f955bd679395d543b4e8cd12b63a0e5"
     },
     {
       "path": "yt.py",
