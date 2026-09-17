@@ -1,4 +1,4 @@
-﻿"""
+"""
 A simple particle engine implementation.
 """
 from .compat import *

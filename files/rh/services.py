@@ -117,7 +117,7 @@ def toggle_gameweb():
     else:
         subprocess.Popen([sys.executable, GAMEWEB_SCRIPT], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True, start_new_session=True)
         ip = get_ip()
-        return f"Đã bật Quản lý Game (Web: http://{ip}:8090)" if state.current_lang == "VI" else f"Enabled Web Game Manager (http://{ip}:8090)"
+        return f"Đã bật Quản lý Game (Web: http://{ip}:8888)" if state.current_lang == "VI" else f"Enabled Web Game Manager (http://{ip}:8888)"
 
 def wifi_iface():
     """Interface holding the default route, e.g. wlan0."""
@@ -190,7 +190,7 @@ def get_gameweb_guide_rows():
     vi = state.current_lang == "VI"
     return [
         ("Mở trên máy tính / điện thoại" if vi else "Open in desktop / mobile browser",
-         f"http://{ip}:8090"),
+         f"http://{ip}:8888"),
         ("Chức năng Web" if vi else "Web Features",
          "Đổi tên game, Cào ảnh bìa (Art), Chuyển hệ máy, Tải ROM" if vi
          else "Rename games, Scrape boxart, Move systems, Upload ROMs"),
@@ -520,8 +520,8 @@ def send_ssh_info_to_telegram():
         "🔒 <b>Mật khẩu mặc định:</b>",
         "<code>root</code>",
         "",
-        "🌐 <b>Quản lý Game Web (8090):</b>",
-        f"http://{dev_ip}:8090",
+        "🌐 <b>Quản lý Game Web (8888):</b>",
+        f"http://{dev_ip}:8888",
         "",
         "📁 <b>SFTPGo Web Manager (8080):</b>",
         f"http://{dev_ip}:8080",
@@ -624,3 +624,18 @@ def toggle_netplay():
                 else "Select a game in Library to Host Netplay!")
 
 
+
+
+def stop_ssh():
+    subprocess.call("/etc/init.d/sshd stop 2>/dev/null; /etc/init.d/dropbear stop 2>/dev/null; killall -9 sshd 2>/dev/null; killall -9 dropbear 2>/dev/null", shell=True)
+    save_options(ssh_val="N")
+
+def stop_sftpgo():
+    subprocess.call("killall -9 sftpgo 2>/dev/null", shell=True)
+    save_options(sftpgo_val="N")
+
+def stop_gameweb():
+    subprocess.call("pkill -9 -f gameweb.py 2>/dev/null; killall -9 gameweb 2>/dev/null", shell=True)
+
+def stop_streamer():
+    subprocess.call("pkill -9 -f streamer.py 2>/dev/null; killall -9 ffmpeg 2>/dev/null", shell=True)

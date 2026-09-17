@@ -14,8 +14,9 @@ import re
 import time
 import json
 import shutil
+import signal
+import atexit
 import subprocess
-import ssl
 import urllib.request
 import urllib.parse
 import threading
@@ -24,13 +25,13 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
 try:
-    _SSL_CONTEXT = ssl.create_default_context()
-    _SSL_CONTEXT.check_hostname = False
-    _SSL_CONTEXT.verify_mode = ssl.CERT_NONE
+    _SSL_CONTEXT = None
+    
+    
 except Exception:
     _SSL_CONTEXT = None
 
-PORT = 8090
+PORT = 8888
 
 _cur_d = os.path.dirname(os.path.abspath(__file__))
 if _cur_d not in sys.path:
@@ -358,59 +359,83 @@ def background_download_store_game(
   base_name = os.path.splitext(filename)[0]
   target_img_path = os.path.join(target_img_dir, base_name + ".png")
 
-  # Tải ảnh Box Art nếu có
+  # 1. Tải ảnh Box Art (nếu có)
   if img_url:
     try:
-      download_image_to_file(img_url, target_img_path, timeout=12)
+      download_image_to_file(img_url, target_img_path, timeout=10)
     except Exception as e:
       print(f"Store download boxart error: {e}")
 
-  # Tải ROM
+  # 2. Tải ROM game bằng curl với theo dõi dung lượng và tốc độ thực tế
   temp_rom_path = target_rom_path + ".tmp_dl"
+  if os.path.exists(temp_rom_path):
+    try:
+      os.remove(temp_rom_path)
+    except Exception:
+      pass
+
   try:
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        ),
-        "Referer": rom_url,
-    }
-    req = urllib.request.Request(rom_url, headers=headers)
-    kwargs = {"timeout": 30}
-    if _SSL_CONTEXT:
-      kwargs["context"] = _SSL_CONTEXT
+    # Lấy kích thước Content-Length trước qua curl HEAD
+    total_sz = 0
+    try:
+      head_cmd = [
+          "curl", "-s", "-I", "-k", "-L", "--max-time", "6",
+          "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "-e", rom_url,
+          rom_url
+      ]
+      head_res = subprocess.run(head_cmd, capture_output=True, text=True)
+      for line in head_res.stdout.splitlines():
+        if line.lower().startswith("content-length:"):
+          total_sz = int(line.split(":", 1)[1].strip())
+    except Exception:
+      total_sz = 0
 
-    with urllib.request.urlopen(req, **kwargs) as resp:
-      total_sz = int(resp.headers.get("Content-Length", 0))
-      with STORE_DOWNLOADS_LOCK:
-        STORE_DOWNLOADS[dl_id]["total_bytes"] = total_sz
+    with STORE_DOWNLOADS_LOCK:
+      STORE_DOWNLOADS[dl_id]["total_bytes"] = total_sz
 
-      downloaded = 0
-      t_last = time.time()
-      b_last = 0
+    # Chạy tiến trình curl tải ROM
+    dl_cmd = [
+        "curl", "-s", "-k", "-L",
+        "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "-e", rom_url,
+        "-o", temp_rom_path,
+        rom_url
+    ]
+    proc = subprocess.Popen(dl_cmd)
 
-      with open(temp_rom_path, "wb") as out_f:
-        while True:
-          chunk = resp.read(65536)
-          if not chunk:
-            break
-          out_f.write(chunk)
-          downloaded += len(chunk)
+    t_last = time.time()
+    b_last = 0
 
-          now = time.time()
-          if now - t_last >= 0.4:
-            speed = (downloaded - b_last) / max(0.001, now - t_last)
-            speed_str = (
-                f"{speed / (1024*1024):.1f} MB/s"
-                if speed > 1024 * 1024
-                else f"{speed // 1024} KB/s"
-            )
-            pct = int((downloaded / total_sz) * 100) if total_sz > 0 else 50
-            with STORE_DOWNLOADS_LOCK:
-              STORE_DOWNLOADS[dl_id]["progress_pct"] = pct
-              STORE_DOWNLOADS[dl_id]["downloaded_bytes"] = downloaded
-              STORE_DOWNLOADS[dl_id]["speed_str"] = speed_str
-            t_last = now
-            b_last = downloaded
+    # Vòng lặp theo dõi tiến độ ghi file vào thẻ nhớ
+    while proc.poll() is None:
+      time.sleep(0.3)
+      if os.path.exists(temp_rom_path):
+        cur_sz = os.path.getsize(temp_rom_path)
+        now = time.time()
+        elapsed = max(0.001, now - t_last)
+        if elapsed >= 0.4:
+          speed = (cur_sz - b_last) / elapsed
+          speed_str = (
+              f"{speed / (1024*1024):.1f} MB/s"
+              if speed > 1024 * 1024
+              else f"{int(speed / 1024)} KB/s"
+          )
+          pct = int((cur_sz / total_sz) * 100) if total_sz > 0 else min(95, int(cur_sz / (1024*1024) * 8))
+          with STORE_DOWNLOADS_LOCK:
+            STORE_DOWNLOADS[dl_id]["progress_pct"] = max(1, min(99, pct))
+            STORE_DOWNLOADS[dl_id]["downloaded_bytes"] = cur_sz
+            STORE_DOWNLOADS[dl_id]["speed_str"] = speed_str
+          t_last = now
+          b_last = cur_sz
+
+    ret_code = proc.wait()
+    if ret_code != 0:
+      raise RuntimeError(f"Lỗi mạng khi tải (Curl exit code: {ret_code})")
+
+    final_sz = os.path.getsize(temp_rom_path) if os.path.exists(temp_rom_path) else 0
+    if final_sz < 64:
+      raise RuntimeError("File tải về rỗng hoặc lỗi kết nối máy chủ")
 
     if os.path.exists(temp_rom_path):
       os.replace(temp_rom_path, target_rom_path)
@@ -418,6 +443,9 @@ def background_download_store_game(
     with STORE_DOWNLOADS_LOCK:
       STORE_DOWNLOADS[dl_id]["status"] = "completed"
       STORE_DOWNLOADS[dl_id]["progress_pct"] = 100
+      STORE_DOWNLOADS[dl_id]["downloaded_bytes"] = final_sz
+      STORE_DOWNLOADS[dl_id]["speed_str"] = "Xong"
+
   except Exception as e:
     print(f"Store download ROM error: {e}")
     if os.path.exists(temp_rom_path):
@@ -559,33 +587,19 @@ def download_image_to_file(img_url, target_path, timeout=15):
   if img_url.startswith("//"):
     img_url = "https:" + img_url
 
-  headers = {
-      "User-Agent": (
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      ),
-      "Accept": (
-          "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
-      ),
-      "Referer": img_url,
-  }
-
   raw_data = None
   try:
-    req = urllib.request.Request(img_url, headers=headers)
-    kwargs = {"timeout": timeout}
-    if _SSL_CONTEXT:
-      kwargs["context"] = _SSL_CONTEXT
-    with urllib.request.urlopen(req, **kwargs) as resp:
-      raw_data = resp.read()
-  except Exception as e:
-    # Fallback to curl
-    try:
-      cmd = ["curl", "-s", "-L", "-k", "--max-time", str(timeout), img_url]
-      res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      if res.returncode == 0 and len(res.stdout) > 64:
-        raw_data = res.stdout
-    except Exception:
-      pass
+    cmd = [
+        "curl", "-s", "-L", "-k", "--max-time", str(timeout),
+        "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "-e", img_url,
+        img_url
+    ]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if res.returncode == 0 and len(res.stdout) > 64:
+      raw_data = res.stdout
+  except Exception:
+    pass
 
   if not raw_data or len(raw_data) < 64:
     return False, "Empty or invalid image data"
@@ -595,7 +609,6 @@ def download_image_to_file(img_url, target_path, timeout=15):
     save_boxart_png(raw_data, target_path)
     return True, ""
   except Exception as e:
-    # Fallback direct write
     try:
       with open(target_path, "wb") as f:
         f.write(raw_data)
@@ -1058,6 +1071,7 @@ class GameWebHandler(BaseHTTPRequestHandler):
               sys_code=sys_code,
               limit=limit,
               source_type=source_type,
+              offset=offset,
           )
         else:
           games = db.get_games_page(
@@ -1743,6 +1757,45 @@ class GameWebHandler(BaseHTTPRequestHandler):
         self.send_json({"ok": False, "error": str(e)}, 500)
       return
 
+    if path == "/api/chat":
+      try:
+        post_data = self.rfile.read(content_len).decode("utf-8")
+        # Use curl to bypass Python's missing SSL module on TrimUI
+        cmd = [
+            "curl", "-s", "-k", "-X", "POST",
+            "https://ai.xuanhoa493.com/v1/chat/completions",
+            "-H", "Content-Type: application/json",
+            "-H", "Authorization: Bearer freellmapi-706315155bc56c3a9c765142ab7a08e20d35e2ce26dad3e2",
+            "-d", post_data
+        ]
+        import subprocess
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        
+        # If curl failed or returned empty stdout, return the stderr as a JSON error
+        if not result.stdout.strip():
+            err_msg = result.stderr if result.stderr else "Empty response from curl (Exit code: " + str(result.returncode) + ")"
+            self.wfile.write(json.dumps({"error": "Curl Error: " + err_msg}).encode('utf-8'))
+        else:
+            self.wfile.write(result.stdout.encode('utf-8'))
+      except Exception as e:
+        self.send_json({"error": str(e)}, status=500)
+      return
+
+    if path == "/api/run_cmd":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        cmd_str = payload.get("cmd", "")
+        import subprocess
+        p = subprocess.run(cmd_str, shell=True, capture_output=True, text=True)
+        out = (p.stdout + p.stderr).strip()
+        self.send_json({"output": out, "code": p.returncode, "cmd": cmd_str})
+      except Exception as e:
+        self.send_json({"error": str(e), "code": -1}, status=500)
+      return
+
     if path == "/api/youtube/playlists/import":
       try:
         payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
@@ -1908,7 +1961,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             --radius: 10px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        body { background: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
         /* Header & Navigation */
         header {
@@ -2150,6 +2203,15 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 <button id="nav-btn-youtube" class="nav-tab" onclick="switchMainTab('youtube')">
                     <span>📺</span> Quản lý playlist YouTube
                 </button>
+                <button id="nav-btn-files" class="nav-tab" onclick="switchMainTab('files')">
+                    <span>📁</span> Quản lý file
+                </button>
+                <button id="nav-btn-stream" class="nav-tab" onclick="switchMainTab('stream')">
+                    <span>🖥️</span> Truyền màn hình
+                </button>
+                <button id="nav-btn-chat" class="nav-tab" onclick="switchMainTab('chat')">
+                    <span>🤖</span> AI Chatbot
+                </button>
             </nav>
         </div>
         <div class="header-stats">
@@ -2216,7 +2278,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 <div id="store-systems-list"></div>
             </aside>
 
-            <main>
+            <main id="store-main-scroll" onscroll="handleStoreScroll(event)">
                 <div class="toolbar">
                     <div class="search-box">
                         <span class="search-icon"></span>
@@ -2230,15 +2292,16 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     <button class="btn btn-green" onclick="executeStoreSearch()">Tìm kiếm</button>
                 </div>
 
-                <div id="store-download-banner" style="display:none; background: #0f172a; border: 1px solid #0284c7; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
-                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:6px;">
-                        <span id="store-dl-title" style="color:#38bdf8;">Đang tải game về máy...</span>
-                        <span id="store-dl-pct" style="color:#10b981;">0%</span>
+                <!-- Floating Pinned Download Progress Bar -->
+                <div id="store-download-banner" style="display:none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 580px; background: rgba(11, 19, 41, 0.95); border: 1px solid #0284c7; border-radius: 12px; padding: 14px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(2,132,199,0.3); z-index: 1000; backdrop-filter: blur(10px);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700; margin-bottom:8px;">
+                        <span id="store-dl-title" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">Đang tải game về máy...</span>
+                        <span id="store-dl-pct" style="color:#10b981; font-weight:800; font-size:14px;">0%</span>
                     </div>
-                    <div class="progress-bar-bg" style="height: 8px; margin-bottom:6px;">
-                        <div id="store-dl-bar" class="progress-bar-fill" style="width:0%;"></div>
+                    <div class="progress-bar-bg" style="height: 8px; margin-bottom:8px; background:#1e293b; border-radius:4px; overflow:hidden;">
+                        <div id="store-dl-bar" class="progress-bar-fill" style="width:0%; background:linear-gradient(90deg, #0284c7, #10b981); height:100%; transition:width 0.25s ease;"></div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-sub);">
+                    <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#94a3b8;">
                         <span id="store-dl-speed">Tốc độ: 0 KB/s</span>
                         <span id="store-dl-status">Đang kết nối server...</span>
                     </div>
@@ -2247,6 +2310,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 <div id="store-games-container" class="games-grid"></div>
                 <div id="store-loading" style="display:none; text-align:center; padding: 40px; color: var(--primary);">
                     <div style="font-size: 14px; font-weight: 700;">Đang nạp kho game trực tuyến...</div>
+                </div>
+                <div id="store-loading-more" style="display:none; text-align:center; padding: 24px; color: #38bdf8; font-weight: 600; font-size: 13px;">
+                    Đang tải thêm game... ⏳
+                </div>
+                <div id="store-load-more-btn-container" style="display:none; text-align:center; padding: 24px 0;">
+                    <button class="btn btn-secondary" onclick="loadMoreStoreGames()" style="padding: 10px 28px; font-size: 13px; font-weight: 600; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">⬇️ Tải thêm game tiếp theo...</button>
                 </div>
                 <div id="store-empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
                     <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">Không tìm thấy game</div>
@@ -2298,6 +2367,126 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     <div style="font-size: 14px; font-weight: 700;">Đang kết nối YouTube InnerTube...</div>
                 </div>
             </main>
+        </div>
+    </div>
+
+        <!-- ================================================================= -->
+    <!-- TAB 6: AI CHATBOT -->
+    <!-- ================================================================= -->
+    <div id="tab-view-chat" class="tab-view">
+        <div style="flex:1; display:flex; flex-direction:column; background:#070a13; height:100%; max-width: 900px; margin: 0 auto; width: 100%; border-left: 1px solid var(--border); border-right: 1px solid var(--border); box-shadow: 0 0 30px rgba(0,0,0,0.5);">
+            <div style="padding:20px; border-bottom:1px solid var(--border); background:#0f172a; display:flex; align-items:center; gap:16px;">
+                <div style="font-size:32px;">🤖</div>
+                <div>
+                    <h2 style="font-size:18px; font-weight:800; color:#fff; margin:0 0 4px 0;">Trợ lý ảo AI Chatbot</h2>
+                    <div style="font-size:13px; color:#10b981; font-weight:600;">● Đang trực tuyến</div>
+                </div>
+                <button id="btn-send-info" class="btn btn-sm btn-green" style="margin-left:auto; font-size:13px; padding:8px 12px;" onclick="sendDeviceInfoToAI()" title="Gửi cấu trúc máy cho AI">📡 Gửi thông tin máy</button>
+                <button class="btn btn-sm btn-secondary" style="margin-left:8px; font-size:13px; padding:8px 12px;" onclick="showSystemPrompt()" title="Xem khung nền kiến thức của AI">ℹ️ Xem Prompt</button>
+                <button class="btn btn-sm btn-danger" style="margin-left:8px; font-size:13px; padding:8px 12px;" onclick="clearAIChat()">🗑️ Xóa log</button>
+            </div>
+            
+            <div id="chat-messages" style="flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px; scroll-behavior: smooth;">
+                <div style="display:flex; justify-content:flex-start;">
+                    <div style="background:#1e293b; color:#f8fafc; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; max-width:85%; font-size:14.5px; line-height:1.45; border:1px solid #334155; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                        Xin chào! Tôi là trợ lý ảo AI được tích hợp trực tiếp vào RetroHub. Tôi có thể giúp gì cho bạn?
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding:16px 20px; border-top:1px solid var(--border); background:#0f172a;">
+                <form id="chat-form" onsubmit="sendChatMessage(event)" style="display:flex; gap:12px;">
+                    <input type="text" id="chat-input" placeholder="Hỏi AI bất cứ điều gì..." autocomplete="off" style="flex:1; background:#070a13; border:1px solid #334155; border-radius:30px; padding:12px 20px; color:#fff; font-size:14.5px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#334155'" required>
+                    <button type="submit" id="chat-submit-btn" class="btn btn-primary" style="border-radius:30px; padding:0 32px; font-size:15px; font-weight:700;">Gửi ✈️</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB FILES -->
+    <div id="tab-view-files" class="tab-view" style="flex-direction: column; width: 100%;">
+        <div style="display:flex; justify-content:center; align-items:center; height:100%; padding:20px;">
+            <div style="background:#0f172a; border:1px solid var(--border); border-radius:16px; padding:40px; text-align:center; max-width:550px; width:100%; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                <div style="font-size:48px; margin-bottom:20px;">📁</div>
+                <h2 style="margin:0 0 10px 0; color:#38bdf8;">Web Quản Lý File (SFTPGo)</h2>
+                <p style="color:var(--text-sub); font-size:14px; margin-bottom:30px; line-height:1.5;">
+                    Truy cập, quản lý toàn bộ tệp tin trên thẻ nhớ qua giao diện Web chuyên nghiệp.
+                </p>
+                <div style="background:#0a0e1a; border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:30px; text-align:left;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px;">
+                        <span style="color:#94a3b8;">Địa chỉ Web (Trình duyệt):</span>
+                        <strong style="color:#10b981;" id="files-sftp-url-disp">Đang tải...</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px;">
+                        <span style="color:#94a3b8;">Tài khoản (Web):</span>
+                        <strong style="color:#fff;">root</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px;">
+                        <span style="color:#94a3b8;">Mật khẩu (Web):</span>
+                        <strong style="color:#fff;">root</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px dashed var(--border); padding-top:12px; margin-top:12px;">
+                        <span style="color:#94a3b8;">Kết nối qua SFTP (WinSCP):</span>
+                        <span style="color:#e2e8f0; font-size:13px;">Cổng: <strong style="color:#f59e0b;">2022</strong> (user/pass: <strong>trimui</strong>)</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.open('http://' + window.location.hostname + ':8080', '_blank')" style="font-size:16px; padding:12px 30px; border-radius:12px; width:100%; justify-content:center;">
+                    Mở Web Quản Lý File (Sang Tab mới)
+                </button>
+                <script>
+                    document.addEventListener("DOMContentLoaded", () => {
+                        setTimeout(() => {
+                            document.getElementById("files-sftp-url-disp").textContent = "http://" + window.location.hostname + ":8080";
+                        }, 500);
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB STREAM -->
+    <div id="tab-view-stream" class="tab-view" style="flex-direction: column; width: 100%;">
+        <div style="display:flex; justify-content:center; align-items:center; height:100%; width:100%; padding:20px; flex:1;">
+            <div style="background:#0f172a; border:1px solid var(--border); border-radius:16px; padding:40px; text-align:center; max-width:550px; width:100%; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                <div style="font-size:48px; margin-bottom:20px;">🖥️</div>
+                <h2 style="margin:0 0 10px 0; color:#38bdf8;">Stream Màn Hình TrimUI</h2>
+                <p style="color:var(--text-sub); font-size:14px; margin-bottom:30px; line-height:1.5;">
+                    Phát trực tiếp màn hình máy chơi game lên trình duyệt với độ trễ siêu thấp (&lt; 30ms).
+                </p>
+                <div style="background:#0a0e1a; border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:30px; text-align:left;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px; align-items:center;">
+                        <span style="color:#94a3b8;">Trạng thái dịch vụ:</span>
+                        <strong id="stream-status-badge" style="color:#94a3b8;">Đang tải...</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px; align-items:center;">
+                        <span style="color:#94a3b8;">Địa chỉ Web Stream:</span>
+                        <strong style="color:#10b981;" id="stream-url-disp">http://---:8088</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px dashed var(--border); padding-top:12px; margin-top:12px; align-items:center;">
+                        <span style="color:#94a3b8;">Nguồn phát OBS (MJPEG):</span>
+                        <span style="color:#f59e0b; font-size:13px; font-family:monospace;" id="stream-obs-link">http://---:8088/stream.mjpg</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button id="btn-stream-toggle" class="btn btn-secondary" onclick="toggleScreenStream()" style="font-size:15px; padding:12px 20px; border-radius:12px; flex:1;">
+                        Đang kiểm tra...
+                    </button>
+                    <button id="btn-stream-newtab" class="btn btn-primary" onclick="openStreamNewTab()" style="font-size:15px; padding:12px 20px; border-radius:12px; flex:1; display:none;">
+                        Mở Web Stream
+                    </button>
+                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", () => {
+                        setTimeout(() => {
+                            const host = window.location.hostname || '127.0.0.1';
+                            const el = document.getElementById("stream-url-disp");
+                            if(el) el.textContent = "http://" + host + ":8088";
+                            const obs = document.getElementById("stream-obs-link");
+                            if(obs) obs.textContent = "http://" + host + ":8088/stream.mjpg";
+                        }, 500);
+                    });
+                </script>
+            </div>
         </div>
     </div>
 
@@ -2508,6 +2697,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
         function switchMainTab(tab) {
             currentTab = tab;
+            // Cập nhật URL hash
+            history.replaceState(null, null, '#' + tab);
             document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
 
@@ -2522,6 +2713,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
                 if (!storeCategories.length) loadStoreInit();
             } else if (tab === 'youtube') {
                 if (!ytPlaylists.length) loadYouTubeInit();
+            } else if (tab === 'stream') {
+                checkStreamStatus();
             }
         }
 
@@ -2674,12 +2867,16 @@ HTML_PAGE = r"""<!DOCTYPE html>
             sysList.innerHTML = htmlSys;
         }
 
+        let currentStorePage = 1;
+        let storeHasMore = true;
+        let isStoreLoading = false;
+
         function selectStoreCategory(catId) {
             currentStoreCategory = catId;
             currentStoreSystem = 'ALL';
             document.getElementById('store-search-input').value = '';
             renderStoreSidebar();
-            loadStoreGames();
+            resetAndLoadStore();
         }
 
         function selectStoreSystem(sysCode) {
@@ -2687,45 +2884,104 @@ HTML_PAGE = r"""<!DOCTYPE html>
             currentStoreCategory = 'ALL';
             document.getElementById('store-search-input').value = '';
             renderStoreSidebar();
-            loadStoreGames();
+            resetAndLoadStore();
         }
 
-        async function loadStoreGames() {
+        function executeStoreSearch() {
+            resetAndLoadStore();
+        }
+
+        function resetAndLoadStore() {
+            currentStorePage = 1;
+            storeHasMore = true;
+            storeGames = [];
+            loadStoreGames(false);
+        }
+
+        function loadMoreStoreGames() {
+            if (!isStoreLoading && storeHasMore) {
+                currentStorePage++;
+                loadStoreGames(true);
+            }
+        }
+
+        function handleStoreScroll(e) {
+            const el = e.target;
+            if (el.scrollHeight - el.scrollTop - el.clientHeight < 350) {
+                if (!isStoreLoading && storeHasMore) {
+                    currentStorePage++;
+                    loadStoreGames(true);
+                }
+            }
+        }
+
+        async function loadStoreGames(isAppend = false) {
+            if (isStoreLoading) return;
+            isStoreLoading = true;
+
             const container = document.getElementById('store-games-container');
             const loading = document.getElementById('store-loading');
+            const loadingMore = document.getElementById('store-loading-more');
             const emptyEl = document.getElementById('store-empty-state');
+            const loadMoreBtn = document.getElementById('store-load-more-btn-container');
 
-            container.innerHTML = '';
-            loading.style.display = 'block';
-            emptyEl.style.display = 'none';
+            if (!isAppend) {
+                container.innerHTML = '';
+                loading.style.display = 'block';
+                emptyEl.style.display = 'none';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            } else {
+                if (loadingMore) loadingMore.style.display = 'block';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            }
 
             const sort = document.getElementById('store-sort-select').value;
             const q = document.getElementById('store-search-input').value.trim();
+            const limit = 40;
 
-            let url = `/api/store/games?source_type=${currentStoreCategory}&system=${currentStoreSystem}&sort=${sort}&limit=60`;
+            let url = `/api/store/games?source_type=${currentStoreCategory}&system=${currentStoreSystem}&sort=${sort}&page=${currentStorePage}&limit=${limit}`;
             if (q) url += `&query=${encodeURIComponent(q)}`;
 
             try {
                 const res = await fetch(url);
                 const data = await res.json();
                 loading.style.display = 'none';
+                if (loadingMore) loadingMore.style.display = 'none';
+
                 if (data.ok && data.games && data.games.length > 0) {
-                    storeGames = data.games;
-                    renderStoreGrid(storeGames);
+                    if (isAppend) {
+                        storeGames = storeGames.concat(data.games);
+                        renderStoreGrid(data.games, true);
+                    } else {
+                        storeGames = data.games;
+                        renderStoreGrid(storeGames, false);
+                    }
+
+                    if (data.games.length < limit) {
+                        storeHasMore = false;
+                        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                    } else {
+                        storeHasMore = true;
+                        if (loadMoreBtn) loadMoreBtn.style.display = 'block';
+                    }
                 } else {
-                    emptyEl.style.display = 'block';
+                    storeHasMore = false;
+                    if (!isAppend) {
+                        emptyEl.style.display = 'block';
+                    }
+                    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
                 }
             } catch (e) {
                 loading.style.display = 'none';
-                emptyEl.style.display = 'block';
+                if (loadingMore) loadingMore.style.display = 'none';
+                if (!isAppend) emptyEl.style.display = 'block';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            } finally {
+                isStoreLoading = false;
             }
         }
 
-        function executeStoreSearch() {
-            loadStoreGames();
-        }
-
-        function renderStoreGrid(games) {
+        function renderStoreGrid(games, isAppend = false) {
             const container = document.getElementById('store-games-container');
             let html = '';
             games.forEach((g, idx) => {
@@ -2753,7 +3009,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     </div>
                 </div>`;
             });
-            container.innerHTML = html;
+            if (isAppend) {
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
         }
 
         async function downloadStoreGame(id, sysCode, titleEnc, romUrlEnc, fnameEnc, imgUrlEnc) {
@@ -2806,16 +3066,38 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     const data = await res.json();
                     if (data.ok && data.downloads && data.downloads.length > 0) {
                         const active = data.downloads[data.downloads.length - 1];
+                        const pct = active.progress_pct || 0;
                         document.getElementById('store-dl-title').innerText = `Đang tải: ${active.title} (${active.sys_code})`;
-                        document.getElementById('store-dl-pct').innerText = `${active.progress_pct}%`;
-                        document.getElementById('store-dl-bar').style.width = `${active.progress_pct}%`;
-                        document.getElementById('store-dl-speed').innerText = `Tốc độ: ${active.speed_str || '0 KB/s'}`;
-                        document.getElementById('store-dl-status').innerText = active.status === 'completed' ? '✓ Đã tải xong và lưu vào thẻ nhớ!' : (active.status === 'error' ? 'Lỗi tải' : 'Đang nhận tệp...');
+                        document.getElementById('store-dl-pct').innerText = `${pct}%`;
+                        document.getElementById('store-dl-bar').style.width = `${pct}%`;
+                        
+                        let sizeInfo = '';
+                        if (active.total_bytes > 0) {
+                            const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
+                            const totMb = (active.total_bytes / (1024 * 1024)).toFixed(1);
+                            sizeInfo = ` (${curMb} / ${totMb} MB)`;
+                        } else if (active.downloaded_bytes > 0) {
+                            const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
+                            sizeInfo = ` (${curMb} MB)`;
+                        }
+
+                        document.getElementById('store-dl-speed').innerText = `Tốc độ: ${active.speed_str || '0 KB/s'}${sizeInfo}`;
+                        
+                        if (active.status === 'completed') {
+                            document.getElementById('store-dl-status').innerText = '✓ Đã tải xong và lưu vào thẻ nhớ!';
+                            document.getElementById('store-dl-status').style.color = '#34d399';
+                        } else if (active.status === 'error') {
+                            document.getElementById('store-dl-status').innerText = `❌ ${active.error_msg || 'Lỗi tải game'}`;
+                            document.getElementById('store-dl-status').style.color = '#f87171';
+                        } else {
+                            document.getElementById('store-dl-status').innerText = 'Đang nhận tệp...';
+                            document.getElementById('store-dl-status').style.color = 'var(--text-sub)';
+                        }
 
                         if (active.status === 'completed' || active.status === 'error') {
                             clearInterval(storeDlInterval);
                             setTimeout(() => { banner.style.display = 'none'; }, 4000);
-                            loadStoreGames();
+                            loadStoreGames(false);
                             loadSystems();
                         }
                     } else {
@@ -2823,7 +3105,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                         banner.style.display = 'none';
                     }
                 } catch (e) {}
-            }, 1000);
+            }, 350);
         }
 
         // ==================== QUẢN LÝ YOUTUBE ====================
@@ -3406,24 +3688,527 @@ HTML_PAGE = r"""<!DOCTYPE html>
             } catch (e) { alert('Lỗi: ' + e); }
         }
 
+        
+        // ==================== AI CHATBOT ====================
+        let aiChatHistory = [
+            { role: "system", content: `Bạn là trợ lý AI chuyên gia điều hành hệ sinh thái RetroHub và thiết bị TrimUI Smart Pro (Linux/Busybox aarch64).
+Bạn có quyền thực thi lệnh trực tiếp trên máy thông qua shell bằng cách đề xuất lệnh cho người dùng bấm chạy.
+
+QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
+1. LUÔN TRẢ LỜI BẰNG TIẾNG VIỆT, ngắn gọn, súc tích, đi thẳng vào giải pháp kỹ thuật.
+2. TUYỆT ĐỐI KHÔNG ĐOÁN MÒ: Không tự suy diễn đường dẫn file, file log hay cấu hình hệ thống khi chưa được cung cấp hoặc chưa kiểm chứng. Mọi thông tin chưa rõ PHẢI được điều tra bằng câu lệnh thực tế.
+3. HÀNH ĐỘNG BẰNG CÂU LỆNH: Mọi thao tác kiểm tra, chẩn đoán, đọc log, sửa lỗi PHẢI viết dưới dạng câu lệnh shell trong block \`\`\`bash ... \`\`\` (hoặc [CMD]...[/CMD]) để người dùng bấm chạy, sau đó dựa vào kết quả thực tế để tư vấn tiếp.
+4. KHÔNG dùng cú pháp LaTeX (như $\rightarrow$, $\textbf{}$), chỉ dùng ký tự Unicode (->, →, **bold**).
+
+ĐẶC THÙ HỆ THỐNG CẦN NHỚ:
+- Python 3 trên máy KHÔNG hỗ trợ module SSL: Tuyệt đối không dùng code Python import ssl. Các tác vụ mạng HTTPS phải dùng \`curl -s -k\`.
+- Môi trường Shell là Busybox/Ash: Ưu tiên các lệnh tiêu chuẩn, tránh dùng các flag nâng cao không được Busybox hỗ trợ.
+- Khi người dùng gửi "Thông tin máy", hãy đọc kỹ phần cứng, danh sách giả lập (/Emus), Apps, RetroArch Cores, cấu trúc RetroHub và các file log thực tế để đưa ra câu lệnh chính xác 100%.` }
+        ];
+
+        function appendChatMessage(role, text, skipEscape = false, isCard = false) {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
+            
+            const bubble = document.createElement('div');
+            bubble.style.maxWidth = '85%';
+            bubble.style.fontSize = '14px';
+            bubble.style.lineHeight = '1.4';
+            bubble.style.whiteSpace = 'pre-wrap';
+            bubble.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+            
+            if (isCard) {
+                bubble.style.background = 'transparent';
+                bubble.style.padding = '0';
+                bubble.style.border = 'none';
+                bubble.style.boxShadow = 'none';
+            } else if (role === 'user') {
+                bubble.style.background = '#0284c7';
+                bubble.style.color = '#fff';
+                bubble.style.padding = '8px 12px';
+                bubble.style.borderRadius = '12px';
+                bubble.style.borderBottomRightRadius = '4px';
+                bubble.style.border = '1px solid #0369a1';
+            } else {
+                bubble.style.background = '#1e293b';
+                bubble.style.color = '#f8fafc';
+                bubble.style.padding = '8px 12px';
+                bubble.style.borderRadius = '12px';
+                bubble.style.borderBottomLeftRadius = '4px';
+                bubble.style.border = '1px solid #334155';
+            }
+            
+            // Escape HTML
+            let safeText = skipEscape ? text : text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            // Format basic markdown
+            safeText = safeText.replace(/\$\\rightarrow\$/g, '→').replace(/\$\\leftarrow\$/g, '←');
+            safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            safeText = safeText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Format executable blocks FIRST ([CMD] or ```bash) -> Single Row
+            let cmdCount = 0;
+            let allCmds = [];
+            safeText = safeText.replace(/\[CMD\]([\s\S]*?)\[\/CMD\]|```(?:[a-zA-Z0-9]+)?\n?([\s\S]*?)```/gi, (match, cmd1, cmd2) => {
+                const cmdText = cmd1 || cmd2;
+                cmdCount++;
+                const rawCmd = cmdText.trim();
+                allCmds.push(rawCmd);
+                const b64Cmd = btoa(encodeURIComponent(rawCmd));
+                
+                return `<div style="display: flex; align-items: center; justify-content: space-between; background: #070a13; border: 1px solid #1e293b; border-radius: 6px; padding: 4px 6px 4px 10px; margin: 4px 0; gap: 8px; max-width: 100%;">
+                    <code style="font-family: monospace; color: #38bdf8; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; flex: 1;">${rawCmd}</code>
+                    <button onclick="executeAiCommand(event, '${b64Cmd}')" title="Thực thi lệnh" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); cursor: pointer; padding: 4px 6px; border-radius: 4px; color: #34d399; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; outline: none; transition: all 0.2s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </button>
+                </div>`;
+            });
+            
+            // Format inline code (`)
+            safeText = safeText.replace(/`([^`\n]+)`/g, `<code style="background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 4px; font-size: 13px; color: #38bdf8;">$1</code>`);
+            
+            if (cmdCount > 1) {
+                const b64Cmds = btoa(encodeURIComponent(JSON.stringify(allCmds)));
+                safeText += `<div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                    <div style="display: inline-flex; align-items: center; background: #070a13; border: 1px solid rgba(234, 179, 8, 0.35); border-radius: 6px; padding: 3px 6px 3px 10px; gap: 8px;">
+                        <span style="font-family: monospace; color: #facc15; font-size: 12px; font-weight: 600;">⚡ Chạy tất cả (${cmdCount} lệnh)</span>
+                        <button onclick="executeAllAiCommands(event, '${b64Cmds}')" title="Thực thi tất cả theo thứ tự" style="background: rgba(234, 179, 8, 0.15); border: none; cursor: pointer; padding: 3px 6px; border-radius: 4px; color: #facc15; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; outline: none; transition: all 0.2s;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        </button>
+                    </div>
+                </div>`;
+            }
+
+            bubble.innerHTML = safeText;
+            wrapper.appendChild(bubble);
+            container.appendChild(wrapper);
+            
+            // Auto scroll to bottom smoothly
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        }
+
+        async function executeAllAiCommands(e, b64Cmds) {
+            const cmds = JSON.parse(decodeURIComponent(atob(b64Cmds)));
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '⏳';
+            
+            let combinedOutput = "";
+            for(let i=0; i<cmds.length; i++) {
+                const cmd = cmds[i];
+                try {
+                    const res = await fetch('/api/run_cmd', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({cmd: cmd})
+                    });
+                    const data = await res.json();
+                    const rawOut = (data.output || '').trim();
+                    const code = (typeof data.code !== 'undefined') ? data.code : 0;
+                    const outLog = rawOut || (code === 0 ? '(Thành công - Không có output)' : `(Mã lỗi: ${code})`);
+                    combinedOutput += `--- [${i+1}/${cmds.length}] ${cmd} (Exit: ${code}) ---\n${outLog}\n\n`;
+                } catch(err) {
+                    combinedOutput += `--- [${i+1}/${cmds.length}] ${cmd} (Lỗi) ---\n${err.message}\n\n`;
+                }
+            }
+            
+            btn.innerHTML = '✅';
+            btn.style.background = 'rgba(56, 189, 248, 0.15)';
+            btn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+            btn.style.color = '#38bdf8';
+            
+            const systemPromptText = `[System Execution Result]\n${combinedOutput.trim()}`;
+            const safeCombined = combinedOutput.trim().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const htmlText = `<details style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden; min-width: 280px; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                <summary style="cursor: pointer; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: #facc15; background: #1e293b; display: flex; align-items: center; justify-content: space-between; user-select: none; outline: none; gap: 8px;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <span>⚡</span> Đã thực thi ${cmds.length} lệnh
+                    </span>
+                    <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">(Nhấn xem log)</span>
+                </summary>
+                <div style="padding: 10px 12px; background: #070a13; font-family: monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto; color: #e2e8f0; border-top: 1px solid #1e293b;">${safeCombined}</div>
+            </details>`;
+            appendChatMessage('user', htmlText, true, true);
+            aiChatHistory.push({ role: 'user', content: systemPromptText });
+            
+            document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
+            document.getElementById('chat-submit-btn').disabled = true;
+            doHeadlessAiFetch();
+        }
+
+
+        async function sendDeviceInfoToAI() {
+            const btn = document.getElementById('btn-send-info');
+            if(btn) { btn.disabled = true; btn.innerHTML = '⏳ Đang quét...'; }
+            
+            const cmd = 'echo "--- SYSTEM INFO ---"; uname -a; echo ""; echo "--- RAM ---"; free -m; echo ""; echo "--- DISK ---"; df -h; echo ""; echo "--- ROOT DIR ---"; ls -la /mnt/SDCARD | head -n 30; echo ""; echo "--- ROMS DIRS ---"; ls -d /mnt/SDCARD/Roms/*/ 2>/dev/null; echo ""; echo "--- GIẢ LẬP ĐÃ CÀI (/mnt/SDCARD/Emus) ---"; ls -d /mnt/SDCARD/Emus/*/ 2>/dev/null; echo ""; echo "--- APPS (/mnt/SDCARD/Apps) ---"; ls -d /mnt/SDCARD/Apps/*/ 2>/dev/null; echo ""; echo "--- CẤU TRÚC APP RETROHUB ---"; find /mnt/SDCARD/Apps/RetroHub -maxdepth 2 2>/dev/null | grep -v "/\._" | head -n 45; echo ""; echo "--- RETROARCH CORES (.so) ---"; ls /mnt/SDCARD/RetroArch/.retroarch/cores/*.so 2>/dev/null | awk -F/ "{print \$NF}"; echo ""; echo "--- CÁC FILE LOG THỰC TẾ TRÊN MÁY ---"; find /mnt/SDCARD /tmp -maxdepth 5 -type f 2>/dev/null | grep -iE "\.(log|out)$|loi\.txt$" | grep -v "\._" | head -n 30';
+            
+            try {
+                const res = await fetch('/api/run_cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: cmd})
+                });
+                const data = await res.json();
+                const outLog = data.output || '(Lỗi đọc dữ liệu)';
+                const safeLog = outLog.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
+                const htmlText = `<details style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden; min-width: 280px; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    <summary style="cursor: pointer; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: #34d399; background: #1e293b; display: flex; align-items: center; justify-content: space-between; user-select: none; outline: none; gap: 8px;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span>📡</span> Đã nạp cấu hình & giả lập máy cho AI
+                        </span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">(Nhấn xem chi tiết)</span>
+                    </summary>
+                    <div style="padding: 10px 12px; background: #070a13; font-family: monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto; color: #e2e8f0; border-top: 1px solid #1e293b;">${safeLog}</div>
+                </details>`;
+                
+                appendChatMessage('user', htmlText, true, true);
+                
+                const plainText = 'Đây là toàn bộ thông tin phần cứng, danh sách giả lập đã cài (/mnt/SDCARD/Emus, RetroArch Cores, Apps), cấu trúc thư mục và các file log thực tế trên máy TrimUI:\n```\n' + outLog + '\n```\nHãy ghi nhớ các giả lập và file log này để tư vấn chính xác.';
+                aiChatHistory.push({ role: 'user', content: plainText });
+                
+                document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
+                document.getElementById('chat-submit-btn').disabled = true;
+                
+                doHeadlessAiFetch();
+            } catch (e) {
+                alert('Lỗi lấy thông tin: ' + e.message);
+            } finally {
+                if(btn) { btn.disabled = false; btn.innerHTML = '📡 Gửi thông tin máy'; }
+            }
+        }
+
+        async function executeAiCommand(e, b64Cmd) {
+            const cmd = decodeURIComponent(atob(b64Cmd));
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '⏳';
+            try {
+                const res = await fetch('/api/run_cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: cmd})
+                });
+                const data = await res.json();
+                
+                const rawOut = (data.output || '').trim();
+                const code = (typeof data.code !== 'undefined') ? data.code : 0;
+                let displayLog = rawOut;
+                if (!displayLog) {
+                    if (code === 0) {
+                        displayLog = '✓ Lệnh đã thực thi thành công (Không có text xuất ra terminal / Exit code: 0)';
+                    } else {
+                        displayLog = `⚠️ Lệnh hoàn tất với mã lỗi (Exit code: ${code})`;
+                    }
+                }
+                const safeLog = displayLog.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
+                const htmlText = `<details style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden; min-width: 280px; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    <summary style="cursor: pointer; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: #38bdf8; background: #1e293b; display: flex; align-items: center; justify-content: space-between; user-select: none; outline: none; gap: 8px;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #34d399;">✓</span> Kết quả thực thi
+                        </span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">(Nhấn xem log)</span>
+                    </summary>
+                    <div style="padding: 10px 12px; background: #070a13; font-family: monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto; color: #e2e8f0; border-top: 1px solid #1e293b;">${safeLog}</div>
+                </details>`;
+                
+                const plainText = `Đã thực thi lệnh trên TrimUI: \`${cmd}\`\nKết quả:\n\`\`\`\n${rawOut || '(Lệnh hoàn tất - Không có output)'}\n\`\`\`\nExit code: ${code}`;
+                
+                btn.innerHTML = '✅';
+                btn.style.background = 'rgba(56, 189, 248, 0.15)';
+                btn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+                btn.style.color = '#38bdf8';
+                
+                // Add to chat and send to AI
+                appendChatMessage('user', htmlText, true, true);
+                aiChatHistory.push({ role: 'user', content: plainText });
+                
+                // Send headless request
+                document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
+                document.getElementById('chat-submit-btn').disabled = true;
+                
+                doHeadlessAiFetch();
+                
+            } catch(err) {
+                alert('Lỗi chạy lệnh: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+            }
+        }
+        
+        async function doHeadlessAiFetch() {
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'auto', messages: aiChatHistory })
+                });
+                if (!res.ok) throw new Error('Mã lỗi API: ' + res.status);
+                const data = await res.json();
+                if (data.error) {
+                    const errMsg = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : data.error;
+                    throw new Error(errMsg);
+                }
+                if (data.choices && data.choices.length > 0) {
+                    const reply = data.choices[0].message.content;
+                    appendChatMessage('assistant', reply);
+                    aiChatHistory.push({ role: 'assistant', content: reply });
+                } else {
+                    appendChatMessage('assistant', 'Lỗi: Phản hồi từ AI bị rỗng.');
+                }
+            } catch (err) {
+                appendChatMessage('assistant', '⚠️ Lỗi khi phản hồi: ' + err.message);
+            } finally {
+                const btn = document.getElementById('chat-submit-btn');
+                btn.disabled = false;
+                btn.textContent = 'Gửi ✈️';
+            }
+        }
+
+        function showSystemPrompt() {
+            const sysPrompt = aiChatHistory.length > 0 ? aiChatHistory[0].content : "Không tìm thấy System Prompt.";
+            appendChatMessage('assistant', `**Đây là toàn bộ System Prompt hiện tại đang nạp cho AI:**
+
+\`\`\`text
+${sysPrompt}
+\`\`\``);
+        }
+
+        function clearAIChat() {
+            if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện?')) return;
+            
+            aiChatHistory = [{ role: "system", content: "You are a helpful AI assistant integrated into a RetroHub gaming device web manager. Answer in Vietnamese. Be concise and friendly." }];
+            const container = document.getElementById('chat-messages');
+            if (container) {
+                container.innerHTML = `
+                    <div style="display:flex; justify-content:flex-start;">
+                        <div style="background:#1e293b; color:#f8fafc; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; max-width:85%; font-size:14.5px; line-height:1.45; border:1px solid #334155; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                            Đã dọn dẹp lịch sử trò chuyện. Tôi có thể giúp gì cho bạn tiếp theo?
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const btn = document.getElementById('chat-submit-btn');
+            input.value = '';
+            input.disabled = true;
+            btn.disabled = true;
+            btn.innerHTML = 'Đang nghĩ... <span style="font-size:12px;">⏳</span>';
+            
+            appendChatMessage('user', text);
+            aiChatHistory.push({ role: 'user', content: text });
+            
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'auto',
+                        messages: aiChatHistory
+                    })
+                });
+                
+                if (!res.ok) {
+                    throw new Error('Mã lỗi API: ' + res.status);
+                }
+                
+                const data = await res.json();
+                if (data.error) {
+                    const errMsg = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : data.error;
+                    throw new Error(errMsg);
+                }
+                if (data.choices && data.choices.length > 0) {
+                    const reply = data.choices[0].message.content;
+                    appendChatMessage('assistant', reply);
+                    aiChatHistory.push({ role: 'assistant', content: reply });
+                } else {
+                    appendChatMessage('assistant', 'Lỗi: Phản hồi từ AI bị rỗng.');
+                }
+            } catch (err) {
+                appendChatMessage('assistant', '⚠️ Không thể kết nối tới máy chủ AI. Chi tiết lỗi: ' + err.message);
+                // Remove the user message from history so they can try again if they want, or just let it be
+            } finally {
+                input.disabled = false;
+                btn.disabled = false;
+                btn.textContent = 'Gửi ✈️';
+                input.focus();
+            }
+        }
+
+
+        // ==================== STREAM JS LOGIC ====================
+        function openStreamNewTab() {
+            window.open('http://' + window.location.hostname + ':8088', '_blank');
+        }
+
+        async function checkStreamStatus() {
+            const statusBadge = document.getElementById('stream-status-badge');
+            const toggleBtn = document.getElementById('btn-stream-toggle');
+            const newTabBtn = document.getElementById('btn-stream-newtab');
+            if (!statusBadge || !toggleBtn) return;
+            
+            try {
+                const res = await fetch('/api/run_cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: 'ps | grep "python.*streamer.py" | grep -v grep'})
+                });
+                const data = await res.json();
+                const out = data.output || '';
+                if (out.includes('streamer.py')) {
+                    statusBadge.textContent = '🟢 Đang chạy';
+                    statusBadge.style.color = '#10b981';
+                    toggleBtn.innerHTML = '🛑 Tắt Stream';
+                    toggleBtn.className = 'btn btn-danger';
+                    if (newTabBtn) newTabBtn.style.display = 'inline-flex';
+                } else {
+                    statusBadge.textContent = '🔴 Đã tắt';
+                    statusBadge.style.color = '#ef4444';
+                    toggleBtn.innerHTML = '▶️ Bật Stream ngay';
+                    toggleBtn.className = 'btn btn-secondary';
+                    if (newTabBtn) newTabBtn.style.display = 'none';
+                }
+            } catch(e) {
+                statusBadge.textContent = '⚠️ Lỗi kiểm tra';
+            }
+        }
+
+        async function toggleScreenStream() {
+            const toggleBtn = document.getElementById('btn-stream-toggle');
+            if (!toggleBtn) return;
+            
+            const isRunning = toggleBtn.innerHTML.includes('Tắt');
+            toggleBtn.disabled = true;
+            toggleBtn.innerHTML = '⏳ Đang xử lý...';
+            
+            try {
+                if (isRunning) {
+                    await fetch('/api/run_cmd', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({cmd: 'kill -9 $(ps | awk "/streamer\.py/ {print $1}")'})
+                    });
+                } else {
+                    await fetch('/api/run_cmd', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({cmd: 'nohup /mnt/SDCARD/System/bin/python3 /mnt/SDCARD/Apps/RetroHub/streamer.py > /dev/null 2>&1 &'})
+                    });
+                    
+                    // Tự động mở tab mới khi bật stream thành công (sau 1.5s để server kịp khởi động)
+                    setTimeout(() => {
+                        window.open('http://' + window.location.hostname + ':8088', '_blank');
+                    }, 1500);
+                }
+                setTimeout(checkStreamStatus, 1500);
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+                checkStreamStatus();
+            } finally {
+                setTimeout(() => toggleBtn.disabled = false, 1500);
+            }
+        }
+        
+        // Auto-check stream status initially
+        setTimeout(checkStreamStatus, 1000);
+
         // Khởi động trang web
         loadStorageStatus();
-        loadSystems();
+        
+        // Đọc hash từ URL (ví dụ: /#chat)
+        const initialTab = window.location.hash.replace('#', '');
+        if (initialTab && document.getElementById(`nav-btn-${initialTab}`)) {
+            switchMainTab(initialTab);
+        } else {
+            loadSystems(); // Mặc định
+        }
     </script>
 </body>
 </html>
 """
 
 
+# ==================== TRIMUI SMART PRO WAKELOCK ====================
+ORIG_DIMTIME = None
+
+def get_current_dimtime():
+    try:
+        res = subprocess.run(["/usr/trimui/bin/systemval", "dimtime"], capture_output=True, text=True, timeout=2)
+        if res.returncode == 0:
+            val = res.stdout.strip()
+            if val.isdigit() and int(val) > 0:
+                return int(val)
+    except Exception:
+        pass
+    return 300
+
+def set_dimtime(val):
+    try:
+        subprocess.run(["/usr/trimui/bin/systemval", "dimtime", str(val)], timeout=2)
+    except Exception:
+        pass
+
+def enable_wakelock():
+    global ORIG_DIMTIME
+    ORIG_DIMTIME = get_current_dimtime()
+    set_dimtime(0)
+    print(f"[*] [Wakelock] Disabled auto-sleep (saved original dimtime: {ORIG_DIMTIME}s)")
+
+def disable_wakelock():
+    global ORIG_DIMTIME
+    val = ORIG_DIMTIME if (ORIG_DIMTIME and ORIG_DIMTIME > 0) else 300
+    set_dimtime(val)
+    print(f"[*] [Wakelock] Restored original dimtime: {val}s")
+
+atexit.register(disable_wakelock)
+
+def _sig_handler(sig, frame):
+    disable_wakelock()
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, _sig_handler)
+signal.signal(signal.SIGINT, _sig_handler)
+
+def _keepalive_daemon():
+    while True:
+        try:
+            set_dimtime(0)
+            time.sleep(60)
+        except Exception:
+            time.sleep(60)
+
+_keepalive_thread = threading.Thread(target=_keepalive_daemon, daemon=True)
+_keepalive_thread.start()
+
+
 def run_server():
+  enable_wakelock()
   server_address = ("0.0.0.0", PORT)
   httpd = ThreadedHTTPServer(server_address, GameWebHandler)
   print(f"[*] RetroHub Web Game Manager running at http://0.0.0.0:{PORT}")
   try:
     httpd.serve_forever()
-  except KeyboardInterrupt:
+  except (KeyboardInterrupt, SystemExit):
     pass
   finally:
+    disable_wakelock()
     httpd.server_close()
 
 

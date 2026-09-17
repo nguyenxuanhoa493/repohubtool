@@ -400,7 +400,7 @@ _SOURCE_CLAUSE = {
 }
 
 
-def search_games_fts(query_str, sys_code="ALL", limit=100, source_type="ALL"):
+def search_games_fts(query_str, sys_code="ALL", limit=100, source_type="ALL", offset=0):
     if not query_str or not query_str.strip():
         return []
     conn = get_db_connection()
@@ -414,8 +414,9 @@ def search_games_fts(query_str, sys_code="ALL", limit=100, source_type="ALL"):
         base_sql += " AND g.sys_code = ?"
         params.append(sys_code)
     base_sql += _SOURCE_CLAUSE.get(source_type or "ALL", "")
-    base_sql += " ORDER BY g.download_count DESC, g.title ASC LIMIT ?"
+    base_sql += " ORDER BY g.download_count DESC, g.title ASC LIMIT ? OFFSET ?"
     params.append(limit)
+    params.append(offset)
     
     cursor.execute(base_sql, params)
     rows = [dict(r) for r in cursor.fetchall()]

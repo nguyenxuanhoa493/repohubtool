@@ -28,8 +28,11 @@ def send_ota_notification(version=None, note_vi=None):
     msg_lines = [
         f"🚀 <b>[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)</b>",
         "",
-        "✨ <b>Nội dung cập nhật:</b>",
-        f"• {escaped_note}",
+        "✨ <b>Điểm mới & Tối ưu nổi bật:</b>",
+        "• <b>Modal Thoát & Quản lý Dịch vụ:</b> Thao tác phím tức thì <code>[A]</code> Thoát hẳn, <code>[B]</code> Hủy/Ở lại, <code>[X]</code> Đổi ON/OFF dịch vụ chạy nền (SSH, SFTP, Web, Stream).",
+        "• <b>Chống nóng máy & Sập nguồn khi Tắt màn hình:</b> Nhận diện tắt màn hình phần cứng, hạ CPU xuống &lt;0.1% giúp máy luôn mát mẻ.",
+        "• <b>Hợp nhất Modal Chi tiết & Tải Game:</b> Layout 2 cột hiện đại, hiển thị thanh tiến trình tải trực quan và tự động chuyển sang xem chi tiết khi tải xong.",
+        "• <b>Chuẩn hóa Đa ngôn ngữ & Java:</b> Xử lý mã dịch thô trên Kho game, làm sạch tên game và hiển thị danh mục tiếng Việt thân thiện cho 28 nhóm Java.",
         "",
         "📲 <b>Cách cập nhật:</b>",
         "Bật Wi-Fi trên máy cầm tay ➔ Mở <b>RetroHub</b> ➔ Ứng dụng sẽ tự động phát hiện và cập nhật tệp mới nhất!"

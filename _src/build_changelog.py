@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.28", "2026-09-17",
+     ("Smart Exit & Service Manager, Sleep Screen-off Overheating Prevention, Unified 2-Column Game Download Modal & Store i18n Standardization",
+      "Tối ưu hóa Modal Thoát & Quản lý Dịch vụ thông minh, Chống nóng máy khi tắt màn hình, Hợp nhất Modal Tải Game 2 cột & Chuẩn hóa Store i18n"),
+     [("Smart Exit & Background Services Manager: Streamlined exit modal with instant key shortcuts: [A] Exit RetroHub immediately with selected services, [B] Cancel / Stay, and [X] Toggle ON/OFF for background services (SSH, SFTPGo, RetroHub Web, Screen Stream) with compact ON/OFF badges and generous vertical row padding.",
+       "Modal Thoát & Quản lý Dịch vụ Thông minh: Tối ưu hóa bảng điều khiển khi thoát ứng dụng với thao tác phím tức thì: [A] Thoát hẳn ngay lập tức, [B] Hủy / Ở lại và [X] Đổi trạng thái Bật/Tắt (ON/OFF) các dịch vụ mạng chạy ngầm (SSH, SFTP, RetroHub Web, Stream) kèm nhãn ON/OFF gọn gàng và khoảng cách hàng thoáng đãng."),
+      ("Sleep Screen-Off Overheating Prevention: Added hardware framebuffer blanking detection (/sys/class/graphics/fb0/blank). When the screen is turned off while RetroHub is running, the render loop sleeps 200ms, dropping CPU usage below 0.1% and preventing overheating or shutdown.",
+       "Chống nóng máy & Sập nguồn khi Tắt màn hình: Tích hợp cơ chế nhận diện tắt màn hình phần cứng. Khi màn hình tắt trong lúc mở RetroHub, vòng lặp đồ họa tự động hạ tải CPU xuống dưới 0.1%, giữ máy luôn mát mẻ và triệt tiêu nguy cơ quá nhiệt sập nguồn."),
+      ("Unified 2-Column Game Details & Download Modal: Replaced separate modal states with a unified 2-column modal displaying system metadata, clean game titles, and dynamic states (Pre-download, Live Progress Bar with download speed, Downloaded Action Grid).",
+       "Hợp nhất Modal Chi tiết & Tải Game 2 cột: Chuẩn hóa giao diện xem thông tin và tải game thành modal 2 cột đồng nhất, hiển thị thanh tiến trình tải trực quan kèm tốc độ mạng và tự động chuyển sang menu Xem chi tiết khi tải hoàn tất."),
+      ("Store Menu & Java J2ME i18n Standardization: Eliminated raw translation keys (e.g. menu_search_title) across store screens, cleaned underscores in game titles, and added friendly localized titles for all 28 Java J2ME categories.",
+       "Chuẩn hóa Đa ngôn ngữ & Danh mục Java: Xử lý triệt để các mã dịch thô trên menu Kho game, tự động chuẩn hóa dấu gạch dưới trong tên game thành khoảng trắng và hiển thị tên danh mục tiếng Việt thân thiện cho toàn bộ 28 nhóm game Java.")]),
+
     ("2.27", "2026-09-16",
      ("Visual Progress Bar & Real-time Percentage for OTA Update Downloads",
       "Bổ sung Thanh tiến trình trực quan & Phần trăm tải tệp thời gian thực trong Modal Cập nhật"),

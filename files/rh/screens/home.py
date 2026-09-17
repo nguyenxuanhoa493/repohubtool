@@ -20,6 +20,7 @@ class HomeScreen(BaseScreen):
         self.items = [
             {"id": "nav_library", "title": tr("home_item_library")},
             {"id": "nav_youtube", "title": tr("home_item_youtube")},
+            {"id": "nav_gameweb", "title": "Retrohub AI"},
             {"id": "nav_netplay", "title": tr("home_item_netplay")},
             {"id": "nav_rom_store_menu", "title": tr("home_item2")},
             {"id": "nav_network", "title": tr("home_item1")},
@@ -84,6 +85,9 @@ class HomeScreen(BaseScreen):
                 self.engine.push_screen("library")
             elif item_id == "nav_youtube":
                 self.engine.push_screen("youtube")
+            elif item_id == "nav_gameweb":
+                from ..modals.common import RetroHubWebModal
+                self.engine.open_modal(RetroHubWebModal(self.engine))
             elif item_id == "nav_netplay":
                 from ..modals.netplay import NetplayModal
                 self.engine.open_modal(NetplayModal(self.engine))
