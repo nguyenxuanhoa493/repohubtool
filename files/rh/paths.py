@@ -52,8 +52,10 @@ def get_roms_root():
                         return candidate
         except OSError:
             pass
-    return os.path.join(SDCARD_PATH, "Roms")
-
+ROMS_DIR = get_roms_root()
+IMGS_DIR = os.path.join(SDCARD_PATH, "Imgs")
+EMUS_DIR = os.path.join(SDCARD_PATH, "Emus")
+WEB_DIR = os.path.join(APP_DIR, "web")
 
 TEMP_DOWNLOAD_DIR = os.path.join(get_roms_root(), ".tmp_download")
 STREAMER_SCRIPT = os.path.join(APP_DIR, "streamer.py")

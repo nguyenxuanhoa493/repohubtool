@@ -45,6 +45,7 @@ try:
         IMGS_DIR,
         EMUS_DIR,
         APP_DIR,
+        WEB_DIR,
         resolve_rom_dir,
         YT_HISTORY_FILE,
         YT_FAVORITES_FILE,
@@ -79,9 +80,7 @@ try:
         load_themes_catalog,
         install_theme,
         uninstall_theme,
-        restore_default_theme,
         get_theme_preview_path,
-        ensure_default_theme_backup,
     )
     import db
 except ImportError:
@@ -91,17 +90,13 @@ except ImportError:
             load_themes_catalog,
             install_theme,
             uninstall_theme,
-            restore_default_theme,
             get_theme_preview_path,
-            ensure_default_theme_backup,
         )
     except Exception:
         def load_themes_catalog(): return []
         def install_theme(t): return False, "Not supported"
         def uninstall_theme(t): return False, "Not supported"
-        def restore_default_theme(): return False, "Not supported"
         def get_theme_preview_path(t): return None
-        def ensure_default_theme_backup(): return True
     SDCARD_PATH = os.environ.get("SDCARD_PATH") or (
         "/mnt/SDCARD"
         if os.path.isdir("/mnt/SDCARD")
@@ -874,7 +869,6 @@ class GameWebHandler(BaseHTTPRequestHandler):
       return
 
     if path == "/api/themes":
-      ensure_default_theme_backup()
       themes = load_themes_catalog()
       self.send_json({"ok": True, "themes": themes, "total": len(themes)})
       return
@@ -1264,14 +1258,7 @@ class GameWebHandler(BaseHTTPRequestHandler):
       return
 
     if path == "/api/themes/restore":
-      try:
-        ok, msg = restore_default_theme()
-        if ok:
-          self.send_json({"ok": True, "message": msg})
-        else:
-          self.send_json({"ok": False, "error": msg}, 500)
-      except Exception as e:
-        self.send_json({"ok": False, "error": str(e)}, 500)
+      self.send_json({"ok": True, "message": "Tính năng backup/khôi phục theme đã được thay thế bằng tải trực tiếp từ Theme Store."})
       return
 
     if path == "/api/themes/delete":
