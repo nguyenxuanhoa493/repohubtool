@@ -86,10 +86,16 @@ def ensure_default_theme_backup() -> bool:
         return False
 
 
-def load_themes_catalog() -> List[Dict]:
-    """Loads lightweight theme catalog with installation status."""
+_THEMES_CACHE = None
+
+
+def load_themes_catalog(force_reload: bool = False) -> List[Dict]:
+    """Loads lightweight theme catalog with installation status (Instant in-memory caching)."""
+    global _THEMES_CACHE
+    if _THEMES_CACHE is not None and not force_reload:
+        return _THEMES_CACHE
+
     catalog_themes = []
-    
     if os.path.isfile(THEMES_CATALOG_FILE):
         try:
             with open(THEMES_CATALOG_FILE, "r", encoding="utf-8") as f:
@@ -98,32 +104,59 @@ def load_themes_catalog() -> List[Dict]:
         except Exception as e:
             print(f"[ThemeManager] Error loading catalog json: {e}")
 
+    # Read installed themes directory ONCE instead of N stat calls
+    installed_folders = set()
+    if os.path.isdir(THEMES_DIR):
+        try:
+            installed_folders = {
+                d for d in os.listdir(THEMES_DIR)
+                if not d.startswith(".") and os.path.isdir(os.path.join(THEMES_DIR, d))
+            }
+        except Exception:
+            pass
+
+    # Read preview directory ONCE instead of N stat calls
+    preview_dir = os.path.join(APP_DIR, "assets", "themes_preview")
+    available_previews = set()
+    if os.path.isdir(preview_dir):
+        try:
+            available_previews = set(os.listdir(preview_dir))
+        except Exception:
+            pass
+
     results = []
     for t in catalog_themes:
         folder = t.get("folder") or t.get("id")
-        installed_path = os.path.join(THEMES_DIR, folder)
-        is_installed = os.path.isdir(installed_path) and os.path.exists(os.path.join(installed_path, "config.json"))
-        
-        # Resolve preview path
-        preview_path = get_theme_preview_path(folder)
+        is_installed = folder in installed_folders
+        installed_path = os.path.join(THEMES_DIR, folder) if is_installed else None
+
+        # Fast preview path resolution without redundant disk stat calls
+        img_name = f"{folder}.png"
+        preview_path = None
+        if img_name in available_previews:
+            preview_path = os.path.join(preview_dir, img_name)
+        elif is_installed:
+            local_p = os.path.join(THEMES_DIR, folder, "preview.png")
+            if os.path.isfile(local_p):
+                preview_path = local_p
 
         item = dict(t)
         item["folder"] = folder
         item["is_installed"] = is_installed
-        item["installed_path"] = installed_path if is_installed else None
+        item["installed_path"] = installed_path
         item["preview_path"] = preview_path
         results.append(item)
 
+    _THEMES_CACHE = results
     return results
 
 
 def get_theme_preview_path(folder_name: str) -> Optional[str]:
     """Returns local path to theme preview image or None."""
     candidates = [
-        os.path.join(THEMES_DIR, folder_name, "preview.png"),
         os.path.join(APP_DIR, "assets", "themes_preview", f"{folder_name}.png"),
+        os.path.join(THEMES_DIR, folder_name, "preview.png"),
         os.path.join(LOCAL_THEMES_REPO_DIR, folder_name, "preview.png"),
-        f"/tmp/theme_previews/{folder_name}.png",
     ]
     for c in candidates:
         if os.path.isfile(c):
@@ -252,9 +285,8 @@ def install_theme(theme_info: Dict, on_progress: Optional[Callable[[int, str], N
         except Exception:
             pass
 
-        if on_progress:
-            on_progress(100, tr("theme_install_success"))
-
+        global _THEMES_CACHE
+        _THEMES_CACHE = None
         return True, tr("theme_install_success")
 
     except Exception as e:
@@ -264,12 +296,14 @@ def install_theme(theme_info: Dict, on_progress: Optional[Callable[[int, str], N
 
 def uninstall_theme(folder_name: str) -> Tuple[bool, str]:
     """Uninstalls a theme directory from SDCARD/Themes/ to free up space."""
+    global _THEMES_CACHE
     target_dir = os.path.join(THEMES_DIR, folder_name)
     if not os.path.isdir(target_dir):
         return False, "Theme chưa được cài đặt!" if state.current_lang == "VI" else "Theme is not installed!"
 
     try:
         shutil.rmtree(target_dir)
+        _THEMES_CACHE = None
         return True, tr("theme_uninstall_success")
     except Exception as e:
         print(f"[ThemeManager] Uninstall error: {e}")
@@ -278,6 +312,7 @@ def uninstall_theme(folder_name: str) -> Tuple[bool, str]:
 
 def restore_default_theme() -> Tuple[bool, str]:
     """Restores the original stock default themes from the immutable backup."""
+    global _THEMES_CACHE
     if not os.path.isdir(THEME_BACKUP_DIR) or not os.path.exists(THEME_BACKUP_MARKER):
         return False, "Không tìm thấy bản sao lưu theme mặc định gốc!" if state.current_lang == "VI" else "Original stock backup not found!"
 
@@ -307,6 +342,7 @@ def restore_default_theme() -> Tuple[bool, str]:
                 except Exception:
                     pass
 
+        _THEMES_CACHE = None
         return True, tr("theme_restore_success")
     except Exception as e:
         print(f"[ThemeManager] Restore error: {e}")
