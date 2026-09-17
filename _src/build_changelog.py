@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.33", "2026-09-18",
+     ("Theme Store Grid 3x2 (Index, Title, Status & Direct Download), Fix Web Manager UI, Boxart Ratio & Online Game Search",
+      "Theme Store Grid 3x2 trực quan (STT, Tên, Trạng thái & Tải trực tiếp), Sửa lỗi Web Manager UI, Khung ảnh Boxart & Tìm kiếm Game Store"),
+     [("Theme Store Grid 3x2 with Direct Download: Upgraded Theme Store UI to a clean 3x2 grid with sequence index, theme name, and dynamic installed status badge. Optimized on-demand remote download and instant extraction directly to /mnt/SDCARD/Themes/.",
+       "Theme Store Grid 3x2 trực quan & Tải trực tiếp: Nâng cấp giao diện Theme Store thành dạng lưới 3x2 tối ưu toàn màn hình, hiển thị đầy đủ STT (#1..#N), Tên theme và biểu tượng trạng thái cài đặt (✓/☁). Tải và giải nén giao diện trực tiếp từ máy chủ mạng vào /mnt/SDCARD/Themes/ kèm thanh tiến độ mượt mà."),
+      ("Web Game Manager UI Cleanup: Cleaned app.js to resolve unexpected token and switchMainTab errors, restoring full tab navigation and responsive management.",
+       "Sửa lỗi Giao diện Web Game Manager: Làm sạch mã nguồn JavaScript trên Web Manager, loại bỏ triệt để lỗi cú pháp Unexpected token '<' và khôi phục hoạt động mượt mà cho toàn bộ các tab chức năng."),
+      ("Standardized Game Boxart Ratio: Fixed game cards stretching issue by constraining art box height to 175px with object-fit: contain, ensuring sharp and proportionate boxart display across all retro systems.",
+       "Chuẩn hóa Tỉ lệ Ảnh bìa Game (Boxart): Khắc phục lỗi ảnh bìa bị kéo dãn dọc toàn màn hình, cố định chiều cao khung ảnh 175px và giữ nguyên tỉ lệ gốc của poster mọi hệ máy kèm lưới nút bấm 2x2 cân đối."),
+      ("Full-Text Search Across 40,000+ Games: Connected web search to SQLite DAO (db.search_games_fts) without category confinement, enabling instant global search and page navigation.",
+       "Tìm kiếm Toàn diện 40.000+ Game: Tối ưu hóa bộ lọc tìm kiếm trên Web Store kết nối trực tiếp SQLite FTS, cho phép tìm kiếm tức thời trên toàn bộ kho game mà không bị giới hạn trong danh mục ban đầu.")]),
+
     ("2.32", "2026-09-17",
      ("Multi-layer Secret Obfuscation for Telegram & AI Keys, added Secret Management CLI utility",
       "Bảo mật & Mã hóa đa tầng Token/AI Key trong toàn bộ ứng dụng, bổ sung công cụ quản lý Secret"),
