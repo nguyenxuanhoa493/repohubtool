@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Theme Manager for Trimui Brick Pro / Trimui Handhelds (Stock OS).
+"""Theme Manager for Trimui Brick Pro / Handhelds.
 
 Handles:
-- Immutable initial backup of default stock themes (never overwritten by subsequent installs).
-- Lightweight catalog loading (names, metadata & previews) without keeping full theme archives locally.
-- On-demand Online / Remote Download and installation directly into SDCARD/Themes/<ThemeName>.
+- Lightweight catalog loading (names, metadata & previews) with instant in-memory caching.
+- On-demand Online / Remote Download & extraction directly into /mnt/SDCARD/Themes/<ThemeName>.
 - Uninstallation to free up SD card space anytime.
-- Restoration of the original factory stock theme state.
 """
 
 import os
@@ -22,8 +20,6 @@ from .paths import (
     SDCARD_PATH,
     APP_DIR,
     THEMES_DIR,
-    THEME_BACKUP_DIR,
-    THEME_BACKUP_MARKER,
     THEMES_CATALOG_FILE,
     LOCAL_THEMES_REPO_DIR,
 )
@@ -39,54 +35,8 @@ except Exception:
     _SSL_CTX = None
 
 
-def ensure_default_theme_backup() -> bool:
-    """Safely and immutably backs up the default stock themes only ONCE."""
-    try:
-        if os.path.exists(THEME_BACKUP_MARKER):
-            return True
-
-        os.makedirs(THEME_BACKUP_DIR, exist_ok=True)
-
-        backed_up_count = 0
-        if os.path.isdir(THEMES_DIR):
-            for item in os.listdir(THEMES_DIR):
-                if item.startswith(".") or item == "zips":
-                    continue
-                src_item = os.path.join(THEMES_DIR, item)
-                dst_item = os.path.join(THEME_BACKUP_DIR, item)
-                if os.path.isdir(src_item) and not os.path.exists(dst_item):
-                    shutil.copytree(src_item, dst_item)
-                    backed_up_count += 1
-
-        sys_theme_candidates = ["/usr/trimui/res/skin", "/root/mytheme", "/usr/trimui/skin"]
-        for cand in sys_theme_candidates:
-            if os.path.isdir(cand):
-                dst_cand = os.path.join(THEME_BACKUP_DIR, "system_skin")
-                if not os.path.exists(dst_cand):
-                    try:
-                        shutil.copytree(cand, dst_cand)
-                        backed_up_count += 1
-                    except Exception:
-                        pass
-
-        info = {
-            "backed_up_at": os.path.getmtime(THEME_BACKUP_DIR),
-            "backed_up_count": backed_up_count,
-            "stock_preserved": True
-        }
-        with open(os.path.join(THEME_BACKUP_DIR, "backup_info.json"), "w", encoding="utf-8") as f:
-            json.dump(info, f, indent=2)
-
-        with open(THEME_BACKUP_MARKER, "w") as f:
-            f.write("TRIMUI_STOCK_DEFAULT_THEME_BACKUP_OK\n")
-
-        return True
-    except Exception as e:
-        print(f"[ThemeManager] Backup error: {e}")
-        return False
-
-
 _THEMES_CACHE = None
+
 
 
 def load_themes_catalog(force_reload: bool = False) -> List[Dict]:
@@ -309,41 +259,3 @@ def uninstall_theme(folder_name: str) -> Tuple[bool, str]:
         print(f"[ThemeManager] Uninstall error: {e}")
         return False, f"Lỗi gỡ bỏ: {e}" if state.current_lang == "VI" else f"Uninstall error: {e}"
 
-
-def restore_default_theme() -> Tuple[bool, str]:
-    """Restores the original stock default themes from the immutable backup."""
-    global _THEMES_CACHE
-    if not os.path.isdir(THEME_BACKUP_DIR) or not os.path.exists(THEME_BACKUP_MARKER):
-        return False, "Không tìm thấy bản sao lưu theme mặc định gốc!" if state.current_lang == "VI" else "Original stock backup not found!"
-
-    try:
-        restored_count = 0
-        os.makedirs(THEMES_DIR, exist_ok=True)
-
-        for item in os.listdir(THEME_BACKUP_DIR):
-            if item.startswith(".") or item == "backup_info.json":
-                continue
-            src_item = os.path.join(THEME_BACKUP_DIR, item)
-            dst_item = os.path.join(THEMES_DIR, item)
-            
-            if os.path.isdir(src_item) and item != "system_skin":
-                if os.path.exists(dst_item):
-                    shutil.rmtree(dst_item)
-                shutil.copytree(src_item, dst_item)
-                restored_count += 1
-
-        sys_skin_backup = os.path.join(THEME_BACKUP_DIR, "system_skin")
-        if os.path.isdir(sys_skin_backup):
-            cand_dst = "/root/mytheme"
-            if os.path.isdir(cand_dst):
-                try:
-                    for f in os.listdir(sys_skin_backup):
-                        shutil.copy2(os.path.join(sys_skin_backup, f), os.path.join(cand_dst, f))
-                except Exception:
-                    pass
-
-        _THEMES_CACHE = None
-        return True, tr("theme_restore_success")
-    except Exception as e:
-        print(f"[ThemeManager] Restore error: {e}")
-        return False, f"{tr('theme_restore_failed')}: {e}"
