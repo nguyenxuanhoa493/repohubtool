@@ -888,8 +888,8 @@
     },
     {
       "path": "catalog/icons_catalog.json",
-      "size": 1927,
-      "sha256": "cdb9254f7f798db7f6349f77014d803e2e5c0cc51cf6ebac95cba6a97336342b"
+      "size": 1963,
+      "sha256": "3fec58691749c1e8985aa44cf9b564190b782b50afc22e65057fdc91c072c33c"
     },
     {
       "path": "catalog/themes_catalog.json",
@@ -1103,8 +1103,8 @@
     },
     {
       "path": "rh/icon_manager.py",
-      "size": 20970,
-      "sha256": "1e14c1d361bcab2cbe2faf5372542f3ab71f8977e244931c2ddb9a42c96aca07"
+      "size": 21364,
+      "sha256": "0c384b28edeefbc1252a21b8936155a9ab9e9f06b1bcba4e9555948a32ef9e21"
     },
     {
       "path": "rh/inputs.py",

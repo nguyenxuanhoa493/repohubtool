@@ -477,15 +477,23 @@ def install_icon_pack(icon_info: Dict, on_progress: Optional[Callable[[int, str]
         zip_name = f"{enc_folder}.zip"
         
         download_urls = []
+        # Raw GitHub CDN is the most reliable direct endpoint
+        if icon_info.get("raw_git_url"):
+            download_urls.append(icon_info["raw_git_url"])
+        download_urls.append(f"https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/EmuIcons/zips/{zip_name}")
+        download_urls.append(f"https://github.com/nguyenxuanhoa493/repohubtool/raw/main/EmuIcons/zips/{zip_name}")
         if icon_info.get("download_url"):
             download_urls.append(icon_info["download_url"])
-        download_urls.extend([
-            f"https://retrohub.xuanhoa493.com/EmuIcons/zips/{zip_name}",
-            f"https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/EmuIcons/zips/{zip_name}",
-            f"https://github.com/nguyenxuanhoa493/repohubtool/raw/main/EmuIcons/zips/{zip_name}",
-        ])
+        download_urls.append(f"https://retrohub.xuanhoa493.com/EmuIcons/zips/{zip_name}")
 
-        tmp_zip = f"/tmp/icon_{folder}.zip"
+        # Deduplicate while preserving priority
+        dedup_urls = []
+        for u in download_urls:
+            if u and u not in dedup_urls:
+                dedup_urls.append(u)
+        download_urls = dedup_urls
+
+        tmp_zip = f"/tmp/icon_{enc_folder}.zip"
         download_ok = False
 
         for url in download_urls:

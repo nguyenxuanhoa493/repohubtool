@@ -107,7 +107,9 @@ def scan_icons():
             shutil.copy2(preview_path, preview_dest)
             preview_rel = f"assets/icons_preview/{item}.png"
 
+        import urllib.parse
         zip_filename = f"{item}.zip"
+        enc_zip_name = urllib.parse.quote(zip_filename)
         icon_packs.append({
             "id": item,
             "name": name,
@@ -123,8 +125,8 @@ def scan_icons():
             "zip_size_bytes": zip_size,
             "size_str": size_str,
             "preview_rel": preview_rel,
-            "download_url": f"{BASE_CDN_URL}{zip_filename}",
-            "raw_git_url": f"{BASE_RAW_GIT_URL}{zip_filename}",
+            "download_url": f"{BASE_CDN_URL}{enc_zip_name}",
+            "raw_git_url": f"{BASE_RAW_GIT_URL}{enc_zip_name}",
         })
 
     return icon_packs
