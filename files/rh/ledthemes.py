@@ -93,6 +93,7 @@ THEMES = [
 ]
 
 _BY_ID = dict((th["id"], th) for th in THEMES)
+THEME_ORDER = [th["id"] for th in THEMES]
 
 
 def get(theme_id):

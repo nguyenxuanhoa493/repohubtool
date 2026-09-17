@@ -1,12 +1,12 @@
 {
-  "version": "2.29",
-  "full_release_version": "2.29",
+  "version": "2.30",
+  "full_release_version": "2.30",
   "python": "any",
-  "built": "2026-09-17T14:10:00+0700",
+  "built": "2026-09-17T20:43:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa lỗi Tìm kiếm Game Online (FTS SQLite), Tối ưu Download & Cào Boxart ảnh bìa, Tự động trích xuất icon Java J2ME",
-    "en": "Fix Online Game Search (SQLite FTS), Optimize Boxart Download & Scraping Fallback, Auto-extract Java J2ME icons"
+    "vi": "Sửa lỗi văng app khi chọn Danh hiệu ứng đèn LED, Đồng bộ trạng thái Daemon đèn LED",
+    "en": "Fix app crash when opening LED Effect / Theme selector, Synchronize LED daemon running state"
   },
   "remove": [
     "app.pyc",
@@ -498,8 +498,8 @@
     },
     {
       "path": "rh/ledthemes.py",
-      "size": 4602,
-      "sha256": "dc12665aeaf8a26f69f472fcb43fcb0cd841a9a3e4e0f6bb78dee0d18e84d239"
+      "size": 4644,
+      "sha256": "482862c240b51c2d6810421a5ddf65c1f850e615f20e58f0ffa31561f546b13d"
     },
     {
       "path": "rh/lobby.py",
@@ -603,8 +603,8 @@
     },
     {
       "path": "rh/screens/led.py",
-      "size": 9038,
-      "sha256": "c6e87bd49fca0b983f792552e684cc425c46cf431ca1b436dca88a7879d80a89"
+      "size": 9092,
+      "sha256": "e85d723c7dc5e27e7328d52e4f7afe9864a286caceb79c32456eac28f19a4ccc"
     },
     {
       "path": "rh/screens/library.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "07c27678a1ca01eabd3c59c2b5f2603acf87c5b3b9bf96ce266db31f402f1ad9"
+      "sha256": "18187b680a2adc1d1b54264e7a0880bdcf6117ab4c95b13f3200cd2a867ec0df"
     },
     {
       "path": "rh/yt.py",
