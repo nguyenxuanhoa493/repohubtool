@@ -1,0 +1,1932 @@
+document.addEventListener("DOMContentLoaded", () => {
+                        setTimeout(() => {
+                            document.getElementById("files-sftp-url-disp").textContent = "http://" + window.location.hostname + ":8080";
+                        }, 500);
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB STREAM -->
+    <div id="tab-view-stream" class="tab-view" style="flex-direction: column; width: 100%;">
+        <div style="display:flex; justify-content:center; align-items:center; height:100%; width:100%; padding:20px; flex:1;">
+            <div style="background:#0f172a; border:1px solid var(--border); border-radius:16px; padding:40px; text-align:center; max-width:550px; width:100%; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                <div style="font-size:48px; margin-bottom:20px;">🖥️</div>
+                <h2 style="margin:0 0 10px 0; color:#38bdf8;">Stream Màn Hình TrimUI</h2>
+                <p style="color:var(--text-sub); font-size:14px; margin-bottom:30px; line-height:1.5;">
+                    Phát trực tiếp màn hình máy chơi game lên trình duyệt với độ trễ siêu thấp (&lt; 30ms).
+                </p>
+                <div style="background:#0a0e1a; border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:30px; text-align:left;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px; align-items:center;">
+                        <span style="color:#94a3b8;">Trạng thái dịch vụ:</span>
+                        <strong id="stream-status-badge" style="color:#94a3b8;">Đang tải...</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px; align-items:center;">
+                        <span style="color:#94a3b8;">Địa chỉ Web Stream:</span>
+                        <strong style="color:#10b981;" id="stream-url-disp">http://---:8088</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:14px; border-top:1px dashed var(--border); padding-top:12px; margin-top:12px; align-items:center;">
+                        <span style="color:#94a3b8;">Nguồn phát OBS (MJPEG):</span>
+                        <span style="color:#f59e0b; font-size:13px; font-family:monospace;" id="stream-obs-link">http://---:8088/stream.mjpg</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button id="btn-stream-toggle" class="btn btn-secondary" onclick="toggleScreenStream()" style="font-size:15px; padding:12px 20px; border-radius:12px; flex:1;">
+                        Đang kiểm tra...
+                    </button>
+                    <button id="btn-stream-newtab" class="btn btn-primary" onclick="openStreamNewTab()" style="font-size:15px; padding:12px 20px; border-radius:12px; flex:1; display:none;">
+                        Mở Web Stream
+                    </button>
+                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", () => {
+                        setTimeout(() => {
+                            const host = window.location.hostname || '127.0.0.1';
+                            const el = document.getElementById("stream-url-disp");
+                            if(el) el.textContent = "http://" + host + ":8088";
+                            const obs = document.getElementById("stream-obs-link");
+                            if(obs) obs.textContent = "http://" + host + ":8088/stream.mjpg";
+                        }, 500);
+                    });
+                </script>
+    <!-- ================================================================= -->
+    <!-- TAB: THEME STORE (KHO GIAO DIỆN) -->
+    <!-- ================================================================= -->
+    <div id="tab-view-themes" class="tab-view" style="flex-direction: column; width: 100%; height: calc(100vh - 60px); overflow-y: auto; padding: 24px;">
+        <div style="max-width: 1400px; margin: 0 auto; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; background: #0f172a; border: 1px solid var(--border); border-radius: 14px; padding: 18px 24px;">
+                <div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: #fff; margin: 0 0 6px 0; display: flex; align-items: center; gap: 10px;">
+                        <span>🎨</span> Kho Giao Diện Theme (Stock OS)
+                    </h2>
+                    <p style="color: var(--text-sub); font-size: 13px; margin: 0;">
+                        Xem trước ảnh độ nét cao, tải & cài đặt theme trực tiếp vào thẻ nhớ TrimUI Brick Pro.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn btn-warning" onclick="restoreStockThemeWeb()" style="background: #eab308; color: #000; font-weight: 700; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <span>⭐</span> Khôi phục Theme Gốc (Mặc định)
+                    </button>
+                </div>
+            </div>
+
+            <div class="toolbar" style="margin-bottom: 20px;">
+                <div class="search-box" style="flex: 1; max-width: 400px;">
+                    <span class="search-icon"></span>
+                    <input type="text" id="theme-search-input" placeholder="Tìm kiếm giao diện theo tên..." oninput="filterThemesWeb()">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="theme-filter-all" class="btn btn-primary" onclick="setThemeFilter('all')">Tất cả (<span id="theme-count-all">0</span>)</button>
+                    <button id="theme-filter-installed" class="btn btn-secondary" onclick="setThemeFilter('installed')">Đã cài (<span id="theme-count-installed">0</span>)</button>
+                    <button id="theme-filter-available" class="btn btn-secondary" onclick="setThemeFilter('available')">Chưa cài (<span id="theme-count-available">0</span>)</button>
+                </div>
+            </div>
+
+            <div id="theme-grid-container" class="theme-grid"></div>
+            <div id="theme-loading" style="display: none; text-align: center; padding: 50px; color: var(--primary);">
+                <div style="font-size: 16px; font-weight: 700;">Đang nạp danh sách theme...</div>
+            </div>
+            <div id="theme-empty" style="display: none; text-align: center; padding: 60px; color: var(--text-sub);">
+                <div style="font-size: 16px;">Không tìm thấy theme nào phù hợp!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODALS -->
+    <!-- ================================================================= -->
+    <div class="modal-backdrop" id="modal-rename">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Đổi tên game</h3>
+                <button class="modal-close" onclick="closeModal('modal-rename')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Tên file cũ</label>
+                <input type="text" id="rename-old" disabled>
+            </div>
+            <div class="form-group">
+                <label>Tên file mới (Tự động đổi cả file ảnh bìa)</label>
+                <input type="text" id="rename-new">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-rename')">Hủy</button>
+                <button class="btn" onclick="submitRename()">Lưu tên mới</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-move">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Chuyển hệ máy</h3>
+                <button class="modal-close" onclick="closeModal('modal-move')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Game cần chuyển</label>
+                <input type="text" id="move-game" disabled>
+            </div>
+            <div class="form-group">
+                <label>Chọn hệ máy đích</label>
+                <select id="move-target-sys"></select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-move')">Hủy</button>
+                <button class="btn" onclick="submitMove()">Xác nhận chuyển</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-scrape">
+        <div class="modal-box" style="max-width: 680px; width: 92vw;">
+            <div class="modal-header">
+                <h3>Cào ảnh bìa (Boxart)</h3>
+                <button class="modal-close" onclick="closeModal('modal-scrape')">&times;</button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="scrape-query" style="flex:1; background:#0f172a; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:6px; font-size:14px;" placeholder="Nhập từ khóa tìm kiếm ảnh..." onkeydown="if(event.key==='Enter') executeScrapeSearch()">
+                <button class="btn btn-sm" onclick="executeScrapeSearch()">Tìm ảnh</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-sub); margin-top: 4px;">
+                <span>Nguồn: RetroHub Catalog DB & Libretro Thumbnails CDN</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openGoogleImageSearch()">Google Images ↗</button>
+            </div>
+            <div id="scrape-results" class="games-grid" style="grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); margin: 12px 0; max-height: 280px; overflow-y: auto;"></div>
+
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed var(--border); border-radius: 6px; padding: 10px; margin-top: 6px;">
+                <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600;">Dán ảnh từ Clipboard (Ctrl+V) hoặc dán link:</div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="scrape-direct-url" style="flex:1; background:#0b0f19; border:1px solid var(--border); color:#fff; padding:6px 10px; border-radius:6px; font-size:12px;" placeholder="Dán link https://... hoặc bấm Ctrl+V" onkeydown="if(event.key==='Enter') submitDirectArtUrl()">
+                    <button class="btn btn-sm btn-green" onclick="submitDirectArtUrl()">Gán link</button>
+                </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                <label class="btn btn-sm btn-secondary" style="margin:0; cursor:pointer;">
+                    Tải ảnh từ máy
+                    <input type="file" id="art-file-input" accept="image/*" style="display:none" onchange="uploadCustomArt(event)">
+                </label>
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-scrape')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nhập Playlist YouTube từ Link -->
+    <div class="modal-backdrop" id="modal-import-playlist">
+        <div class="modal-box" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3>📥 Nhập Playlist YouTube từ Link</h3>
+                <button class="modal-close" onclick="closeModal('modal-import-playlist')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Link Playlist hoặc Link Video có list=</label>
+                <input type="text" id="import-playlist-url" placeholder="https://www.youtube.com/playlist?list=PL... hoặc ID Playlist">
+                <small style="color: var(--text-sub); display:block; margin-top:5px; font-size:11px;">
+                    💡 Hỗ trợ mọi link: <code>youtube.com/playlist?list=...</code>, <code>youtu.be/...&list=...</code> hoặc mã ID Playlist (PL..., RD..., OLAK...).
+                </small>
+            </div>
+            <div class="form-group" style="margin-top:12px;">
+                <label>Tên Playlist hiển thị (tùy chọn)</label>
+                <input type="text" id="import-playlist-title" placeholder="Để trống nếu muốn tự lấy tên gốc trên YouTube">
+            </div>
+            <div id="import-playlist-status" style="display:none; margin-top:14px; padding:12px; border-radius:8px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:12px; text-align:center;">
+                <span id="import-playlist-status-text">Đang trích xuất toàn bộ video từ YouTube InnerTube...</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-import-playlist')">Hủy</button>
+                <button class="btn btn-danger" id="btn-submit-import-pl" onclick="submitImportPlaylist()">🚀 Nhập toàn bộ Playlist</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Playlist YouTube -->
+    <div class="modal-backdrop" id="modal-add-playlist">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Thêm Playlist / Chủ đề YouTube</h3>
+                <button class="modal-close" onclick="closeModal('modal-add-playlist')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Tên Playlist hoặc Từ khóa / Tên Kênh</label>
+                <input type="text" id="new-playlist-name" placeholder="Ví dụ: Nhạc Trẻ Remix 2026, Phim Hoạt Hình, MixiGaming...">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-add-playlist')">Hủy</button>
+                <button class="btn btn-green" onclick="submitAddPlaylist()">Thêm vào danh sách</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Save & Cheats -->
+    <div class="modal-backdrop" id="modal-saves-cheats">
+        <div class="modal-box" style="max-width: 780px; width: 92vw;">
+            <div class="modal-header">
+                <h3>Quản lý Save Game, Cheat Code & Logs</h3>
+                <button class="modal-close" onclick="closeModal('modal-saves-cheats')">&times;</button>
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                <button id="tab-btn-saves" class="btn btn-sm" onclick="switchSavesCheatsTab('saves')">Sao lưu Save</button>
+                <button id="tab-btn-cheats" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('cheats')">Kho Cheat Code</button>
+                <button id="tab-btn-logs" class="btn btn-sm btn-secondary" onclick="switchSavesCheatsTab('logs')">Gửi Log & Chẩn đoán</button>
+            </div>
+            <div id="tab-content-saves">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span id="saves-stats-text" style="font-size: 12px; color: var(--text-sub);">Đang tải thống kê...</span>
+                    <button class="btn btn-sm btn-green" onclick="createSaveBackupWeb()">+ Tạo bản sao lưu mới</button>
+                </div>
+                <div id="backups-list-table" style="max-height: 280px; overflow-y: auto; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 6px;"></div>
+            </div>
+            <div id="tab-content-cheats" style="display:none;">
+                <div id="cheats-status-box" style="padding: 12px; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; margin-bottom: 12px;">Đang đọc kho cheat...</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-sm btn-green" onclick="downloadCheatsWeb('installed')">Tải Cheat cho game hiện có</button>
+                    <button class="btn btn-sm btn-secondary" onclick="downloadCheatsWeb('all')">Tải toàn bộ kho Cheat (~37MB)</button>
+                </div>
+            </div>
+            <div id="tab-content-logs" style="display:none;">
+                <div style="padding: 12px; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; margin-bottom: 12px;">
+                    <div>Thiết bị: <strong id="web-log-device-id" style="color:#38bdf8;">...</strong> | Kích thước: <strong id="web-log-size">...</strong></div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-sm btn-batch" onclick="sendLogTelegramWeb()">Gửi Log lên Telegram tác giả</button>
+                    <a href="/api/logs/download" class="btn btn-sm btn-secondary" download>Tải file báo cáo (.txt)</a>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-saves-cheats')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- ================================================================= -->
+    <!-- JAVASCRIPT APP LOGIC -->
+    <!-- ================================================================= -->
+    <script>
+        let currentTab = 'games';
+        let allSystems = [];
+        let currentSystem = null;
+        let currentGames = [];
+        let selectedGame = null;
+
+        let storeCategories = [];
+        let storeSystems = [];
+        let currentStoreCategory = 'HITS';
+        let currentStoreSystem = 'ALL';
+        let storeGames = [];
+        let storeDlInterval = null;
+
+        let ytPlaylists = [];
+        let currentYtTab = 'trending';
+        let ytVideos = [];
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('show');
+        }
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('show');
+        }
+
+        let allThemes = [];
+        let currentThemeFilter = 'all';
+
+        function switchMainTab(tab) {
+            currentTab = tab;
+            // Cập nhật URL hash
+            history.replaceState(null, null, '#' + tab);
+            document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+
+            const btn = document.getElementById(`nav-btn-${tab}`);
+            const view = document.getElementById(`tab-view-${tab}`);
+            if (btn) btn.classList.add('active');
+            if (view) view.classList.add('active');
+
+            if (tab === 'games') {
+                if (!allSystems.length) loadSystems();
+            } else if (tab === 'store') {
+                if (!storeCategories.length) loadStoreInit();
+            } else if (tab === 'themes') {
+                if (!allThemes.length) loadThemes();
+            } else if (tab === 'youtube') {
+                if (!ytPlaylists.length) loadYouTubeInit();
+            } else if (tab === 'stream') {
+                checkStreamStatus();
+            }
+        }
+
+        function reloadCurrentView() {
+            loadStorageStatus();
+            if (currentTab === 'games') loadSystems(true);
+            else if (currentTab === 'store') loadStoreGames();
+            else if (currentTab === 'themes') loadThemes(true);
+            else if (currentTab === 'youtube') loadYouTubeVideos(currentYtTab);
+        }
+
+        // ==================== THEME STORE ====================
+        async function loadThemes(force = false) {
+            const loading = document.getElementById('theme-loading');
+            const container = document.getElementById('theme-grid-container');
+            const empty = document.getElementById('theme-empty');
+            if (loading) loading.style.display = 'block';
+            if (container) container.innerHTML = '';
+            if (empty) empty.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/themes');
+                const data = await res.json();
+                if (data.ok) {
+                    allThemes = data.themes || [];
+                    updateThemeFilterCounts();
+                    renderThemesList();
+                } else {
+                    showToast('Lỗi nạp danh sách theme: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('Không kết nối được API Theme Store: ' + e);
+            } finally {
+                if (loading) loading.style.display = 'none';
+            }
+        }
+
+        function updateThemeFilterCounts() {
+            const total = allThemes.length;
+            const installed = allThemes.filter(t => t.is_installed).length;
+            const available = total - installed;
+
+            const elAll = document.getElementById('theme-count-all');
+            const elInst = document.getElementById('theme-count-installed');
+            const elAvail = document.getElementById('theme-count-available');
+
+            if (elAll) elAll.textContent = total;
+            if (elInst) elInst.textContent = installed;
+            if (elAvail) elAvail.textContent = available;
+        }
+
+        function setThemeFilter(filter) {
+            currentThemeFilter = filter;
+            ['all', 'installed', 'available'].forEach(f => {
+                const btn = document.getElementById(`theme-filter-${f}`);
+                if (btn) {
+                    if (f === filter) {
+                        btn.className = 'btn btn-primary';
+                    } else {
+                        btn.className = 'btn btn-secondary';
+                    }
+                }
+            });
+            renderThemesList();
+        }
+
+        function filterThemesWeb() {
+            renderThemesList();
+        }
+
+        function renderThemesList() {
+            const container = document.getElementById('theme-grid-container');
+            const empty = document.getElementById('theme-empty');
+            if (!container) return;
+
+            const searchVal = (document.getElementById('theme-search-input')?.value || '').toLowerCase().trim();
+
+            const list = allThemes.filter(t => {
+                if (currentThemeFilter === 'installed' && !t.is_installed) return false;
+                if (currentThemeFilter === 'available' && t.is_installed) return false;
+                if (searchVal) {
+                    const name = (t.name || '').toLowerCase();
+                    const folder = (t.folder || '').toLowerCase();
+                    if (!name.includes(searchVal) && !folder.includes(searchVal)) return false;
+                }
+                return true;
+            });
+
+            if (list.length === 0) {
+                container.innerHTML = '';
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+
+            if (empty) empty.style.display = 'none';
+
+            let html = '';
+            list.forEach(t => {
+                const isInst = t.is_installed;
+                const prevUrl = `/api/themes/preview?name=${encodeURIComponent(t.folder)}`;
+                const sizeStr = t.size_str || '';
+                const fontStr = t.font ? `Font: ${t.font}` : 'Font: Mặc định';
+
+                html += `
+                <div class="theme-card">
+                    <div class="theme-thumb-box">
+                        <img src="${prevUrl}" alt="${t.name}" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'150\\' viewBox=\\'0 0 200 150\\'><rect fill=\\'%23111\\' width=\\'200\\' height=\\'150\\'/><text fill=\\'%23666\\' x=\\'50%\\' y=\\'50%\\' text-anchor=\\'middle\\'>Chưa có preview</text></svg>'">
+                        ${isInst ? '<div class="theme-badge-installed">✓ ĐÃ CÀI</div>' : ''}
+                    </div>
+                    <div class="theme-body">
+                        <div>
+                            <div class="theme-title" title="${t.name}">${t.name}</div>
+                            <div class="theme-meta">
+                                <span>${fontStr}</span>
+                                <span>${sizeStr}</span>
+                            </div>
+                        </div>
+                        <div class="theme-actions">
+                            ${isInst ? `
+                                <button class="btn btn-sm btn-primary" style="flex:1;" onclick="installThemeWeb('${t.folder}')">Cài lại</button>
+                                <button class="btn btn-sm btn-danger" onclick="uninstallThemeWeb('${t.folder}')">Gỡ bỏ</button>
+                            ` : `
+                                <button class="btn btn-sm btn-green" style="flex:1;" onclick="installThemeWeb('${t.folder}')">⚡ Cài đặt Theme</button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function installThemeWeb(folder) {
+            showToast(`Đang cài đặt theme ${folder}...`);
+            try {
+                const res = await fetch('/api/themes/install', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: folder })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Cài đặt theme thành công!');
+                    loadThemes(true);
+                } else {
+                    showToast('Lỗi cài theme: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e);
+            }
+        }
+
+        async function uninstallThemeWeb(folder) {
+            if (!confirm(`Bạn có chắc muốn gỡ bỏ theme "${folder}" khỏi thẻ nhớ?`)) return;
+            try {
+                const res = await fetch('/api/themes/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: folder })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Đã gỡ bỏ theme!');
+                    loadThemes(true);
+                } else {
+                    showToast('Lỗi gỡ bỏ: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e);
+            }
+        }
+
+        async function restoreStockThemeWeb() {
+            if (!confirm('Bạn có chắc chắn muốn khôi phục lại Theme Mặc Định gốc xuất xưởng của TrimUI Stock ROM?')) return;
+            showToast('Đang khôi phục theme mặc định gốc...');
+            try {
+                const res = await fetch('/api/themes/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Đã khôi phục theme mặc định gốc!');
+                    loadThemes(true);
+                } else {
+                    showToast('Lỗi khôi phục: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e);
+            }
+        }
+
+        async function loadStorageStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                if (data.ok && data.storage) {
+                    document.getElementById('storage-stat').innerHTML = `Bộ nhớ: <strong>Trống ${data.storage.free_gb}</strong> / ${data.storage.total_gb}`;
+                }
+            } catch (e) {}
+        }
+
+        // ==================== QUẢN LÝ GAME (GAMES MANAGER) ====================
+        async function loadSystems(forceSelectFirst = false) {
+            try {
+                const res = await fetch('/api/systems');
+                const data = await res.json();
+                if (data.ok) {
+                    allSystems = data.systems || [];
+                    renderSystemsList(data.no_art_count || 0);
+                    if (allSystems.length > 0 && (!currentSystem || forceSelectFirst)) {
+                        selectSystem(allSystems[0].dir);
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading systems:', e);
+            }
+        }
+
+        function renderSystemsList(noArtCount) {
+            const listEl = document.getElementById('systems-list');
+            let html = '';
+            if (noArtCount > 0) {
+                html += `<div class="sys-item ${currentSystem === '__no_art__' ? 'active' : ''}" onclick="selectSystem('__no_art__')">
+                    <span style="color:#f59e0b;">⚠️ Thiếu ảnh bìa</span>
+                    <span class="count" style="background:#b45309; color:#fff;">${noArtCount}</span>
+                </div>`;
+            }
+            allSystems.forEach(s => {
+                const activeCls = (currentSystem === s.dir) ? 'active' : '';
+                html += `<div class="sys-item ${activeCls}" onclick="selectSystem('${s.dir}')">
+                    <span>${s.name}</span>
+                    <span class="count">${s.count}</span>
+                </div>`;
+            });
+            listEl.innerHTML = html;
+        }
+
+        async function selectSystem(sysDir) {
+            currentSystem = sysDir;
+            renderSystemsList();
+            try {
+                const res = await fetch(`/api/games?system=${encodeURIComponent(sysDir)}`);
+                const data = await res.json();
+                if (data.ok) {
+                    currentGames = data.games || [];
+                    renderGamesGrid(currentGames);
+                }
+            } catch (e) {
+                console.error('Error loading games:', e);
+            }
+        }
+
+        function renderGamesGrid(games) {
+            const container = document.getElementById('games-container');
+            const emptyEl = document.getElementById('empty-state');
+            if (!games || games.length === 0) {
+                container.innerHTML = '';
+                emptyEl.style.display = 'block';
+                return;
+            }
+            emptyEl.style.display = 'none';
+            let html = '';
+            games.forEach((g, idx) => {
+                const artHtml = g.has_art ? `<img src="${g.art_url}" loading="lazy" alt="${g.title}">` : `<div style="font-size:32px;">🎮</div>`;
+                html += `<div class="game-card">
+                    <div class="art-box">${artHtml}</div>
+                    <div class="game-info">
+                        <div class="game-title" title="${g.filename}">${g.title}</div>
+                        <div class="game-meta">
+                            <span>${g.system}</span>
+                            <span>${g.size_str}</span>
+                        </div>
+                        <div class="game-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="openScrapeModal('${g.system}', '${encodeURIComponent(g.filename)}')">Cào ảnh</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openRenameModal('${g.system}', '${encodeURIComponent(g.filename)}')">Đổi tên</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openMoveModal('${g.system}', '${encodeURIComponent(g.filename)}')">Chuyển</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteGame('${g.system}', '${encodeURIComponent(g.filename)}')">Xóa</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function filterGames() {
+            const q = document.getElementById('search-input').value.toLowerCase().trim();
+            if (!q) {
+                renderGamesGrid(currentGames);
+                return;
+            }
+            const filtered = currentGames.filter(g => g.title.toLowerCase().includes(q) || g.filename.toLowerCase().includes(q));
+            renderGamesGrid(filtered);
+        }
+
+        // ==================== TẢI GAME ONLINE (ROMS STORE) ====================
+        async function loadStoreInit() {
+            try {
+                const res = await fetch('/api/store/categories');
+                const data = await res.json();
+                if (data.ok) {
+                    storeCategories = data.categories || [];
+                    storeSystems = data.systems || [];
+                    renderStoreSidebar();
+                    loadStoreGames();
+                }
+            } catch (e) {
+                console.error('Error loadStoreInit:', e);
+            }
+        }
+
+        function renderStoreSidebar() {
+            const catList = document.getElementById('store-categories-list');
+            let htmlCat = '';
+            storeCategories.forEach(c => {
+                const active = (currentStoreCategory === c.id && currentStoreSystem === 'ALL') ? 'active' : '';
+                htmlCat += `<div class="sys-item ${active}" onclick="selectStoreCategory('${c.id}')">
+                    <span>${c.icon} ${c.name}</span>
+                </div>`;
+            });
+            catList.innerHTML = htmlCat;
+
+            const sysList = document.getElementById('store-systems-list');
+            let htmlSys = '';
+            storeSystems.forEach(s => {
+                const active = (currentStoreSystem === s.code) ? 'active' : '';
+                htmlSys += `<div class="sys-item ${active}" onclick="selectStoreSystem('${s.code}')">
+                    <span>${s.name}</span>
+                    <span class="count">${s.count}</span>
+                </div>`;
+            });
+            sysList.innerHTML = htmlSys;
+        }
+
+        let currentStorePage = 1;
+        let storeHasMore = true;
+        let isStoreLoading = false;
+
+        function selectStoreCategory(catId) {
+            currentStoreCategory = catId;
+            currentStoreSystem = 'ALL';
+            document.getElementById('store-search-input').value = '';
+            renderStoreSidebar();
+            resetAndLoadStore();
+        }
+
+        function selectStoreSystem(sysCode) {
+            currentStoreSystem = sysCode;
+            currentStoreCategory = 'ALL';
+            document.getElementById('store-search-input').value = '';
+            renderStoreSidebar();
+            resetAndLoadStore();
+        }
+
+        function executeStoreSearch() {
+            resetAndLoadStore();
+        }
+
+        function resetAndLoadStore() {
+            currentStorePage = 1;
+            storeHasMore = true;
+            storeGames = [];
+            loadStoreGames(false);
+        }
+
+        function loadMoreStoreGames() {
+            if (!isStoreLoading && storeHasMore) {
+                currentStorePage++;
+                loadStoreGames(true);
+            }
+        }
+
+        function handleStoreScroll(e) {
+            const el = e.target;
+            if (el.scrollHeight - el.scrollTop - el.clientHeight < 350) {
+                if (!isStoreLoading && storeHasMore) {
+                    currentStorePage++;
+                    loadStoreGames(true);
+                }
+            }
+        }
+
+        async function loadStoreGames(isAppend = false) {
+            if (isStoreLoading) return;
+            isStoreLoading = true;
+
+            const container = document.getElementById('store-games-container');
+            const loading = document.getElementById('store-loading');
+            const loadingMore = document.getElementById('store-loading-more');
+            const emptyEl = document.getElementById('store-empty-state');
+            const loadMoreBtn = document.getElementById('store-load-more-btn-container');
+
+            if (!isAppend) {
+                container.innerHTML = '';
+                loading.style.display = 'block';
+                emptyEl.style.display = 'none';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            } else {
+                if (loadingMore) loadingMore.style.display = 'block';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            }
+
+            const sort = document.getElementById('store-sort-select').value;
+            const q = document.getElementById('store-search-input').value.trim();
+            const limit = 40;
+
+            let url = `/api/store/games?source_type=${currentStoreCategory}&system=${currentStoreSystem}&sort=${sort}&page=${currentStorePage}&limit=${limit}`;
+            if (q) url += `&query=${encodeURIComponent(q)}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                loading.style.display = 'none';
+                if (loadingMore) loadingMore.style.display = 'none';
+
+                if (data.ok && data.games && data.games.length > 0) {
+                    if (isAppend) {
+                        storeGames = storeGames.concat(data.games);
+                        renderStoreGrid(data.games, true);
+                    } else {
+                        storeGames = data.games;
+                        renderStoreGrid(storeGames, false);
+                    }
+
+                    if (data.games.length < limit) {
+                        storeHasMore = false;
+                        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                    } else {
+                        storeHasMore = true;
+                        if (loadMoreBtn) loadMoreBtn.style.display = 'block';
+                    }
+                } else {
+                    storeHasMore = false;
+                    if (!isAppend) {
+                        emptyEl.style.display = 'block';
+                    }
+                    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                }
+            } catch (e) {
+                loading.style.display = 'none';
+                if (loadingMore) loadingMore.style.display = 'none';
+                if (!isAppend) emptyEl.style.display = 'block';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            } finally {
+                isStoreLoading = false;
+            }
+        }
+
+        function renderStoreGrid(games, isAppend = false) {
+            const container = document.getElementById('store-games-container');
+            let html = '';
+            games.forEach((g, idx) => {
+                const imgUrl = g.img_url ? `<img src="${g.img_url}" loading="lazy" alt="${g.title}">` : `<div style="font-size:32px;">🕹️</div>`;
+                const isViet = g.is_viet ? `<span class="badge-tag badge-viet">VIỆT HÓA</span>` : '';
+                const isHack = g.is_hack ? `<span class="badge-tag badge-hack">HACK</span>` : '';
+                const isHit = g.is_hit ? `<span class="badge-tag badge-top">TOP</span>` : '';
+
+                const actionBtn = g.is_installed 
+                    ? `<span class="badge-tag badge-installed">✓ Đã có trên thẻ</span>`
+                    : `<button class="btn btn-sm btn-green" id="btn-store-dl-${g.id}" onclick="downloadStoreGame(${g.id}, '${g.sys_code}', '${encodeURIComponent(g.title)}', '${encodeURIComponent(g.rom_url || '')}', '${encodeURIComponent(g.filename || '')}', '${encodeURIComponent(g.img_url || '')}')">⬇️ Tải về máy</button>`;
+
+                html += `<div class="game-card">
+                    <div class="art-box">${imgUrl}</div>
+                    <div class="game-info">
+                        <div style="display:flex; gap:4px; margin-bottom:4px; flex-wrap:wrap;">${isViet}${isHack}${isHit}</div>
+                        <div class="game-title" title="${g.title}">${g.title}</div>
+                        <div class="game-meta">
+                            <span>${g.sys_code}</span>
+                            <span>${g.file_size_str || ''}</span>
+                        </div>
+                        <div class="game-actions" style="margin-top:10px;">
+                            ${actionBtn}
+                        </div>
+                    </div>
+                </div>`;
+            });
+            if (isAppend) {
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
+        }
+
+        async function downloadStoreGame(id, sysCode, titleEnc, romUrlEnc, fnameEnc, imgUrlEnc) {
+            const title = decodeURIComponent(titleEnc);
+            const romUrl = decodeURIComponent(romUrlEnc);
+            const fname = decodeURIComponent(fnameEnc);
+            const imgUrl = decodeURIComponent(imgUrlEnc);
+
+            const btn = document.getElementById(`btn-store-dl-${id}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Đang tải...';
+            }
+
+            try {
+                const res = await fetch('/api/store/download', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        game_id: id,
+                        sys_code: sysCode,
+                        title: title,
+                        rom_url: romUrl,
+                        filename: fname,
+                        img_url: imgUrl
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`Bắt đầu tải: ${title}`);
+                    startStoreDownloadPolling();
+                } else {
+                    alert('Lỗi: ' + (data.error || 'Không thể tải'));
+                    if (btn) { btn.disabled = false; btn.innerText = '⬇️ Tải về máy'; }
+                }
+            } catch (e) {
+                alert('Lỗi kết nối: ' + e);
+                if (btn) { btn.disabled = false; btn.innerText = '⬇️ Tải về máy'; }
+            }
+        }
+
+        function startStoreDownloadPolling() {
+            const banner = document.getElementById('store-download-banner');
+            banner.style.display = 'block';
+
+            if (storeDlInterval) clearInterval(storeDlInterval);
+            storeDlInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/store/download/status');
+                    const data = await res.json();
+                    if (data.ok && data.downloads && data.downloads.length > 0) {
+                        const active = data.downloads[data.downloads.length - 1];
+                        const pct = active.progress_pct || 0;
+                        document.getElementById('store-dl-title').innerText = `Đang tải: ${active.title} (${active.sys_code})`;
+                        document.getElementById('store-dl-pct').innerText = `${pct}%`;
+                        document.getElementById('store-dl-bar').style.width = `${pct}%`;
+                        
+                        let sizeInfo = '';
+                        if (active.total_bytes > 0) {
+                            const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
+                            const totMb = (active.total_bytes / (1024 * 1024)).toFixed(1);
+                            sizeInfo = ` (${curMb} / ${totMb} MB)`;
+                        } else if (active.downloaded_bytes > 0) {
+                            const curMb = (active.downloaded_bytes / (1024 * 1024)).toFixed(1);
+                            sizeInfo = ` (${curMb} MB)`;
+                        }
+
+                        document.getElementById('store-dl-speed').innerText = `Tốc độ: ${active.speed_str || '0 KB/s'}${sizeInfo}`;
+                        
+                        if (active.status === 'completed') {
+                            document.getElementById('store-dl-status').innerText = '✓ Đã tải xong và lưu vào thẻ nhớ!';
+                            document.getElementById('store-dl-status').style.color = '#34d399';
+                        } else if (active.status === 'error') {
+                            document.getElementById('store-dl-status').innerText = `❌ ${active.error_msg || 'Lỗi tải game'}`;
+                            document.getElementById('store-dl-status').style.color = '#f87171';
+                        } else {
+                            document.getElementById('store-dl-status').innerText = 'Đang nhận tệp...';
+                            document.getElementById('store-dl-status').style.color = 'var(--text-sub)';
+                        }
+
+                        if (active.status === 'completed' || active.status === 'error') {
+                            clearInterval(storeDlInterval);
+                            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+                            loadStoreGames(false);
+                            loadSystems();
+                        }
+                    } else {
+                        clearInterval(storeDlInterval);
+                        banner.style.display = 'none';
+                    }
+                } catch (e) {}
+            }, 350);
+        }
+
+        // ==================== QUẢN LÝ YOUTUBE ====================
+        async function loadYouTubeInit() {
+            try {
+                const res = await fetch('/api/youtube/playlists');
+                const data = await res.json();
+                if (data.ok) {
+                    ytPlaylists = data.playlists || [];
+                    renderYouTubePlaylists(data.favorites_count || 0);
+                    loadYouTubeVideos('trending');
+                }
+            } catch (e) {
+                console.error('Error loadYouTubeInit:', e);
+            }
+        }
+
+        function renderYouTubePlaylists(favCount = 0) {
+            const listEl = document.getElementById('yt-playlists-list');
+            let html = '';
+            
+            // Item 1: Trending
+            html += `<div class="yt-playlist-item ${currentYtTab === 'trending' ? 'active' : ''}" onclick="selectYouTubePlaylist('trending')">
+                <span>🔥 Trending YouTube</span>
+            </div>`;
+
+            // Item 2: Favorites
+            html += `<div class="yt-playlist-item ${currentYtTab === 'favorites' ? 'active' : ''}" onclick="selectYouTubePlaylist('favorites')">
+                <span>⭐ Video Yêu thích</span>
+                <span class="count" style="background:#b45309; color:#fff; font-size:11px; padding:2px 7px; border-radius:10px;">${favCount}</span>
+            </div>`;
+
+            // Custom playlists
+            ytPlaylists.forEach(q => {
+                const active = (currentYtTab === q) ? 'active' : '';
+                html += `<div class="yt-playlist-item ${active}" onclick="selectYouTubePlaylist('${q.replace(/'/g, "\\'")}')">
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">${q}</span>
+                    <button class="btn btn-sm btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deletePlaylist(event, '${q.replace(/'/g, "\\'")}')">&times;</button>
+                </div>`;
+            });
+
+            listEl.innerHTML = html;
+        }
+
+        function selectYouTubePlaylist(q) {
+            currentYtTab = q;
+            renderYouTubePlaylists();
+            loadYouTubeVideos(q);
+        }
+
+        async function loadYouTubeVideos(query) {
+            const container = document.getElementById('yt-videos-container');
+            const loading = document.getElementById('yt-loading');
+            const countEl = document.getElementById('yt-video-count');
+            const titleEl = document.getElementById('yt-current-title');
+
+            container.innerHTML = '';
+            loading.style.display = 'block';
+
+            if (query === 'favorites') {
+                titleEl.innerText = '⭐ Video Yêu thích';
+                try {
+                    const res = await fetch('/api/youtube/favorites');
+                    const data = await res.json();
+                    loading.style.display = 'none';
+                    if (data.ok) {
+                        ytVideos = data.favorites || [];
+                        countEl.innerText = `${ytVideos.length} video`;
+                        renderYouTubeGrid(ytVideos, true);
+                    }
+                } catch (e) { loading.style.display = 'none'; }
+                return;
+            }
+
+            titleEl.innerText = (query === 'trending') ? '🔥 Trending YouTube' : `📺 Playlist: ${query}`;
+            try {
+                const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(query)}&limit=24`);
+                const data = await res.json();
+                loading.style.display = 'none';
+                if (data.ok && data.videos) {
+                    ytVideos = data.videos;
+                    countEl.innerText = `${ytVideos.length} video`;
+                    renderYouTubeGrid(ytVideos, false);
+                }
+            } catch (e) {
+                loading.style.display = 'none';
+            }
+        }
+
+        function executeYouTubeSearch() {
+            const q = document.getElementById('yt-search-input').value.trim();
+            if (!q) return;
+            currentYtTab = q;
+            renderYouTubePlaylists();
+            loadYouTubeVideos(q);
+        }
+
+        function renderYouTubeGrid(videos, isFavList = false) {
+            const container = document.getElementById('yt-videos-container');
+            if (!videos || videos.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-sub);">Chưa có video nào.</div>';
+                return;
+            }
+
+            let html = '';
+            videos.forEach(v => {
+                const favBtn = isFavList 
+                    ? `<button class="btn btn-sm btn-danger" onclick="removeFromFavorites('${v.id}')">❌ Xóa khỏi Yêu thích</button>`
+                    : `<button class="btn btn-sm btn-gold" onclick="addToFavorites('${v.id}', '${encodeURIComponent(v.title)}', '${encodeURIComponent(v.channel || '')}', '${encodeURIComponent(v.duration || '')}', '${encodeURIComponent(v.thumb || '')}')">⭐ Lưu yêu thích</button>`;
+
+                html += `<div class="yt-card">
+                    <div class="yt-thumb-box">
+                        <img src="${v.thumb}" loading="lazy" alt="${v.title}">
+                        <span class="yt-dur-badge">${v.duration || 'Video'}</span>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-title" title="${v.title}">${v.title}</div>
+                        <div class="game-meta">
+                            <span>${v.channel || 'YouTube'}</span>
+                            <span>${v.age || ''}</span>
+                        </div>
+                        <div class="game-actions" style="margin-top:10px;">
+                            ${favBtn}
+                            <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="btn btn-sm btn-secondary">Xem ↗</a>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function openImportPlaylistModal() {
+            document.getElementById('import-playlist-url').value = '';
+            document.getElementById('import-playlist-title').value = '';
+            document.getElementById('import-playlist-status').style.display = 'none';
+            document.getElementById('btn-submit-import-pl').disabled = false;
+            openModal('modal-import-playlist');
+        }
+
+        async function submitImportPlaylist() {
+            const url = document.getElementById('import-playlist-url').value.trim();
+            const customTitle = document.getElementById('import-playlist-title').value.trim();
+            if (!url) {
+                alert('Vui lòng dán Link hoặc ID Playlist YouTube!');
+                return;
+            }
+
+            const statusEl = document.getElementById('import-playlist-status');
+            const statusText = document.getElementById('import-playlist-status-text');
+            const btnSubmit = document.getElementById('btn-submit-import-pl');
+
+            statusEl.style.display = 'block';
+            statusText.innerText = '⏳ Đang quét danh sách và lấy toàn bộ video từ YouTube...';
+            btnSubmit.disabled = true;
+
+            try {
+                const res = await fetch('/api/youtube/playlists/import', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url, custom_title: customTitle})
+                });
+                const data = await res.json();
+                btnSubmit.disabled = false;
+
+                if (data.ok) {
+                    closeModal('modal-import-playlist');
+                    showToast(`🎉 ${data.message}`);
+                    ytPlaylists = data.playlists || [];
+                    currentYtTab = data.title;
+                    renderYouTubePlaylists();
+                    
+                    // Render the imported videos directly
+                    const titleEl = document.getElementById('yt-current-title');
+                    const countEl = document.getElementById('yt-video-count');
+                    titleEl.innerText = `📺 Playlist: ${data.title}`;
+                    countEl.innerText = `${data.count} video`;
+                    ytVideos = data.videos || [];
+                    renderYouTubeGrid(ytVideos, false);
+                } else {
+                    statusText.innerText = '❌ ' + (data.error || 'Lỗi khi nhập playlist');
+                }
+            } catch (e) {
+                btnSubmit.disabled = false;
+                statusText.innerText = '❌ Lỗi kết nối: ' + e;
+            }
+        }
+
+        function openAddPlaylistModal() {
+            document.getElementById('new-playlist-name').value = '';
+            openModal('modal-add-playlist');
+        }
+
+        async function submitAddPlaylist() {
+            const name = document.getElementById('new-playlist-name').value.trim();
+            if (!name) return;
+            try {
+                const res = await fetch('/api/youtube/playlists/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    closeModal('modal-add-playlist');
+                    showToast(`Đã thêm playlist ${name}!`);
+                    ytPlaylists = data.playlists || [];
+                    selectYouTubePlaylist(name);
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function deletePlaylist(e, name) {
+            e.stopPropagation();
+            if (!confirm(`Bạn có chắc muốn xóa playlist "${name}"?`)) return;
+            try {
+                const res = await fetch('/api/youtube/playlists/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`Đã xóa playlist ${name}!`);
+                    ytPlaylists = data.playlists || [];
+                    selectYouTubePlaylist('trending');
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function addToFavorites(id, titleEnc, channelEnc, durEnc, thumbEnc) {
+            const video = {
+                id: id,
+                title: decodeURIComponent(titleEnc),
+                channel: decodeURIComponent(channelEnc),
+                duration: decodeURIComponent(durEnc),
+                thumb: decodeURIComponent(thumbEnc)
+            };
+            try {
+                const res = await fetch('/api/youtube/favorites/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({video: video})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã lưu video vào Yêu thích!');
+                    loadYouTubeInit();
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function removeFromFavorites(id) {
+            try {
+                const res = await fetch('/api/youtube/favorites/remove', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: id})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã xóa khỏi Yêu thích!');
+                    loadYouTubeVideos('favorites');
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        function addCurrentSearchAsPlaylist() {
+            const q = document.getElementById('yt-search-input').value.trim();
+            if (!q) return;
+            document.getElementById('new-playlist-name').value = q;
+            submitAddPlaylist();
+        }
+
+        async function clearYouTubeCache() {
+            if (!confirm('Dọn dẹp toàn bộ bộ nhớ đệm ảnh thumbnail YouTube trên thẻ nhớ?')) return;
+            try {
+                const res = await fetch('/api/youtube/cache/clear', {method: 'POST'});
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Đã dọn dẹp cache YouTube!');
+                    loadStorageStatus();
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        // ==================== MODALS & HELPERS ====================
+        function openRenameModal(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            selectedGame = {system: sys, filename: fn};
+            document.getElementById('rename-old').value = fn;
+            document.getElementById('rename-new').value = fn;
+            openModal('modal-rename');
+        }
+
+        async function submitRename() {
+            if (!selectedGame) return;
+            const newName = document.getElementById('rename-new').value.trim();
+            if (!newName) return;
+            try {
+                const res = await fetch('/api/rename', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        system: selectedGame.system,
+                        old_filename: selectedGame.filename,
+                        new_filename: newName
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    closeModal('modal-rename');
+                    showToast(data.message || 'Đổi tên thành công!');
+                    selectSystem(selectedGame.system);
+                } else { alert('Lỗi: ' + (data.error || 'Không thể đổi tên')); }
+            } catch (e) { alert('Lỗi kết nối: ' + e); }
+        }
+
+        function openMoveModal(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            selectedGame = {system: sys, filename: fn};
+            document.getElementById('move-game').value = `${fn} (${sys})`;
+            const sel = document.getElementById('move-target-sys');
+            let opts = '';
+            allSystems.forEach(s => {
+                if (s.dir !== sys) opts += `<option value="${s.dir}">${s.name} (${s.dir})</option>`;
+            });
+            sel.innerHTML = opts;
+            openModal('modal-move');
+        }
+
+        async function submitMove() {
+            if (!selectedGame) return;
+            const targetSys = document.getElementById('move-target-sys').value;
+            if (!targetSys) return;
+            try {
+                const res = await fetch('/api/move', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        from_system: selectedGame.system,
+                        to_system: targetSys,
+                        filename: selectedGame.filename
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    closeModal('modal-move');
+                    showToast(data.message || 'Chuyển hệ máy thành công!');
+                    loadSystems();
+                } else { alert('Lỗi: ' + (data.error || 'Không thể chuyển')); }
+            } catch (e) { alert('Lỗi kết nối: ' + e); }
+        }
+
+        async function deleteGame(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            if (!confirm(`Bạn có chắc chắn muốn xóa game "${fn}" khỏi thẻ nhớ?`)) return;
+            try {
+                const res = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({system: sys, filename: fn, delete_art: true})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`Đã xóa ${fn}`);
+                    selectSystem(sys);
+                } else { alert('Lỗi: ' + (data.error || 'Không thể xóa')); }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        function openScrapeModal(sys, fnEnc) {
+            const fn = decodeURIComponent(fnEnc);
+            selectedGame = {system: sys, filename: fn};
+            document.getElementById('scrape-query').value = cleanRomTitle(fn);
+            document.getElementById('scrape-results').innerHTML = '';
+            openModal('modal-scrape');
+            executeScrapeSearch();
+        }
+
+        function cleanRomTitle(fn) {
+            let base = fn.replace(/\.[^/.]+$/, "");
+            base = base.replace(/^\d+\s*[-–—.]\s*/, "");
+            return base.replace(/\(.*?\)|\[.*?\]/g, "").trim();
+        }
+
+        async function executeScrapeSearch() {
+            if (!selectedGame) return;
+            const q = document.getElementById('scrape-query').value.trim();
+            const resBox = document.getElementById('scrape-results');
+            resBox.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-sub);">Đang tìm ảnh...</div>';
+            try {
+                const res = await fetch(`/api/scrape/search?system=${encodeURIComponent(selectedGame.system)}&query=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                if (data.ok && data.candidates && data.candidates.length > 0) {
+                    let html = '';
+                    data.candidates.forEach(c => {
+                        html += `<div class="game-card" style="cursor:pointer;" onclick="applyScrapedArt('${encodeURIComponent(c.url)}')">
+                            <div class="art-box"><img src="${c.url}" loading="lazy" alt="Boxart"></div>
+                            <div style="padding:6px; font-size:10px; color:var(--text-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.type || 'Boxart'}</div>
+                        </div>`;
+                    });
+                    resBox.innerHTML = html;
+                } else {
+                    resBox.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-sub);">Không tìm thấy ảnh. Hãy thử nhập từ khóa khác hoặc dán link bên dưới.</div>';
+                }
+            } catch (e) {
+                resBox.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#ef4444;">Lỗi tìm ảnh: ' + e + '</div>';
+            }
+        }
+
+        async function applyScrapedArt(urlEnc) {
+            if (!selectedGame) return;
+            const url = decodeURIComponent(urlEnc);
+            try {
+                const res = await fetch('/api/scrape/auto', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        system: selectedGame.system,
+                        filename: selectedGame.filename,
+                        query: document.getElementById('scrape-query').value.trim(),
+                        fast: false
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    closeModal('modal-scrape');
+                    showToast('Đã gán ảnh bìa thành công!');
+                    selectSystem(selectedGame.system);
+                } else { alert('Lỗi gán ảnh: ' + (data.error || 'Thất bại')); }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function submitDirectArtUrl() {
+            const url = document.getElementById('scrape-direct-url').value.trim();
+            if (!url || !selectedGame) return;
+            applyScrapedArt(encodeURIComponent(url));
+        }
+
+        function openGoogleImageSearch() {
+            if (!selectedGame) return;
+            const q = document.getElementById('scrape-query').value.trim() + ' ' + selectedGame.system + ' boxart cover';
+            window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q), '_blank');
+        }
+
+        function handleUploadRomClick() {
+            document.getElementById('rom-file-input-direct').click();
+        }
+
+        async function handleDirectRomFiles(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0 || !currentSystem) return;
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                showToast(`Đang tải lên ${f.name}...`);
+                try {
+                    await fetch(`/api/upload_rom?system=${encodeURIComponent(currentSystem)}&filename=${encodeURIComponent(f.name)}`, {
+                        method: 'POST',
+                        body: f
+                    });
+                } catch (err) {}
+            }
+            showToast('Tải ROMs thành công!');
+            selectSystem(currentSystem);
+        }
+
+        // ==================== SAVE & CHEATS MODAL ====================
+        function openSavesCheatsModal(tab = 'saves') {
+            switchSavesCheatsTab(tab);
+            openModal('modal-saves-cheats');
+        }
+
+        function switchSavesCheatsTab(tab) {
+            ['saves', 'cheats', 'logs'].forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const c = document.getElementById(`tab-content-${t}`);
+                if (btn) btn.className = (t === tab) ? 'btn btn-sm' : 'btn btn-sm btn-secondary';
+                if (c) c.style.display = (t === tab) ? 'block' : 'none';
+            });
+            if (tab === 'saves') loadSavesData();
+            else if (tab === 'cheats') loadCheatsData();
+        }
+
+        async function loadSavesData() {
+            try {
+                const res = await fetch('/api/saves');
+                const data = await res.json();
+                if (data.ok) {
+                    document.getElementById('saves-stats-text').innerText = `Tổng cộng ${data.stats ? data.stats.total_files : 0} file save trên thẻ nhớ.`;
+                    const box = document.getElementById('backups-list-table');
+                    if (!data.backups || data.backups.length === 0) {
+                        box.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:12px;">Chưa có bản sao lưu nào. Hãy bấm "+ Tạo bản sao lưu mới" ở trên!</div>';
+                        return;
+                    }
+                    let html = '';
+                    data.backups.forEach(b => {
+                        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid var(--border); font-size:12px;">
+                            <div>
+                                <strong style="color:#38bdf8;">${b.created_at || b.filename}</strong>
+                                <span style="color:var(--text-sub); margin-left:8px;">(${b.size_str})</span>
+                            </div>
+                            <div style="display:flex; gap:6px;">
+                                <a href="/api/saves/download?file=${encodeURIComponent(b.filename)}" class="btn btn-sm btn-secondary" download>Tải về (.zip)</a>
+                                <button class="btn btn-sm btn-green" onclick="restoreSaveBackupWeb('${b.filename}')">Khôi phục</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteSaveBackupWeb('${b.filename}')">Xóa</button>
+                            </div>
+                        </div>`;
+                    });
+                    box.innerHTML = html;
+                }
+            } catch (e) {}
+        }
+
+        async function createSaveBackupWeb() {
+            try {
+                const res = await fetch('/api/saves/backup', {method: 'POST'});
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã tạo bản sao lưu thành công!');
+                    loadSavesData();
+                }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function restoreSaveBackupWeb(fn) {
+            if (!confirm(`Khôi phục dữ liệu từ bản sao lưu "${fn}"?`)) return;
+            try {
+                const res = await fetch('/api/saves/restore', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: fn})
+                });
+                const data = await res.json();
+                if (data.ok) showToast(data.message || 'Khôi phục thành công!');
+                else alert('Lỗi: ' + data.error);
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function deleteSaveBackupWeb(fn) {
+            if (!confirm(`Xóa bản sao lưu "${fn}"?`)) return;
+            try {
+                const res = await fetch('/api/saves/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: fn})
+                });
+                const data = await res.json();
+                if (data.ok) { showToast('Đã xóa bản sao lưu!'); loadSavesData(); }
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function loadCheatsData() {
+            try {
+                const res = await fetch('/api/cheats/status');
+                const data = await res.json();
+                if (data.ok && data.status) {
+                    document.getElementById('cheats-status-box').innerHTML = `Đã cài đặt: <strong>${data.status.installed_count}</strong> file cheat trên máy. Tổng kho Libretro: <strong>${data.status.total_available}</strong> game hỗ trợ cheat.`;
+                }
+            } catch (e) {}
+        }
+
+        async function downloadCheatsWeb(mode) {
+            try {
+                const res = await fetch('/api/cheats/download', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({mode: mode})
+                });
+                const data = await res.json();
+                if (data.ok) showToast(data.message || 'Đang tải kho cheat...');
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        async function sendLogTelegramWeb() {
+            try {
+                const res = await fetch('/api/logs/send-telegram', {method: 'POST'});
+                const data = await res.json();
+                if (data.ok) showToast('Đã gửi nhật ký lên Telegram tác giả!');
+                else alert('Lỗi: ' + data.error);
+            } catch (e) { alert('Lỗi: ' + e); }
+        }
+
+        
+        // ==================== AI CHATBOT ====================
+        let aiChatHistory = [
+            { role: "system", content: `Bạn là trợ lý AI chuyên gia điều hành hệ sinh thái RetroHub và thiết bị TrimUI Smart Pro (Linux/Busybox aarch64).
+Bạn có quyền thực thi lệnh trực tiếp trên máy thông qua shell bằng cách đề xuất lệnh cho người dùng bấm chạy.
+
+QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
+1. LUÔN TRẢ LỜI BẰNG TIẾNG VIỆT, ngắn gọn, súc tích, đi thẳng vào giải pháp kỹ thuật.
+2. TUYỆT ĐỐI KHÔNG ĐOÁN MÒ: Không tự suy diễn đường dẫn file, file log hay cấu hình hệ thống khi chưa được cung cấp hoặc chưa kiểm chứng. Mọi thông tin chưa rõ PHẢI được điều tra bằng câu lệnh thực tế.
+3. HÀNH ĐỘNG BẰNG CÂU LỆNH: Mọi thao tác kiểm tra, chẩn đoán, đọc log, sửa lỗi PHẢI viết dưới dạng câu lệnh shell trong block \`\`\`bash ... \`\`\` (hoặc [CMD]...[/CMD]) để người dùng bấm chạy, sau đó dựa vào kết quả thực tế để tư vấn tiếp.
+4. KHÔNG dùng cú pháp LaTeX (như $\rightarrow$, $\textbf{}$), chỉ dùng ký tự Unicode (->, →, **bold**).
+
+ĐẶC THÙ HỆ THỐNG CẦN NHỚ:
+- Python 3 trên máy KHÔNG hỗ trợ module SSL: Tuyệt đối không dùng code Python import ssl. Các tác vụ mạng HTTPS phải dùng \`curl -s -k\`.
+- Môi trường Shell là Busybox/Ash: Ưu tiên các lệnh tiêu chuẩn, tránh dùng các flag nâng cao không được Busybox hỗ trợ.
+- Khi người dùng gửi "Thông tin máy", hãy đọc kỹ phần cứng, danh sách giả lập (/Emus), Apps, RetroArch Cores, cấu trúc RetroHub và các file log thực tế để đưa ra câu lệnh chính xác 100%.` }
+        ];
+
+        function appendChatMessage(role, text, skipEscape = false, isCard = false) {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
+            
+            const bubble = document.createElement('div');
+            bubble.style.maxWidth = '85%';
+            bubble.style.fontSize = '14px';
+            bubble.style.lineHeight = '1.4';
+            bubble.style.whiteSpace = 'pre-wrap';
+            bubble.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+            
+            if (isCard) {
+                bubble.style.background = 'transparent';
+                bubble.style.padding = '0';
+                bubble.style.border = 'none';
+                bubble.style.boxShadow = 'none';
+            } else if (role === 'user') {
+                bubble.style.background = '#0284c7';
+                bubble.style.color = '#fff';
+                bubble.style.padding = '8px 12px';
+                bubble.style.borderRadius = '12px';
+                bubble.style.borderBottomRightRadius = '4px';
+                bubble.style.border = '1px solid #0369a1';
+            } else {
+                bubble.style.background = '#1e293b';
+                bubble.style.color = '#f8fafc';
+                bubble.style.padding = '8px 12px';
+                bubble.style.borderRadius = '12px';
+                bubble.style.borderBottomLeftRadius = '4px';
+                bubble.style.border = '1px solid #334155';
+            }
+            
+            // Escape HTML
+            let safeText = skipEscape ? text : text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            // Format basic markdown
+            safeText = safeText.replace(/\$\\rightarrow\$/g, '→').replace(/\$\\leftarrow\$/g, '←');
+            safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            safeText = safeText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Format executable blocks FIRST ([CMD] or ```bash) -> Single Row
+            let cmdCount = 0;
+            let allCmds = [];
+            safeText = safeText.replace(/\[CMD\]([\s\S]*?)\[\/CMD\]|```(?:[a-zA-Z0-9]+)?\n?([\s\S]*?)```/gi, (match, cmd1, cmd2) => {
+                const cmdText = cmd1 || cmd2;
+                cmdCount++;
+                const rawCmd = cmdText.trim();
+                allCmds.push(rawCmd);
+                const b64Cmd = btoa(encodeURIComponent(rawCmd));
+                
+                return `<div style="display: flex; align-items: center; justify-content: space-between; background: #070a13; border: 1px solid #1e293b; border-radius: 6px; padding: 4px 6px 4px 10px; margin: 4px 0; gap: 8px; max-width: 100%;">
+                    <code style="font-family: monospace; color: #38bdf8; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; flex: 1;">${rawCmd}</code>
+                    <button onclick="executeAiCommand(event, '${b64Cmd}')" title="Thực thi lệnh" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); cursor: pointer; padding: 4px 6px; border-radius: 4px; color: #34d399; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; outline: none; transition: all 0.2s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </button>
+                </div>`;
+            });
+            
+            // Format inline code (`)
+            safeText = safeText.replace(/`([^`\n]+)`/g, `<code style="background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 4px; font-size: 13px; color: #38bdf8;">$1</code>`);
+            
+            if (cmdCount > 1) {
+                const b64Cmds = btoa(encodeURIComponent(JSON.stringify(allCmds)));
+                safeText += `<div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                    <div style="display: inline-flex; align-items: center; background: #070a13; border: 1px solid rgba(234, 179, 8, 0.35); border-radius: 6px; padding: 3px 6px 3px 10px; gap: 8px;">
+                        <span style="font-family: monospace; color: #facc15; font-size: 12px; font-weight: 600;">⚡ Chạy tất cả (${cmdCount} lệnh)</span>
+                        <button onclick="executeAllAiCommands(event, '${b64Cmds}')" title="Thực thi tất cả theo thứ tự" style="background: rgba(234, 179, 8, 0.15); border: none; cursor: pointer; padding: 3px 6px; border-radius: 4px; color: #facc15; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; outline: none; transition: all 0.2s;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        </button>
+                    </div>
+                </div>`;
+            }
+
+            bubble.innerHTML = safeText;
+            wrapper.appendChild(bubble);
+            container.appendChild(wrapper);
+            
+            // Auto scroll to bottom smoothly
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        }
+
+        async function executeAllAiCommands(e, b64Cmds) {
+            const cmds = JSON.parse(decodeURIComponent(atob(b64Cmds)));
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '⏳';
+            
+            let combinedOutput = "";
+            for(let i=0; i<cmds.length; i++) {
+                const cmd = cmds[i];
+                try {
+                    const res = await fetch('/api/run_cmd', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({cmd: cmd})
+                    });
+                    const data = await res.json();
+                    const rawOut = (data.output || '').trim();
+                    const code = (typeof data.code !== 'undefined') ? data.code : 0;
+                    const outLog = rawOut || (code === 0 ? '(Thành công - Không có output)' : `(Mã lỗi: ${code})`);
+                    combinedOutput += `--- [${i+1}/${cmds.length}] ${cmd} (Exit: ${code}) ---\n${outLog}\n\n`;
+                } catch(err) {
+                    combinedOutput += `--- [${i+1}/${cmds.length}] ${cmd} (Lỗi) ---\n${err.message}\n\n`;
+                }
+            }
+            
+            btn.innerHTML = '✅';
+            btn.style.background = 'rgba(56, 189, 248, 0.15)';
+            btn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+            btn.style.color = '#38bdf8';
+            
+            const systemPromptText = `[System Execution Result]\n${combinedOutput.trim()}`;
+            const safeCombined = combinedOutput.trim().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const htmlText = `<details style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden; min-width: 280px; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                <summary style="cursor: pointer; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: #facc15; background: #1e293b; display: flex; align-items: center; justify-content: space-between; user-select: none; outline: none; gap: 8px;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <span>⚡</span> Đã thực thi ${cmds.length} lệnh
+                    </span>
+                    <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">(Nhấn xem log)</span>
+                </summary>
+                <div style="padding: 10px 12px; background: #070a13; font-family: monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto; color: #e2e8f0; border-top: 1px solid #1e293b;">${safeCombined}</div>
+            </details>`;
+            appendChatMessage('user', htmlText, true, true);
+            aiChatHistory.push({ role: 'user', content: systemPromptText });
+            
+            document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
+            document.getElementById('chat-submit-btn').disabled = true;
+            doHeadlessAiFetch();
+        }
+
+
+        async function sendDeviceInfoToAI() {
+            const btn = document.getElementById('btn-send-info');
+            if(btn) { btn.disabled = true; btn.innerHTML = '⏳ Đang quét...'; }
+            
+            const cmd = 'echo "--- SYSTEM INFO ---"; uname -a; echo ""; echo "--- RAM ---"; free -m; echo ""; echo "--- DISK ---"; df -h; echo ""; echo "--- ROOT DIR ---"; ls -la /mnt/SDCARD | head -n 30; echo ""; echo "--- ROMS DIRS ---"; ls -d /mnt/SDCARD/Roms/*/ 2>/dev/null; echo ""; echo "--- GIẢ LẬP ĐÃ CÀI (/mnt/SDCARD/Emus) ---"; ls -d /mnt/SDCARD/Emus/*/ 2>/dev/null; echo ""; echo "--- APPS (/mnt/SDCARD/Apps) ---"; ls -d /mnt/SDCARD/Apps/*/ 2>/dev/null; echo ""; echo "--- CẤU TRÚC APP RETROHUB ---"; find /mnt/SDCARD/Apps/RetroHub -maxdepth 2 2>/dev/null | grep -v "/\._" | head -n 45; echo ""; echo "--- RETROARCH CORES (.so) ---"; ls /mnt/SDCARD/RetroArch/.retroarch/cores/*.so 2>/dev/null | awk -F/ "{print \$NF}"; echo ""; echo "--- CÁC FILE LOG THỰC TẾ TRÊN MÁY ---"; find /mnt/SDCARD /tmp -maxdepth 5 -type f 2>/dev/null | grep -iE "\.(log|out)$|loi\.txt$" | grep -v "\._" | head -n 30';
+            
+            try {
+                const res = await fetch('/api/run_cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: cmd})
+                });
+                const data = await res.json();
+                const outLog = data.output || '(Lỗi đọc dữ liệu)';
+                const safeLog = outLog.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
+                const htmlText = `<details style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden; min-width: 280px; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    <summary style="cursor: pointer; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: #34d399; background: #1e293b; display: flex; align-items: center; justify-content: space-between; user-select: none; outline: none; gap: 8px;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span>📡</span> Đã nạp cấu hình & giả lập máy cho AI
+                        </span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">(Nhấn xem chi tiết)</span>
+                    </summary>
+                    <div style="padding: 10px 12px; background: #070a13; font-family: monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto; color: #e2e8f0; border-top: 1px solid #1e293b;">${safeLog}</div>
+                </details>`;
+                
+                appendChatMessage('user', htmlText, true, true);
+                
+                const plainText = 'Đây là toàn bộ thông tin phần cứng, danh sách giả lập đã cài (/mnt/SDCARD/Emus, RetroArch Cores, Apps), cấu trúc thư mục và các file log thực tế trên máy TrimUI:\n```\n' + outLog + '\n```\nHãy ghi nhớ các giả lập và file log này để tư vấn chính xác.';
+                aiChatHistory.push({ role: 'user', content: plainText });
+                
+                document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
+                document.getElementById('chat-submit-btn').disabled = true;
+                
+                doHeadlessAiFetch();
+            } catch (e) {
+                alert('Lỗi lấy thông tin: ' + e.message);
+            } finally {
+                if(btn) { btn.disabled = false; btn.innerHTML = '📡 Gửi thông tin máy'; }
+            }
+        }
+
+        async function executeAiCommand(e, b64Cmd) {
+            const cmd = decodeURIComponent(atob(b64Cmd));
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '⏳';
+            try {
+                const res = await fetch('/api/run_cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: cmd})
+                });
+                const data = await res.json();
+                
+                const rawOut = (data.output || '').trim();
+                const code = (typeof data.code !== 'undefined') ? data.code : 0;
+                let displayLog = rawOut;
+                if (!displayLog) {
+                    if (code === 0) {
+                        displayLog = '✓ Lệnh đã thực thi thành công (Không có text xuất ra terminal / Exit code: 0)';
+                    } else {
+                        displayLog = `⚠️ Lệnh hoàn tất với mã lỗi (Exit code: ${code})`;
+                    }
+                }
+                const safeLog = displayLog.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
+                const htmlText = `<details style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden; min-width: 280px; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    <summary style="cursor: pointer; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: #38bdf8; background: #1e293b; display: flex; align-items: center; justify-content: space-between; user-select: none; outline: none; gap: 8px;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #34d399;">✓</span> Kết quả thực thi
+                        </span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">(Nhấn xem log)</span>
+                    </summary>
+                    <div style="padding: 10px 12px; background: #070a13; font-family: monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto; color: #e2e8f0; border-top: 1px solid #1e293b;">${safeLog}</div>
+                </details>`;
+                
+                const plainText = `Đã thực thi lệnh trên TrimUI: \`${cmd}\`\nKết quả:\n\`\`\`\n${rawOut || '(Lệnh hoàn tất - Không có output)'}\n\`\`\`\nExit code: ${code}`;
+                
+                btn.innerHTML = '✅';
+                btn.style.background = 'rgba(56, 189, 248, 0.15)';
+                btn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+                btn.style.color = '#38bdf8';
+                
+                // Add to chat and send to AI
+                appendChatMessage('user', htmlText, true, true);
+                aiChatHistory.push({ role: 'user', content: plainText });
+                
+                // Send headless request
+                document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
+                document.getElementById('chat-submit-btn').disabled = true;
+                
+                doHeadlessAiFetch();
+                
+            } catch(err) {
+                alert('Lỗi chạy lệnh: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+            }
+        }
+        
+        async function doHeadlessAiFetch() {
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'auto', messages: aiChatHistory })
+                });
+                if (!res.ok) throw new Error('Mã lỗi API: ' + res.status);
+                const data = await res.json();
+                if (data.error) {
+                    const errMsg = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : data.error;
+                    throw new Error(errMsg);
+                }
+                if (data.choices && data.choices.length > 0) {
+                    const reply = data.choices[0].message.content;
+                    appendChatMessage('assistant', reply);
+                    aiChatHistory.push({ role: 'assistant', content: reply });
+                } else {
+                    appendChatMessage('assistant', 'Lỗi: Phản hồi từ AI bị rỗng.');
+                }
+            } catch (err) {
+                appendChatMessage('assistant', '⚠️ Lỗi khi phản hồi: ' + err.message);
+            } finally {
+                const btn = document.getElementById('chat-submit-btn');
+                btn.disabled = false;
+                btn.textContent = 'Gửi ✈️';
+            }
+        }
+
+        function showSystemPrompt() {
+            const sysPrompt = aiChatHistory.length > 0 ? aiChatHistory[0].content : "Không tìm thấy System Prompt.";
+            appendChatMessage('assistant', `**Đây là toàn bộ System Prompt hiện tại đang nạp cho AI:**
+
+\`\`\`text
+${sysPrompt}
+\`\`\``);
+        }
+
+        function clearAIChat() {
+            if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện?')) return;
+            
+            aiChatHistory = [{ role: "system", content: "You are a helpful AI assistant integrated into a RetroHub gaming device web manager. Answer in Vietnamese. Be concise and friendly." }];
+            const container = document.getElementById('chat-messages');
+            if (container) {
+                container.innerHTML = `
+                    <div style="display:flex; justify-content:flex-start;">
+                        <div style="background:#1e293b; color:#f8fafc; padding:10px 14px; border-radius:12px; border-bottom-left-radius:4px; max-width:85%; font-size:14.5px; line-height:1.45; border:1px solid #334155; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                            Đã dọn dẹp lịch sử trò chuyện. Tôi có thể giúp gì cho bạn tiếp theo?
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const btn = document.getElementById('chat-submit-btn');
+            input.value = '';
+            input.disabled = true;
+            btn.disabled = true;
+            btn.innerHTML = 'Đang nghĩ... <span style="font-size:12px;">⏳</span>';
+            
+            appendChatMessage('user', text);
+            aiChatHistory.push({ role: 'user', content: text });
+            
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'auto',
+                        messages: aiChatHistory
+                    })
+                });
+                
+                if (!res.ok) {
+                    throw new Error('Mã lỗi API: ' + res.status);
+                }
+                
+                const data = await res.json();
+                if (data.error) {
+                    const errMsg = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : data.error;
+                    throw new Error(errMsg);
+                }
+                if (data.choices && data.choices.length > 0) {
+                    const reply = data.choices[0].message.content;
+                    appendChatMessage('assistant', reply);
+                    aiChatHistory.push({ role: 'assistant', content: reply });
+                } else {
+                    appendChatMessage('assistant', 'Lỗi: Phản hồi từ AI bị rỗng.');
+                }
+            } catch (err) {
+                appendChatMessage('assistant', '⚠️ Không thể kết nối tới máy chủ AI. Chi tiết lỗi: ' + err.message);
+                // Remove the user message from history so they can try again if they want, or just let it be
+            } finally {
+                input.disabled = false;
+                btn.disabled = false;
+                btn.textContent = 'Gửi ✈️';
+                input.focus();
+            }
+        }
+
+
+        // ==================== STREAM JS LOGIC ====================
+        function openStreamNewTab() {
+            window.open('http://' + window.location.hostname + ':8088', '_blank');
+        }
+
+        async function checkStreamStatus() {
+            const statusBadge = document.getElementById('stream-status-badge');
+            const toggleBtn = document.getElementById('btn-stream-toggle');
+            const newTabBtn = document.getElementById('btn-stream-newtab');
+            if (!statusBadge || !toggleBtn) return;
+            
+            try {
+                const res = await fetch('/api/run_cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: 'ps | grep "python.*streamer.py" | grep -v grep'})
+                });
+                const data = await res.json();
+                const out = data.output || '';
+                if (out.includes('streamer.py')) {
+                    statusBadge.textContent = '🟢 Đang chạy';
+                    statusBadge.style.color = '#10b981';
+                    toggleBtn.innerHTML = '🛑 Tắt Stream';
+                    toggleBtn.className = 'btn btn-danger';
+                    if (newTabBtn) newTabBtn.style.display = 'inline-flex';
+                } else {
+                    statusBadge.textContent = '🔴 Đã tắt';
+                    statusBadge.style.color = '#ef4444';
+                    toggleBtn.innerHTML = '▶️ Bật Stream ngay';
+                    toggleBtn.className = 'btn btn-secondary';
+                    if (newTabBtn) newTabBtn.style.display = 'none';
+                }
+            } catch(e) {
+                statusBadge.textContent = '⚠️ Lỗi kiểm tra';
+            }
+        }
+
+        async function toggleScreenStream() {
+            const toggleBtn = document.getElementById('btn-stream-toggle');
+            if (!toggleBtn) return;
+            
+            const isRunning = toggleBtn.innerHTML.includes('Tắt');
+            toggleBtn.disabled = true;
+            toggleBtn.innerHTML = '⏳ Đang xử lý...';
+            
+            try {
+                if (isRunning) {
+                    await fetch('/api/run_cmd', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({cmd: 'kill -9 $(ps | awk "/streamer\.py/ {print $1}")'})
+                    });
+                } else {
+                    await fetch('/api/run_cmd', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({cmd: 'nohup /mnt/SDCARD/System/bin/python3 /mnt/SDCARD/Apps/RetroHub/streamer.py > /dev/null 2>&1 &'})
+                    });
+                    
+                    // Tự động mở tab mới khi bật stream thành công (sau 1.5s để server kịp khởi động)
+                    setTimeout(() => {
+                        window.open('http://' + window.location.hostname + ':8088', '_blank');
+                    }, 1500);
+                }
+                setTimeout(checkStreamStatus, 1500);
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+                checkStreamStatus();
+            } finally {
+                setTimeout(() => toggleBtn.disabled = false, 1500);
+            }
+        }
+        
+        // Auto-check stream status initially
+        setTimeout(checkStreamStatus, 1000);
+
+        // Khởi động trang web
+        loadStorageStatus();
+        
+        // Đọc hash từ URL (ví dụ: /#chat)
+        const initialTab = window.location.hash.replace('#', '');
+        if (initialTab && document.getElementById(`nav-btn-${initialTab}`)) {
+            switchMainTab(initialTab);
+        } else {
+            loadSystems(); // Mặc định
+        }

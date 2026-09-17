@@ -7,6 +7,12 @@ import sys
 import paramiko
 
 TARGET_FILES = [
+    ("rh/theme_manager.py", "rh/theme_manager.py"),
+    ("rh/screens/theme_store.py", "rh/screens/theme_store.py"),
+    ("catalog/themes_catalog.json", "catalog/themes_catalog.json"),
+    ("web/index.html", "web/index.html"),
+    ("web/style.css", "web/style.css"),
+    ("web/app.js", "web/app.js"),
     ("rh/yt.py", "rh/yt.py"),
     ("rh/yt_player.py", "rh/yt_player.py"),
     ("rh/i18n.py", "rh/i18n.py"),
@@ -102,18 +108,19 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     local_root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files")
 
-    # Tu dong gom toan bo cac file ma nguon trong files/rh/ (va thu muc con) de khong bao gio bi sot
+    # Tu dong gom toan bo cac file ma nguon trong files/rh/, files/web/, files/assets/themes_preview/
     all_targets = list(TARGET_FILES)
-    rh_dir = os.path.join(local_root, "rh")
-    if os.path.isdir(rh_dir):
-        for root, dirs, files in os.walk(rh_dir):
-            for fname in files:
-                if fname.endswith(".py") or fname.endswith(".json") or fname.endswith(".gz"):
-                    abs_f = os.path.join(root, fname)
-                    rel_f = os.path.relpath(abs_f, local_root)
-                    entry = (rel_f, rel_f)
-                    if entry not in all_targets:
-                        all_targets.append(entry)
+    for sub in ["rh", "web", "assets/themes_preview", "catalog"]:
+        sub_dir = os.path.join(local_root, sub)
+        if os.path.isdir(sub_dir):
+            for root, dirs, files in os.walk(sub_dir):
+                for fname in files:
+                    if not fname.startswith("."):
+                        abs_f = os.path.join(root, fname)
+                        rel_f = os.path.relpath(abs_f, local_root)
+                        entry = (rel_f, rel_f)
+                        if entry not in all_targets:
+                            all_targets.append(entry)
 
     print("[*] Bắt đầu đồng bộ tệp...")
     for rel_src, rel_dst in all_targets:
