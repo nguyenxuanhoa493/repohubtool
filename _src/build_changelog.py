@@ -26,6 +26,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.31", "2026-09-17",
+     ("Side-by-side Boot Splash Manager & Live Preview, Save Game Backup & Restore, Boxart Scraper Modal, SSH Telegram Confirm Modal",
+      "Nâng cấp Đổi ảnh khởi động Side-by-Side & Live Preview, Quản lý Sao lưu Save Game, Modal Cào Boxart, Modal xác nhận SSH Telegram"),
+     [("Side-by-Side Boot Splash Manager & Live Preview: Restructured Boot Splash UI with a 2-column layout. Left column hosts preset library, SD card file browser, and one-click default restore; right column provides instant real-time live preview before applying to bootloader and OS.",
+       "Giao diện Đổi ảnh khởi động Side-by-Side & Live Preview: Tái cấu trúc giao diện Đổi ảnh khởi động 2 cột chuyên nghiệp. Cột trái gồm thư viện ảnh mẫu, trình duyệt file thẻ nhớ và khôi phục ảnh gốc; cột phải hiển thị ảnh xem trước trực tiếp theo thời gian thực trước khi áp dụng vào bootloader và hệ điều hành."),
+      ("Save Game Backup & Restore Manager: Full-featured Save Manager modal with one-click timestamped ZIP compression of all save files (.srm, .sav, .state*) across all systems, archive history inspection, and individual backup restore or deletion.",
+       "Quản lý Sao lưu & Khôi phục Save Game: Nâng cấp hoàn chỉnh Modal quản lý save game với tính năng nén ZIP toàn bộ save (.srm, .sav, .state*) có gắn nhãn thời gian, duyệt lịch sử sao lưu và bấm khôi phục hoặc xóa bản sao lưu cũ dễ dàng."),
+      ("Boxart Scraper Progress Modal: Added live percentage progress bar, concurrent worker status, and active title display when running automated boxart scraping.",
+       "Modal Theo dõi Tiến trình Cào Boxart: Bổ sung giao diện modal hiển thị thanh tiến độ %, số lượng cào thành công/tổng số và tên game đang cào với 4 luồng xử lý song song."),
+      ("SSH Telegram Confirmation Modal: Added safety confirmation modal with IP address preview before sending SSH connection details to avoid accidental clicks.",
+       "Modal Xác nhận Gửi SSH qua Telegram: Bổ sung hộp thoại xác nhận kèm thông tin IP máy trước khi gửi dữ liệu kết nối SSH lên Telegram, triệt tiêu nguy cơ bấm nhầm."),
+      ("UI Typography, Spacing & Codebase Hardening: Polished modal footers with colored button badges (A green, X orange, B red), added framebuffer clearing against double-buffering artifacts, eliminated all bare except blocks, and optimized direct GraphicsMagick subprocess calls.",
+       "Tối ưu Giao diện, Màu sắc Nút bấm & Tinh gọn Mã nguồn: Chuẩn hóa thanh hướng dẫn nút bấm có huy hiệu màu trực quan, chống rách hình Framebuffer, loại bỏ toàn bộ khối bắt lỗi trần và tối ưu hóa lệnh gọi đồ họa GraphicsMagick.")]),
+
     ("2.30", "2026-09-17",
      ("Fix app crash when opening LED Effect / Theme selector, Synchronize LED daemon running state",
       "Sửa lỗi văng app khi chọn Danh hiệu ứng đèn LED, Đồng bộ trạng thái Daemon đèn LED"),

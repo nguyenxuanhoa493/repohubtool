@@ -67,9 +67,16 @@ def save_boxart_png(raw, target_png):
         gm_bin = os.path.join(SDCARD_PATH, "System", "bin", "gm")
         gm_lib = os.path.join(SDCARD_PATH, "System", "lib")
         if os.path.exists(gm_bin):
-            cmd = ('export LD_LIBRARY_PATH="%s:$LD_LIBRARY_PATH"; '
-                   '"%s" convert "%s[0]" "%s" 2>/dev/null' % (gm_lib, gm_bin, tmp_img, target_png))
-            if subprocess.call(cmd, shell=True) == 0 and os.path.exists(target_png) and os.path.getsize(target_png) > 100:
+            gm_env = os.environ.copy()
+            cur_ld = gm_env.get("LD_LIBRARY_PATH", "")
+            gm_env["LD_LIBRARY_PATH"] = f"{gm_lib}:{cur_ld}" if cur_ld else gm_lib
+            res = subprocess.call(
+                [gm_bin, "convert", f"{tmp_img}[0]", target_png],
+                env=gm_env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            if res == 0 and os.path.exists(target_png) and os.path.getsize(target_png) > 100:
                 return True
 
         if sdlimage and sdl2:

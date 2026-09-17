@@ -1,12 +1,12 @@
 {
-  "version": "2.30",
-  "full_release_version": "2.30",
+  "version": "2.31",
+  "full_release_version": "2.31",
   "python": "any",
-  "built": "2026-09-17T20:43:00+0700",
+  "built": "2026-09-17T21:38:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa lỗi văng app khi chọn Danh hiệu ứng đèn LED, Đồng bộ trạng thái Daemon đèn LED",
-    "en": "Fix app crash when opening LED Effect / Theme selector, Synchronize LED daemon running state"
+    "vi": "Nâng cấp Đổi ảnh khởi động Side-by-Side & Live Preview, Quản lý Sao lưu Save Game, Modal Cào Boxart, Modal xác nhận SSH Telegram",
+    "en": "Side-by-side Boot Splash Manager & Live Preview, Save Game Backup & Restore, Boxart Scraper Modal, SSH Telegram Confirm Modal"
   },
   "remove": [
     "app.pyc",
@@ -413,8 +413,8 @@
     },
     {
       "path": "rh/catalog.py",
-      "size": 14465,
-      "sha256": "dfa47779147500433ad27ab42666902b087b2dbf72bdc8eb51393b3998848b98"
+      "size": 14543,
+      "sha256": "4a3d733d1ce04b3fe118bd2a9538e5cf3de04ee0453db76b7a20f682fd5c82d7"
     },
     {
       "path": "rh/cheat_manager.py",
@@ -433,8 +433,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 41779,
-      "sha256": "1d18e7a2b142b8e9f0d31ac35ed870a73653c29a2e1ebb79c88a7cdeaddd717e"
+      "size": 41334,
+      "sha256": "cfe28e0392bf475f529a608fdbd3a4cc0cfdbc2b5010e2ab6b3b2a41ad0bd5d3"
     },
     {
       "path": "rh/emulators.py",
@@ -443,8 +443,8 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 19250,
-      "sha256": "e7a1874f742d97616dfd9d0e72cbd3318e2b465a2e4c31e139b9a74f83a33b91"
+      "size": 19370,
+      "sha256": "abc5d03374432c107fc2164d0243a2924757f4c409d27c2fa81b41ea20b4dcf3"
     },
     {
       "path": "rh/env.py",
@@ -513,13 +513,13 @@
     },
     {
       "path": "rh/media.py",
-      "size": 3364,
-      "sha256": "128a717d8213eadd82863692d876facb401babb1de63ae4a0f13f4d9954c8eee"
+      "size": 3572,
+      "sha256": "8a8f3aaff62353d206057c85a8bc1deb77aeb81f8dba4242fa8179f60019f2bc"
     },
     {
       "path": "rh/modals/__init__.py",
-      "size": 377,
-      "sha256": "e4a3a5e94287f980269a946c84636dc4bd8cedc8813ac977313e4cf6b6939a47"
+      "size": 468,
+      "sha256": "3408b948fc712184392bbf623b33a2972149b9547769c7103c01685cb983b591"
     },
     {
       "path": "rh/modals/alphabet.py",
@@ -533,8 +533,8 @@
     },
     {
       "path": "rh/modals/common.py",
-      "size": 28051,
-      "sha256": "66a8e1e2cb99f71c9274b4f8aa67dcf6e5887dae58656f3a5872e8cc14eccd4f"
+      "size": 52015,
+      "sha256": "3becf7b06209d491abb9cf6746e2e46e6f8be4e02304c91743430d9785371d2e"
     },
     {
       "path": "rh/modals/game_action.py",
@@ -613,8 +613,8 @@
     },
     {
       "path": "rh/screens/network.py",
-      "size": 10330,
-      "sha256": "50c51dde0510d7a835ee8f6e7cbc39bf8d6a93247a926fe37ed1d6b02eddee8a"
+      "size": 10046,
+      "sha256": "12b8d59ff822768db073114a436aabcc6524233347bd44bb018d1808e7702c35"
     },
     {
       "path": "rh/screens/settings.py",
@@ -623,8 +623,8 @@
     },
     {
       "path": "rh/screens/splash.py",
-      "size": 5883,
-      "sha256": "35af43263036c99c9c712e6582a508de7d9b7efaa257ea4d69361b8a28d5f39a"
+      "size": 22803,
+      "sha256": "de7cf665aad3efc9aec27a64bcff4f57d19b7b7426ed71bb0040b65d38ba5eee"
     },
     {
       "path": "rh/screens/store.py",
@@ -633,8 +633,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 9097,
-      "sha256": "232d08b631dcda5742324f44b7b459bced23b65e32fd837ba4d197c1b27bff9e"
+      "size": 8550,
+      "sha256": "712d14961ce84a6d1c2103a9d22dda68c61b84bcae3ccba13eadd5c7c39e3ee4"
     },
     {
       "path": "rh/screens/youtube.py",
@@ -648,13 +648,13 @@
     },
     {
       "path": "rh/splash.py",
-      "size": 10908,
-      "sha256": "3d01bca62a79cd3542949236740cd1eb9e51c51c27ed68fa8276ee5f8194030d"
+      "size": 11276,
+      "sha256": "fa21f8c18874103b625a9d15f98970972a2e395f12c30692903776953411fe6e"
     },
     {
       "path": "rh/state.py",
-      "size": 4896,
-      "sha256": "f667f80b618e4701090b23c894bf90a2d49559f6eb3a82966e099bd105911128"
+      "size": 4940,
+      "sha256": "80c7c9ff2da24cec2cee8802c3f2cf6859abecfe8b7fbd4328b01f97dcc0f716"
     },
     {
       "path": "rh/storage.py",
@@ -663,8 +663,8 @@
     },
     {
       "path": "rh/sysinfo.py",
-      "size": 13424,
-      "sha256": "682416418714d4f561d737db235e038ec55f518761bab64c64cc46685729d97a"
+      "size": 13527,
+      "sha256": "67f4725333314c30623917d02ce90601dc92fc3a0f02ad05543d72e28731b31d"
     },
     {
       "path": "rh/ui/__init__.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "18187b680a2adc1d1b54264e7a0880bdcf6117ab4c95b13f3200cd2a867ec0df"
+      "sha256": "b679dc4bfcad2cbc0ac8d429d7901ed60dc728c7c7ea6b388ba00150942271c5"
     },
     {
       "path": "rh/yt.py",

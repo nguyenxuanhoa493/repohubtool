@@ -242,8 +242,10 @@ def start_download_thread(sys_code, game_info, background=False):
         # Always clean previous leftover temporary file before starting
         if os.path.exists(tmp_zip_path):
             unlock(tmp_zip_path)
-            try: os.remove(tmp_zip_path)
-            except: pass
+            try:
+                os.remove(tmp_zip_path)
+            except OSError:
+                pass
 
         candidates = []
         if db and game_info.get("id"):
@@ -305,14 +307,14 @@ def start_download_thread(sys_code, game_info, background=False):
                             return "Internet Archive (FBNeo Arcade)"
                         elif "pico-8" in coll:
                             return "Internet Archive (PICO-8)"
-                    except:
+                    except Exception:
                         pass
                 return "Internet Archive"
             try:
                 from urllib.parse import urlparse
                 host = urlparse(url_str).netloc
                 return host if host else "Online CDN"
-            except:
+            except Exception:
                 return "Online CDN"
 
         ctx = ssl._create_unverified_context()
@@ -366,7 +368,7 @@ def start_download_thread(sys_code, game_info, background=False):
                             try:
                                 total_bytes = int(cr.split("/")[-1])
                                 supports_range = True
-                            except:
+                            except (ValueError, TypeError, IndexError):
                                 pass
                         if total_bytes == 0:
                             total_bytes = int(probe_resp.headers.get("Content-Length", 0))
@@ -561,8 +563,10 @@ def start_download_thread(sys_code, game_info, background=False):
                     if dl_state["cancel_requested"]:
                         break
                     if os.path.exists(tmp_zip_path) and os.path.getsize(tmp_zip_path) < 5000:
-                        try: os.remove(tmp_zip_path)
-                        except: pass
+                        try:
+                            os.remove(tmp_zip_path)
+                        except OSError:
+                            pass
                     # Rot Wi-Fi giua chung: moi lan thu lai, tren moi mirror, deu
                     # hong y het. Dung luon thay vi tieu them ~20s de ra dung cau
                     # bao loi nay.
@@ -582,8 +586,10 @@ def start_download_thread(sys_code, game_info, background=False):
 
         if dl_state["cancel_requested"]:
             if os.path.exists(tmp_zip_path):
-                try: os.remove(tmp_zip_path)
-                except: pass
+                try:
+                    os.remove(tmp_zip_path)
+                except OSError:
+                    pass
             dl_state["status"] = "cancelled"
             dl_state["active"] = False
             dl_state["msg"] = tr("dl_cancelled_toast")
@@ -643,8 +649,10 @@ def start_download_thread(sys_code, game_info, background=False):
                         prefer_name=os.path.splitext(filename)[0])
                 except archive_tool.ArchiveError as ae:
                     print(f"Archive extraction failed: {ae}")
-                    try: os.remove(tmp_zip_path)
-                    except: pass
+                    try:
+                        os.remove(tmp_zip_path)
+                    except OSError:
+                        pass
                     # Con so "can 1,2 GB, con 400 MB" la thu duy nhat giup nguoi
                     # dung biet phai xoa bao nhieu; cac ly do khac da du ro.
                     detail = (f"\n({ae.detail})"
@@ -655,20 +663,15 @@ def start_download_thread(sys_code, game_info, background=False):
 
             if not extracted_rom_path or not os.path.exists(extracted_rom_path):
                 target_rom = os.path.join(rom_dir, filename)
-                # Ban cu cua chinh game nay co the dang mang co read-only cua DOS
-                # (chep tu Windows/macOS, hay bung ra tu zip): ghi de len no tra
-                # EACCES du ca phan con lai cua the van ghi tot.
-                # copyfile chu khong phai copy2: buoc copystat cua copy2 goi chmod
-                # len the FAT/exFAT, va cu chmod do co the bi tu choi ngay khi
-                # file da chep xong - du de bao nham "the khoa ghi" cho mot lan
-                # tai that ra da thanh cong.
                 try:
                     unlock(target_rom)
                     shutil.copyfile(tmp_zip_path, target_rom)
                 except OSError as cp_err:
                     print(f"Cannot write ROM into {rom_dir}: {cp_err}")
-                    try: os.remove(tmp_zip_path)
-                    except: pass
+                    try:
+                        os.remove(tmp_zip_path)
+                    except OSError:
+                        pass
                     dl_state["msg"] = tr(neterrors.classify_error(cp_err))
                     dl_state["status"] = "error"
                     return
@@ -680,7 +683,7 @@ def start_download_thread(sys_code, game_info, background=False):
 
             try:
                 os.remove(tmp_zip_path)
-            except:
+            except OSError:
                 pass
 
             # Mot so ban dong goi de lai mot muc rong gan co ma hoa trong tep
@@ -758,16 +761,15 @@ def start_download_thread(sys_code, game_info, background=False):
                     print(f"Boxart fallback scraping exception: {se}")
 
             dl_state["extracted_rom_path"] = extracted_rom_path
-            # Report where the file actually landed. Rebuilding the path from
-            # target_sys named the wrong folder for J2ME, whose jars go into a
-            # per-resolution subfolder of rom_dir.
             dl_state["msg"] = (f"{tr('success_msg')}\n• {rom_dir}/"
                                f"\n• {os.path.basename(extracted_rom_path)}")
             dl_state["status"] = "success"
         else:
             if os.path.exists(tmp_zip_path):
-                try: os.remove(tmp_zip_path)
-                except: pass
+                try:
+                    os.remove(tmp_zip_path)
+                except OSError:
+                    pass
             dl_state["msg"] = tr(neterrors.classify_error(last_error))
             dl_state["status"] = "error"
 
@@ -781,11 +783,11 @@ def start_download_thread(sys_code, game_info, background=False):
                 str(game_info.get("filename", "")).replace("\\", "/")) or "game.zip"
             tmp_p = os.path.join(TEMP_DOWNLOAD_DIR, fn)
             if os.path.exists(tmp_p):
-                try: os.remove(tmp_p)
-                except: pass
+                try:
+                    os.remove(tmp_p)
+                except OSError:
+                    pass
             top_key = neterrors.classify_error(e_top)
-            # Chi kem chuoi exception khi khong doan duoc gi hon; da co cau ro
-            # rang roi thi day them ky tu la chi lam roi man hinh.
             detail = f"\n({str(e_top)[:40]})" if top_key == neterrors.GENERIC else ""
             dl_state["msg"] = f"{tr(top_key)}{detail}"
             dl_state["status"] = "error"
