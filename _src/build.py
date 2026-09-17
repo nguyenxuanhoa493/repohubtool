@@ -48,12 +48,9 @@ VERSION = _published_version()
 FULL_VERSION = _full_release_version()
 VER_FULL = "RetroHub-%s-full.zip" % FULL_VERSION
 VER_NEXTUI = "RetroHub-%s-NextUI.zip" % FULL_VERSION
-VER_HOTFIX = "RetroHub-HOTFIX.zip"
-VER_SD_FULL = "trimui_brick_pro_tg4040_sd_base_20260824_retrohub_v1.97.zip"
 REL = ("https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v%s"
        % FULL_VERSION)
-SD_FULL_URL = f"{REL}/{VER_SD_FULL}"
-HOTFIX_URL = f"{REL}/{VER_HOTFIX}"
+SD_FULL_URL = "https://github.com/DTH-RetroHandheld/assets_brickpro/releases"
 
 # slug -> (title, description) per language. The slug is also the screenshot
 # filename, looked up under shots/<lang>/.
@@ -124,19 +121,20 @@ T = {
   "dl_trimui_sub": "8.3 MB · Core + Auto Java · Latest",
   "dl_nextui": "Download for NextUI (Pak) — v" + VERSION,
   "dl_nextui_sub": "8.3 MB · Ready for NextUI · Latest",
-  "dl_hotfix": "⚡ Hotfix for v2.15 & v2.17",
-  "dl_hotfix_sub": "Upgrade to v" + VERSION + " · 100% Safe for DB & Saves",
-  "hotfix_note": "💡 <b>Using v2.15 or v2.17?</b> Download the Hotfix zip, unpack and copy to your SD card to upgrade directly to <b>v" + VERSION + "</b>, fixing startup crashes and update check bugs while keeping 100% of your ROMs, saves, and databases intact.",
-  "dl_sd": "Full Package (Brick Pro only)",
-  "dl_sd_sub": "1.05 GB · Pre-configured for Brick Pro (TG4040)",
-  "sd_warn": "⚠️ <b>Note:</b> The Full ROM Package (1.05 GB) is pre-configured specifically for <b>TrimUI Brick Pro (TG4040)</b>. If you use <b>TrimUI Smart Pro</b>, please download the standalone TrimUI (Stock) or NextUI package above.",
+  "dl_sd": "Stock Full ROMs (Brick Pro)",
+  "dl_sd_sub": "Full emulators & stock ROMs from DTH",
+  "sd_warn": "💡 <b>Tip:</b> The Stock Full ROMs package is tailored for <b>TrimUI Brick Pro</b>. For <b>TrimUI Smart Pro</b> or NextUI, download standalone RetroHub above.",
   "sd_url": SD_FULL_URL,
-  "h_feat": "Highlights", "h_install": "How to install & update", "h_dl": "Download",
+  "h_feat": "Highlights", "h_install": "Beginner Setup Guide (7 Steps)", "h_dl": "Download",
   "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
   "steps": [
-    "<b>For TrimUI (Stock OS / CrossMix):</b> Unpack <code>" + VER_FULL + "</code> and copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card. Open <b>Apps → RetroHub</b>.",
-    "<b>For NextUI:</b> Unpack <code>" + VER_NEXTUI + "</code> and copy the <code>Tools</code> folder directly to your SD card root (lands in <code>/Tools/tg5040/RetroHub.pak/</code>). Open <b>Tools → RetroHub</b>.",
-    "<b>Online updates:</b> Connect your handheld to Wi-Fi. RetroHub checks for updates automatically every time it opens and downloads only what changed."
+    "<b>Download Stock Full ROMs:</b> Download the full emulator base from <a href=\"https://github.com/DTH-RetroHandheld/assets_brickpro/releases\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--accent);text-decoration:underline\">DTH-RetroHandheld Releases</a>.",
+    "<b>Format SD card as exFAT:</b> Insert your MicroSD card into PC and format to <code>exFAT</code>.",
+    "<b>Extract ROMs to SD card:</b> Extract all archive folders directly to the root of your SD card.",
+    "<b>Reboot console to initialize:</b> Insert SD card into console and power on to initialize emulators.",
+    "<b>Download latest RetroHub:</b> Download <code>" + VER_FULL + "</code> (TrimUI) or <code>" + VER_NEXTUI + "</code> (NextUI).",
+    "<b>Copy RetroHub to SD card:</b> Copy the <code>RetroHub</code> folder into <code>/Apps/</code> on your SD card (or <code>/Tools/</code> for NextUI).",
+    "<b>Reboot & launch app:</b> Power on, open <b>Apps → RetroHub</b> to access 40,000+ games with auto-updates over Wi-Fi."
   ],
   "note": "You only install manually once. From then on, the app updates automatically over Wi-Fi on both TrimUI Stock OS and NextUI.",
   "card_trimui_t": "TrimUI (Stock OS / CrossMix) — v" + VERSION,
@@ -183,19 +181,20 @@ T = {
   "dl_trimui_sub": "8.3 MB · Đầy đủ Core · Tự đồng bộ Java",
   "dl_nextui": "Tải bản NextUI (Pak) — v" + VERSION,
   "dl_nextui_sub": "8.3 MB · Chuẩn Pak NextUI · Mới nhất",
-  "dl_hotfix": "⚡ Bản Hotfix v2.15 & v2.17",
-  "dl_hotfix_sub": "Nâng cấp lên v" + VERSION + " · Giữ nguyên DB & Save",
-  "hotfix_note": "💡 <b>Đang ở v2.15 hoặc v2.17?</b> Tải bản Hotfix giải nén chép đè vào thẻ nhớ để lên thẳng <b>v" + VERSION + "</b>, sửa dứt điểm lỗi văng app & kiểm tra cập nhật, 100% giữ nguyên ROMs, file save và cơ sở dữ liệu.",
-  "dl_sd": "Bản Full (Chỉ cho Brick Pro)",
-  "dl_sd_sub": "1.05 GB · Cài sẵn cho Brick Pro (TG4040)",
-  "sd_warn": "⚠️ <b>Lưu ý:</b> Bản Full ROM (1.05 GB) được cấu hình riêng cho <b>TrimUI Brick Pro (TG4040)</b>. Người dùng <b>TrimUI Smart Pro</b> vui lòng tải bản TrimUI (Hệ gốc) hoặc NextUI ở trên.",
+  "dl_sd": "ROMs Stock Full (Brick Pro)",
+  "dl_sd_sub": "Trọn bộ giả lập & ROM gốc từ DTH",
+  "sd_warn": "💡 <b>Lưu ý:</b> Gói ROMs Stock Full trên dành riêng cho <b>TrimUI Brick Pro</b>. Người dùng <b>TrimUI Smart Pro</b> hoặc NextUI chỉ cần tải bản RetroHub ở trên.",
   "sd_url": SD_FULL_URL,
-  "h_feat": "Tính năng nổi bật", "h_install": "Cách cài & cập nhật", "h_dl": "Tải về",
+  "h_feat": "Tính năng nổi bật", "h_install": "Hướng dẫn cài đặt cho người mới (7 Bước)", "h_dl": "Tải về",
   "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
   "steps": [
-    "<b>Cho TrimUI (Hệ gốc / CrossMix):</b> Giải nén <code>" + VER_FULL + "</code>, chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ nhớ. Mở <b>Apps → RetroHub</b>.",
-    "<b>Cho NextUI:</b> Giải nén <code>" + VER_NEXTUI + "</code>, chép thư mục <code>Tools</code> vào thư mục gốc của thẻ nhớ (tự động vào <code>/Tools/tg5040/RetroHub.pak/</code>). Mở <b>Tools → RetroHub</b>.",
-    "<b>Cập nhật online:</b> Kết nối Wi-Fi trên máy. Ứng dụng sẽ tự động kiểm tra và tải bản cập nhật mới mỗi khi khởi động."
+    "<b>Tải ROMs Stock Full:</b> Tải trọn bộ giả lập và ROM gốc tại <a href=\"https://github.com/DTH-RetroHandheld/assets_brickpro/releases\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--accent);text-decoration:underline\">DTH-RetroHandheld Releases</a>.",
+    "<b>Format thẻ về exFAT:</b> Cắm thẻ nhớ MicroSD vào máy tính và định dạng chuẩn <code>exFAT</code>.",
+    "<b>Giải nén ROM ra thẻ nhớ:</b> Giải nén toàn bộ tệp ROM vừa tải trực tiếp vào thư mục gốc của thẻ nhớ.",
+    "<b>Khởi động lại máy để cài ROM:</b> Cắm thẻ vào máy cầm tay và bật nguồn để hệ thống nhận diện giả lập.",
+    "<b>Tải RetroHub mới nhất:</b> Tải bản <code>" + VER_FULL + "</code> (TrimUI Hệ gốc) hoặc <code>" + VER_NEXTUI + "</code> (NextUI).",
+    "<b>Copy RetroHub vào thẻ nhớ:</b> Chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ (hoặc <code>/Tools/</code> với NextUI).",
+    "<b>Khởi động lại & mở app:</b> Bật máy, vào <b>Apps → RetroHub</b> để sử dụng kho 40.000 game và tự động cập nhật qua Wi-Fi."
   ],
   "note": "Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới qua Wi-Fi mỗi lần mở và chỉ tải phần thay đổi cho cả TrimUI Stock OS lẫn NextUI.",
   "card_trimui_t": "Bản cho TrimUI (Stock OS / CrossMix) — v" + VERSION,
@@ -292,13 +291,7 @@ CSS = """
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
-  .btn.hotfix{background:#ff9800;color:#120c00;border:1px solid #ffb74d}
-  .btn.hotfix:hover{background:#ffa726;filter:brightness(1.1);box-shadow:0 12px 28px rgba(255,152,0,.35)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
-  .hotfix-alert{margin:18px auto 0;max-width:760px;font-size:.9rem;color:#ffe0b2;
-    background:rgba(255,152,0,.12);border:1px solid rgba(255,152,0,.45);
-    border-radius:10px;padding:12px 18px;line-height:1.5;text-align:center}
-  .hotfix-alert b{color:#ffb74d}
   .sd-warn{margin:12px auto 0;max-width:760px;font-size:.88rem;color:#f4e3b8;
     background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
     border-radius:10px;padding:10px 18px;line-height:1.5;text-align:center}
@@ -601,11 +594,9 @@ PAGE = """<!doctype html>
     <div class="cta">
       <a class="btn" href="{REL}/{VER_FULL}">{dl_trimui}<small>{dl_trimui_sub}</small></a>
       <a class="btn" href="{REL}/{VER_NEXTUI}">{dl_nextui}<small>{dl_nextui_sub}</small></a>
-      <a class="btn hotfix" href="{hotfix_url}">{dl_hotfix}<small>{dl_hotfix_sub}</small></a>
       <a class="btn alt" href="{sd_url}">{dl_sd}<small>{dl_sd_sub}</small></a>
       <a class="btn ghost" href="{guide_url}">{btn_guide}<small>{btn_guide_sub}</small></a>
     </div>
-    <p class="hotfix-alert">{hotfix_note}</p>
     <p class="sd-warn">{sd_warn}</p>
     <p class="dlcount" id="dlcount" hidden>{SVG_DL}<b>0</b><span>{dls}</span></p>
   </div>
@@ -762,7 +753,6 @@ def render(lang):
         "css": CSS, "home": t["home"], "otherhome": T[other]["home"],
         "other": other, "other_name": t["other_name"], "navlinks": navlinks,
         "tagline": t["tagline"], "REL": REL, "VERSION": VERSION, "VER_FULL": VER_FULL, "VER_NEXTUI": VER_NEXTUI,
-        "hotfix_url": HOTFIX_URL,
         "steps": steps, "osrows": osrows, "roadrows": roadrows, "disc": disc,
         "SVG_TG": SVG_TG, "SVG_MAIL": SVG_MAIL, "SVG_TEL": SVG_TEL, "SVG_CUP": SVG_CUP,
         "SVG_DL": SVG_DL,

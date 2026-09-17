@@ -113,13 +113,7 @@
   .btn.ghost:hover{background:rgba(0,246,246,.08);box-shadow:0 12px 26px rgba(0,246,246,.14)}
   .btn.alt{background:transparent;color:var(--gold);border:1px solid rgba(255,207,60,.5)}
   .btn.alt:hover{background:rgba(255,207,60,.08);box-shadow:0 12px 26px rgba(255,207,60,.18)}
-  .btn.hotfix{background:#ff9800;color:#120c00;border:1px solid #ffb74d}
-  .btn.hotfix:hover{background:#ffa726;filter:brightness(1.1);box-shadow:0 12px 28px rgba(255,152,0,.35)}
   .btn small{display:block;font-weight:500;font-size:.78rem;opacity:.72;margin-top:2px}
-  .hotfix-alert{margin:18px auto 0;max-width:760px;font-size:.9rem;color:#ffe0b2;
-    background:rgba(255,152,0,.12);border:1px solid rgba(255,152,0,.45);
-    border-radius:10px;padding:12px 18px;line-height:1.5;text-align:center}
-  .hotfix-alert b{color:#ffb74d}
   .sd-warn{margin:12px auto 0;max-width:760px;font-size:.88rem;color:#f4e3b8;
     background:rgba(255,207,60,.08);border:1px solid rgba(255,207,60,.35);
     border-radius:10px;padding:10px 18px;line-height:1.5;text-align:center}
@@ -283,12 +277,10 @@
     <div class="cta">
       <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.29/RetroHub-2.29-full.zip">Tải bản TrimUI (Hệ gốc) — v2.29<small>8.3 MB · Đầy đủ Core · Tự đồng bộ Java</small></a>
       <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.29/RetroHub-2.29-NextUI.zip">Tải bản NextUI (Pak) — v2.29<small>8.3 MB · Chuẩn Pak NextUI · Mới nhất</small></a>
-      <a class="btn hotfix" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.29/RetroHub-HOTFIX.zip">⚡ Bản Hotfix v2.15 & v2.17<small>Nâng cấp lên v2.29 · Giữ nguyên DB & Save</small></a>
-      <a class="btn alt" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.29/trimui_brick_pro_tg4040_sd_base_20260824_retrohub_v1.97.zip">Bản Full (Chỉ cho Brick Pro)<small>1.05 GB · Cài sẵn cho Brick Pro (TG4040)</small></a>
+      <a class="btn alt" href="https://github.com/DTH-RetroHandheld/assets_brickpro/releases">ROMs Stock Full (Brick Pro)<small>Trọn bộ giả lập & ROM gốc từ DTH</small></a>
       <a class="btn ghost" href="/vi/guide/">Hướng dẫn người mới<small>Cài ROM full & App từ A-Z</small></a>
     </div>
-    <p class="hotfix-alert">💡 <b>Đang ở v2.15 hoặc v2.17?</b> Tải bản Hotfix giải nén chép đè vào thẻ nhớ để lên thẳng <b>v2.29</b>, sửa dứt điểm lỗi văng app & kiểm tra cập nhật, 100% giữ nguyên ROMs, file save và cơ sở dữ liệu.</p>
-    <p class="sd-warn">⚠️ <b>Lưu ý:</b> Bản Full ROM (1.05 GB) được cấu hình riêng cho <b>TrimUI Brick Pro (TG4040)</b>. Người dùng <b>TrimUI Smart Pro</b> vui lòng tải bản TrimUI (Hệ gốc) hoặc NextUI ở trên.</p>
+    <p class="sd-warn">💡 <b>Lưu ý:</b> Gói ROMs Stock Full trên dành riêng cho <b>TrimUI Brick Pro</b>. Người dùng <b>TrimUI Smart Pro</b> hoặc NextUI chỉ cần tải bản RetroHub ở trên.</p>
     <p class="dlcount" id="dlcount" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v8.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1v1h14v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z"/></svg><b>0</b><span>lượt tải</span></p>
   </div>
 </header>
@@ -303,8 +295,8 @@
   </section>
 
   <section id="cach-cai" class="rise">
-    <h2>Cách cài & cập nhật</h2>
-    <ol><li><b>Cho TrimUI (Hệ gốc / CrossMix):</b> Giải nén <code>RetroHub-2.29-full.zip</code>, chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ nhớ. Mở <b>Apps → RetroHub</b>.</li><li><b>Cho NextUI:</b> Giải nén <code>RetroHub-2.29-NextUI.zip</code>, chép thư mục <code>Tools</code> vào thư mục gốc của thẻ nhớ (tự động vào <code>/Tools/tg5040/RetroHub.pak/</code>). Mở <b>Tools → RetroHub</b>.</li><li><b>Cập nhật online:</b> Kết nối Wi-Fi trên máy. Ứng dụng sẽ tự động kiểm tra và tải bản cập nhật mới mỗi khi khởi động.</li></ol>
+    <h2>Hướng dẫn cài đặt cho người mới (7 Bước)</h2>
+    <ol><li><b>Tải ROMs Stock Full:</b> Tải trọn bộ giả lập và ROM gốc tại <a href="https://github.com/DTH-RetroHandheld/assets_brickpro/releases" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">DTH-RetroHandheld Releases</a>.</li><li><b>Format thẻ về exFAT:</b> Cắm thẻ nhớ MicroSD vào máy tính và định dạng chuẩn <code>exFAT</code>.</li><li><b>Giải nén ROM ra thẻ nhớ:</b> Giải nén toàn bộ tệp ROM vừa tải trực tiếp vào thư mục gốc của thẻ nhớ.</li><li><b>Khởi động lại máy để cài ROM:</b> Cắm thẻ vào máy cầm tay và bật nguồn để hệ thống nhận diện giả lập.</li><li><b>Tải RetroHub mới nhất:</b> Tải bản <code>RetroHub-2.29-full.zip</code> (TrimUI Hệ gốc) hoặc <code>RetroHub-2.29-NextUI.zip</code> (NextUI).</li><li><b>Copy RetroHub vào thẻ nhớ:</b> Chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ (hoặc <code>/Tools/</code> với NextUI).</li><li><b>Khởi động lại & mở app:</b> Bật máy, vào <b>Apps → RetroHub</b> để sử dụng kho 40.000 game và tự động cập nhật qua Wi-Fi.</li></ol>
     <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới qua Wi-Fi mỗi lần mở và chỉ tải phần thay đổi cho cả TrimUI Stock OS lẫn NextUI.</p>
   </section>
 
