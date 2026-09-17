@@ -28,6 +28,19 @@ from .updater import check_for_update
 from .modals.update import UpdateModal
 
 
+
+def is_screen_blanked():
+    """Returns True if physical display is blanked/off by OS (standby/sleep)."""
+    try:
+        if os.path.exists("/sys/class/graphics/fb0/blank"):
+            with open("/sys/class/graphics/fb0/blank", "r") as f:
+                val = f.read().strip()
+                if val and val != "0":
+                    return True
+    except Exception:
+        pass
+    return False
+
 class RetroHubEngine:
     """Main application engine managing SDL2, fonts, textures, screens, and the event loop."""
 
@@ -336,6 +349,11 @@ class RetroHubEngine:
             frame_cnt += 1
             if frame_cnt <= 5 or frame_cnt % 300 == 0:
                 print(f"[DEBUG ENGINE] Loop frame {frame_cnt}, screen={self.current_screen_name}, modal={self.active_modal}")
+
+            # Check if screen is off/blanked (standby) -> sleep low-power to avoid heat and panics
+            if is_screen_blanked():
+                time.sleep(0.2)
+                continue
 
             # Poll input
             inputs = self.input_mgr.poll(has_controller=bool(self.controllers), current_screen=self.current_screen_name)

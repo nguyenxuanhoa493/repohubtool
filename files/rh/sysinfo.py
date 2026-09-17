@@ -75,7 +75,7 @@ def is_streamer_running():
     return is_proc_running(['streamer', 'ustreamer', 'mjpg_streamer']) or is_port_listening(8088)
 
 def is_gameweb_running():
-    return is_proc_running(['gameweb']) or is_port_listening(8090)
+    return is_proc_running(['gameweb']) or is_port_listening(8888)
 
 def is_remote_tunnel_running():
     pid_file = "/tmp/remote_ssh.pid"

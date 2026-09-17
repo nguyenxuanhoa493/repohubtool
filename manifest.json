@@ -1,12 +1,12 @@
 {
-  "version": "2.27",
-  "full_release_version": "2.27",
+  "version": "2.28",
+  "full_release_version": "2.28",
   "python": "any",
-  "built": "2026-09-16T20:06:07+0700",
+  "built": "2026-09-17T11:05:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Bổ sung Thanh tiến trình trực quan & Phần trăm tải tệp thời gian thực trong Modal Cập nhật",
-    "en": "Visual Progress Bar & Real-time Percentage for OTA Update Downloads"
+    "vi": "Tối ưu hóa Modal Thoát & Quản lý Dịch vụ thông minh, Chống nóng máy khi tắt màn hình, Hợp nhất Modal Tải Game 2 cột & Chuẩn hóa Store i18n",
+    "en": "Smart Exit & Service Manager, Sleep Screen-off Overheating Prevention, Unified 2-Column Game Download Modal & Store i18n Standardization"
   },
   "remove": [
     "app.pyc",
@@ -263,8 +263,8 @@
     },
     {
       "path": "db.py",
-      "size": 20596,
-      "sha256": "1a1703b5381400e6656ead10af05770e6275b93cf709810c74467f52ed47782c"
+      "size": 20641,
+      "sha256": "a305d257b0ca7a51b0dbb7b93f8329847c1e81b1717f4f906c6448d43c47673d"
     },
     {
       "path": "emus/JAVA/NOTICE.txt",
@@ -363,8 +363,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 138071,
-      "sha256": "6b4928734138bda8d6aa8b229784e7bb4fbb545f3e099696598cb47fe93e33d0"
+      "size": 184389,
+      "sha256": "8e237489958cfeca8730f744785f2529f07ae6bdae5b73e5c688a99261fce844"
     },
     {
       "path": "icon.png",
@@ -413,8 +413,8 @@
     },
     {
       "path": "rh/catalog.py",
-      "size": 11959,
-      "sha256": "dd518a6d526593c98558baca6e80a364cd3d7c63cc3bfbaa6d10ce5f2852ccb8"
+      "size": 13450,
+      "sha256": "2131828abbbb545cb6eb856849bf20a384567018187070d34e5653be906cfce0"
     },
     {
       "path": "rh/cheat_manager.py",
@@ -443,8 +443,8 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 18652,
-      "sha256": "5d3fe1bcb34aed67807db2480bbeb159100483f56388f9d5c3947c100faf262c"
+      "size": 19250,
+      "sha256": "e7a1874f742d97616dfd9d0e72cbd3318e2b465a2e4c31e139b9a74f83a33b91"
     },
     {
       "path": "rh/env.py",
@@ -458,8 +458,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 51004,
-      "sha256": "fba0d30768948709bbf82cef9bcb8d604cd705c849bab91d17c887b2f73480ff"
+      "size": 54284,
+      "sha256": "64cb5e5a856a5e84a2acd8548c800c5d9baef1ce338df9d1c36a657445b15cb8"
     },
     {
       "path": "rh/inputs.py",
@@ -533,13 +533,13 @@
     },
     {
       "path": "rh/modals/common.py",
-      "size": 16312,
-      "sha256": "a531a876d3f4a81e2518b20f4fda04d111c3f2efa1d29e9be96fdad574a8346f"
+      "size": 28051,
+      "sha256": "66a8e1e2cb99f71c9274b4f8aa67dcf6e5887dae58656f3a5872e8cc14eccd4f"
     },
     {
       "path": "rh/modals/game_action.py",
-      "size": 13412,
-      "sha256": "5d1fb3f7ef63f0beb65bd9c4c736df1996e64a134bf375c8105f4514e8ef8ce5"
+      "size": 25936,
+      "sha256": "a73e5f07d73459de2c74c2570d13d3d2625e1f5a6a2cce2e6824e715ca501281"
     },
     {
       "path": "rh/modals/j2me.py",
@@ -593,8 +593,8 @@
     },
     {
       "path": "rh/screens/home.py",
-      "size": 5846,
-      "sha256": "311457df53946fae25aece24fe0e7485823a3191d40233d10ed965c7caac8d5f"
+      "size": 6079,
+      "sha256": "36e26f5b5564b42fd838e20820e7943f0112227d8ae6b116437a2e44d189ac7b"
     },
     {
       "path": "rh/screens/keyboard.py",
@@ -628,8 +628,8 @@
     },
     {
       "path": "rh/screens/store.py",
-      "size": 18587,
-      "sha256": "bee951f55d6c99daf6bc914586b5f1c7f1e2513ca416b42ab5eb23bc2d3c675d"
+      "size": 21700,
+      "sha256": "d0350fb64ad33ae2f1a11c4deed027ed034c1c3b92f1beeea6cf2e39ae7fb5ee"
     },
     {
       "path": "rh/screens/utilities.py",
@@ -643,8 +643,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 24908,
-      "sha256": "714b0ee27127e7f9fa787d6fe0d6391fa4a9a5c28a528a97f1006c5254b0a55b"
+      "size": 25491,
+      "sha256": "5ff5ecea8680f19096cdb8c79c418224ab4864575da3a246938ca0dd5367827e"
     },
     {
       "path": "rh/splash.py",
@@ -664,7 +664,7 @@
     {
       "path": "rh/sysinfo.py",
       "size": 13424,
-      "sha256": "20b2c48d4bd86daacf314e6b2ec25eca6cfc0c09aee792a2d07828a5d6998391"
+      "sha256": "682416418714d4f561d737db235e038ec55f518761bab64c64cc46685729d97a"
     },
     {
       "path": "rh/ui/__init__.py",
@@ -694,7 +694,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "ea36f146b4e3eb4e1bc24fb0d93911323f14d11fc3a1094d2d905013830a65f7"
+      "sha256": "9fd6f2083b7d49c98de6b1f2a69aff9d81df8fcab44b56cff8f5e346bd3f7b38"
     },
     {
       "path": "rh/yt.py",
@@ -715,6 +715,31 @@
       "path": "streamer.py",
       "size": 30863,
       "sha256": "44d064c982bfe7bf60927c092531a98f7779299d32e411771f65f334211c2ea8"
+    },
+    {
+      "path": "update_files_center.py",
+      "size": 484,
+      "sha256": "8bb984f5091b4e633782938cf3a11e59554f315c0fc6a05c9f68c998ab05ce98"
+    },
+    {
+      "path": "update_files_tab.py",
+      "size": 3507,
+      "sha256": "311a9c1ec3d3071324c52feb22132b1f0b47ad47b00bf66548712b89e31a44b4"
+    },
+    {
+      "path": "update_js.py",
+      "size": 715,
+      "sha256": "02140dc2bb14ad35cb97c6a5172c8fc739d0f9a598302ef627a14b834a2d3749"
+    },
+    {
+      "path": "update_stream.py",
+      "size": 4046,
+      "sha256": "4f327c88d1d8af08a7e09ef045477046f60364246e89110e930b2585ede6eaa1"
+    },
+    {
+      "path": "update_toggle.py",
+      "size": 2548,
+      "sha256": "e2f8cce9918f2b14c7210b5661e00960072f0245bcd21b0d03b9dcda2df481e9"
     },
     {
       "path": "vendor/sdl2/COPYING.txt",
@@ -858,8 +883,8 @@
     },
     {
       "path": "vendor/sdl2/ext/particles.py",
-      "size": 4124,
-      "sha256": "f7f307948cf9fb591816f718a60c891682d23e5ce9539297a81230e7400dad1c"
+      "size": 4121,
+      "sha256": "7f8c7612bc549ed45b99abeff6cee8578501072bfb79c87a1faf834506010a8b"
     },
     {
       "path": "vendor/sdl2/ext/pixelaccess.py",
@@ -1095,6 +1120,11 @@
       "path": "vendor/sdl2/vulkan.py",
       "size": 1666,
       "sha256": "399ba88cd119bdf1a5bcbf95c695216ed283e86daf1d72e4a6e153ac79dc62c1"
+    },
+    {
+      "path": "yt.py",
+      "size": 37688,
+      "sha256": "eb157ac7874bb6e87525c52e4c4c22ae214cfd933dc153dd511f8cb4db8cff16"
     }
   ],
   "notes": "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm",

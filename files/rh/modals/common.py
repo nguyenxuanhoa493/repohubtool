@@ -13,11 +13,64 @@ from .base import BaseModal
 
 
 class ExitModal(BaseModal):
-    """Exit confirmation dialog."""
+    """Exit confirmation dialog with background service management."""
 
     def __init__(self, engine=None):
         super().__init__(engine)
-        self.selected_btn = 0  # 0: Yes (Exit), 1: Cancel
+        self.selected_idx = 0
+        self.services = []
+        self.btn_selected = 0  # 0: Thoát, 1: Hủy
+
+    def open(self, data=None):
+        super().open(data)
+        from ..sysinfo import is_ssh_running, is_sftpgo_running, is_gameweb_running, is_streamer_running
+        self.services = []
+        vi = state.current_lang == "VI"
+        
+        if is_ssh_running():
+            self.services.append({
+                "id": "ssh",
+                "title": "SSH Server (Cổng 22)" if vi else "SSH Server (Port 22)",
+                "stop": True
+            })
+        if is_sftpgo_running():
+            self.services.append({
+                "id": "sftp",
+                "title": "SFTPGo (Web: 8080 / Port: 2022)" if vi else "SFTPGo (Web 8080 / Port 2022)",
+                "stop": True
+            })
+        if is_gameweb_running():
+            self.services.append({
+                "id": "web",
+                "title": "RetroHub AI / Web (Cổng 8888)" if vi else "RetroHub AI / Web (Port 8888)",
+                "stop": True
+            })
+        if is_streamer_running():
+            self.services.append({
+                "id": "stream",
+                "title": "Stream màn hình (Cổng 8088)" if vi else "Screen Streamer (Port 8088)",
+                "stop": True
+            })
+
+        self.selected_idx = 0
+        self.btn_selected = 0
+
+    def _apply_services_and_exit(self):
+        from ..services import stop_ssh, stop_sftpgo, stop_gameweb, stop_streamer
+        for svc in self.services:
+            if svc.get("stop"):
+                s_id = svc.get("id")
+                if s_id == "ssh":
+                    stop_ssh()
+                elif s_id == "sftp":
+                    stop_sftpgo()
+                elif s_id == "web":
+                    stop_gameweb()
+                elif s_id == "stream":
+                    stop_streamer()
+        self.close()
+        if self.engine:
+            self.engine.running = False
 
     def handle_input(self, inputs):
         if not self.active:
@@ -25,22 +78,34 @@ class ExitModal(BaseModal):
 
         btn_a = inputs.get("btn_a")
         btn_b = inputs.get("btn_b")
+        btn_x = inputs.get("btn_x")
+        btn_up = inputs.get("btn_up")
+        btn_down = inputs.get("btn_down")
         btn_left = inputs.get("btn_left")
         btn_right = inputs.get("btn_right")
+
+        num_services = len(self.services)
 
         if btn_b:
             self.close()
             return True
 
-        if btn_left or btn_right:
-            self.selected_btn = 1 - self.selected_btn
+        if btn_a:
+            self._apply_services_and_exit()
             return True
 
-        if btn_a:
-            if self.selected_btn == 0:
-                self.engine.running = False
-            self.close()
-            return True
+        num_services = len(self.services)
+        if num_services > 0:
+            if btn_up:
+                self.selected_idx = (self.selected_idx - 1) % num_services
+                return True
+            if btn_down:
+                self.selected_idx = (self.selected_idx + 1) % num_services
+                return True
+            if btn_x or btn_left or btn_right:
+                svc = self.services[self.selected_idx]
+                svc["stop"] = not svc.get("stop", True)
+                return True
 
         return True
 
@@ -48,39 +113,134 @@ class ExitModal(BaseModal):
         if not self.active:
             return
 
-        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 200)
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
 
-        mw = 580
-        mh = 240
-        mx = (state.SCREEN_W - mw) // 2
-        my = (state.SCREEN_H - mh) // 2
+        vi = state.current_lang == "VI"
+        num_services = len(self.services)
 
-        engine.fill_rect(mx, my, mw, mh, 18, 25, 42, 255)
-        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=3)
+        if num_services > 0:
+            mw = 840
+            mh = min(600, 200 + num_services * 74)
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
 
-        title = "THOÁT ỨNG DỤNG?" if state.current_lang == "VI" else "EXIT RETROHUB?"
-        engine.draw_text(title, engine.font_title, mx + mw // 2, my + 45, 255, 215, 0, center_x=True, center_y=True)
+            # Container
+            engine.fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
 
-        msg = "Bạn có chắc chắn muốn quay về giao diện chính?" if state.current_lang == "VI" else "Are you sure you want to return to system menu?"
-        engine.draw_text(msg, engine.font_sub, mx + mw // 2, my + 95, 200, 215, 235, center_x=True, center_y=True)
+            # Header
+            head_h = 54
+            engine.fill_rect(mx + 2, my + 2, mw - 4, head_h - 2, 22, 32, 54, 255)
+            engine.fill_rect(mx + 2, my + head_h, mw - 4, 2, 0, 246, 246, 255)
+            title = "THOÁT ỨNG DỤNG & QUẢN LÝ DỊCH VỤ" if vi else "EXIT & SERVICES MANAGEMENT"
+            engine.draw_text(title, engine.font_title, mx + 28, my + head_h // 2, 0, 246, 246, center_y=True)
 
-        btn_w = 200
-        btn_h = 48
-        by = my + mh - 70
+            # Sub-desc with breathing room
+            sub_msg = "Bấm (X) để Bật (ON) / Tắt (OFF) dịch vụ chạy nền khi thoát:" if vi else "Press (X) to toggle background services ON / OFF on exit:"
+            engine.draw_text(sub_msg, engine.font_sub, mx + 28, my + head_h + 22, 195, 215, 235)
 
-        # Button Yes
-        bx1 = mx + 60
-        is_sel1 = (self.selected_btn == 0)
-        engine.fill_rect(bx1, by, btn_w, btn_h, 45, 20, 24 if is_sel1 else 28, 255)
-        engine.draw_rect(bx1, by, btn_w, btn_h, 255 if is_sel1 else 160, 70 if is_sel1 else 60, 70 if is_sel1 else 60, 255, thickness=2 if is_sel1 else 1)
-        engine.draw_text("[A] Thoát" if state.current_lang == "VI" else "[A] Exit", engine.font_badge, bx1 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            # Services List with increased top margin, row height and gap
+            sy = my + head_h + 70
+            row_h = 58
+            row_gap = 14
 
-        # Button Cancel
-        bx2 = mx + mw - 60 - btn_w
-        is_sel2 = (self.selected_btn == 1)
-        engine.fill_rect(bx2, by, btn_w, btn_h, 20, 45, 34 if is_sel2 else 28, 255)
-        engine.draw_rect(bx2, by, btn_w, btn_h, 0 if is_sel2 else 70, 230 if is_sel2 else 140, 140 if is_sel2 else 90, 255, thickness=2 if is_sel2 else 1)
-        engine.draw_text("[B] Hủy" if state.current_lang == "VI" else "[B] Cancel", engine.font_badge, bx2 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+            for idx, svc in enumerate(self.services):
+                ry = sy + idx * (row_h + row_gap)
+                is_row_sel = (self.selected_idx == idx)
+                is_stop = svc.get("stop", True)
+
+                # Row Background
+                if is_row_sel:
+                    engine.fill_rect(mx + 24, ry, mw - 48, row_h, 30, 48, 80, 255)
+                    engine.draw_rect(mx + 24, ry, mw - 48, row_h, 0, 246, 246, 255, thickness=2)
+                    engine.fill_rect(mx + 26, ry + 4, 6, row_h - 8, 0, 246, 246, 255)
+                else:
+                    engine.fill_rect(mx + 24, ry, mw - 48, row_h, 20, 28, 48, 255)
+                    engine.draw_rect(mx + 24, ry, mw - 48, row_h, 45, 60, 95, 255, thickness=1)
+
+                # Service Title
+                engine.draw_text(svc["title"], engine.font_item, mx + 46, ry + row_h // 2, 255, 255, 255, center_y=True)
+
+                # Compact Badge Toggle: OFF (Red) vs ON (Cyan/Green)
+                bw = 80
+                bh = 34
+                bx = mx + mw - 24 - bw - 16
+                by = ry + (row_h - bh) // 2
+
+                if is_stop:
+                    # OFF badge (Stop on exit)
+                    engine.fill_rect(bx, by, bw, bh, 56, 20, 24, 255)
+                    engine.draw_rect(bx, by, bw, bh, 255, 75, 75, 255, thickness=1)
+                    engine.draw_text("OFF", engine.font_badge, bx + bw // 2, by + bh // 2, 255, 120, 120, center_x=True, center_y=True)
+                else:
+                    # ON badge (Keep running in background)
+                    engine.fill_rect(bx, by, bw, bh, 14, 48, 38, 255)
+                    engine.draw_rect(bx, by, bw, bh, 0, 230, 150, 255, thickness=1)
+                    engine.draw_text("ON", engine.font_badge, bx + bw // 2, by + bh // 2, 0, 255, 160, center_x=True, center_y=True)
+
+            # Bottom Action Bar (Clear key mapping guidance)
+            foot_y = my + mh - 64
+            engine.fill_rect(mx + 2, foot_y, mw - 4, 62, 14, 20, 34, 255)
+            engine.fill_rect(mx + 2, foot_y, mw - 4, 1, 40, 56, 88, 255)
+
+            btn_w = 236
+            btn_h = 44
+            by = foot_y + 9
+
+            # Action: [A] Thoát ứng dụng
+            bx0 = mx + 24
+            engine.fill_rect(bx0, by, btn_w, btn_h, 56, 20, 24, 255)
+            engine.draw_rect(bx0, by, btn_w, btn_h, 255, 75, 75, 255, thickness=1)
+            btn0_txt = "[A] Thoát ứng dụng" if vi else "[A] Exit RetroHub"
+            engine.draw_text(btn0_txt, engine.font_badge, bx0 + btn_w // 2, by + btn_h // 2, 255, 220, 220, center_x=True, center_y=True)
+
+            # Action: [X] Bật/Tắt (ON/OFF)
+            bx_mid = mx + (mw - btn_w) // 2
+            engine.fill_rect(bx_mid, by, btn_w, btn_h, 20, 40, 65, 255)
+            engine.draw_rect(bx_mid, by, btn_w, btn_h, 0, 246, 246, 255, thickness=1)
+            btn_x_txt = "[X] Đổi ON / OFF" if vi else "[X] Toggle ON / OFF"
+            engine.draw_text(btn_x_txt, engine.font_badge, bx_mid + btn_w // 2, by + btn_h // 2, 0, 246, 246, center_x=True, center_y=True)
+
+            # Action: [B] Hủy / Ở lại
+            bx1 = mx + mw - 24 - btn_w
+            engine.fill_rect(bx1, by, btn_w, btn_h, 24, 32, 48, 255)
+            engine.draw_rect(bx1, by, btn_w, btn_h, 80, 110, 150, 255, thickness=1)
+            btn1_txt = "[B] Hủy / Ở lại" if vi else "[B] Cancel / Stay"
+            engine.draw_text(btn1_txt, engine.font_badge, bx1 + btn_w // 2, by + btn_h // 2, 200, 215, 235, center_x=True, center_y=True)
+
+        else:
+            # Simple confirmation when no services are running
+            mw = 620
+            mh = 240
+            mx = (state.SCREEN_W - mw) // 2
+            my = (state.SCREEN_H - mh) // 2
+
+            engine.fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+            engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
+
+            title = "THOÁT RETROHUB?" if vi else "EXIT RETROHUB?"
+            engine.draw_text(title, engine.font_title, mx + mw // 2, my + 42, 255, 215, 0, center_x=True, center_y=True)
+
+            msg = "Bạn có chắc chắn muốn quay về giao diện chính?" if vi else "Are you sure you want to return to system menu?"
+            engine.draw_text(msg, engine.font_sub, mx + mw // 2, my + 92, 200, 215, 235, center_x=True, center_y=True)
+
+            btn_w = 210
+            btn_h = 44
+            by = my + mh - 66
+
+            # Button 0: Thoát
+            bx0 = mx + 60
+            engine.fill_rect(bx0, by, btn_w, btn_h, 56, 20, 24, 255)
+            engine.draw_rect(bx0, by, btn_w, btn_h, 255, 75, 75, 255, thickness=1)
+            btn0_txt = "[A] Thoát" if vi else "[A] Exit"
+            engine.draw_text(btn0_txt, engine.font_badge, bx0 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+            # Button 1: Hủy
+            bx1 = mx + mw - 60 - btn_w
+            engine.fill_rect(bx1, by, btn_w, btn_h, 24, 32, 48, 255)
+            engine.draw_rect(bx1, by, btn_w, btn_h, 80, 110, 150, 255, thickness=1)
+            btn1_txt = "[B] Hủy / Ở lại" if vi else "[B] Cancel"
+            engine.draw_text(btn1_txt, engine.font_badge, bx1 + btn_w // 2, by + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
 
 
 class ResolutionModal(BaseModal):
@@ -426,3 +586,120 @@ class StreamLoadingModal(BaseModal):
 
         # Cancel button
         engine.draw_footer_btn(mx + mw - 160, my + mh - 58, 42, "B", "Hủy bỏ", btn_color=(255, 75, 75), is_dark_btn=False)
+
+
+class RetroHubWebModal(BaseModal):
+    """Modal to manage and view RetroHub Web status."""
+
+    def __init__(self, engine=None):
+        super().__init__(engine)
+        self.ip = "127.0.0.1"
+        self.is_running = False
+
+    def open(self, data=None):
+        super().open(data)
+        from ..services import is_gameweb_running, toggle_gameweb, get_ip
+        self.ip = get_ip()
+        self.is_running = is_gameweb_running()
+        if not self.is_running:
+            toggle_gameweb()
+            self.is_running = is_gameweb_running()
+
+    def handle_input(self, inputs):
+        if not self.active:
+            return False
+
+        btn_a = inputs.get("btn_a")
+        btn_b = inputs.get("btn_b")
+
+        if btn_b:
+            self.close()
+            return True
+
+        if btn_a:
+            from ..services import toggle_gameweb, is_gameweb_running
+            msg = toggle_gameweb()
+            self.is_running = is_gameweb_running()
+            if self.engine:
+                self.engine.toast(msg)
+            return True
+
+        return True
+
+    def render(self, engine):
+        if not self.active:
+            return
+
+        # Dim backdrop
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
+
+        vi = state.current_lang == "VI"
+        
+        head_h = 58
+        foot_h = 48
+        
+        mw = min(state.SCREEN_W - 64, 820)
+        mh = 320 # Compact height
+
+        mx = (state.SCREEN_W - mw) // 2
+        my = (state.SCREEN_H - mh) // 2
+
+        # Outer Container & Glow Border
+        engine.fill_rect(mx, my, mw, mh, 14, 20, 34, 255)
+        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
+
+        # Header Bar
+        engine.fill_rect(mx + 2, my + 2, mw - 4, head_h - 4, 20, 28, 48, 255)
+        engine.fill_rect(mx + 2, my + head_h - 2, mw - 4, 2, 0, 246, 246, 255)
+        engine.draw_text("RETROHUB AI", engine.font_title, mx + 28, my + head_h // 2, 0, 246, 246, center_y=True)
+
+        # Content Area
+        cx = mx + 24
+        cw = mw - 48
+        
+        # 1. Row: Just the HUGE IP Address
+        cy = my + head_h + 16
+        card1_h = 80
+        engine.fill_rect(cx, cy, cw, card1_h, 18, 26, 44, 255)
+        engine.draw_rect(cx, cy, cw, card1_h, 40, 56, 88, 255, thickness=1)
+        
+        # Accent stripe
+        stripe_col = (0, 230, 150) if self.is_running else (255, 75, 75)
+        engine.fill_rect(cx + 2, cy + 2, 4, card1_h - 4, stripe_col[0], stripe_col[1], stripe_col[2], 255)
+
+        ip_url = f"http://{self.ip}:8888" if self.is_running else ("Dịch vụ đang tắt" if vi else "Service is stopped")
+        ip_col = (255, 220, 0) if self.is_running else (150, 150, 150)
+        
+        # IP text huge! Centered perfectly inside card
+        font_ip = engine.font_huge if self.is_running else engine.font_item
+        engine.draw_text(ip_url, font_ip, cx + cw // 2, cy + card1_h // 2, ip_col[0], ip_col[1], ip_col[2], center_x=True, center_y=True)
+
+        # 2. Row: Connect Info Compact
+        cy += card1_h + 12
+        card2_h = 80
+        engine.fill_rect(cx, cy, cw, card2_h, 18, 26, 44, 255)
+        engine.draw_rect(cx, cy, cw, card2_h, 40, 56, 88, 255, thickness=1)
+        
+        lbl_conn = "Cách kết nối:" if vi else "How to Connect:"
+        val_conn_1 = "Mở trình duyệt trên máy tính," if vi else "Open a browser on PC or phone"
+        val_conn_2 = "hoặc điện thoại chung mạng Wi-Fi" if vi else "connected to the same Wi-Fi"
+        
+        engine.draw_text(lbl_conn, engine.font_badge, cx + 18, cy + card2_h // 2, 185, 210, 245, center_y=True)
+        engine.draw_text(val_conn_1, engine.font_sub, cx + 185, cy + 28, 255, 255, 255, center_y=True)
+        engine.draw_text(val_conn_2, engine.font_sub, cx + 185, cy + 56, 255, 255, 255, center_y=True)
+
+        # Footer Bar
+        fy = my + mh - foot_h
+        engine.fill_rect(mx + 2, fy, mw - 4, foot_h - 2, 16, 22, 36, 255)
+        engine.fill_rect(mx + 2, fy, mw - 4, 1, 38, 52, 80, 255)
+
+        fx = mx + 24
+        toggle_label = "Tắt dịch vụ" if self.is_running else "Bật dịch vụ"
+        if not vi:
+            toggle_label = "Stop Web" if self.is_running else "Start Web"
+        btn_col = (255, 75, 75) if self.is_running else (0, 230, 150)
+        
+        fx = engine.draw_footer_btn(fx, fy, foot_h - 2, "A", toggle_label, btn_col, is_dark_btn=False)
+
+        # Close button B (Yellow)
+        engine.draw_footer_btn(mx + mw - 145, fy, foot_h - 2, "B", "Đóng" if vi else "Close", btn_color=(255, 220, 0), text_color=(255, 255, 255), is_dark_btn=True)

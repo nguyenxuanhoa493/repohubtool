@@ -19,12 +19,37 @@ VALID_EXTS = (
     ".gdi", ".a26", ".a78", ".lnx", ".fig", ".smd"
 )
 
+JAVA_CATEGORY_NAMES = {
+    "ALL": ("Tất cả Game Java", "Kho 2.800+ Game Java J2ME đa thể loại"),
+    "@teamobi": ("Game TeaMobi Online", "Ninja School, Chú Bé Rồng, Ngọc Rồng, Avatar, KPAH"),
+    "@320x240": ("Game Màn Hình Ngang (320x240)", "Tối ưu chuẩn tỷ lệ màn hình máy TrimUI"),
+    "@giaitri321": ("Game Hay GiaiTri321", "Tuyển tập game Gameloft màn hình ngang chọn lọc"),
+    "Game Crack Hack Mod Việt Hóa Tổng Hợp 1": ("Game Việt Hóa / Crack Mod (Bộ 1)", "Tuyển tập game Java Việt Hóa và Crack SMS"),
+    "Game Crack Hack Mod Việt Hóa Tổng Hợp 2": ("Game Việt Hóa / Crack Mod (Bộ 2)", "Tuyển tập game Java Việt Hóa và Crack SMS"),
+    "Game Tiếng Anh 1": ("Game Java Quốc Tế (Tiếng Anh 1)", "Gameloft, EA Mobile, Fishlabs, GLU"),
+    "Game Tiếng Anh 2": ("Game Java Quốc Tế (Tiếng Anh 2)", "Gameloft, EA Mobile, Fishlabs, GLU"),
+    "Game Tiếng Anh 3": ("Game Java Quốc Tế (Tiếng Anh 3)", "Gameloft, EA Mobile, Fishlabs, GLU"),
+    "": ("Game Java Khác", "Các tựa game Java bổ sung khác")
+}
+
+def get_java_category_display_name(cat_id):
+    if cat_id in JAVA_CATEGORY_NAMES:
+        return JAVA_CATEGORY_NAMES[cat_id]
+    if not cat_id:
+        return ("Game Java Khác", "Các tựa game Java bổ sung khác")
+    clean = str(cat_id).replace("_", " ").replace("-", " ").strip()
+    return (clean, "Tuyển tập game Java theo chủ đề")
+
 def clean_game_title(title):
-    """Strip numbering prefixes such as '097 - Contra' -> 'Contra', '01. Mario' -> 'Mario'."""
+    """Strip numbering prefixes, underscores and normalize titles."""
     if not title:
         return ""
-    cleaned = re.sub(r'^\d+\s*[-–—.]\s*', '', str(title).strip())
-    return cleaned if cleaned else str(title).strip()
+    t = str(title).strip()
+    t = re.sub(r'^\d+\s*[-–—.]\s*', '', t)
+    if "_" in t:
+        t = t.replace("_", " ")
+    t = re.sub(r'\s+', ' ', t).strip()
+    return t
 
 def scan_all_downloaded_games():
     """Scans all folders in /mnt/SDCARD/Roms/ to list all downloaded games across all systems."""

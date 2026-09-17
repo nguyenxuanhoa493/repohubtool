@@ -10,6 +10,7 @@ TEXTS = {
         "not_connected": "Chưa kết nối Wi-Fi",
         "home_item_library": "Thư viện game",
         "home_item_youtube": "Xem YouTube",
+        "home_item_gameweb": "Retrohub AI",
         "home_item_netplay": "Sảnh game",
         "home_item2": "Kho game ROMs Store (40,000+ Game)",
         "home_item1": "Quản lý dịch vụ",
@@ -33,7 +34,7 @@ TEXTS = {
         "back_search": "< Quay lại ô tìm kiếm",
         
         "net_title": "QUẢN LÝ DỊCH VỤ HỆ THỐNG",
-        "gameweb_item": "Quản lý Game qua Web (Cổng 8090)",
+        "gameweb_item": "Quản lý Game qua Web (Cổng 8888)",
         "gameweb_guide": "   - Hướng dẫn Quản lý Game qua Web",
         "sftp_item": "SFTPGo (Web / SFTP)",
         "sftp_guide": "   - Hướng dẫn kết nối SFTPGo",
@@ -335,6 +336,24 @@ TEXTS = {
         "search_scope_all": "Tất cả hệ máy (7,400+ Game)",
         "search_scope_sys": "Hệ máy ",
         "search_prompt": "Nhập từ khóa tìm kiếm...",
+        "store_menu_title": "KHO GAME ROMS STORE (40.000+ GAME)",
+        "menu_search_title": "Tìm kiếm game Online",
+        "menu_search_sub": "Tìm kiếm tức thì theo tên trong 40.000+ game",
+        "menu_viet_title": "Game Việt Hóa",
+        "menu_viet_sub": "Tổng hợp game đã được dịch phụ đề tiếng Việt",
+        "menu_hack_title": "Game Hack / Mod",
+        "menu_hack_sub": "Bản mod bất tử, full tiền, tăng độ khó, hack map",
+        "menu_hits_title": "Top 100 Lượt tải nhiều nhất",
+        "menu_hits_sub": "100 tựa game hay nhất được cộng đồng yêu thích",
+        "menu_java_title": "Game Java (J2ME Mobile)",
+        "menu_java_sub": "Kho game di động TeaMobi, Gameloft huyền thoại",
+        "menu_all_title": "Kho game tổng hợp (40.000+ Game)",
+        "menu_all_sub": "Duyệt theo từng hệ máy NES, GBA, SNES, PS1, NDS...",
+        "search": "TÌM KIẾM",
+        "nav_select": "Chọn",
+        "nav_open": "Mở",
+        "nav_back": "Quay lại",
+        "nav_jump_alpha": "Nhảy chữ cái" ,
         "search_res_title": "KẾT QUẢ TÌM KIẾM",
         "no_res": "Không tìm thấy game nào khớp với từ khóa",
         "in_sys_search": "[Y] Tìm trong hệ",
@@ -432,9 +451,9 @@ TEXTS = {
         "net_stream_toggle": "Stream màn hình (Web / OBS / Quay video)",
         "net_stream_guide": "   - Hướng dẫn xem Stream màn hình",
         "net_stream_guide_title": "HƯỚNG DẪN STREAMING",
-        "net_gameweb_toggle": "Quản lý Game qua Web (Cổng 8090)",
+        "net_gameweb_toggle": "Quản lý Game qua Web (Cổng 8888)",
         "net_gameweb_guide": "   - Hướng dẫn Quản lý Game qua Web",
-        "net_gameweb_guide_title": "HƯỚNG DẪN GAMEWEB 8090",
+        "net_gameweb_guide_title": "HƯỚNG DẪN GAMEWEB 8888",
 
         # Missing Settings Keys
         "set_title": "CÀI ĐẶT HỆ THỐNG",
@@ -478,7 +497,25 @@ TEXTS = {
 
         # Keyboard / Search
         "search_title": "BÀN PHÍM TÌM KIẾM",
-        "search_prompt": "Nhập từ khóa tìm kiếm..."
+        "search_prompt": "Nhập từ khóa tìm kiếm...",
+        "store_menu_title": "KHO GAME ROMS STORE (40.000+ GAME)",
+        "menu_search_title": "Tìm kiếm game Online",
+        "menu_search_sub": "Tìm kiếm tức thì theo tên trong 40.000+ game",
+        "menu_viet_title": "Game Việt Hóa",
+        "menu_viet_sub": "Tổng hợp game đã được dịch phụ đề tiếng Việt",
+        "menu_hack_title": "Game Hack / Mod",
+        "menu_hack_sub": "Bản mod bất tử, full tiền, tăng độ khó, hack map",
+        "menu_hits_title": "Top 100 Lượt tải nhiều nhất",
+        "menu_hits_sub": "100 tựa game hay nhất được cộng đồng yêu thích",
+        "menu_java_title": "Game Java (J2ME Mobile)",
+        "menu_java_sub": "Kho game di động TeaMobi, Gameloft huyền thoại",
+        "menu_all_title": "Kho game tổng hợp (40.000+ Game)",
+        "menu_all_sub": "Duyệt theo từng hệ máy NES, GBA, SNES, PS1, NDS...",
+        "search": "TÌM KIẾM",
+        "nav_select": "Chọn",
+        "nav_open": "Mở",
+        "nav_back": "Quay lại",
+        "nav_jump_alpha": "Nhảy chữ cái" 
     },
     "EN": {
         "app_title": "RETROHUB",
@@ -486,6 +523,7 @@ TEXTS = {
         "not_connected": "Wi-Fi Not Connected",
         "home_item_library": "Game Library",
         "home_item_youtube": "Watch YouTube",
+        "home_item_gameweb": "Retrohub AI",
         "home_item_netplay": "Game Lobby",
         "home_item2": "ROMs Store (40,000+ Games)",
         "home_item1": "Services Manager",
@@ -509,7 +547,7 @@ TEXTS = {
         "back_search": "< Back to Search Bar",
         
         "net_title": "SYSTEM SERVICES MANAGER",
-        "gameweb_item": "Web Game Manager (Port 8090)",
+        "gameweb_item": "Web Game Manager (Port 8888)",
         "gameweb_guide": "   - Web Game Manager Guide",
         "sftp_item": "SFTPGo (Web / SFTP)",
         "sftp_guide": "   - SFTPGo Connection Guide",
@@ -906,9 +944,9 @@ TEXTS = {
         "net_stream_toggle": "Screen Streamer (Web / OBS / Record)",
         "net_stream_guide": "   - Screen Streaming Guide",
         "net_stream_guide_title": "SCREEN STREAMING GUIDE",
-        "net_gameweb_toggle": "Web Game Manager (Port 8090)",
+        "net_gameweb_toggle": "Web Game Manager (Port 8888)",
         "net_gameweb_guide": "   - Web Game Manager Guide",
-        "net_gameweb_guide_title": "WEB GAME MANAGER (8090) GUIDE",
+        "net_gameweb_guide_title": "WEB GAME MANAGER (8888) GUIDE",
 
         # Missing Settings Keys
         "set_title": "SYSTEM SETTINGS",
@@ -952,7 +990,25 @@ TEXTS = {
 
         # Keyboard / Search
         "search_title": "SEARCH KEYBOARD",
-        "search_prompt": "Enter search keyword..."
+        "search_prompt": "Enter search keyword...",
+        "store_menu_title": "ONLINE ROMS STORE (40,000+ GAMES)",
+        "menu_search_title": "Search Online Games",
+        "menu_search_sub": "Instant search across 40,000+ titles",
+        "menu_viet_title": "Vietnamese Translated Games",
+        "menu_viet_sub": "Curated collection of Vietnamese translated ROMs",
+        "menu_hack_title": "Hack / Mod Games",
+        "menu_hack_sub": "Cheats, unlimited items, patched & modified ROMs",
+        "menu_hits_title": "Top 100 Most Downloaded",
+        "menu_hits_sub": "100 most popular titles loved by the community",
+        "menu_java_title": "Java J2ME Mobile Games",
+        "menu_java_sub": "Classic mobile games (TeaMobi, Gameloft, EA...)",
+        "menu_all_title": "Complete Game Catalog (40,000+)",
+        "menu_all_sub": "Browse by system: NES, GBA, SNES, PS1, NDS...",
+        "search": "SEARCH",
+        "nav_select": "Select",
+        "nav_open": "Open",
+        "nav_back": "Back",
+        "nav_jump_alpha": "Jump Alpha" 
     }
 }
 
