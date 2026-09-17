@@ -386,6 +386,8 @@ class RetroHubEngine:
             # ------------------------------------------------------------------
             # Render Pass
             # ------------------------------------------------------------------
+            sdl2.SDL_SetRenderDrawColor(self.renderer, 13, 17, 28, 255)
+            sdl2.SDL_RenderClear(self.renderer)
             self.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 13, 17, 28, 255)
 
             # 1. Screen Body

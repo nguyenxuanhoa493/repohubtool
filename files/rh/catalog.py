@@ -103,8 +103,10 @@ def scan_all_downloaded_games():
                         if not is_valid:
                             continue
 
-                        try: sz = entry.stat().st_size
-                        except: sz = 0
+                        try:
+                            sz = entry.stat().st_size
+                        except (OSError, ValueError):
+                            sz = 0
                         sz_str = f"{sz / (1024*1024):.1f} MB" if sz > 1024*1024 else f"{sz // 1024} KB"
 
                         base_name = os.path.splitext(name)[0]

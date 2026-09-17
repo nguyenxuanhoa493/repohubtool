@@ -10,7 +10,7 @@ from ..save_manager import create_save_backup, restore_save_backup
 from ..sysinfo import get_device_info_rows, get_storage_info_rows
 from ..j2me import is_j2me_runtime_ready, runtime_is_stale, runtime_supports_renderer
 from ..modals.j2me import J2meModal
-from ..modals.common import TwoColInfoModal
+from ..modals.common import TwoColInfoModal, BoxartScraperModal, CheatModal, SaveManagerModal
 from .base import BaseScreen
 
 
@@ -26,6 +26,10 @@ class UtilitiesScreen(BaseScreen):
     def on_enter(self, params=None):
         self.scroll_top = 0
         self.refresh_items()
+
+    def update(self, dt):
+        if scraper_runner.is_running() or cheat_runner.is_running():
+            self.refresh_items()
 
     def refresh_items(self):
         scrape_badge = f"{scraper_runner.progress_pct}%" if scraper_runner.is_running() else tr("view")
@@ -121,28 +125,11 @@ class UtilitiesScreen(BaseScreen):
             if it_id == "nav_splash":
                 self.engine.push_screen("splash")
             elif it_id == "nav_auto_scrape":
-                if scraper_runner.is_running():
-                    scraper_runner.stop()
-                    self.engine.toast("Đang dừng cào ảnh...")
-                else:
-                    scraper_runner.start()
-                    self.engine.toast("Đang bắt đầu cào Box Art tự động...")
-                self.refresh_items()
+                self.engine.open_modal(BoxartScraperModal(self.engine))
             elif it_id == "nav_cheats":
-                if cheat_runner.is_running():
-                    cheat_runner.stop()
-                    self.engine.toast("Đang dừng tải Cheat Code...")
-                else:
-                    cheat_runner.start()
-                    self.engine.toast("Đang tải kho Cheat Code Libretro...")
-                self.refresh_items()
+                self.engine.open_modal(CheatModal(self.engine))
             elif it_id == "nav_save_manager":
-                # Quick backup trigger
-                ok, zip_p = create_save_backup()
-                if ok:
-                    self.engine.toast(tr("save_backup_success"))
-                else:
-                    self.engine.toast(zip_p)
+                self.engine.open_modal(SaveManagerModal(self.engine))
             elif it_id == "install_j2me_emu":
                 self.engine.open_modal(J2meModal(self.engine))
             elif it_id == "nav_led":

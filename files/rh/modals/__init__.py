@@ -3,7 +3,8 @@
 
 from .base import BaseModal
 from .common import (ExitModal, ResolutionModal, TwoColInfoModal,
-                    StreamLoadingModal)
+                    StreamLoadingModal, BoxartScraperModal, CheatModal,
+                    SaveManagerModal, SendSshConfirmModal)
 from .alphabet import AlphabetModal
 from .j2me import J2meModal
 from .netplay import NetplayModal

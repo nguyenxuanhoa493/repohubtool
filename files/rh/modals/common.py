@@ -703,3 +703,573 @@ class RetroHubWebModal(BaseModal):
 
         # Close button B (Yellow)
         engine.draw_footer_btn(mx + mw - 145, fy, foot_h - 2, "B", "Đóng" if vi else "Close", btn_color=(255, 220, 0), text_color=(255, 255, 255), is_dark_btn=True)
+
+
+class BoxartScraperModal(BaseModal):
+    """High-speed Boxart scraper progress and live status dialog."""
+
+    def __init__(self, engine=None):
+        super().__init__(engine)
+
+    def open(self, data=None):
+        super().open(data)
+        from ..boxart_scraper import scraper_runner, scan_missing_boxarts
+        if not scraper_runner.is_running():
+            missing = scan_missing_boxarts()
+            if missing:
+                scraper_runner.start(missing)
+            else:
+                scraper_runner.status_msg = tr("scrape_no_missing")
+                scraper_runner.done = True
+
+    def handle_input(self, inputs):
+        if not self.active:
+            return False
+
+        from ..boxart_scraper import scraper_runner
+        btn_a = inputs.get("btn_a")
+        btn_b = inputs.get("btn_b")
+        btn_x = inputs.get("btn_x")
+
+        if scraper_runner.is_running():
+            if btn_b or btn_x:
+                scraper_runner.request_stop()
+                if self.engine:
+                    self.engine.toast("Đang dừng cào ảnh..." if state.current_lang == "VI" else "Stopping scrape...")
+                return True
+        else:
+            if btn_a or btn_b or btn_x:
+                self.close()
+                if self.engine:
+                    self.engine.toast(tr("scrape_done_toast"))
+                return True
+
+        return True
+
+    def render(self, engine):
+        if not self.active:
+            return
+
+        from ..boxart_scraper import scraper_runner
+        # Dim backdrop
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
+
+        mw = min(880, state.SCREEN_W - 60)
+        mh = 380
+        mx = (state.SCREEN_W - mw) // 2
+        my = (state.SCREEN_H - mh) // 2
+
+        # Outer Container & Glow Border
+        engine.fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
+
+        # Header Bar
+        head_h = 58
+        engine.fill_rect(mx + 2, my + 2, mw - 4, head_h - 4, 20, 28, 48, 255)
+        engine.fill_rect(mx + 2, my + head_h - 2, mw - 4, 2, 0, 246, 246, 255)
+        engine.draw_text(tr("scrape_modal_title"), engine.font_title, mx + 28, my + head_h // 2, 0, 246, 246, center_y=True)
+
+        tot = scraper_runner.total
+        comp = scraper_runner.completed
+        succ = scraper_runner.success_count
+        pct = scraper_runner.progress_pct
+
+        vi = state.current_lang == "VI"
+        if tot == 0 and not scraper_runner.is_running():
+            info_line = tr("scrape_no_missing")
+        elif vi:
+            info_line = f"Tiến độ: [{comp}/{tot}]   |   Thành công: {succ} ảnh   |   4 luồng song song"
+        else:
+            info_line = f"Progress: [{comp}/{tot}]   |   Success: {succ} arts   |   4 concurrent workers"
+
+        engine.draw_text(info_line, engine.font_sub, mx + 36, my + head_h + 24, 255, 215, 0)
+
+        # Progress bar track
+        pb_x = mx + 36
+        pb_y = my + head_h + 60
+        pb_w = mw - 72
+        pb_h = 36
+        engine.fill_rect(pb_x, pb_y, pb_w, pb_h, 24, 34, 56, 255)
+        engine.draw_rect(pb_x, pb_y, pb_w, pb_h, 60, 85, 130, 255, thickness=1)
+
+        fill_w = int(pb_w * (pct / 100.0))
+        if fill_w > 0:
+            engine.fill_rect(pb_x + 2, pb_y + 2, fill_w - 4, pb_h - 4, 0, 230, 150, 255)
+
+        engine.draw_text(f"{pct}%", engine.font_badge, pb_x + pb_w // 2, pb_y + pb_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+        # Current status text
+        cur_t = scraper_runner.current_title
+        cur_s = scraper_runner.current_sys
+        if scraper_runner.is_running() and cur_t:
+            status_txt = f"Đang cào: [{cur_s}] {cur_t}" if vi else f"Scraping: [{cur_s}] {cur_t}"
+        else:
+            status_txt = scraper_runner.status_msg or (tr("scrape_no_missing") if tot == 0 else "Hoàn tất")
+
+        lines = engine.wrap_text_to_width(status_txt, engine.font_sub, mw - 72, max_lines=2)
+        line_y = my + head_h + 116
+        for l in lines:
+            engine.draw_text(l, engine.font_sub, mx + 36, line_y, 220, 230, 245)
+            line_y += 30
+
+        # Footer Button
+        foot_h = 52
+        fy = my + mh - foot_h - 14
+        btn_w = 260
+        btn_h = 46
+        bx = mx + (mw - btn_w) // 2
+
+        if scraper_runner.is_running():
+            engine.fill_rect(bx, fy, btn_w, btn_h, 160, 45, 45, 255)
+            engine.draw_rect(bx, fy, btn_w, btn_h, 255, 80, 80, 255, thickness=2)
+            btn_lbl = f"[B] {tr('scrape_btn_stop')}"
+            engine.draw_text(btn_lbl, engine.font_badge, bx + btn_w // 2, fy + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+        else:
+            engine.fill_rect(bx, fy, btn_w, btn_h, 0, 180, 110, 255)
+            engine.draw_rect(bx, fy, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
+            btn_lbl = f"[A] {tr('scrape_btn_close')}"
+            engine.draw_text(btn_lbl, engine.font_badge, bx + btn_w // 2, fy + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+
+class CheatModal(BaseModal):
+    """Download and manage Libretro Cheat Codes dialog."""
+
+    def __init__(self, engine=None):
+        super().__init__(engine)
+
+    def open(self, data=None):
+        super().open(data)
+        from ..cheat_manager import cheat_runner
+        if not cheat_runner.is_running():
+            cheat_runner.start()
+
+    def handle_input(self, inputs):
+        if not self.active:
+            return False
+
+        from ..cheat_manager import cheat_runner
+        btn_a = inputs.get("btn_a")
+        btn_b = inputs.get("btn_b")
+        btn_x = inputs.get("btn_x")
+
+        if cheat_runner.is_running():
+            if btn_b or btn_x:
+                cheat_runner.request_stop()
+                if self.engine:
+                    self.engine.toast("Đang dừng tải Cheat Code..." if state.current_lang == "VI" else "Stopping cheat download...")
+                return True
+        else:
+            if btn_a or btn_b or btn_x:
+                self.close()
+                return True
+
+        return True
+
+    def render(self, engine):
+        if not self.active:
+            return
+
+        from ..cheat_manager import cheat_runner, count_cheats
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
+
+        mw = min(880, state.SCREEN_W - 60)
+        mh = 400
+        mx = (state.SCREEN_W - mw) // 2
+        my = (state.SCREEN_H - mh) // 2
+
+        # Outer Container & Glow Border
+        engine.fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
+
+        # Header Bar
+        head_h = 58
+        engine.fill_rect(mx + 2, my + 2, mw - 4, head_h - 4, 20, 28, 48, 255)
+        engine.fill_rect(mx + 2, my + head_h - 2, mw - 4, 2, 0, 246, 246, 255)
+        engine.draw_text(tr("cheat_modal_title"), engine.font_title, mx + 28, my + head_h // 2, 0, 246, 246, center_y=True)
+
+        c_st = cheat_runner.get_state()
+        pct = c_st.get("progress_pct", 0)
+
+        vi = state.current_lang == "VI"
+        cnt = count_cheats()
+        info_line = f"Tổng số Cheat hiện có trong máy: {cnt} file .cht" if vi else f"Total Cheats installed on device: {cnt} .cht files"
+        engine.draw_text(info_line, engine.font_sub, mx + 36, my + head_h + 20, 255, 215, 0)
+
+        # Progress bar track
+        pb_x = mx + 36
+        pb_y = my + head_h + 54
+        pb_w = mw - 72
+        pb_h = 36
+        engine.fill_rect(pb_x, pb_y, pb_w, pb_h, 24, 34, 56, 255)
+        engine.draw_rect(pb_x, pb_y, pb_w, pb_h, 60, 85, 130, 255, thickness=1)
+
+        fill_w = int(pb_w * (pct / 100.0))
+        if fill_w > 0:
+            engine.fill_rect(pb_x + 2, pb_y + 2, fill_w - 4, pb_h - 4, 0, 230, 150, 255)
+
+        engine.draw_text(f"{pct}%", engine.font_badge, pb_x + pb_w // 2, pb_y + pb_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+        # Status and guide text
+        status_txt = c_st.get("status_msg") or ("Sẵn sàng" if vi else "Ready")
+        engine.draw_text(status_txt, engine.font_sub, mx + 36, my + head_h + 104, 0, 246, 246)
+
+        engine.draw_text(tr("cheat_guide_line1"), engine.font_sub, mx + 36, my + head_h + 138, 210, 220, 240)
+        engine.draw_text(tr("cheat_guide_line2"), engine.font_sub, mx + 36, my + head_h + 168, 170, 190, 220)
+
+        # Footer Button
+        foot_h = 52
+        fy = my + mh - foot_h - 14
+        btn_w = 260
+        btn_h = 46
+        bx = mx + (mw - btn_w) // 2
+
+        if cheat_runner.is_running():
+            engine.fill_rect(bx, fy, btn_w, btn_h, 160, 45, 45, 255)
+            engine.draw_rect(bx, fy, btn_w, btn_h, 255, 80, 80, 255, thickness=2)
+            btn_lbl = f"[B] {tr('cheat_btn_stop')}"
+            engine.draw_text(btn_lbl, engine.font_badge, bx + btn_w // 2, fy + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+        else:
+            engine.fill_rect(bx, fy, btn_w, btn_h, 0, 180, 110, 255)
+            engine.draw_rect(bx, fy, btn_w, btn_h, 0, 255, 160, 255, thickness=2)
+            btn_lbl = f"[A] {tr('cheat_btn_close')}"
+            engine.draw_text(btn_lbl, engine.font_badge, bx + btn_w // 2, fy + btn_h // 2, 255, 255, 255, center_x=True, center_y=True)
+
+
+class SaveManagerModal(BaseModal):
+    """Save Game backup and restore manager dialog."""
+
+    def __init__(self, engine=None):
+        super().__init__(engine)
+        self.mode = "menu"  # "menu" or "list"
+        self.selected_idx = 0
+        self.scroll_top = 0
+        self.backups = []
+
+    def open(self, data=None):
+        super().open(data)
+        self.mode = "menu"
+        self.selected_idx = 0
+        self.scroll_top = 0
+        self.backups = []
+
+    def handle_input(self, inputs):
+        if not self.active:
+            return False
+
+        from ..save_manager import (get_saves_stats, create_save_backup,
+                                   list_save_backups, restore_save_backup,
+                                   delete_save_backup)
+
+        btn_a = inputs.get("btn_a")
+        btn_b = inputs.get("btn_b")
+        btn_x = inputs.get("btn_x")
+        btn_up = inputs.get("btn_up")
+        btn_down = inputs.get("btn_down")
+
+        if self.mode == "menu":
+            if btn_b:
+                self.close()
+                return True
+
+            if btn_up:
+                self.selected_idx = (self.selected_idx - 1) % 2
+                return True
+            elif btn_down:
+                self.selected_idx = (self.selected_idx + 1) % 2
+                return True
+
+            if btn_a:
+                if self.selected_idx == 0:
+                    # Tạo bản sao lưu mới
+                    ok, zip_p, st = create_save_backup()
+                    if ok:
+                        cnt = st.get("total_files", 0)
+                        if self.engine:
+                            self.engine.toast(f"Đã sao lưu thành công {cnt} file save!" if state.current_lang == "VI" else f"Successfully backed up {cnt} saves!")
+                    else:
+                        if self.engine:
+                            self.engine.toast(str(zip_p))
+                elif self.selected_idx == 1:
+                    # Xem danh sách bản sao lưu
+                    bks = list_save_backups()
+                    if not bks:
+                        if self.engine:
+                            self.engine.toast(tr("save_no_backups"))
+                    else:
+                        self.backups = bks
+                        self.mode = "list"
+                        self.selected_idx = 0
+                        self.scroll_top = 0
+                return True
+
+        elif self.mode == "list":
+            if btn_b:
+                self.mode = "menu"
+                self.selected_idx = 1
+                return True
+
+            num_b = len(self.backups)
+            if num_b == 0:
+                self.mode = "menu"
+                return True
+
+            max_vis = 3
+            if btn_up:
+                if self.selected_idx > 0:
+                    self.selected_idx -= 1
+                else:
+                    self.selected_idx = num_b - 1
+                    self.scroll_top = max(0, num_b - max_vis)
+                if self.selected_idx < self.scroll_top:
+                    self.scroll_top = self.selected_idx
+                return True
+            elif btn_down:
+                if self.selected_idx < num_b - 1:
+                    self.selected_idx += 1
+                else:
+                    self.selected_idx = 0
+                    self.scroll_top = 0
+                if self.selected_idx >= self.scroll_top + max_vis:
+                    self.scroll_top = self.selected_idx - max_vis + 1
+                return True
+
+            if btn_a and 0 <= self.selected_idx < num_b:
+                sel_bk = self.backups[self.selected_idx]
+                ok, restored_cnt, err = restore_save_backup(sel_bk["filepath"])
+                if ok:
+                    if self.engine:
+                        self.engine.toast(f"Đã khôi phục {restored_cnt} file save thành công!" if state.current_lang == "VI" else f"Restored {restored_cnt} save files successfully!")
+                    self.close()
+                else:
+                    if self.engine:
+                        self.engine.toast(err or "Lỗi khôi phục save!")
+                return True
+
+            if btn_x and 0 <= self.selected_idx < num_b:
+                sel_bk = self.backups[self.selected_idx]
+                ok, msg = delete_save_backup(sel_bk["filepath"])
+                if self.engine:
+                    self.engine.toast(msg)
+                self.backups = list_save_backups()
+                if not self.backups:
+                    self.mode = "menu"
+                    self.selected_idx = 0
+                else:
+                    self.selected_idx = min(self.selected_idx, len(self.backups) - 1)
+                return True
+
+        return True
+
+    def render(self, engine):
+        if not self.active:
+            return
+
+        from ..save_manager import get_saves_stats
+
+        # Dim backdrop
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
+
+        mw = min(920, state.SCREEN_W - 60)
+        mh = 450
+        mx = (state.SCREEN_W - mw) // 2
+        my = (state.SCREEN_H - mh) // 2
+
+        # Outer Container & Glow Border
+        engine.fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
+
+        # Header Bar
+        head_h = 58
+        engine.fill_rect(mx + 2, my + 2, mw - 4, head_h - 4, 20, 28, 48, 255)
+        engine.fill_rect(mx + 2, my + head_h - 2, mw - 4, 2, 0, 246, 246, 255)
+        engine.draw_text(tr("save_menu_title"), engine.font_title, mx + 28, my + head_h // 2, 0, 246, 246, center_y=True)
+
+        vi = state.current_lang == "VI"
+
+        # ----------------------------------------------------------------------
+        # MODE: MENU
+        # ----------------------------------------------------------------------
+        if self.mode == "menu":
+            save_st = get_saves_stats()
+            tot_f = save_st.get("total_files", 0)
+            tot_mb = save_st.get("total_bytes", 0) / (1024 * 1024)
+            sub_info = f"Tìm thấy {tot_f} file save ({tot_mb:.2f} MB) trên thẻ nhớ" if vi else f"Found {tot_f} save files ({tot_mb:.2f} MB) on SD card"
+            engine.draw_text(sub_info, engine.font_sub, mx + 36, my + head_h + 20, 255, 215, 0)
+
+            opts = [
+                (tr("save_item_backup_now"), "Nén toàn bộ save (.srm, .sav, .state) thành 1 file ZIP an toàn" if vi else "Compress all saves & states into a safe timestamped ZIP"),
+                (tr("save_item_list"), "Xem lại các bản sao lưu đã tạo, ngày giờ & khôi phục" if vi else "View existing backup archives, dates & restore")
+            ]
+
+            opt_y = my + head_h + 54
+            card_w = mw - 72
+            card_h = 92
+            gap = 14
+
+            for idx, (title_t, desc_t) in enumerate(opts):
+                is_sel = (self.selected_idx == idx)
+                cy = opt_y + idx * (card_h + gap)
+
+                if is_sel:
+                    engine.fill_rect(mx + 36, cy, card_w, card_h, 30, 48, 80, 255)
+                    engine.draw_rect(mx + 36, cy, card_w, card_h, 0, 246, 246, 255, thickness=2)
+                    engine.fill_rect(mx + 38, cy + 4, 6, card_h - 8, 0, 246, 246, 255)
+                    engine.draw_text(title_t, engine.font_item, mx + 58, cy + 28, 255, 255, 255, center_y=True)
+                else:
+                    engine.fill_rect(mx + 36, cy, card_w, card_h, 20, 28, 48, 255)
+                    engine.draw_rect(mx + 36, cy, card_w, card_h, 45, 60, 95, 255, thickness=1)
+                    engine.draw_text(title_t, engine.font_item, mx + 58, cy + 28, 210, 225, 245, center_y=True)
+
+                engine.draw_text(desc_t, engine.font_sub, mx + 58, cy + 64, 160, 180, 210, center_y=True)
+
+            # Footer Action Bar
+            foot_h = 52
+            fy = my + mh - foot_h
+            engine.fill_rect(mx + 2, fy, mw - 4, foot_h - 2, 14, 20, 34, 255)
+            engine.fill_rect(mx + 2, fy, mw - 4, 1, 40, 56, 88, 255)
+
+            fx = mx + 32
+            fx = engine.draw_footer_btn(fx, fy, foot_h - 2, "A", tr("footer_select"), (0, 230, 150), (220, 225, 235), is_dark_btn=True)
+            engine.draw_footer_btn(mx + mw - 165, fy, foot_h - 2, "B", "Đóng" if vi else "Close", (255, 75, 75), (220, 225, 235), is_dark_btn=False)
+
+        # ----------------------------------------------------------------------
+        # MODE: LIST
+        # ----------------------------------------------------------------------
+        elif self.mode == "list":
+            sub_info = f"Danh sách bản sao lưu ({len(self.backups)} bản):" if vi else f"Backup archives list ({len(self.backups)} files):"
+            engine.draw_text(sub_info, engine.font_sub, mx + 36, my + head_h + 18, 255, 215, 0)
+
+            list_y = my + head_h + 46
+            card_w = mw - 72
+            card_h = 80
+            gap = 10
+            max_vis = 3
+
+            vis_slice = self.backups[self.scroll_top : self.scroll_top + max_vis]
+            for i, b in enumerate(vis_slice):
+                actual_idx = self.scroll_top + i
+                cy = list_y + i * (card_h + gap)
+                is_sel = (self.selected_idx == actual_idx)
+
+                mb_size = b.get("size", 0) / (1024 * 1024)
+                size_txt = f"{mb_size:.2f} MB" if mb_size >= 1.0 else f"{b.get('size', 0)/1024:.1f} KB"
+
+                if is_sel:
+                    engine.fill_rect(mx + 36, cy, card_w, card_h, 30, 48, 80, 255)
+                    engine.draw_rect(mx + 36, cy, card_w, card_h, 0, 246, 246, 255, thickness=2)
+                    engine.fill_rect(mx + 38, cy + 4, 6, card_h - 8, 0, 246, 246, 255)
+                    engine.draw_text(f"📁 {b['filename']}", engine.font_badge, mx + 56, cy + 24, 0, 246, 246, center_y=True)
+                else:
+                    engine.fill_rect(mx + 36, cy, card_w, card_h, 20, 28, 48, 255)
+                    engine.draw_rect(mx + 36, cy, card_w, card_h, 45, 60, 95, 255, thickness=1)
+                    engine.draw_text(f"📁 {b['filename']}", engine.font_badge, mx + 56, cy + 24, 210, 225, 245, center_y=True)
+
+                info_t = f"{b.get('date_str', '')}   |   {b.get('file_count', 0)} files   |   {size_txt}"
+                engine.draw_text(info_t, engine.font_sub, mx + 56, cy + 56, 160, 180, 210, center_y=True)
+
+            # Footer Action Bar
+            foot_h = 52
+            fy = my + mh - foot_h
+            engine.fill_rect(mx + 2, fy, mw - 4, foot_h - 2, 14, 20, 34, 255)
+            engine.fill_rect(mx + 2, fy, mw - 4, 1, 40, 56, 88, 255)
+
+            fx = mx + 32
+            fx = engine.draw_footer_btn(fx, fy, foot_h - 2, "A", "Khôi phục" if vi else "Restore", (0, 230, 150), (220, 225, 235), is_dark_btn=True)
+            fx = engine.draw_footer_btn(fx, fy, foot_h - 2, "X", "Xóa bản này" if vi else "Delete", (255, 140, 0), (220, 225, 235), is_dark_btn=True)
+            engine.draw_footer_btn(mx + mw - 165, fy, foot_h - 2, "B", "Quay lại" if vi else "Back", (255, 75, 75), (220, 225, 235), is_dark_btn=False)
+
+
+class SendSshConfirmModal(BaseModal):
+    """Confirmation modal before sending SSH connection info via Telegram."""
+
+    def __init__(self, engine=None):
+        super().__init__(engine)
+        self.ip = "127.0.0.1"
+
+    def open(self, data=None):
+        super().open(data)
+        from ..sysinfo import get_ip
+        self.ip = get_ip()
+
+    def handle_input(self, inputs):
+        if not self.active:
+            return False
+
+        btn_a = inputs.get("btn_a")
+        btn_b = inputs.get("btn_b")
+
+        if btn_b:
+            self.close()
+            return True
+
+        if btn_a:
+            self.close()
+            if self.engine:
+                self.engine.toast("Đang gửi thông tin SSH sang Telegram..." if state.current_lang == "VI" else "Sending SSH info to Telegram...")
+            
+            from ..services import send_ssh_info_to_telegram
+            import threading
+            def _bg_send():
+                res = send_ssh_info_to_telegram()
+                msg = res[1] if isinstance(res, tuple) else res
+                if self.engine:
+                    self.engine.toast(msg)
+            threading.Thread(target=_bg_send, daemon=True).start()
+            return True
+
+        return True
+
+    def render(self, engine):
+        if not self.active:
+            return
+
+        engine.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 0, 0, 0, 220)
+
+        vi = state.current_lang == "VI"
+        mw = min(state.SCREEN_W - 64, 780)
+        mh = 350
+        mx = (state.SCREEN_W - mw) // 2
+        my = (state.SCREEN_H - mh) // 2
+
+        # Outer Container & Glow Border
+        engine.fill_rect(mx, my, mw, mh, 16, 22, 38, 255)
+        engine.draw_rect(mx, my, mw, mh, 0, 246, 246, 255, thickness=2)
+
+        # Header Bar
+        head_h = 58
+        engine.fill_rect(mx + 2, my + 2, mw - 4, head_h - 4, 20, 28, 48, 255)
+        engine.fill_rect(mx + 2, my + head_h - 2, mw - 4, 2, 0, 246, 246, 255)
+        title = "XÁC NHẬN GỬI SSH QUA TELEGRAM" if vi else "CONFIRM SEND SSH TO TELEGRAM"
+        engine.draw_text(title, engine.font_title, mx + 28, my + head_h // 2, 0, 246, 246, center_y=True)
+
+        # Content Card
+        cx = mx + 24
+        cw = mw - 48
+        cy = my + head_h + 16
+        card_h = 160
+
+        engine.fill_rect(cx, cy, cw, card_h, 20, 28, 46, 255)
+        engine.draw_rect(cx, cy, cw, card_h, 45, 60, 95, 255, thickness=1)
+        engine.fill_rect(cx + 2, cy + 2, 4, card_h - 4, 0, 230, 255, 255)
+
+        line1 = "Bạn có chắc chắn muốn gửi thông tin kết nối SSH của máy?" if vi else "Are you sure you want to send SSH connection info to Telegram?"
+        engine.draw_text(line1, engine.font_item, cx + 20, cy + 28, 255, 255, 255, center_y=True)
+
+        line2 = f"• Địa chỉ IP: {self.ip}   |   Cổng: 22   |   User: root"
+        engine.draw_text(line2, engine.font_badge, cx + 20, cy + 74, 255, 215, 0, center_y=True)
+
+        line3 = "Dữ liệu sẽ được gửi trực tiếp tới Telegram của tác giả để hỗ trợ kết nối từ xa." if vi else "Data will be sent to Telegram for remote debugging assistance."
+        engine.draw_text(line3, engine.font_sub, cx + 20, cy + 120, 170, 190, 220, center_y=True)
+
+        # Footer Action Bar
+        foot_h = 52
+        fy = my + mh - foot_h
+        engine.fill_rect(mx + 2, fy, mw - 4, foot_h - 2, 14, 20, 34, 255)
+        engine.fill_rect(mx + 2, fy, mw - 4, 1, 40, 56, 88, 255)
+
+        fx = mx + 32
+        fx = engine.draw_footer_btn(fx, fy, foot_h - 2, "A", "Xác nhận gửi" if vi else "Confirm Send", (0, 230, 150), (220, 225, 235), is_dark_btn=True)
+        engine.draw_footer_btn(mx + mw - 165, fy, foot_h - 2, "B", "Hủy bỏ" if vi else "Cancel", (255, 75, 75), (220, 225, 235), is_dark_btn=False)
+
+
+

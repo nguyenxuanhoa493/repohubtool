@@ -15,7 +15,7 @@ def get_ip():
         if not out:
             out = subprocess.check_output("ifconfig wlan0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d: -f2", shell=True).decode().strip()
         return out if out else tr("not_connected")
-    except:
+    except Exception:
         return tr("not_connected")
 
 def is_proc_running(name_patterns):
@@ -209,7 +209,8 @@ def get_storage_info_rows():
                         fp = os.path.join(dp, f)
                         if os.path.isfile(fp):
                             rom_bytes += os.path.getsize(fp)
-                except: pass
+                except (OSError, IOError):
+                    pass
             
             rom_pct = int((rom_bytes / total_b) * 100) if total_b > 0 and rom_bytes > 0 else 0
             rom_sz_str = format_storage_bytes(rom_bytes)
@@ -226,7 +227,8 @@ def get_storage_info_rows():
                     "sub": f"{len(rom_systems)} systems • {rom_count} ROMs • Takes {rom_pct}% SD",
                     "pct": max(5, rom_pct) if rom_count > 0 else 0
                 })
-    except: pass
+    except Exception:
+        pass
 
     # 3. System Flash / Root partition
     try:
@@ -244,7 +246,8 @@ def get_storage_info_rows():
                 "sub": f"Used {format_storage_bytes(root_used)} / {format_storage_bytes(root_total)} • Linux OS Partition",
                 "pct": r_used_pct
             })
-    except: pass
+    except Exception:
+        pass
 
     # 4. RAM / Memory
     try:
@@ -274,7 +277,8 @@ def get_storage_info_rows():
                 "sub": f"In Use {m_used} MB / {m_total} MB RAM • Free {m_avail} MB",
                 "pct": m_pct
             })
-    except: pass
+    except Exception:
+        pass
 
     return rows
 def get_battery_info():

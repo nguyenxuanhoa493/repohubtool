@@ -11,7 +11,7 @@ from ..services import (is_ssh_running, toggle_ssh, get_ssh_guide_rows,
                        is_gameweb_running, toggle_gameweb, get_gameweb_guide_rows,
                        send_ssh_info_to_telegram)
 from ..sysinfo import get_device_info_rows
-from ..modals.common import TwoColInfoModal
+from ..modals.common import TwoColInfoModal, SendSshConfirmModal
 from .base import BaseScreen
 
 
@@ -143,13 +143,7 @@ class NetworkScreen(BaseScreen):
                     "style": "big"
                 })
             elif it_id == "ssh_telegram":
-                self.engine.toast("Đang gửi thông tin sang Telegram...")
-                import threading
-                def _bg_send():
-                    res = send_ssh_info_to_telegram()
-                    msg = res[1] if isinstance(res, tuple) else res
-                    self.engine.toast(msg)
-                threading.Thread(target=_bg_send, daemon=True).start()
+                self.engine.open_modal(SendSshConfirmModal(self.engine))
             elif it_id == "stream_toggle":
                 msg = toggle_streamer()
                 self.engine.toast(msg)

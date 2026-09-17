@@ -57,7 +57,7 @@ if os.path.exists(SETTINGS_FILE):
             pending_update = cfg.get("pending_update", "") or ""
             catalog_sha = cfg.get("catalog_sha", "") or ""
             pending_catalog_notice = cfg.get("pending_catalog_notice", "") or ""
-    except:
+    except (OSError, json.JSONDecodeError, ValueError):
         current_lang = "EN"
         downloaded_view_mode = "grid"
 

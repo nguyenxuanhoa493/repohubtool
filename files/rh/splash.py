@@ -8,7 +8,7 @@ import subprocess
 import sdl2
 import sdl2.sdlimage as sdlimage
 
-from .paths import (SDCARD_PATH, SPLASH_BACKUP_DIR, SPLASH_BACKUP_FILE, SPLASH_DIR, SPLASH_SYS_FILE,
+from .paths import (APP_DIR, SDCARD_PATH, SPLASH_BACKUP_DIR, SPLASH_BACKUP_FILE, SPLASH_DIR, SPLASH_SYS_FILE,
                     SPLASH_TEMP_PREVIEW, SPLASH_TEMP_BMP, BOOTLOGO_BACKUP_FILE)
 from . import state
 from .i18n import tr
@@ -16,6 +16,7 @@ from .i18n import tr
 def ensure_splash_backup():
     try:
         os.makedirs(SPLASH_BACKUP_DIR, exist_ok=True)
+        os.makedirs(SPLASH_DIR, exist_ok=True)
         if not os.path.exists(SPLASH_BACKUP_FILE) and os.path.exists(SPLASH_SYS_FILE):
             shutil.copyfile(SPLASH_SYS_FILE, SPLASH_BACKUP_FILE)
             
@@ -33,7 +34,8 @@ def ensure_splash_backup():
 def scan_splash_images():
     ensure_splash_backup()
     images = []
-    scan_dirs = [SPLASH_DIR, os.path.join(SDCARD_PATH, "Pictures"), os.path.join(SDCARD_PATH, "Screenshots")]
+    app_splash = os.path.join(APP_DIR, "assets", "splash")
+    scan_dirs = [SPLASH_DIR, app_splash, os.path.join(SDCARD_PATH, "Pictures"), os.path.join(SDCARD_PATH, "Screenshots")]
     valid_exts = (".png", ".jpg", ".jpeg", ".bmp", ".webp")
     seen = set()
     for sdir in scan_dirs:
@@ -82,14 +84,24 @@ def convert_and_fit_splash(src_path, dst_path=SPLASH_TEMP_PREVIEW, width=1024, h
         if os.path.exists(SPLASH_TEMP_BMP):
             os.remove(SPLASH_TEMP_BMP)
 
-        # 1. Try GraphicsMagick first (highest quality bicubic downscale/fit)
         gm_bin = os.path.join(SDCARD_PATH, "System", "bin", "gm")
         gm_lib = os.path.join(SDCARD_PATH, "System", "lib")
         if os.path.exists(gm_bin):
-            cmd_png = f'export LD_LIBRARY_PATH="{gm_lib}:$LD_LIBRARY_PATH"; "{gm_bin}" convert "{src_path}" -resize {width}x{height} -gravity center -background black -extent {width}x{height} "{dst_path}"'
-            cmd_bmp = f'export LD_LIBRARY_PATH="{gm_lib}:$LD_LIBRARY_PATH"; "{gm_bin}" convert "{src_path}" -resize {width}x{height} -gravity center -background black -extent {width}x{height} -type TrueColor "{SPLASH_TEMP_BMP}"'
-            res1 = subprocess.call(cmd_png, shell=True)
-            res2 = subprocess.call(cmd_bmp, shell=True)
+            gm_env = os.environ.copy()
+            cur_ld = gm_env.get("LD_LIBRARY_PATH", "")
+            gm_env["LD_LIBRARY_PATH"] = f"{gm_lib}:{cur_ld}" if cur_ld else gm_lib
+            res1 = subprocess.call(
+                [gm_bin, "convert", src_path, "-resize", f"{width}x{height}", "-gravity", "center", "-background", "black", "-extent", f"{width}x{height}", dst_path],
+                env=gm_env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            res2 = subprocess.call(
+                [gm_bin, "convert", src_path, "-resize", f"{width}x{height}", "-gravity", "center", "-background", "black", "-extent", f"{width}x{height}", "-type", "TrueColor", SPLASH_TEMP_BMP],
+                env=gm_env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
             if res1 == 0 and os.path.exists(dst_path) and os.path.getsize(dst_path) > 100:
                 return True
 
