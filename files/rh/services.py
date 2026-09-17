@@ -11,6 +11,7 @@ import threading
 import re
 
 from .paths import EX_OPTIONS_FILE, STREAMER_SCRIPT, GAMEWEB_SCRIPT
+from .secrets import get_telegram_token
 from . import state
 from .sysinfo import (get_ip, is_sftpgo_running, is_ssh_running,
                       is_adb_running, is_mtp_running, is_streamer_running,
@@ -531,10 +532,10 @@ def send_ssh_info_to_telegram():
 
     text = "\n".join(msg_lines)
 
-    TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
     TELEGRAM_CHAT_ID = "663642384"
     TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
     TELEGRAM_DEBUG_THREAD_ID = 1205
+    token = get_telegram_token()
 
     dest_chats = [
         (TELEGRAM_GROUP_CHAT_ID, TELEGRAM_DEBUG_THREAD_ID)
@@ -546,7 +547,7 @@ def send_ssh_info_to_telegram():
     last_err = "Lỗi gửi Telegram"
 
     for cid, tid in dest_chats:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
         payload = {
             "chat_id": cid,
             "text": text,

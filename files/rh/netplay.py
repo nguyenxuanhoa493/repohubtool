@@ -13,13 +13,13 @@ from . import state
 from .paths import SDCARD_PATH
 from .sysinfo import get_ip, is_proc_running
 from .services import find_ssh_client
+from .secrets import get_telegram_token
 
 NETPLAY_PORT = 55435
 NETPLAY_PID_FILE = "/tmp/netplay_tunnel.pid"
 NETPLAY_INFO_FILE = "/tmp/netplay_info.json"
 NETPLAY_LOG_FILE = "/tmp/netplay_tunnel.log"
 
-TELEGRAM_BOT_TOKEN = "8843439406:AAEtTnuMk68ilAniAxj8Kl3uTKZmVKEVDDs"
 TELEGRAM_CHAT_ID = "663642384"
 TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
 TELEGRAM_NETPLAY_THREAD_ID = 1175
@@ -31,7 +31,8 @@ def resolve_netplay_telegram_chat_id():
     """
     try:
         import urllib.request, ssl
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates?limit=50"
+        token = get_telegram_token()
+        url = f"https://api.telegram.org/bot{token}/getUpdates?limit=50"
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
@@ -288,9 +289,10 @@ def send_netplay_info_to_telegram(game_title=None, sys_code=None, host=None, por
 
     sent_any = False
     last_err = "Lỗi gửi Telegram"
+    token = get_telegram_token()
 
     for cid, tid in dest_chats:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
         payload = {
             "chat_id": cid,
             "text": text,
