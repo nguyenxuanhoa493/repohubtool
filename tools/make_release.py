@@ -153,7 +153,43 @@ def step_5_build_site():
     print("  -> Hoan tat build site HTML!")
 
 
+def step_6_publish_github_release(publish: bool = False):
+    with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+    ver = manifest.get("version", "2.34")
+    note_en = manifest.get("note", {}).get("en", f"RetroHub v{ver} Release")
+    dist_dir = os.path.join(ROOT, "dist")
+    
+    full_zip = os.path.join(dist_dir, f"RetroHub-{ver}-full.zip")
+    nextui_zip = os.path.join(dist_dir, f"RetroHub-{ver}-NextUI.zip")
+    core_zip = os.path.join(dist_dir, f"RetroHub-{ver}.zip")
+
+    if not publish:
+        print("\n[6/6] Huong dan upload GitHub Releases (hoac chay voi flag --publish):")
+        print(f"  gh release create v{ver} \"{full_zip}\" \"{nextui_zip}\" \"{core_zip}\" --title \"RetroHub v{ver}\" --notes \"{note_en}\"")
+        return
+
+    print(f"\n[6/6] Dang tu dong phat hanh GitHub Release v{ver} qua gh CLI...")
+    # Kiem tra release da ton tai chua
+    check_code = os.system(f"gh release view v{ver} >/dev/null 2>&1")
+    if check_code != 0:
+        create_cmd = f"gh release create v{ver} -t \"RetroHub v{ver}\" -n \"{note_en}\""
+        os.system(create_cmd)
+    
+    upload_cmd = f"gh release upload v{ver} \"{full_zip}\" \"{nextui_zip}\" \"{core_zip}\" --clobber"
+    ret = os.system(upload_cmd)
+    if ret == 0:
+        print(f"  -> Da upload thanh cong toan bo file zip len GitHub Release v{ver}!")
+    else:
+        print(f"  [!] Upload that bai hoac loi mang (exit code: {ret})")
+
+
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Quy trinh Kiem chuan & Release RetroHub")
+    parser.add_argument("--publish", action="store_true", help="Tu dong tao va upload file len GitHub Releases qua gh CLI")
+    args = parser.parse_args()
+
     print("==================================================")
     print("      QUY TRINH KIEM CHUAN & RELEASE RETROHUB     ")
     print("==================================================")
@@ -162,6 +198,7 @@ if __name__ == "__main__":
     step_3_update_manifest()
     step_4_package_dist()
     step_5_build_site()
+    step_6_publish_github_release(publish=args.publish)
     print("==================================================")
-    print("  SUCCESS: San pham da san sang de commit & push!")
+    print("  SUCCESS: Quy trinh release hoan tat!")
     print("==================================================")
