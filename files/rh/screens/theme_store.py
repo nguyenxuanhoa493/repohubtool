@@ -285,12 +285,12 @@ class ThemeStoreScreen(BaseScreen):
                 engine.draw_rect(card_x, card_y, card_w, card_h, 36, 50, 78, 255, thickness=1)
 
             # ------------------------------------------------------------------
-            # 2. Maximize Full Thumbnail Image Area (Edge-to-Edge inside card)
+            # 2. Thumbnail Image Area (Upper Part of Card)
             # ------------------------------------------------------------------
             img_x = card_x + 4
             img_y = card_y + 4
             img_w = card_w - 8
-            img_h = card_h - 8
+            img_h = card_h - 52
 
             engine.fill_rect(img_x, img_y, img_w, img_h, 10, 14, 22, 255)
 
@@ -306,27 +306,57 @@ class ThemeStoreScreen(BaseScreen):
                                  70, 90, 120, center_x=True, center_y=True)
 
             # ------------------------------------------------------------------
-            # 3. Status Icon in Bottom-Right Corner of Thumbnail
+            # 3. Bottom Information Bar: STT + Theme Name + Status Icon
             # ------------------------------------------------------------------
-            icon_w = 34
-            icon_h = 30
-            icon_x = card_x + card_w - icon_w - 8
-            icon_y = card_y + card_h - icon_h - 8
+            bar_x = card_x + 4
+            bar_y = card_y + img_h + 4
+            bar_w = card_w - 8
+            bar_h = 44
+
+            if is_sel:
+                engine.fill_rect(bar_x, bar_y, bar_w, bar_h, 24, 38, 64, 255)
+                engine.fill_rect(bar_x, bar_y, bar_w, 2, 0, 246, 246, 255)
+            else:
+                engine.fill_rect(bar_x, bar_y, bar_w, bar_h, 14, 18, 30, 255)
+                engine.fill_rect(bar_x, bar_y, bar_w, 1, 35, 48, 72, 255)
+
+            # STT Badge (#1, #2, ...)
+            stt_str = f"#{actual_idx + 1}"
+            stt_w = max(38, engine.measure_text(stt_str, engine.font_grid_title) + 12)
+            stt_h = 28
+            stt_x = bar_x + 6
+            stt_y = bar_y + (bar_h - stt_h) // 2
+
+            if is_sel:
+                engine.fill_rect(stt_x, stt_y, stt_w, stt_h, 0, 210, 255, 255)
+                engine.draw_text(stt_str, engine.font_grid_title, stt_x + stt_w // 2, stt_y + stt_h // 2, 0, 24, 48, center_x=True, center_y=True)
+            else:
+                engine.fill_rect(stt_x, stt_y, stt_w, stt_h, 24, 34, 52, 255)
+                engine.draw_text(stt_str, engine.font_grid_title, stt_x + stt_w // 2, stt_y + stt_h // 2, 170, 195, 225, center_x=True, center_y=True)
+
+            # Status Icon on Right (✓ or ☁)
+            icon_w = 32
+            icon_h = 28
+            icon_x = bar_x + bar_w - icon_w - 6
+            icon_y = bar_y + (bar_h - icon_h) // 2
 
             if is_inst:
-                # Installed Status: Green badge with Checkmark
                 engine.fill_rect(icon_x, icon_y, icon_w, icon_h, 12, 45, 26, 225)
                 engine.draw_rect(icon_x, icon_y, icon_w, icon_h, 0, 230, 130, 255, thickness=1)
-                engine.draw_text("✓", engine.font_badge,
-                                 icon_x + icon_w // 2, icon_y + icon_h // 2,
-                                 0, 245, 150, center_x=True, center_y=True)
+                engine.draw_text("✓", engine.font_badge, icon_x + icon_w // 2, icon_y + icon_h // 2, 0, 245, 150, center_x=True, center_y=True)
             else:
-                # Cloud Status: Subtle cyan badge with Cloud / Download indicator
                 engine.fill_rect(icon_x, icon_y, icon_w, icon_h, 16, 28, 48, 205)
                 engine.draw_rect(icon_x, icon_y, icon_w, icon_h, 0, 190, 240, 220, thickness=1)
-                engine.draw_text("☁", engine.font_badge,
-                                 icon_x + icon_w // 2, icon_y + icon_h // 2,
-                                 0, 230, 255, center_x=True, center_y=True)
+                engine.draw_text("☁", engine.font_badge, icon_x + icon_w // 2, icon_y + icon_h // 2, 0, 230, 255, center_x=True, center_y=True)
+
+            # Theme Name in Middle
+            t_name = item.get("name", item.get("folder", ""))
+            name_x = stt_x + stt_w + 8
+            name_max_w = icon_x - name_x - 6
+            name_lines = engine.wrap_text_to_width(t_name, engine.font_grid_title, name_max_w, max_lines=1)
+            disp_name = name_lines[0] if name_lines else t_name
+            t_col = (255, 255, 255) if is_sel else (205, 218, 235)
+            engine.draw_text(disp_name, engine.font_grid_title, name_x, bar_y + bar_h // 2, t_col[0], t_col[1], t_col[2], center_y=True)
 
         # ----------------------------------------------------------------------
         # 4. Live Download & Installation Progress Modal Overlay
