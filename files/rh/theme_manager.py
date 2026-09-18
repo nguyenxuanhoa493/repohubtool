@@ -82,9 +82,15 @@ def load_themes_catalog(force_reload: bool = False) -> List[Dict]:
 
         # Fast preview path resolution without redundant disk stat calls
         img_name = f"{folder}.png"
+        img_safe = f"{folder.replace(' ', '_')}.png"
+        preview_rel = t.get("preview_rel")
         preview_path = None
-        if img_name in available_previews:
+        if img_safe in available_previews:
+            preview_path = os.path.join(preview_dir, img_safe)
+        elif img_name in available_previews:
             preview_path = os.path.join(preview_dir, img_name)
+        elif preview_rel and os.path.isfile(os.path.join(APP_DIR, preview_rel)):
+            preview_path = os.path.join(APP_DIR, preview_rel)
         elif is_installed:
             local_p = os.path.join(THEMES_DIR, folder, "preview.png")
             if os.path.isfile(local_p):
@@ -103,7 +109,9 @@ def load_themes_catalog(force_reload: bool = False) -> List[Dict]:
 
 def get_theme_preview_path(folder_name: str) -> Optional[str]:
     """Returns local path to theme preview image or None."""
+    safe_name = folder_name.replace(" ", "_")
     candidates = [
+        os.path.join(APP_DIR, "assets", "themes_preview", f"{safe_name}.png"),
         os.path.join(APP_DIR, "assets", "themes_preview", f"{folder_name}.png"),
         os.path.join(THEMES_DIR, folder_name, "preview.png"),
         os.path.join(LOCAL_THEMES_REPO_DIR, folder_name, "preview.png"),
