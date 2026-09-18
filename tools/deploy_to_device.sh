@@ -13,13 +13,21 @@ fi
 echo "==> 1. Xóa bản cài đặt cũ trên máy..."
 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@"$IP" "rm -rf /mnt/SDCARD/Apps/RetroHub"
 
-echo "==> 2. Sao chép gói RetroHub-2.27-full.zip sang thiết bị..."
-scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no "$ROOT/dist/RetroHub-2.27-full.zip" root@"$IP":/tmp/RetroHub-2.27-full.zip
+VERSION=$(grep '"version"' "$ROOT/manifest.json" | head -n 1 | sed -E 's/.*"version": "([^"]+)".*/\1/')
+ZIP_FILE="$ROOT/dist/RetroHub-${VERSION}-full.zip"
+
+if [ ! -f "$ZIP_FILE" ]; then
+    echo "[!] Không tìm thấy $ZIP_FILE. Đang đóng gói từ tools/make_release.py..."
+    python3 "$ROOT/tools/make_release.py"
+fi
+
+echo "==> 2. Sao chép gói RetroHub-${VERSION}-full.zip sang thiết bị..."
+scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no "$ZIP_FILE" root@"$IP":/tmp/RetroHub-latest.zip
 
 echo "==> 3. Giải nén cài đặt sạch..."
 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@"$IP" "
-    unzip -q -o /tmp/RetroHub-2.27-full.zip -d /mnt/SDCARD/
-    rm -f /tmp/RetroHub-2.27-full.zip
+    unzip -q -o /tmp/RetroHub-latest.zip -d /mnt/SDCARD/
+    rm -f /tmp/RetroHub-latest.zip
     chmod +x /mnt/SDCARD/Apps/RetroHub/launch.sh 2>/dev/null || true
     chmod +x /mnt/SDCARD/Apps/RetroHub/bin/* 2>/dev/null || true
     find /mnt/SDCARD/Apps/RetroHub -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
@@ -27,4 +35,4 @@ ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@"$IP" "
     sync
 "
 
-echo "==> Hoàn tất cài đặt sạch bản RetroHub 2.27 Full trên thiết bị!"
+echo "==> Hoàn tất cài đặt sạch bản RetroHub v${VERSION} Full trên thiết bị!"
