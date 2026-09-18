@@ -31,15 +31,17 @@ def send_ota_notification(version=None, note_vi=None):
     msg_lines = [
         f"🚀 <b>[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)</b>",
         "",
-        "✨ <b>Điểm mới & Tối ưu nổi bật:</b>",
-        "• 🖼️ <b>Đổi ảnh khởi động Side-by-Side & Live Preview:</b> Bố cục 2 cột chuyên nghiệp, hiển thị trực tiếp ảnh xem trước thời gian thực, duyệt ảnh từ thẻ nhớ SD và khôi phục ảnh gốc 1 chạm.",
-        "• 💾 <b>Quản lý Sao lưu & Khôi phục Save Game:</b> Nén ZIP toàn bộ save (.srm, .sav, .state*) có gắn nhãn thời gian, duyệt lịch sử và khôi phục/xóa bản sao lưu dễ dàng.",
-        "• 🎨 <b>Modal Theo dõi Tiến trình Cào Boxart:</b> Hiển thị thanh tiến độ %, bộ đếm hoàn thành và tên game đang cào với 4 luồng xử lý song song.",
-        "• 🔒 <b>Xác nhận Gửi SSH qua Telegram:</b> Thêm hộp thoại xác nhận kèm thông tin IP máy trước khi gửi, triệt tiêu nguy cơ bấm nhầm.",
-        "• 🛡️ <b>Tối ưu Giao diện & Mã nguồn:</b> Chuẩn hóa thanh phím bấm có màu (A xanh, X cam, B đỏ), chống rách hình Framebuffer, tối ưu xử lý đồ họa.",
+        "✨ <b>Điểm mới & Tính năng nổi bật:</b>",
+        "• 🎨 <b>Thư viện Theme Store (Lưới 3x2 trực quan):</b> Kho giao diện toàn hệ thống hiển thị STT (#1..#N), ảnh xem trước sắc nét, nhãn trạng thái [ĐÃ CÀI] và tải trực tiếp từ CDN mạng vào máy.",
+        "• 🎮 <b>Thư viện Icon Store (Kho Icon Giả Lập):</b> Bổ sung gói <b>Stock Default (TrimUI Official)</b> trọn bộ 108 icon/bg gốc và gói hiện đại <b>Burst v1.1.0</b>, tải online 1 chạm.",
+        "• 💾 <b>Sao lưu & Khôi phục Icon Gốc An Toàn:</b> Tự động backup bộ icon gốc khi cài lần đầu, cơ chế khôi phục 2 lớp thông minh (Local Backup & Emergency Stock ZIP).",
+        "• ⚡ <b>Nâng cấp Bộ máy Tải OTA & Fix Lỗi:</b> Tối ưu mã hóa URL chuẩn, nạp SSL bypass an toàn cho hệ điều hành nhúng TrimUI, kiểm chuẩn mã băm SHA-256 100%.",
+        "• 🌐 <b>Trang chủ & Bản phát hành:</b> Cập nhật đầy đủ gói cài đặt <code>RetroHub-2.34-full.zip</code> và bản Pak NextUI trên GitHub Releases.",
         "",
-        "📲 <b>Cách cập nhật:</b>",
-        "Bật Wi-Fi trên máy cầm tay ➔ Mở <b>RetroHub</b> ➔ Ứng dụng sẽ tự động phát hiện và cập nhật tệp mới nhất!"
+        "📲 <b>Cách cập nhật qua OTA:</b>",
+        "1. Bật <b>Wi-Fi</b> trên máy chơi game.",
+        "2. Mở ứng dụng <b>RetroHub</b> ➔ Ứng dụng sẽ tự động thông báo và tải cập nhật trong 2–3 giây!",
+        "3. Hoặc vào <b>Cài đặt (Settings) ➔ Kiểm tra cập nhật</b>."
     ]
     text = "\n".join(msg_lines)
 
