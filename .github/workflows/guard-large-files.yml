@@ -1,0 +1,31 @@
+name: Guard large files
+
+# The repository was once 1.6 GB because build output and archives were
+# committed by hand. This job makes that mistake fail loudly instead of
+# silently bloating every future clone.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail if a tracked file exceeds 5 MB
+        run: |
+          limit=$((10 * 1024 * 1024))
+          found=""
+          while IFS= read -r -d '' f; do
+            s=$(stat -c%s "$f" 2>/dev/null || echo 0)
+            if [ "$s" -gt "$limit" ]; then
+              found="${found}$(printf '%6.1f MB  %s\n' "$(echo "$s / 1048576" | bc -l)" "$f")"$'\n'
+            fi
+          done < <(git ls-files -z)
+          if [ -n "$found" ]; then
+            echo "::error::Tracked files larger than 10 MB. Move them to a GitHub Release (see _src/publish_assets.py)."
+            printf '%s' "$found"
+            exit 1
+          fi
+          echo "OK: no tracked file exceeds 10 MB."

@@ -14,8 +14,12 @@ import urllib.request
 from . import paths
 from .emulators import resolve_core_name, _config_of
 
-ONLINE_CDN_BASE = "https://retrohub.xuanhoa493.com/emus/"
-GITHUB_RAW_BASE = "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/emus/"
+# Emulator tarballs are content, not source. They live as assets on a GitHub
+# Release (see _src/publish_assets.py) instead of in git, which keeps a fresh
+# clone small. Asset filenames here contain no spaces, so the name is unchanged.
+ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+ONLINE_CDN_BASE = ASSET_BASE
+GITHUB_RAW_BASE = ASSET_BASE
 
 
 def get_emus_catalog():

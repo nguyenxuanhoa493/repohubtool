@@ -15,10 +15,28 @@ import hashlib
 import py_compile
 import zipfile
 import re
+from datetime import datetime, timezone, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILES_DIR = os.path.join(ROOT, "files")
 MANIFEST_PATH = os.path.join(ROOT, "manifest.json")
+
+# Set from the command line. BRANCH is the branch the OTA updater reads from.
+# It stays "main": installed clients hardcode it and the catalog payload is
+# resolved against it, so renaming the branch would strand every device.
+REPO = "nguyenxuanhoa493/repohubtool"
+BRANCH = "main"
+FULL = False
+TZ = timezone(timedelta(hours=7))
+
+
+def app_version():
+    """The single version constant, from files/rh/version.py."""
+    with open(os.path.join(FILES_DIR, "rh", "version.py"), encoding="utf-8") as f:
+        m = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', f.read())
+    if not m:
+        raise SystemExit("khong tim thay APP_VERSION trong files/rh/version.py")
+    return m.group(1).strip().lstrip("v")
 
 
 def step_1_syntax_and_ota_check():
@@ -32,8 +50,8 @@ def step_1_syntax_and_ota_check():
     for root, _, files in os.walk(FILES_DIR):
         for f in files:
             fp = os.path.join(root, f)
-            rel = os.path.relpath(fp, FILES_DIR)
-            
+            rel = os.path.relpath(fp, FILES_DIR).replace(os.sep, "/")
+
             if not safe_name_pattern.match(rel):
                 unsafe_name_files.append(rel)
             if " " in rel:
@@ -94,6 +112,13 @@ def step_3_update_manifest():
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
+    version = app_version()
+    manifest["version"] = version
+    manifest["built"] = datetime.now(TZ).replace(microsecond=0).isoformat()
+    manifest["base_url"] = "https://raw.githubusercontent.com/%s/%s" % (REPO, BRANCH)
+    if FULL:
+        manifest["full_release_version"] = version
+
     old_paths = {
         f["path"] for f in manifest.get("files", []) if isinstance(f, dict) and "path" in f
     }
@@ -108,7 +133,7 @@ def step_3_update_manifest():
             if fn.startswith(".") or fn.endswith(".pyc") or fn == "desktop.ini":
                 continue
             fp = os.path.join(root, fn)
-            rel = os.path.relpath(fp, FILES_DIR)
+            rel = os.path.relpath(fp, FILES_DIR).replace(os.sep, "/")
             with open(fp, "rb") as fh:
                 data = fh.read()
             sha = hashlib.sha256(data).hexdigest()
@@ -140,9 +165,11 @@ def step_3_update_manifest():
             rf["size"] = len(data)
             rf["sha256"] = hashlib.sha256(data).hexdigest()
 
-    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
+    with open(MANIFEST_PATH, "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
-    print(f"  -> Da dong bo ma bam SHA256 cua {scanned} tep vao manifest.json (kem runtime).")
+        f.write("\n")
+    print(f"  -> Da dong bo ma bam SHA256 cua {scanned} tep vao manifest.json "
+          f"(version={version}, branch={BRANCH}, full={FULL}).")
 
 
 def step_4_ota_simulation_suite():
@@ -190,7 +217,7 @@ def step_4_ota_simulation_suite():
             sys.exit(1)
 
         # Test unquoted URL construction of legacy clients
-        legacy_url = "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/files/%s" % p
+        legacy_url = "https://raw.githubusercontent.com/%s/%s/files/%s" % (REPO, BRANCH, p)
         if " " in legacy_url:
             print(f"FAILED: Space found in legacy URL: {legacy_url}")
             sys.exit(1)
@@ -230,10 +257,10 @@ def step_5_package_dist():
 
 def step_6_build_site():
     print("[6/7] Cap nhat HTML landing page & changelog...")
-    os.system(f"python3 {os.path.join(ROOT, '_src', 'build.py')}")
-    os.system(f"python3 {os.path.join(ROOT, '_src', 'build_changelog.py')}")
-    os.system(f"python3 {os.path.join(ROOT, '_src', 'build_guide.py')}")
-    os.system(f"python3 {os.path.join(ROOT, '_src', 'build_java.py')}")
+    for script in ("build.py", "build_changelog.py", "build_guide.py", "build_java.py"):
+        ret = os.system(f'"{sys.executable}" {os.path.join(ROOT, "_src", script)}')
+        if ret != 0:
+            sys.exit(f"FAILED: {script} tra ve ma loi {ret}")
     print("  -> Hoan tat build site HTML!")
 
 
@@ -244,13 +271,17 @@ def step_7_publish_github_release(publish: bool = False):
     note_en = manifest.get("note", {}).get("en", f"RetroHub v{ver} Release")
     dist_dir = os.path.join(ROOT, "dist")
     
-    full_zip = os.path.join(dist_dir, f"RetroHub-{ver}-full.zip")
-    nextui_zip = os.path.join(dist_dir, f"RetroHub-{ver}-NextUI.zip")
-    core_zip = os.path.join(dist_dir, f"RetroHub-{ver}.zip")
+    assets = [
+        os.path.join(dist_dir, f"RetroHub-{ver}-full.zip"),
+        os.path.join(dist_dir, f"RetroHub-{ver}-NextUI.zip"),
+        os.path.join(dist_dir, f"RetroHub-{ver}.zip"),
+        os.path.join(dist_dir, "RetroHub.pak.zip"),
+    ]
+    quoted = " ".join(f'"{a}"' for a in assets)
 
     if not publish:
         print("\n[7/7] Huong dan upload GitHub Releases (hoac chay voi flag --publish):")
-        print(f"  gh release create v{ver} \"{full_zip}\" \"{nextui_zip}\" \"{core_zip}\" --title \"RetroHub v{ver}\" --notes \"{note_en}\"")
+        print(f"  gh release create v{ver} {quoted} --title \"RetroHub v{ver}\" --notes \"{note_en}\"")
         return
 
     print(f"\n[7/7] Dang tu dong phat hanh GitHub Release v{ver} qua gh CLI...")
@@ -259,8 +290,8 @@ def step_7_publish_github_release(publish: bool = False):
     if check_code != 0:
         create_cmd = f"gh release create v{ver} -t \"RetroHub v{ver}\" -n \"{note_en}\""
         os.system(create_cmd)
-    
-    upload_cmd = f"gh release upload v{ver} \"{full_zip}\" \"{nextui_zip}\" \"{core_zip}\" --clobber"
+
+    upload_cmd = f"gh release upload v{ver} {quoted} --clobber"
     ret = os.system(upload_cmd)
     if ret == 0:
         print(f"  -> Da upload thanh cong toan bo file zip len GitHub Release v{ver}!")
@@ -272,7 +303,12 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Quy trinh Kiem chuan & Release RetroHub")
     parser.add_argument("--publish", action="store_true", help="Tu dong tao va upload file len GitHub Releases qua gh CLI")
+    parser.add_argument("--full", action="store_true", help="Danh dau day la ban full (cap nhat full_release_version)")
+    parser.add_argument("--branch", default="main", help="Nhanh ma trinh cap nhat OTA doc tu do (mac dinh: main)")
     args = parser.parse_args()
+
+    FULL = args.full
+    BRANCH = args.branch
 
     print("==================================================")
     print("      QUY TRINH KIEM CHUAN & RELEASE RETROHUB     ")

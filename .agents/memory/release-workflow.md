@@ -2,33 +2,48 @@
 
 ## ⚠️ QUY TẮC PHÁT HÀNH (MANDATORY RULE)
 
-### 1. Mặc định ("phát hành đi", "phát hành bản mới"): CHỈ PHÁT HÀNH OTA (Bản cập nhật)
-Khi người dùng yêu cầu "phát hành", "phát hành đi", "ra bản mới":
-- **Mục tiêu:** Cho phép máy cầm tay kết nối Wi-Fi tự nhận và tải các tệp cập nhật mới nhất.
-- **Các bước thực hiện:**
-  1. Nâng `APP_VERSION` trong `files/rh/version.py`.
-  2. Cập nhật `manifest.json`:
-     - Nâng `version` tương ứng.
-     - Cập nhật ghi chú `note` (vi & en).
-     - Tính toán lại dung lượng và mã SHA-256 cho toàn bộ các file đã chỉnh sửa trong `files/`.
-     - Giữ nguyên `full_release_version` trỏ tới bản full zip đã phát hành gần nhất để link tải trên website KHÔNG bị 404.
-  3. Cập nhật `_src/build_changelog.py` và chạy `python3 _src/build_changelog.py && python3 _src/build.py`.
-  4. Git commit, tạo tag và `git push origin main` (kèm tags).
-  5. Purge CDN jsDelivr cho `manifest.json`, `files/rh/version.py`, v.v.
-  6. **Gửi thông báo vào nhóm chung Telegram:** Tự động gửi thông tin phiên bản mới và nội dung cập nhật vào chủ đề chung (General / all) của nhóm RetroHub (`-1003890413445`) bằng script `_src/notify_ota_telegram.py`.
-  7. Thử đồng bộ qua SSH sang thiết bị nếu máy đang online.
-- **TUYỆT ĐỐI KHÔNG:** Không tự ý nén các file full zip (`RetroHub-*-full.zip`, `NextUI.zip`) và không chạy `gh release create`.
+Từ nay việc đóng gói và phát hành do **GitHub Actions** làm
+(`.github/workflows/release.yml`). Không nén zip bằng tay, không commit
+`dist/`, không tự chạy `gh release create` trên máy.
 
----
+### 0. Bất biến (không được vi phạm)
+- `files/rh/version.py` là **nguồn version duy nhất**. Mọi chỗ khác
+  (manifest, tag, website) đều suy ra từ đó.
+- `dist/`, `Themes/zips/`, `EmuIcons/zips/`, `emus/*.tar.gz` **không bao giờ
+  được commit**. Chúng nằm trên GitHub Releases (release tag `assets`).
+- Một file bị track > 5 MB sẽ làm CI `guard-large-files` fail.
 
-### 2. Khi người dùng YÊU CẦU RÕ RÀNG ("phát hành bản full", "đóng gói release zip",...): MỚI PHÁT HÀNH BẢN FULL
-- Chỉ kích hoạt quy trình này khi người dùng nói cụ thể:
-  - *"phát hành bản full"*
-  - *"đóng gói file zip"*
-  - *"tạo release trên GitHub"*
-- **Các bước thực hiện:**
-  1. Cập nhật `full_release_version` trong `manifest.json` lên phiên bản mới.
-  2. Đóng gói 4 tệp phát hành (`RetroHub-X.XX-full.zip`, `RetroHub-X.XX-NextUI.zip`, `RetroHub-X.XX.zip`, `RetroHub.pak.zip`).
-  3. Chạy `gh release create vX.XX ...` để đẩy các assets lên GitHub Releases.
-  4. Chạy lại `python3 _src/build.py` để website cập nhật link tải sang phiên bản mới.
-  5. Kiểm tra mã phản hồi HTTP 200 cho các link tải.
+### 1. Phát hành OTA ("phát hành đi", "phát hành bản mới")
+1. Sửa code trong `files/`.
+2. Nâng `APP_VERSION` trong `files/rh/version.py` và cập nhật `note` (vi & en)
+   trong `manifest.json`.
+3. Cập nhật `_src/build_changelog.py` cho phiên bản mới.
+4. Commit, rồi tạo tag và push:
+   ```
+   git tag vX.XX && git push origin main --tags
+   ```
+5. CI sẽ: kiểm tra syntax + i18n + mô phỏng OTA, tính lại SHA-256 vào
+   `manifest.json`, build website, đóng gói 4 zip, tạo GitHub Release, và
+   commit manifest/website trở lại nhánh mặc định.
+6. Sau khi CI xong: purge CDN jsDelivr cho `manifest.json` và
+   `files/rh/version.py`.
+7. Gửi thông báo Telegram bằng `_src/notify_ota_telegram.py`.
+8. Thử đồng bộ SSH sang thiết bị nếu máy online.
+
+### 2. Phát hành bản full ("phát hành bản full", "đóng gói release zip")
+- Chạy workflow `Build & Release` với input `full = true` (hoặc push tag như
+  trên). Cờ `--full` sẽ nâng `full_release_version` trong manifest để link tải
+  trên website không bị 404.
+- Không đóng gói zip thủ công.
+
+### 3. Thêm/sửa theme, icon, gói giả lập (archive lớn)
+1. Đặt file nguồn vào `Themes/zips/`, `EmuIcons/zips/`, hoặc `emus/`.
+2. Upload lên release `assets`:
+   ```
+   GITHUB_TOKEN=... python3 _src/publish_assets.py
+   ```
+3. Đồng bộ URL trong catalog (GitHub đổi tên asset: space → dấu chấm, bỏ `&`):
+   ```
+   GITHUB_TOKEN=... python3 _src/migrate_assets_urls.py
+   ```
+4. Commit catalog đã cập nhật. Các file archive vẫn nằm ngoài git.

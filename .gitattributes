@@ -1,0 +1,22 @@
+# Normalise line endings in the repository so a Windows checkout and a Linux
+# CI runner produce identical bytes.
+* text=auto eol=lf
+
+# Shell scripts must stay LF or the device refuses to run them.
+*.sh text eol=lf
+
+# Explicitly binary: never let git try to diff or merge these.
+*.zip   binary
+*.tar.gz binary
+*.7z    binary
+*.rar   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ttf   binary
+*.otf   binary
+*.jar   binary
+*.class binary
+*.sqlite3 binary
+*.gz    binary
