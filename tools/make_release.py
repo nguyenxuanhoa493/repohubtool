@@ -21,21 +21,30 @@ MANIFEST_PATH = os.path.join(ROOT, "manifest.json")
 
 
 def step_1_syntax_check():
-    print("[1/5] Kiem tra cu phap cac file Python...")
+    print("[1/5] Kiem tra cu phap cac file Python & an toan duong dan...")
     errors = 0
+    space_files = []
     for root, _, files in os.walk(FILES_DIR):
         for f in files:
+            fp = os.path.join(root, f)
+            rel = os.path.relpath(fp, FILES_DIR)
+            if " " in rel:
+                space_files.append(rel)
             if f.endswith(".py"):
-                fp = os.path.join(root, f)
                 try:
                     py_compile.compile(fp, doraise=True)
                 except Exception as e:
                     print(f"  [!] LOI CU PHAP o file {os.path.relpath(fp, ROOT)}: {e}")
                     errors += 1
+    if space_files:
+        print(f"FAILED: Phat hien {len(space_files)} file chua dau cach (gay loi OTA tren thiet bi cu):")
+        for sf in space_files[:10]:
+            print(f"  - {sf}")
+        sys.exit(1)
     if errors > 0:
         print(f"FAILED: Phat hien {errors} loi cu phap! Vui long sua truoc khi release.")
         sys.exit(1)
-    print("  -> Tat ca file Python deu vuot qua kiem tra cu phap.")
+    print("  -> Tat ca file Python deu vuot qua kiem tra cu phap & an toan duong dan (0 spaces).")
 
 
 def step_2_check_i18n_keys():

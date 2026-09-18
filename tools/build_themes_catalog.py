@@ -45,7 +45,8 @@ def generate_preview(theme_path: str, item_name: str) -> bool:
         return False
 
     os.makedirs(PREVIEWS_DIR, exist_ok=True)
-    dst_preview = os.path.join(PREVIEWS_DIR, f"{item_name}.png")
+    safe_name = item_name.replace(" ", "_")
+    dst_preview = os.path.join(PREVIEWS_DIR, f"{safe_name}.png")
 
     # If destination already exists and is newer than source, skip regenerating
     if os.path.isfile(dst_preview) and os.path.getmtime(dst_preview) >= os.path.getmtime(src_preview):
@@ -136,8 +137,9 @@ def scan_and_build():
                 pass
 
         # 1. Preview generation
+        safe_name = item.replace(" ", "_")
         has_preview = generate_preview(theme_path, item)
-        preview_rel = f"assets/themes_preview/{item}.png" if has_preview else ""
+        preview_rel = f"assets/themes_preview/{safe_name}.png" if has_preview else ""
 
         # 2. Package Zip
         zip_path = build_theme_zip(theme_path, item)
