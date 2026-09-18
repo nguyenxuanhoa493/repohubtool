@@ -33,6 +33,9 @@ from .paths import (
 from . import state
 from .i18n import tr
 
+# Icon zips are served from a GitHub Release, not committed to git.
+ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+
 _SSL_CTX = None
 try:
     _SSL_CTX = ssl.create_default_context()
@@ -476,19 +479,17 @@ def install_icon_pack(icon_info: Dict, on_progress: Optional[Callable[[int, str]
                     except Exception:
                         pass
 
-        # Step 4: Online Download from Git / CDN / Hosting
+        # Step 4: Online Download from GitHub Release (not git)
         enc_folder = urllib.parse.quote(folder)
         zip_name = f"{enc_folder}.zip"
-        
+
         download_urls = []
-        # Raw GitHub CDN is the most reliable direct endpoint
         if icon_info.get("raw_git_url"):
             download_urls.append(icon_info["raw_git_url"])
-        download_urls.append(f"https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/EmuIcons/zips/{zip_name}")
-        download_urls.append(f"https://github.com/nguyenxuanhoa493/repohubtool/raw/main/EmuIcons/zips/{zip_name}")
         if icon_info.get("download_url"):
             download_urls.append(icon_info["download_url"])
-        download_urls.append(f"https://retrohub.xuanhoa493.com/EmuIcons/zips/{zip_name}")
+        download_urls.append(
+            ASSET_BASE + urllib.parse.quote(folder.replace(" ", ".")) + ".zip")
 
         # Deduplicate while preserving priority
         dedup_urls = []

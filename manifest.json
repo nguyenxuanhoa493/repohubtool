@@ -2,7 +2,7 @@
   "version": "2.35",
   "full_release_version": "2.35",
   "python": "any",
-  "built": "2026-09-18T15:30:00+0700",
+  "built": "2026-09-18T17:21:25+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Trợ lý AI Web Manager: Sửa lỗi mã hóa ký tự lệnh Shell, Thêm nút Quét Log lỗi Chẩn đoán nhanh, Quét động phần cứng & màn hình",
@@ -269,8 +269,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 4984,
-        "sha256": "86101990b6cb6cb8020109f0df2a8e9609929ef3dac1cbcfe8d08d3cd2a601df"
+        "size": 5120,
+        "sha256": "1fdc40dce4614f4e744453df059427a0b4e1d958e9eaa702cc40ce5e0e037ad1"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -317,8 +317,8 @@
     },
     {
       "path": "app.py",
-      "size": 4074,
-      "sha256": "cb4a5f11087a424b4a4a9242b2fc4e34d0e9417e60d089f48917b3a6fcdf2dc8"
+      "size": 4175,
+      "sha256": "1c84a31840ef7d484844e680169129a435a8d647e31f4980deca3b449ab89f1f"
     },
     {
       "path": "assets/emus_preview/bg-arcade.png",
@@ -1542,18 +1542,18 @@
     },
     {
       "path": "catalog/emus_catalog.json",
-      "size": 27528,
-      "sha256": "faee730851dc55f66d2fcf180349d96b4f6c99e5a93a1e75a62b15eba0b0f5b7"
+      "size": 28403,
+      "sha256": "a85acbeffa5b2ae7b213565bd6b53b8f4c92fd0b6c2d98fb04c282228de561fc"
     },
     {
       "path": "catalog/icons_catalog.json",
-      "size": 1963,
-      "sha256": "3fec58691749c1e8985aa44cf9b564190b782b50afc22e65057fdc91c072c33c"
+      "size": 1991,
+      "sha256": "09c7f3ce766c256194fc280595c115ed1fc1e02233ce472520439745c865fa1e"
     },
     {
       "path": "catalog/themes_catalog.json",
-      "size": 73346,
-      "sha256": "3a0feb5ef3e084bf640afde7bb2fca25436d8048d6191306620b552be164db2e"
+      "size": 76202,
+      "sha256": "d60123ef638c05491fbbb877b594084d0c59a24e0f5fb6e135bd8cd778ab7e73"
     },
     {
       "path": "config.json",
@@ -1582,8 +1582,8 @@
     },
     {
       "path": "emus/JAVA/launch.sh",
-      "size": 4984,
-      "sha256": "86101990b6cb6cb8020109f0df2a8e9609929ef3dac1cbcfe8d08d3cd2a601df"
+      "size": 5120,
+      "sha256": "1fdc40dce4614f4e744453df059427a0b4e1d958e9eaa702cc40ce5e0e037ad1"
     },
     {
       "path": "emus/JAVA/zulu17/bin/default_phone.cfg",
@@ -1622,28 +1622,28 @@
     },
     {
       "path": "emus/SEGACD/cpufreq.sh",
-      "size": 152,
-      "sha256": "231eef08baad1c1e7e8ddbe7427e2fba01501753c7f290c20b79f6e1b760c358"
+      "size": 155,
+      "sha256": "be01dd61d1d1164f381be0610ceecf648f4f29d92ab7f4a95f8ff59bde3e97ec"
     },
     {
       "path": "emus/SEGACD/cpuswitch.sh",
-      "size": 191,
-      "sha256": "0733d555c8a541b49550847ec2abcc9c5554c731922f2640c3dd960aa677bed3"
+      "size": 197,
+      "sha256": "640875ef41ebc0671829155065de7588fde82108ea5091da24f667e05fb775f5"
     },
     {
       "path": "emus/SEGACD/launch.sh",
-      "size": 548,
-      "sha256": "e48903a184999dfa1fbec09a9c63a7ab106d576dc016b4b33c644da9eed172e4"
+      "size": 562,
+      "sha256": "5f90d7224bd786acb411b37ec80bb6f75caf2befeadfef4c96ccd367631128ba"
     },
     {
       "path": "emus/SEGACD/launch_genplus.sh",
-      "size": 359,
-      "sha256": "67bb09b0bfe0eae85c8c1251b47fd8d452ce3a4e7f017fe1ba465acfb334ef92"
+      "size": 372,
+      "sha256": "71ec8f1419525d5bbc0d9a3d21fde0bb8465313026748076417c5fa97ca7a5da"
     },
     {
       "path": "emus/SEGACD/launch_genplus_wide.sh",
-      "size": 364,
-      "sha256": "67846237d461d95c2c3a47997754176dae8ba2a72a0a98779754b38a9ec4845d"
+      "size": 377,
+      "sha256": "f66a0d4aea09b3a47055d27e84a9776aa736fdf41ead959a489ade6610290504"
     },
     {
       "path": "emus/_theme/bg-segacd.png",
@@ -1662,8 +1662,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 71739,
-      "sha256": "e818f2f6847137ab99665b5bee2c538bad405a082ced29b62f39687e3936d22d"
+      "size": 73976,
+      "sha256": "43607636fc4db2da23379b46012c31b9f8584fe7e1574c46c6011c8df65c4ed9"
     },
     {
       "path": "icon.png",
@@ -1672,8 +1672,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 9751,
-      "sha256": "4f5331b3496234003bca0d43bfa72b773cca041c838750522ec03d1d40ccb6b2"
+      "size": 9993,
+      "sha256": "643df228799cc4f69893408527e0c6f634924002456b66756be563ddcfc46ebb"
     },
     {
       "path": "led_daemon.py",
@@ -1737,8 +1737,8 @@
     },
     {
       "path": "rh/emulator_store.py",
-      "size": 8342,
-      "sha256": "b99605af02bec36f42f68df511039b0065d1c38508d0649922f61ca168ca7482"
+      "size": 8573,
+      "sha256": "5cbe576eb69c8821c0a6507617221b0d2092ef349953945f0f41ce08ed8b3bbe"
     },
     {
       "path": "rh/emulators.py",
@@ -1762,13 +1762,13 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 60057,
-      "sha256": "ef1ef2522badbf1e769616dcb110434d97f2237f5983f0fca0f6cc3b0b89931c"
+      "size": 61220,
+      "sha256": "639eb4fbd4d9164f791df1bd17665a17bb1646d8aa957e20cabedc17f791f23f"
     },
     {
       "path": "rh/icon_manager.py",
-      "size": 21758,
-      "sha256": "2fd917f38b552e953ee2f7fa1fdc6514e2e6ac2d2022458a560a10455f5680d5"
+      "size": 21630,
+      "sha256": "e15334524462f15a8ab243e5e6f3dba99a15f90db60fae392c095a3d1a19ff1b"
     },
     {
       "path": "rh/inputs.py",
@@ -1877,8 +1877,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 7967,
-      "sha256": "539ce45e9d0a61b836e5258e0b98c3a79e2ceee8cf9f338762979a7ad2c3953f"
+      "size": 8174,
+      "sha256": "43448f9230f72c7ff60f1b730b416cfef6d2046efce7f98925f9074b1f5a440c"
     },
     {
       "path": "rh/romfiles.py",
@@ -1902,8 +1902,8 @@
     },
     {
       "path": "rh/screens/emu_store.py",
-      "size": 17307,
-      "sha256": "f935b126000ccd78e38b0a6cc3a395ce234d92d450d983fc5d6eb7eaa3e60570"
+      "size": 17722,
+      "sha256": "71a59132058e82e753950954a403c8a8871c63159ae845c948b611dd38a4bbff"
     },
     {
       "path": "rh/screens/home.py",
@@ -1957,8 +1957,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 9132,
-      "sha256": "772ae1e04d65d3892f81f369acdb962f42c04dfec5a4ddffeef7c1a0db1f8941"
+      "size": 9345,
+      "sha256": "e803fba079b2c03225842828859cf7176612a646479b6100a97cc8e38d221a29"
     },
     {
       "path": "rh/screens/youtube.py",
@@ -2002,8 +2002,8 @@
     },
     {
       "path": "rh/theme_manager.py",
-      "size": 10290,
-      "sha256": "83098a39aafa139d04e13ce8863532197318c1cd1cd1bf4de645b8557a19e03f"
+      "size": 10563,
+      "sha256": "cdf45beea19cca7fa12221d8d8fc72ede067af700f5dbf584573f9c2bb1acb13"
     },
     {
       "path": "rh/ui/__init__.py",
@@ -2032,8 +2032,8 @@
     },
     {
       "path": "rh/version.py",
-      "size": 855,
-      "sha256": "df6725f4c1d64360835314ef82d1de5f4e666a9c52279d63698aee317daf4b1c"
+      "size": 879,
+      "sha256": "4339323b98a0113445e84136bc11366f54fe1dcc591abb061907bcb30034db11"
     },
     {
       "path": "rh/yt.py",
@@ -2462,23 +2462,23 @@
     },
     {
       "path": "web/app.js",
-      "size": 103682,
-      "sha256": "363f02bf2f260edfdf1f8a17a2cf6c3a0293679b5d5bf6f536da5228837ee304"
+      "size": 105726,
+      "sha256": "5e0d955c6bca919a8dbe53d844ccc8c636f0e177caf11799eb1ef9d2e1d0d47a"
     },
     {
       "path": "web/index.html",
-      "size": 34795,
-      "sha256": "f32e2d285a89d76ec55ee17a5e3b67299d2761efc2b32620f75e65ef421e44e1"
+      "size": 35316,
+      "sha256": "b0c4ce7c209967fd1b6edbaecf215596f3811144bbe872eaf4f6d72c8ce37763"
     },
     {
       "path": "web/style.css",
-      "size": 25547,
-      "sha256": "c0fbfcd994e06885280bb7912be6eab6d4c617621d0dfcfb9a4e2e0175011d4f"
+      "size": 26753,
+      "sha256": "5de8ccfa441f412c3c2dc860a7b9e6de0ad4c41656e5949dfd82faf10bfd8fa7"
     },
     {
       "path": "yt.py",
-      "size": 37688,
-      "sha256": "eb157ac7874bb6e87525c52e4c4c22ae214cfd933dc153dd511f8cb4db8cff16"
+      "size": 38743,
+      "sha256": "e75d1efb93a87df447a045595093378d03003684da13ac7ccd7551774b80d349"
     }
   ],
   "notes": "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm",

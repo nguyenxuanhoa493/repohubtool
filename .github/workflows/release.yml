@@ -1,0 +1,68 @@
+name: Build & Release
+
+# Publishing is driven by tags, never by hand:
+#   git tag v2.36 && git push origin v2.36
+# CI runs the existing tools/make_release.py pipeline: syntax + i18n + OTA
+# checks, manifest hashes, the four archives, the rendered site, and the
+# GitHub Release. Nothing is packaged or zipped by hand any more.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Publish as a full installer release"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify tag matches files/rh/version.py
+        run: |
+          V=$(python -c "import re;print(re.search(r'APP_VERSION\s*=\s*[\"\\']([^\"\\']+)',open('files/rh/version.py',encoding='utf-8').read()).group(1).lstrip('v'))")
+          echo "version.py = $V"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$TAG" != "$V" ]; then
+              echo "::error::tag $TAG does not match APP_VERSION $V"
+              exit 1
+            fi
+          fi
+
+      - name: Run the release pipeline
+        env:
+          FULL: ${{ inputs.full }}
+        run: |
+          FLAG=""
+          if [ "${{ github.ref_type }}" = "tag" ] || [ "$FULL" = "true" ]; then
+            FLAG="--full"
+          fi
+          python tools/make_release.py --publish $FLAG \
+            --branch "${{ github.event.repository.default_branch }}"
+
+      - name: Commit manifest and site back
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json index.html vi changelog guide java
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "chore(release): sync manifest and site for ${GITHUB_REF_NAME:-manual}"
+            git push origin "HEAD:${{ github.event.repository.default_branch }}"
+          fi

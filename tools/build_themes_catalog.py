@@ -16,8 +16,12 @@ CATALOG_DIR = os.path.join(ROOT, "catalog")
 OUTPUT_JSON = os.path.join(CATALOG_DIR, "themes_catalog.json")
 APP_CATALOG_JSON = os.path.join(ROOT, "files", "catalog", "themes_catalog.json")
 
-CDN_BASE_URL = "https://retrohub.xuanhoa493.com/Themes/zips/"
-RAW_GIT_BASE_URL = "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/Themes/zips/"
+# Theme zips live on a GitHub Release (uploaded by _src/publish_assets.py).
+# GitHub rewrites spaces to dots in asset names; run
+# _src/migrate_assets_urls.py after uploading to correct any edge cases.
+ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+CDN_BASE_URL = ASSET_BASE
+RAW_GIT_BASE_URL = ASSET_BASE
 
 
 def clean_junk(directory: str):
@@ -164,8 +168,8 @@ def scan_and_build():
             "zip_size_bytes": zip_size_bytes,
             "size_str": size_str,
             "preview_rel": preview_rel,
-            "download_url": f"{CDN_BASE_URL}{item}.zip",
-            "raw_git_url": f"{RAW_GIT_BASE_URL}{item}.zip"
+                    "download_url": f"{CDN_BASE_URL}{item.replace(' ', '.')}.zip",
+                    "raw_git_url": f"{RAW_GIT_BASE_URL}{item.replace(' ', '.')}.zip"
         })
 
     return themes
