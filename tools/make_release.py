@@ -74,11 +74,15 @@ def step_3_update_manifest():
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    manifest_files_by_path = {
-        f["path"]: f for f in manifest.get("files", []) if isinstance(f, dict) and "path" in f
+    old_paths = {
+        f["path"] for f in manifest.get("files", []) if isinstance(f, dict) and "path" in f
     }
+    remove_list = set(manifest.get("remove", []))
 
+    current_files = []
+    scanned_paths = set()
     scanned = 0
+
     for root, _, files in os.walk(FILES_DIR):
         for fn in sorted(files):
             if fn.startswith(".") or fn.endswith(".pyc") or fn == "desktop.ini":
@@ -90,18 +94,21 @@ def step_3_update_manifest():
             sha = hashlib.sha256(data).hexdigest()
             size = len(data)
 
-            if rel in manifest_files_by_path:
-                manifest_files_by_path[rel]["sha256"] = sha
-                manifest_files_by_path[rel]["size"] = size
-            else:
-                manifest_files_by_path[rel] = {
-                    "path": rel,
-                    "size": size,
-                    "sha256": sha
-                }
+            current_files.append({
+                "path": rel,
+                "size": size,
+                "sha256": sha
+            })
+            scanned_paths.add(rel)
             scanned += 1
 
-    manifest["files"] = sorted(list(manifest_files_by_path.values()), key=lambda x: x["path"])
+    # Tự động thêm các tệp đã xóa hoặc đổi tên vào danh sách remove
+    deleted_paths = old_paths - scanned_paths
+    for dp in deleted_paths:
+        remove_list.add(dp)
+
+    manifest["files"] = sorted(current_files, key=lambda x: x["path"])
+    manifest["remove"] = sorted(list(remove_list))
 
     # Cap nhat luon ca cac tep trong runtime neu co
     for rf in manifest.get("runtime", {}).get("files", []):
