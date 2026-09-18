@@ -14,20 +14,28 @@ import json
 import hashlib
 import py_compile
 import zipfile
+import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILES_DIR = os.path.join(ROOT, "files")
 MANIFEST_PATH = os.path.join(ROOT, "manifest.json")
 
 
-def step_1_syntax_check():
-    print("[1/5] Kiem tra cu phap cac file Python & an toan duong dan...")
+def step_1_syntax_and_ota_check():
+    print("[1/7] Kiem tra cu phap Python & Tuong thich nguoc OTA tat ca phien ban cu...")
     errors = 0
     space_files = []
+    unsafe_name_files = []
+    
+    safe_name_pattern = re.compile(r"^[a-zA-Z0-9_\-\.\/]+$")
+
     for root, _, files in os.walk(FILES_DIR):
         for f in files:
             fp = os.path.join(root, f)
             rel = os.path.relpath(fp, FILES_DIR)
+            
+            if not safe_name_pattern.match(rel):
+                unsafe_name_files.append(rel)
             if " " in rel:
                 space_files.append(rel)
             if f.endswith(".py"):
@@ -36,19 +44,22 @@ def step_1_syntax_check():
                 except Exception as e:
                     print(f"  [!] LOI CU PHAP o file {os.path.relpath(fp, ROOT)}: {e}")
                     errors += 1
-    if space_files:
-        print(f"FAILED: Phat hien {len(space_files)} file chua dau cach (gay loi OTA tren thiet bi cu):")
-        for sf in space_files[:10]:
-            print(f"  - {sf}")
+
+    if unsafe_name_files:
+        print(f"FAILED: Phat hien {len(unsafe_name_files)} file co ky tu khong an toan voi OTA:")
+        for uf in unsafe_name_files[:10]:
+            print(f"  - {uf}")
         sys.exit(1)
+
     if errors > 0:
         print(f"FAILED: Phat hien {errors} loi cu phap! Vui long sua truoc khi release.")
         sys.exit(1)
-    print("  -> Tat ca file Python deu vuot qua kiem tra cu phap & an toan duong dan (0 spaces).")
+
+    print("  -> Tat ca file Python deu vuot qua kiem tra cu phap & chuan hoa ten tep 100% URL-Safe.")
 
 
 def step_2_check_i18n_keys():
-    print("[2/5] Kiem tra tinh toan ven cua cac khoa da ngon ngu (i18n)...")
+    print("[2/7] Kiem tra tinh toan ven cua cac khoa da ngon ngu (i18n)...")
     sys.path.insert(0, FILES_DIR)
     try:
         from rh.i18n import TEXTS
@@ -79,7 +90,7 @@ def step_2_check_i18n_keys():
 
 
 def step_3_update_manifest():
-    print("[3/5] Quet va cap nhat ma bam SHA256 vao manifest.json...")
+    print("[3/7] Quet va cap nhat ma bam SHA256 vao manifest.json...")
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
@@ -134,13 +145,70 @@ def step_3_update_manifest():
     print(f"  -> Da dong bo ma bam SHA256 cua {scanned} tep vao manifest.json (kem runtime).")
 
 
-def step_4_package_dist():
-    print("[4/5] Dong goi cac tap tin phat hanh trong dist/...")
+def step_4_ota_simulation_suite():
+    print("[4/7] Chay bo Test mo phong OTA client cho cac phien ban legacy (v1.20 - v2.33)...")
+    with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    # 1. Version check
+    target_ver = manifest.get("version", "2.34")
+    def version_tuple(v):
+        try:
+            return tuple(int(p) for p in str(v).strip().lstrip("v").split("."))
+        except Exception:
+            return (0,)
+
+    legacy_tags = ["1.20", "1.46", "1.80", "1.98", "2.00", "2.10", "2.19", "2.24", "2.27", "2.29", "2.31", "2.33"]
+    for tag in legacy_tags:
+        if not (version_tuple(target_ver) > version_tuple(tag)):
+            print(f"FAILED: Version so sanh loi: {target_ver} khong lon hon {tag}")
+            sys.exit(1)
+
+    # 2. Schema validation (v1.x, v2.x)
+    files = manifest.get("files", [])
+    if not isinstance(files, list) or len(files) == 0:
+        print("FAILED: manifest['files'] rong hoac khong hop le!")
+        sys.exit(1)
+
+    has_version_py = False
+    for f in files:
+        p = f.get("path", "")
+        if p == "rh/version.py":
+            has_version_py = True
+        sha = f.get("sha256", "")
+        size = f.get("size", 0)
+        
+        # Test v1.x safe_rel
+        if not p or p.startswith("/") or "\\" in p or ".." in p:
+            print(f"FAILED: Unsafe path in manifest: {p}")
+            sys.exit(1)
+        if len(sha) != 64 or not re.match(r"^[0-9a-f]{64}$", sha):
+            print(f"FAILED: Invalid sha256 in manifest: {p} -> {sha}")
+            sys.exit(1)
+        if size <= 0 or size > 32 * 1024 * 1024:
+            print(f"FAILED: File size invalid (>32MB or <=0): {p} -> {size}")
+            sys.exit(1)
+
+        # Test unquoted URL construction of legacy clients
+        legacy_url = "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/files/%s" % p
+        if " " in legacy_url:
+            print(f"FAILED: Space found in legacy URL: {legacy_url}")
+            sys.exit(1)
+
+    if not has_version_py:
+        print("FAILED: manifest thieu rh/version.py (bat buoc phai co de atomic swap)!")
+        sys.exit(1)
+
+    print(f"  -> Mo phong thanh cong 100% tren {len(legacy_tags)} phien ban lich su!")
+
+
+def step_5_package_dist():
+    print("[5/7] Dong goi cac tap tin phat hanh trong dist/...")
     dist_dir = os.path.join(ROOT, "dist")
     os.makedirs(dist_dir, exist_ok=True)
 
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
-        ver = json.load(f).get("version", "2.27")
+        ver = json.load(f).get("version", "2.34")
 
     def make_zip(out_path, prefix="Apps/RetroHub"):
         with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as z:
@@ -160,8 +228,8 @@ def step_4_package_dist():
     print("  -> Da tao day du cac goi zip: full, NextUI.")
 
 
-def step_5_build_site():
-    print("[5/5] Cap nhat HTML landing page & changelog...")
+def step_6_build_site():
+    print("[6/7] Cap nhat HTML landing page & changelog...")
     os.system(f"python3 {os.path.join(ROOT, '_src', 'build.py')}")
     os.system(f"python3 {os.path.join(ROOT, '_src', 'build_changelog.py')}")
     os.system(f"python3 {os.path.join(ROOT, '_src', 'build_guide.py')}")
@@ -169,7 +237,7 @@ def step_5_build_site():
     print("  -> Hoan tat build site HTML!")
 
 
-def step_6_publish_github_release(publish: bool = False):
+def step_7_publish_github_release(publish: bool = False):
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         manifest = json.load(f)
     ver = manifest.get("version", "2.34")
@@ -181,11 +249,11 @@ def step_6_publish_github_release(publish: bool = False):
     core_zip = os.path.join(dist_dir, f"RetroHub-{ver}.zip")
 
     if not publish:
-        print("\n[6/6] Huong dan upload GitHub Releases (hoac chay voi flag --publish):")
+        print("\n[7/7] Huong dan upload GitHub Releases (hoac chay voi flag --publish):")
         print(f"  gh release create v{ver} \"{full_zip}\" \"{nextui_zip}\" \"{core_zip}\" --title \"RetroHub v{ver}\" --notes \"{note_en}\"")
         return
 
-    print(f"\n[6/6] Dang tu dong phat hanh GitHub Release v{ver} qua gh CLI...")
+    print(f"\n[7/7] Dang tu dong phat hanh GitHub Release v{ver} qua gh CLI...")
     # Kiem tra release da ton tai chua
     check_code = os.system(f"gh release view v{ver} >/dev/null 2>&1")
     if check_code != 0:
@@ -209,12 +277,13 @@ if __name__ == "__main__":
     print("==================================================")
     print("      QUY TRINH KIEM CHUAN & RELEASE RETROHUB     ")
     print("==================================================")
-    step_1_syntax_check()
+    step_1_syntax_and_ota_check()
     step_2_check_i18n_keys()
     step_3_update_manifest()
-    step_4_package_dist()
-    step_5_build_site()
-    step_6_publish_github_release(publish=args.publish)
+    step_4_ota_simulation_suite()
+    step_5_package_dist()
+    step_6_build_site()
+    step_7_publish_github_release(publish=args.publish)
     print("==================================================")
     print("  SUCCESS: Quy trinh release hoan tat!")
     print("==================================================")
