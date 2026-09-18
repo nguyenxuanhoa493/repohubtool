@@ -1460,21 +1460,47 @@ let currentTab = 'games';
 
         
         // ==================== AI CHATBOT ====================
+        const RETROHUB_SYSTEM_PROMPT = `Bạn là trợ lý AI chuyên gia kỹ thuật điều hành hệ sinh thái RetroHub và thiết bị máy chơi game cầm tay (Linux aarch64, Kernel 4.9, Shell BusyBox/Ash).
+Bạn tương tác với người dùng qua Web Game Manager và có khả năng đề xuất các câu lệnh shell để người dùng bấm chạy trực tiếp trên máy (qua nút bấm thực thi).
+
+QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ 100%):
+1. ĐỊNH DẠNG KHỐI LỆNH: Mọi câu lệnh cần thực thi BẮT BUỘC PHẢI đặt trong block code markdown:
+\`\`\`bash
+câu_lệnh_ở_đây
+\`\`\`
+hoặc [CMD]câu_lệnh_ở_đây[/CMD].
+Hệ thống web sẽ tự động trích xuất và tạo nút bấm ⚡ Thực thi riêng cho từng lệnh.
+
+2. CÂU LỆNH ĐƠN GIẢN, TÁCH RỜI & AN TOÀN:
+- Mỗi block code chỉ chứa DUY NHẤT 1 câu lệnh (hoặc 1 lệnh đơn gọn gàng). Tránh gom quá nhiều lệnh phức tạp nối bằng && hay ; trong cùng một block để người dùng dễ quan sát output từng bước.
+- KHÔNG dùng markdown styling (như *tên_file* hay **bold**) bên trong block code.
+- Môi trường là Linux BusyBox ash: Sử dụng các lệnh tiêu chuẩn (ls, cat, grep, find, sed, rm, cp, mv, ps, df, free, kill...).
+- Python 3 trên máy KHÔNG có module SSL: Nếu cần gọi mạng HTTPS, dùng curl -s -k. Để chỉnh sửa file XML/JSON phức tạp an toàn, có thể dùng python3 -c "import xml.etree.ElementTree as ET..." hoặc python3 -c "import json...".
+
+3. QUY TRÌNH CHẨN ĐOÁN LỖI & RÚT GỌN THỜI GIAN DEBUG (FAST INVESTIGATION):
+- KHI NHẬN ĐƯỢC LOG (từ nút 'Quét log lỗi' hoặc lệnh tail/cat): Đọc ngay các dòng Error/Exception/Panic, xác định trực diện nguyên nhân gốc rễ và đưa NGAY LẬP TỨC câu lệnh khắc phục trong block code, kèm lời giải thích ngắn gọn (tối đa 2-3 câu). Không lan man.
+- TUYỆT ĐỐI KHÔNG ĐOÁN MÒ: Không tự suy diễn thông số phần cứng (như độ phân giải màn hình, CPU, RAM), đường dẫn file hay cấu hình khi chưa rõ. Hãy đọc kỹ thông tin được cung cấp từ nút "Gửi info" hoặc "Quét log lỗi", hoặc chủ động gửi 1 câu lệnh gom chẩn đoán nhanh.
+- Luôn trả lời bằng TIẾNG VIỆT, ngắn gọn, lịch sự, đi thẳng vào giải pháp kỹ thuật.`;
+
         let aiChatHistory = [
-            { role: "system", content: `Bạn là trợ lý AI chuyên gia điều hành hệ sinh thái RetroHub và thiết bị TrimUI Smart Pro (Linux/Busybox aarch64).
-Bạn có quyền thực thi lệnh trực tiếp trên máy thông qua shell bằng cách đề xuất lệnh cho người dùng bấm chạy.
-
-QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
-1. LUÔN TRẢ LỜI BẰNG TIẾNG VIỆT, ngắn gọn, súc tích, đi thẳng vào giải pháp kỹ thuật.
-2. TUYỆT ĐỐI KHÔNG ĐOÁN MÒ: Không tự suy diễn đường dẫn file, file log hay cấu hình hệ thống khi chưa được cung cấp hoặc chưa kiểm chứng. Mọi thông tin chưa rõ PHẢI được điều tra bằng câu lệnh thực tế.
-3. HÀNH ĐỘNG BẰNG CÂU LỆNH: Mọi thao tác kiểm tra, chẩn đoán, đọc log, sửa lỗi PHẢI viết dưới dạng câu lệnh shell trong block \`\`\`bash ... \`\`\` (hoặc [CMD]...[/CMD]) để người dùng bấm chạy, sau đó dựa vào kết quả thực tế để tư vấn tiếp.
-4. KHÔNG dùng cú pháp LaTeX (như $\rightarrow$, $\textbf{}$), chỉ dùng ký tự Unicode (->, →, **bold**).
-
-ĐẶC THÙ HỆ THỐNG CẦN NHỚ:
-- Python 3 trên máy KHÔNG hỗ trợ module SSL: Tuyệt đối không dùng code Python import ssl. Các tác vụ mạng HTTPS phải dùng \`curl -s -k\`.
-- Môi trường Shell là Busybox/Ash: Ưu tiên các lệnh tiêu chuẩn, tránh dùng các flag nâng cao không được Busybox hỗ trợ.
-- Khi người dùng gửi "Thông tin máy", hãy đọc kỹ phần cứng, danh sách giả lập (/Emus), Apps, RetroArch Cores, cấu trúc RetroHub và các file log thực tế để đưa ra câu lệnh chính xác 100%.` }
+            { role: "system", content: RETROHUB_SYSTEM_PROMPT }
         ];
+
+        function strToBase64(str) {
+            try {
+                return btoa(unescape(encodeURIComponent(str)));
+            } catch (e) {
+                return btoa(str);
+            }
+        }
+
+        function base64ToStr(b64) {
+            try {
+                return decodeURIComponent(escape(atob(b64)));
+            } catch (e) {
+                return atob(b64);
+            }
+        }
 
         function appendChatMessage(role, text, skipEscape = false, isCard = false) {
             const container = document.getElementById('chat-messages');
@@ -1512,40 +1538,74 @@ QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
                 bubble.style.border = '1px solid #334155';
             }
             
-            // Escape HTML
-            let safeText = skipEscape ? text : text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            if (skipEscape) {
+                bubble.innerHTML = text;
+                wrapper.appendChild(bubble);
+                container.appendChild(wrapper);
+                setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+                return;
+            }
+
+            // BƯỚC 1: Trích xuất các block lệnh [CMD]...[/CMD] và ```bash ... ``` TRƯỚC KHI escape HTML / Markdown
+            let cmdBlocks = [];
+            let processedText = text;
             
-            // Format basic markdown
+            processedText = processedText.replace(/\[CMD\]([\s\S]*?)\[\/CMD\]|```(?:[a-zA-Z0-9_-]+)?\n?([\s\S]*?)```/gi, (match, cmd1, cmd2) => {
+                const rawCmd = (cmd1 || cmd2 || '').trim();
+                if (!rawCmd) return '';
+                const token = `__CMD_BLOCK_TOKEN_${cmdBlocks.length}__`;
+                cmdBlocks.push(rawCmd);
+                return token;
+            });
+
+            // BƯỚC 2: Trích xuất inline code `...`
+            let inlineCodes = [];
+            processedText = processedText.replace(/`([^`\n]+)`/g, (match, codeText) => {
+                const token = `__INLINE_CODE_TOKEN_${inlineCodes.length}__`;
+                inlineCodes.push(codeText);
+                return token;
+            });
+
+            // BƯỚC 3: Escape HTML cho phần văn bản thông thường
+            let safeText = processedText
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            // BƯỚC 4: Format Markdown cơ bản (chỉ trên text an toàn)
             safeText = safeText.replace(/\$\\rightarrow\$/g, '→').replace(/\$\\leftarrow\$/g, '←');
             safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             safeText = safeText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            
-            // Format executable blocks FIRST ([CMD] or ```bash) -> Single Row
-            let cmdCount = 0;
+
+            // BƯỚC 5: Khôi phục inline code an toàn
+            inlineCodes.forEach((code, idx) => {
+                const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const html = `<code style="background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; font-size: 13px; color: #38bdf8; font-family: monospace;">${escapedCode}</code>`;
+                safeText = safeText.replace(`__INLINE_CODE_TOKEN_${idx}__`, html);
+            });
+
+            // BƯỚC 6: Khôi phục các Block lệnh với nút Thực thi (giữ 100% RAW command trong Base64)
             let allCmds = [];
-            safeText = safeText.replace(/\[CMD\]([\s\S]*?)\[\/CMD\]|```(?:[a-zA-Z0-9]+)?\n?([\s\S]*?)```/gi, (match, cmd1, cmd2) => {
-                const cmdText = cmd1 || cmd2;
-                cmdCount++;
-                const rawCmd = cmdText.trim();
+            cmdBlocks.forEach((rawCmd, idx) => {
                 allCmds.push(rawCmd);
-                const b64Cmd = btoa(encodeURIComponent(rawCmd));
+                const b64Cmd = strToBase64(rawCmd);
+                const escapedDisplay = rawCmd.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 
-                return `<div style="display: flex; align-items: center; justify-content: space-between; background: #070a13; border: 1px solid #1e293b; border-radius: 6px; padding: 4px 6px 4px 10px; margin: 4px 0; gap: 8px; max-width: 100%;">
-                    <code style="font-family: monospace; color: #38bdf8; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; flex: 1;">${rawCmd}</code>
-                    <button onclick="executeAiCommand(event, '${b64Cmd}')" title="Thực thi lệnh" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); cursor: pointer; padding: 4px 6px; border-radius: 4px; color: #34d399; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; outline: none; transition: all 0.2s;">
+                const blockHtml = `<div style="display: flex; align-items: center; justify-content: space-between; background: #070a13; border: 1px solid #1e293b; border-radius: 6px; padding: 6px 8px 6px 10px; margin: 6px 0; gap: 8px; max-width: 100%;">
+                    <code style="font-family: monospace; color: #38bdf8; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; flex: 1;">${escapedDisplay}</code>
+                    <button onclick="executeAiCommand(event, '${b64Cmd}')" title="Thực thi lệnh này" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); cursor: pointer; padding: 5px 8px; border-radius: 4px; color: #34d399; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; outline: none; transition: all 0.2s;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     </button>
                 </div>`;
+                safeText = safeText.replace(`__CMD_BLOCK_TOKEN_${idx}__`, blockHtml);
             });
-            
-            // Format inline code (`)
-            safeText = safeText.replace(/`([^`\n]+)`/g, `<code style="background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 4px; font-size: 13px; color: #38bdf8;">$1</code>`);
-            
-            if (cmdCount > 1) {
-                const b64Cmds = btoa(encodeURIComponent(JSON.stringify(allCmds)));
+
+            // BƯỚC 7: Nút Chạy tất cả nếu có nhiều hơn 1 lệnh
+            if (cmdBlocks.length > 1) {
+                const b64Cmds = strToBase64(JSON.stringify(allCmds));
                 safeText += `<div style="display: flex; justify-content: flex-end; margin-top: 6px;">
                     <div style="display: inline-flex; align-items: center; background: #070a13; border: 1px solid rgba(234, 179, 8, 0.35); border-radius: 6px; padding: 3px 6px 3px 10px; gap: 8px;">
-                        <span style="font-family: monospace; color: #facc15; font-size: 12px; font-weight: 600;">⚡ Chạy tất cả (${cmdCount} lệnh)</span>
+                        <span style="font-family: monospace; color: #facc15; font-size: 12px; font-weight: 600;">⚡ Chạy tất cả (${cmdBlocks.length} lệnh)</span>
                         <button onclick="executeAllAiCommands(event, '${b64Cmds}')" title="Thực thi tất cả theo thứ tự" style="background: rgba(234, 179, 8, 0.15); border: none; cursor: pointer; padding: 3px 6px; border-radius: 4px; color: #facc15; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; outline: none; transition: all 0.2s;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         </button>
@@ -1557,14 +1617,13 @@ QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
             wrapper.appendChild(bubble);
             container.appendChild(wrapper);
             
-            // Auto scroll to bottom smoothly
             setTimeout(() => {
                 container.scrollTop = container.scrollHeight;
             }, 50);
         }
 
         async function executeAllAiCommands(e, b64Cmds) {
-            const cmds = JSON.parse(decodeURIComponent(atob(b64Cmds)));
+            const cmds = JSON.parse(base64ToStr(b64Cmds));
             const btn = e.currentTarget;
             btn.disabled = true;
             btn.innerHTML = '⏳';
@@ -1617,7 +1676,29 @@ QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
             const btn = document.getElementById('btn-send-info');
             if(btn) { btn.disabled = true; btn.innerHTML = '⏳ Đang quét...'; }
             
-            const cmd = 'echo "--- SYSTEM INFO ---"; uname -a; echo ""; echo "--- RAM ---"; free -m; echo ""; echo "--- DISK ---"; df -h; echo ""; echo "--- ROOT DIR ---"; ls -la /mnt/SDCARD | head -n 30; echo ""; echo "--- ROMS DIRS ---"; ls -d /mnt/SDCARD/Roms/*/ 2>/dev/null; echo ""; echo "--- GIẢ LẬP ĐÃ CÀI (/mnt/SDCARD/Emus) ---"; ls -d /mnt/SDCARD/Emus/*/ 2>/dev/null; echo ""; echo "--- APPS (/mnt/SDCARD/Apps) ---"; ls -d /mnt/SDCARD/Apps/*/ 2>/dev/null; echo ""; echo "--- CẤU TRÚC APP RETROHUB ---"; find /mnt/SDCARD/Apps/RetroHub -maxdepth 2 2>/dev/null | grep -v "/\._" | head -n 45; echo ""; echo "--- RETROARCH CORES (.so) ---"; ls /mnt/SDCARD/RetroArch/.retroarch/cores/*.so 2>/dev/null | awk -F/ "{print \$NF}"; echo ""; echo "--- CÁC FILE LOG THỰC TẾ TRÊN MÁY ---"; find /mnt/SDCARD /tmp -maxdepth 5 -type f 2>/dev/null | grep -iE "\.(log|out)$|loi\.txt$" | grep -v "\._" | head -n 30';
+            const cmd = [
+                'echo "=== [1] THÔNG TIN PHẦN CỨNG & HỆ ĐIỀU HÀNH ==="',
+                'uname -a',
+                'cat /proc/device-tree/model 2>/dev/null && echo ""',
+                'echo "=== [2] MÀN HÌNH & ĐỘ PHÂN GIẢI THỰC TẾ ==="',
+                'if [ -f /sys/class/graphics/fb0/virtual_size ]; then echo "Framebuffer resolution: $(cat /sys/class/graphics/fb0/virtual_size)"; elif which fbset >/dev/null 2>&1; then fbset | grep -i "geometry"; fi',
+                'echo "=== [3] RAM & BỘ NHỚ DISK ==="',
+                'free -m',
+                'df -h | grep -E "Filesystem|/mnt/SDCARD|/tmp|rootfs"',
+                'echo "=== [4] GIẢ LẬP ĐÃ CÀI (/mnt/SDCARD/Emus) ==="',
+                'ls -d /mnt/SDCARD/Emus/*/ 2>/dev/null',
+                'echo "=== [5] CORES RETROARCH (.so) ==="',
+                'ls /mnt/SDCARD/RetroArch/.retroarch/cores/*.so 2>/dev/null | awk -F/ "{print \\$NF}"',
+                'echo "=== [6] APPS & GAME PORTS (/mnt/SDCARD/Apps & Data/ports) ==="',
+                'ls -d /mnt/SDCARD/Apps/*/ 2>/dev/null',
+                'ls -d /mnt/SDCARD/Data/ports/*/ 2>/dev/null',
+                'echo "=== [7] THƯ MỤC ROMS HIỆN CÓ ==="',
+                'ls -d /mnt/SDCARD/Roms/*/ 2>/dev/null',
+                'echo "=== [8] CẤU TRÚC ỨNG DỤNG RETROHUB ==="',
+                'find /mnt/SDCARD/Apps/RetroHub -maxdepth 2 2>/dev/null | grep -v "/\\._" | head -n 35',
+                'echo "=== [9] CÁC FILE LOG THỰC TẾ TRÊN THIẾT BỊ ==="',
+                'find /mnt/SDCARD /tmp -maxdepth 5 -type f 2>/dev/null | grep -iE "\\.(log|out)$|loi\\.txt$" | grep -v "\\._" | head -n 30'
+            ].join("; echo ''; ");
             
             try {
                 const res = await fetch('/api/run_cmd', {
@@ -1641,7 +1722,7 @@ QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
                 
                 appendChatMessage('user', htmlText, true, true);
                 
-                const plainText = 'Đây là toàn bộ thông tin phần cứng, danh sách giả lập đã cài (/mnt/SDCARD/Emus, RetroArch Cores, Apps), cấu trúc thư mục và các file log thực tế trên máy TrimUI:\n```\n' + outLog + '\n```\nHãy ghi nhớ các giả lập và file log này để tư vấn chính xác.';
+                const plainText = 'Đây là toàn bộ thông tin phần cứng (model máy, độ phân giải màn hình thực tế, RAM, Disk), danh sách giả lập, cores RetroArch, game ports, cấu trúc thư mục và các file log thực tế trên máy:\n```\n' + outLog + '\n```\nHãy ghi nhớ các thông số này (đặc biệt là độ phân giải màn hình thực tế, danh sách giả lập và log) để tư vấn và đưa ra câu lệnh chính xác 100%.';
                 aiChatHistory.push({ role: 'user', content: plainText });
                 
                 document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
@@ -1651,12 +1732,65 @@ QUY TẮC LÀM VIỆC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
             } catch (e) {
                 alert('Lỗi lấy thông tin: ' + e.message);
             } finally {
-                if(btn) { btn.disabled = false; btn.innerHTML = '📡 Gửi thông tin máy'; }
+                if(btn) { btn.disabled = false; btn.innerHTML = '📡 Gửi info'; }
+            }
+        }
+
+        async function quickDebugLogsAI() {
+            const btn = document.getElementById('btn-quick-debug');
+            if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Đang quét log...'; }
+
+            const cmd = [
+                'echo "=== [1] LOGS VỪA THAY ĐỔI GẦN ĐÂY (< 30 PHÚT) ==="',
+                'find /mnt/SDCARD /tmp -maxdepth 5 -type f -mmin -30 2>/dev/null | grep -iE "\\.(log|out|txt)$" | grep -v "/\\._" | while read f; do echo "--- FILE: \\$f ---"; tail -n 25 "\\$f"; echo ""; done',
+                'echo "=== [2] RETROHUB LOG (25 DÒNG CUỐI) ==="',
+                'if [ -f /mnt/SDCARD/RetroHub/logs/retrohub.log ]; then tail -n 25 /mnt/SDCARD/RetroHub/logs/retrohub.log; elif [ -f /mnt/SDCARD/Apps/RetroHub/logs/retrohub.log ]; then tail -n 25 /mnt/SDCARD/Apps/RetroHub/logs/retrohub.log; else echo "(Không có file log)"; fi',
+                'echo "=== [3] RETROARCH LOG (25 DÒNG CUỐI) ==="',
+                'if [ -f /mnt/SDCARD/RetroArch/.retroarch/logs/retroarch.log ]; then tail -n 25 /mnt/SDCARD/RetroArch/.retroarch/logs/retroarch.log; elif [ -f /mnt/SDCARD/RetroArch/retroarch.log ]; then tail -n 25 /mnt/SDCARD/RetroArch/retroarch.log; else echo "(Không có file log)"; fi',
+                'echo "=== [4] LOGS GAME PORTS / PORTMASTER (NẾU CÓ) ==="',
+                'find /mnt/SDCARD/Data/ports /mnt/SDCARD/roms/ports -maxdepth 3 -type f \\( -name "*.log" -o -name "log.txt" -o -name "StardewValley.log" \\) 2>/dev/null | while read pf; do echo "--- PORT LOG: \\$pf ---"; tail -n 20 "\\$pf"; echo ""; done',
+                'echo "=== [5] DMESG KERNEL WARNINGS & ERRORS ==="',
+                'dmesg 2>/dev/null | grep -iE "error|fail|panic|oom|segfault|killed|fault" | tail -n 20 || echo "(Không có)"'
+            ].join("; echo ''; ");
+
+            try {
+                const res = await fetch('/api/run_cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: cmd})
+                });
+                const data = await res.json();
+                const outLog = data.output || '(Lỗi đọc dữ liệu log)';
+                const safeLog = outLog.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                const htmlText = `<details style="background: #0f172a; border: 1px solid #7c3aed; border-radius: 8px; overflow: hidden; min-width: 280px; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    <summary style="cursor: pointer; padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: #c084fc; background: #1e1b4b; display: flex; align-items: center; justify-content: space-between; user-select: none; outline: none; gap: 8px;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span>🔍</span> Tổng hợp nhật ký lỗi hệ thống & giả lập gần nhất
+                        </span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">(Nhấn xem chi tiết)</span>
+                    </summary>
+                    <div style="padding: 10px 12px; background: #070a13; font-family: monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; max-height: 240px; overflow-y: auto; color: #e2e8f0; border-top: 1px solid #7c3aed;">${safeLog}</div>
+                </details>`;
+
+                appendChatMessage('user', htmlText, true, true);
+
+                const plainText = 'Dưới đây là toàn bộ các file log vừa thay đổi gần đây, log RetroHub, RetroArch, PortMaster và dmesg kernel trên thiết bị:\n```\n' + outLog + '\n```\nHãy phân tích nhanh nguyên nhân lỗi từ log trên và đưa ra ngay câu lệnh khắc phục ngắn gọn, chuẩn xác.';
+                aiChatHistory.push({ role: 'user', content: plainText });
+
+                document.getElementById('chat-submit-btn').innerHTML = 'Đang nghĩ... ⏳';
+                document.getElementById('chat-submit-btn').disabled = true;
+
+                doHeadlessAiFetch();
+            } catch (e) {
+                alert('Lỗi chẩn đoán log: ' + e.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '🔍 Quét log lỗi'; }
             }
         }
 
         async function executeAiCommand(e, b64Cmd) {
-            const cmd = decodeURIComponent(atob(b64Cmd));
+            const cmd = base64ToStr(b64Cmd);
             const btn = e.currentTarget;
             btn.disabled = true;
             btn.innerHTML = '⏳';
@@ -1755,7 +1889,7 @@ ${sysPrompt}
         function clearAIChat() {
             if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện?')) return;
             
-            aiChatHistory = [{ role: "system", content: "You are a helpful AI assistant integrated into a RetroHub gaming device web manager. Answer in Vietnamese. Be concise and friendly." }];
+            aiChatHistory = [{ role: "system", content: RETROHUB_SYSTEM_PROMPT }];
             const container = document.getElementById('chat-messages');
             if (container) {
                 container.innerHTML = `

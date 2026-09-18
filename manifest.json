@@ -1,12 +1,12 @@
 {
-  "version": "2.34",
-  "full_release_version": "2.34",
+  "version": "2.35",
+  "full_release_version": "2.35",
   "python": "any",
-  "built": "2026-09-18T02:55:00+0700",
+  "built": "2026-09-18T15:30:00+0700",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Thêm Thư viện Theme, Thư viện Icon Giả Lập trực quan, Tải Online 1 chạm, Tự động Sao lưu & Khôi phục",
-    "en": "Theme Store & Emu Icon Store with 1-Click Online Install, Auto-Backup & Fail-Safe Recovery"
+    "vi": "Trợ lý AI Web Manager: Sửa lỗi mã hóa ký tự lệnh Shell, Thêm nút Quét Log lỗi Chẩn đoán nhanh, Quét động phần cứng & màn hình",
+    "en": "Web Manager AI Assistant: Fix Shell Command HTML Encoding, Add 1-Click Quick Debug Log Scanner, Dynamic Hardware & Display Probing"
   },
   "remove": [
     "app.pyc",
@@ -317,8 +317,548 @@
     },
     {
       "path": "app.py",
-      "size": 3962,
-      "sha256": "6cb6f7d8c6539e87b2e941f8804ba72f28afb5975d94b3ff067d00227c4e92cc"
+      "size": 4074,
+      "sha256": "cb4a5f11087a424b4a4a9242b2fc4e34d0e9417e60d089f48917b3a6fcdf2dc8"
+    },
+    {
+      "path": "assets/emus_preview/bg-arcade.png",
+      "size": 63532,
+      "sha256": "212244a3f0e11498349c4c33aa9dc406e6807f2b42d7ae7b3743844c72ef6f55"
+    },
+    {
+      "path": "assets/emus_preview/bg-atari2600.png",
+      "size": 71210,
+      "sha256": "8fb5e2840d89f2e76e5bcbb3b53d25fcb3c8ef5c1439a0078ef54e34d31b8dfe"
+    },
+    {
+      "path": "assets/emus_preview/bg-atari7800.png",
+      "size": 11174,
+      "sha256": "e25b83364499fee20119036f4407b5965440abb801dc3317749307824bd5b93e"
+    },
+    {
+      "path": "assets/emus_preview/bg-cps1.png",
+      "size": 69256,
+      "sha256": "65cfcaf532703284dd3dc1cd0bb0daeebedb268918695a6126c1fe5f755e8d20"
+    },
+    {
+      "path": "assets/emus_preview/bg-cps2.png",
+      "size": 76722,
+      "sha256": "c2fa64c97e6e6fb7458fd8e52d5c34ec976523d6843dbbd0d468df51407c7f07"
+    },
+    {
+      "path": "assets/emus_preview/bg-cps3.png",
+      "size": 66892,
+      "sha256": "261797ada8bd7ac078a2fa334862daecfac48096dd96f4050a45e197e535b75a"
+    },
+    {
+      "path": "assets/emus_preview/bg-dc.png",
+      "size": 76730,
+      "sha256": "c5071ecea707abd85dfef46c51612d527a71ed6c1094f90681c750dacd4844b3"
+    },
+    {
+      "path": "assets/emus_preview/bg-easyrpg.png",
+      "size": 65677,
+      "sha256": "7afb938afdb6002c3cc3edaf4a944dba6cfc7b5a7f2d582e06504d79ceb86721"
+    },
+    {
+      "path": "assets/emus_preview/bg-fbneo.png",
+      "size": 63532,
+      "sha256": "212244a3f0e11498349c4c33aa9dc406e6807f2b42d7ae7b3743844c72ef6f55"
+    },
+    {
+      "path": "assets/emus_preview/bg-fc.png",
+      "size": 86062,
+      "sha256": "0f180c7679fa24c1f8aef7a2b9ec112c77c376544bb0175d3526cd87b240e0e0"
+    },
+    {
+      "path": "assets/emus_preview/bg-ffmpeg.png",
+      "size": 77351,
+      "sha256": "220c6457cb1774b7af8c2698a121a0751bc3dd8160ee3696a707d73d7c0ef1cd"
+    },
+    {
+      "path": "assets/emus_preview/bg-gb.png",
+      "size": 55970,
+      "sha256": "80491672f65744d4170510caf6f349360ebf646382fa8cb913701ebb19143bbe"
+    },
+    {
+      "path": "assets/emus_preview/bg-gba.png",
+      "size": 60775,
+      "sha256": "d6fb53695e767783b5b86b79b17eadb056aebfae6764bf142619da2ca1e67b28"
+    },
+    {
+      "path": "assets/emus_preview/bg-gbc.png",
+      "size": 70316,
+      "sha256": "91a671322140d75c5b970687458bfbc157288693e4419f0a9eca49d0f5c46cf4"
+    },
+    {
+      "path": "assets/emus_preview/bg-gg.png",
+      "size": 83699,
+      "sha256": "e097120c8720119d23e0f415fa3088338b4965f6cc6ec32af2102f6018648bde"
+    },
+    {
+      "path": "assets/emus_preview/bg-gw.png",
+      "size": 42868,
+      "sha256": "a57868dcb43ef8ee2cad9cf511220f327e9c804d45ae01419ed2cb263929574e"
+    },
+    {
+      "path": "assets/emus_preview/bg-lynx.png",
+      "size": 70118,
+      "sha256": "3d65328f5b00901cee71292015940d22721565c265ae30c07e3bba4790df511c"
+    },
+    {
+      "path": "assets/emus_preview/bg-mame.png",
+      "size": 75565,
+      "sha256": "e393ba9b8325758607354e9bb5b10b584732440ce2f15fd1e30faaf17a82a209"
+    },
+    {
+      "path": "assets/emus_preview/bg-mame2003plus.png",
+      "size": 86042,
+      "sha256": "d8117d4585e1e3cb9218f8fce8e56e84f09953373e785d51a17c093159e3cf5f"
+    },
+    {
+      "path": "assets/emus_preview/bg-mame2010.png",
+      "size": 94037,
+      "sha256": "f24a7b7b77dff76e1e5696f243b39e21e5b278a3f8e257782bbd6fc94d36c5ec"
+    },
+    {
+      "path": "assets/emus_preview/bg-md.png",
+      "size": 51208,
+      "sha256": "ff0b262eb3002be59f0616de8bb3a572b21d7b5cf4f6d82fd9856210efd68235"
+    },
+    {
+      "path": "assets/emus_preview/bg-ms.png",
+      "size": 83113,
+      "sha256": "0e04ce9a1d2c61813e627981f48db308755bf9a3616e977d366acb3b497e3358"
+    },
+    {
+      "path": "assets/emus_preview/bg-n64.png",
+      "size": 55523,
+      "sha256": "e5e314586e68613a2d5f2e8a10b0dfc94b7f461ad00df6af5c0ef2d5bd7bc60e"
+    },
+    {
+      "path": "assets/emus_preview/bg-nds.png",
+      "size": 82048,
+      "sha256": "4cd8dc04352eef117a65c4eb05bd40ea9dd9b2c4afb91c168ee8834f7ff4270a"
+    },
+    {
+      "path": "assets/emus_preview/bg-neogeo.png",
+      "size": 89319,
+      "sha256": "7add862217445c358d1e78f64a59788cd888214b496d9e6555af4a8fe997403c"
+    },
+    {
+      "path": "assets/emus_preview/bg-ngp.png",
+      "size": 100605,
+      "sha256": "7bb4a2ca9844a407073a2e6e58f9786848d7b13033925dd9d1aab5c18fbd0eb2"
+    },
+    {
+      "path": "assets/emus_preview/bg-openbor.png",
+      "size": 66336,
+      "sha256": "388f23f1b0793b86ca2de51492ec053e402b477429338c8ef92ced10ae28cd79"
+    },
+    {
+      "path": "assets/emus_preview/bg-pce.png",
+      "size": 19510,
+      "sha256": "7a603fa40e4ddb8083fd3ab86091c23e72dfc16c634b5aad60d6825874bd1b81"
+    },
+    {
+      "path": "assets/emus_preview/bg-pgm.png",
+      "size": 86975,
+      "sha256": "ab545d8a6d54d2817e519eff8a399494c371e06ac32e0facd90c70fd1d2f3523"
+    },
+    {
+      "path": "assets/emus_preview/bg-pico8.png",
+      "size": 24590,
+      "sha256": "e0ffc961e39720913db4ac44973d9128b4105c3f8c44f4d68d4824ec5b6fe8d9"
+    },
+    {
+      "path": "assets/emus_preview/bg-ppsspp.png",
+      "size": 82630,
+      "sha256": "155a5552e837fdd1050b05c2e3e12e052da85387dcd2732a74e06505be6f072b"
+    },
+    {
+      "path": "assets/emus_preview/bg-ps.png",
+      "size": 60463,
+      "sha256": "d09bc345ef376fc26dfe58b1b69da088a5e1e79da2ad82d894a2b8acf9db7ff2"
+    },
+    {
+      "path": "assets/emus_preview/bg-segacd.png",
+      "size": 60893,
+      "sha256": "23dc6921daad67c81be11696b92163b52886fc158031a6cc19faf70e8dca0516"
+    },
+    {
+      "path": "assets/emus_preview/bg-sfc.png",
+      "size": 25558,
+      "sha256": "c2f10500e7c9f7cf4968c50c992313a15e1168b27edec292adfe998593c87bcb"
+    },
+    {
+      "path": "assets/emus_preview/bg-ss.png",
+      "size": 88296,
+      "sha256": "5ad3bbd8f2cbc9d6cecc15847bd98a5770a703f7afd553dd3487e0c851167c49"
+    },
+    {
+      "path": "assets/emus_preview/bg-wsc.png",
+      "size": 65223,
+      "sha256": "1cf80af676f055a68420cdd184a4926718f84f046624fd2890eee930583620e8"
+    },
+    {
+      "path": "assets/emus_preview/ic-arcade.png",
+      "size": 2428,
+      "sha256": "63e64de9cb9171c20145a7d278318dab98424e1c0c1e57c6ff699b092cae8cfc"
+    },
+    {
+      "path": "assets/emus_preview/ic-atari2600.png",
+      "size": 2704,
+      "sha256": "6e05809c395dc1952845810b970c6850dd7b86de9f6085c75808a2723b1030b3"
+    },
+    {
+      "path": "assets/emus_preview/ic-atari7800.png",
+      "size": 2484,
+      "sha256": "48d3efac0d64bb6c23b3fc3931eb293e402a2fb2cd86ca238c410d5fd4bfc523"
+    },
+    {
+      "path": "assets/emus_preview/ic-cps1.png",
+      "size": 3045,
+      "sha256": "a09fc1bf2075ee9fe77614c8a1ae7ada38f8646e0e6425e374a6e26a2507f3fc"
+    },
+    {
+      "path": "assets/emus_preview/ic-cps2.png",
+      "size": 3069,
+      "sha256": "d4e5c183fbae0666090f971aa2b96966519daaa6b9cb2c5de2e93afa8b8224e6"
+    },
+    {
+      "path": "assets/emus_preview/ic-cps3.png",
+      "size": 3070,
+      "sha256": "b2788421d52f88c3bb0dc8ccd0b0e0904b7fb03b969dfa91147708cef7db8482"
+    },
+    {
+      "path": "assets/emus_preview/ic-dc.png",
+      "size": 2624,
+      "sha256": "55ff2692c223dcb1a74527aa1294a093e31c63ea4a361bbf6a186067bebafd88"
+    },
+    {
+      "path": "assets/emus_preview/ic-easyrpg.png",
+      "size": 2739,
+      "sha256": "1cae0f1ec54ab48d5881e459385ec7a513e217719af272e752c97c291c32d0f8"
+    },
+    {
+      "path": "assets/emus_preview/ic-fbneo.png",
+      "size": 2530,
+      "sha256": "71fae84dac7c2f04d6268315f86d73d956b708fdb23bfc8525cf154771d33717"
+    },
+    {
+      "path": "assets/emus_preview/ic-fc.png",
+      "size": 2651,
+      "sha256": "55a271303020ad8d3311b309632218e905cb3e5ebc9357306245b20b8334f187"
+    },
+    {
+      "path": "assets/emus_preview/ic-ffmpeg.png",
+      "size": 2488,
+      "sha256": "63ed85cded0b5bd89d70b0c180d3748d6c83026d6a3821aad436152e41af1a52"
+    },
+    {
+      "path": "assets/emus_preview/ic-gb.png",
+      "size": 2536,
+      "sha256": "3ccc3e4ddad381136fb0d30900631ef7e1e337edd9e138f9939cd3415f8dda5f"
+    },
+    {
+      "path": "assets/emus_preview/ic-gba.png",
+      "size": 2889,
+      "sha256": "b7e277a4c21fa8a654b85bd2a69542a24cc06183f88015a8cda7d0d26b0b412d"
+    },
+    {
+      "path": "assets/emus_preview/ic-gbc.png",
+      "size": 3190,
+      "sha256": "db5cb751b5b10f93cafaa7063fe94d20ae2cb63ded4d53858ff920a055983b46"
+    },
+    {
+      "path": "assets/emus_preview/ic-gg.png",
+      "size": 2587,
+      "sha256": "3e5d71bb58cf44ed23982d44dd1a6ea4fc471812d423142309bbe7c39a201aa1"
+    },
+    {
+      "path": "assets/emus_preview/ic-gw.png",
+      "size": 2903,
+      "sha256": "47a88c11dee1279ef1dfa98f517875119274ca04ddc1108e2d8c3967257384de"
+    },
+    {
+      "path": "assets/emus_preview/ic-lynx.png",
+      "size": 2343,
+      "sha256": "6758d951d017d019d00512fdf5a3ebfe00a26e068107e306b2361a58046ad87c"
+    },
+    {
+      "path": "assets/emus_preview/ic-mame.png",
+      "size": 2504,
+      "sha256": "4c4063e2559115ddcb56e582290d74d3123b42f183af8f2b16018bf4090c3842"
+    },
+    {
+      "path": "assets/emus_preview/ic-mame2003plus.png",
+      "size": 2752,
+      "sha256": "1b245130cd346482706eeb02eaaa7af69d613a163effcca6069b956c1a2aaa21"
+    },
+    {
+      "path": "assets/emus_preview/ic-mame2010.png",
+      "size": 2843,
+      "sha256": "aa53b13caf670f3a782b8041f5a005eda004f6107b7e255cd679fa283441e465"
+    },
+    {
+      "path": "assets/emus_preview/ic-md.png",
+      "size": 2399,
+      "sha256": "ef946f5a05c8ec5ae14482b901b4411369920b40760786607e778c7f559328e3"
+    },
+    {
+      "path": "assets/emus_preview/ic-ms.png",
+      "size": 2535,
+      "sha256": "29bc02f1fc5c853776364f74df9fc5fc709e9de5710ac3da35ff0d42afcd38e5"
+    },
+    {
+      "path": "assets/emus_preview/ic-n64.png",
+      "size": 2339,
+      "sha256": "f1b23479ff4d79856ae4c8f18be9ff9ed36fbc65ba380fa6e5829d16012f490b"
+    },
+    {
+      "path": "assets/emus_preview/ic-nds.png",
+      "size": 2457,
+      "sha256": "7b8cd852b7a24c35d28e1b037642a68cb5db187752d35c27ac68cd7331696597"
+    },
+    {
+      "path": "assets/emus_preview/ic-neogeo.png",
+      "size": 2598,
+      "sha256": "22f33737be7971cd0081a21de199167e78a46ff8671aca0fd0db8eeb7ea8e10e"
+    },
+    {
+      "path": "assets/emus_preview/ic-ngp.png",
+      "size": 2404,
+      "sha256": "b912efbec686d03b7acc5d2a9c68cd21848c7219977af232c7231df5d31e1e47"
+    },
+    {
+      "path": "assets/emus_preview/ic-openbor.png",
+      "size": 2548,
+      "sha256": "d2ffdf5fb8a8ad9d3d246443bc55544c5be6a7630627fb9e54e9e589df186400"
+    },
+    {
+      "path": "assets/emus_preview/ic-pce.png",
+      "size": 3002,
+      "sha256": "84f5a47c91565888194f1b7b76c8b6adf36cf335778e4352de9795ac4557ff12"
+    },
+    {
+      "path": "assets/emus_preview/ic-pgm.png",
+      "size": 2914,
+      "sha256": "806d7dd1a9785aa7919fea7f38945a53d70d2d293ee21fb0ca208fec66324317"
+    },
+    {
+      "path": "assets/emus_preview/ic-pico8.png",
+      "size": 2684,
+      "sha256": "05b7e31f6fede11ccc7b8c7a66ba554cdf259816cd5ddd9bb9f5ab45b9ffac18"
+    },
+    {
+      "path": "assets/emus_preview/ic-ppsspp.png",
+      "size": 2914,
+      "sha256": "5580036f18447650c88d4c81a92e6a898be30c3de2b03f443c139940dbfde9b7"
+    },
+    {
+      "path": "assets/emus_preview/ic-ps.png",
+      "size": 2397,
+      "sha256": "5d3b1f47b518c717801e4f6bd94e5034dbf0533666383b06ae09ad8e83415f70"
+    },
+    {
+      "path": "assets/emus_preview/ic-saturn.png",
+      "size": 2382,
+      "sha256": "e60aee18c37c9b4ef5ff3e612a1d7b4218afb58fd720f6a057bb5e3f8231356c"
+    },
+    {
+      "path": "assets/emus_preview/ic-segacd.png",
+      "size": 5238,
+      "sha256": "2aa9a59c9f61a2ab2cb9c13bbe7d3c3307a0ad634d953f6c0d2b809ec2c07066"
+    },
+    {
+      "path": "assets/emus_preview/ic-sfc.png",
+      "size": 2565,
+      "sha256": "38455d06994c156e35b728732c297eb864449f6ae18adf32174850120af30687"
+    },
+    {
+      "path": "assets/emus_preview/ic-wsc.png",
+      "size": 2521,
+      "sha256": "58704c797a4f34044082f2865898f5ec69ff3e5f45aa9b00d438a0017573d22c"
+    },
+    {
+      "path": "assets/emus_preview/poster-arcade.png",
+      "size": 54608,
+      "sha256": "9375b85d6295cf3d4d03f2f8281362f4a378307dc944ba3119e9ca1e5695d78b"
+    },
+    {
+      "path": "assets/emus_preview/poster-atari2600.png",
+      "size": 18414,
+      "sha256": "430362b2040dc7a8445858542c9e75cb87631bb591b263c8b009d9c14e1bfc8d"
+    },
+    {
+      "path": "assets/emus_preview/poster-atari7800.png",
+      "size": 37011,
+      "sha256": "0f61cfa0e08e0282e8d85676699ec8861c04b6b1078600d81ccbad8337b12d8c"
+    },
+    {
+      "path": "assets/emus_preview/poster-cps1.png",
+      "size": 32429,
+      "sha256": "6575d32346a3a3e8730b47cdc2048c5de21ad61e3117d4030b5be63b256f7c4e"
+    },
+    {
+      "path": "assets/emus_preview/poster-cps2.png",
+      "size": 29400,
+      "sha256": "dcdb706bcb1483781229b45744966f5af521ca7d21da279692038669181f2a78"
+    },
+    {
+      "path": "assets/emus_preview/poster-cps3.png",
+      "size": 17395,
+      "sha256": "f4248c8c2bb2ad4a34bd9c6dc7037832ee08b2a76fb85e85f370860b2d5b75b6"
+    },
+    {
+      "path": "assets/emus_preview/poster-dc.png",
+      "size": 40423,
+      "sha256": "5faa36280fb7bd75a1849b081cdd4ea6322d3b8cd005d6804b3bcbd48eaa3f03"
+    },
+    {
+      "path": "assets/emus_preview/poster-easyrpg.png",
+      "size": 39749,
+      "sha256": "a1fa6aade1582b3e4f9128dbb589e407003771bb991bb71dc6816d342a0b21ac"
+    },
+    {
+      "path": "assets/emus_preview/poster-fbneo.png",
+      "size": 31640,
+      "sha256": "c99ad9ca9ac8fe5b4920179f9d87fc8ed16022b85afeee0485d1a80d97e359fc"
+    },
+    {
+      "path": "assets/emus_preview/poster-fc.png",
+      "size": 46056,
+      "sha256": "5217416fe0b2b16b831c25690f6f60452a212c4180464d80ad33bc06cde0b500"
+    },
+    {
+      "path": "assets/emus_preview/poster-ffmpeg.png",
+      "size": 41711,
+      "sha256": "11894b343486ee6c6b9c80b78ef64fd417a8d06d1baf1b586bd6a6256b11beac"
+    },
+    {
+      "path": "assets/emus_preview/poster-gb.png",
+      "size": 19127,
+      "sha256": "381dcce2f8bd4fb967901d4af7fcf114883bf004966f4ab0a85cf3ccf4e76abd"
+    },
+    {
+      "path": "assets/emus_preview/poster-gba.png",
+      "size": 28301,
+      "sha256": "1d3ae56d1a176a4c70b4616f1db5ea4fac869b93192a2a968a2012e1c8d6bb03"
+    },
+    {
+      "path": "assets/emus_preview/poster-gbc.png",
+      "size": 39410,
+      "sha256": "b19660d18d73c578a398b21795e2c38126369146f71f18b6661bade063efb988"
+    },
+    {
+      "path": "assets/emus_preview/poster-gg.png",
+      "size": 28001,
+      "sha256": "c78b190ee434d10b09c7b159c6c09995e393b5babce86b99ef6d14f9aa86ae48"
+    },
+    {
+      "path": "assets/emus_preview/poster-gw.png",
+      "size": 17769,
+      "sha256": "b703c317a617b8642870a724b6ffad376289426d0c72a8f9f69eceb52109acf5"
+    },
+    {
+      "path": "assets/emus_preview/poster-lynx.png",
+      "size": 24926,
+      "sha256": "f2641e47698a97bbe2b9eb082155bdfaf52436b111f396a82465c723be39a86f"
+    },
+    {
+      "path": "assets/emus_preview/poster-mame.png",
+      "size": 44297,
+      "sha256": "761a15f5fc30297b69fb9110d27d22744e8433274fe370a039d18f152e6cd92f"
+    },
+    {
+      "path": "assets/emus_preview/poster-mame2003plus.png",
+      "size": 42520,
+      "sha256": "3bb3d675aeacf3d0d1a1e0f3637c3504c4bafcf2ee90beabecdfd26f970ca765"
+    },
+    {
+      "path": "assets/emus_preview/poster-mame2010.png",
+      "size": 18306,
+      "sha256": "e3df1e25442ec7d62b9f0ea82e170cb9ad1f0276287114329c1200ff7f255f55"
+    },
+    {
+      "path": "assets/emus_preview/poster-md.png",
+      "size": 34380,
+      "sha256": "6d954a1db8a3dbd793ecfccbf752c2c59e10a0cfa25c4c076b11813cdcf92f5e"
+    },
+    {
+      "path": "assets/emus_preview/poster-ms.png",
+      "size": 28430,
+      "sha256": "0bd5d5dc374348216ddd2acece6189fddedf2d22ff1cf9ff954a28eda08d8ed4"
+    },
+    {
+      "path": "assets/emus_preview/poster-n64.png",
+      "size": 34631,
+      "sha256": "05cb70dead1b35d80bc8d967516d732914528cba233390411221c3cb3f99cd83"
+    },
+    {
+      "path": "assets/emus_preview/poster-nds.png",
+      "size": 38217,
+      "sha256": "37e24467bfd490a1c1d13f76a61b1ac843b12bbe65c7e8d1265e75722117b6bf"
+    },
+    {
+      "path": "assets/emus_preview/poster-neogeo.png",
+      "size": 41822,
+      "sha256": "b3b2c7b706da20b64183309bfea809f35949d0ed71f2c1ba037f8bfc352a915f"
+    },
+    {
+      "path": "assets/emus_preview/poster-ngp.png",
+      "size": 41842,
+      "sha256": "69cb0006fa11f1343a6845e4f14cb69eb6d193069a6f342a95a103421764ef5a"
+    },
+    {
+      "path": "assets/emus_preview/poster-openbor.png",
+      "size": 39241,
+      "sha256": "cf49a09f62023f7e36671003b271bc199bf4a5f5f2d48a5f26438e0783309e2a"
+    },
+    {
+      "path": "assets/emus_preview/poster-pce.png",
+      "size": 29892,
+      "sha256": "3fe87c843ce79b9a1af3e1a24037420ad8d026db428d00d38f436a6838712f94"
+    },
+    {
+      "path": "assets/emus_preview/poster-pgm.png",
+      "size": 33242,
+      "sha256": "64579e80f4235d45bf815a67cc533c231f961c43d3ed7d97c617f182029d47b6"
+    },
+    {
+      "path": "assets/emus_preview/poster-pico8.png",
+      "size": 14113,
+      "sha256": "0eff8b2c7a731526317adb7156e6135524ba53a59a90f50598f2be41c4de4dbe"
+    },
+    {
+      "path": "assets/emus_preview/poster-ppsspp.png",
+      "size": 17621,
+      "sha256": "a9969546dbdfbef12b667360004f5a5e4df5d86c1555f0f95a6a65a24fc4d26a"
+    },
+    {
+      "path": "assets/emus_preview/poster-ps.png",
+      "size": 13298,
+      "sha256": "2416ac51e4e23dd9c8bfb1dd3e77eaaf0deee6830e7717c8832e26e643c79122"
+    },
+    {
+      "path": "assets/emus_preview/poster-saturn.png",
+      "size": 42134,
+      "sha256": "f3e15863d37300a7351ad5ed44bc02779dbde3b11a21fcbc6542621d1c4b9eac"
+    },
+    {
+      "path": "assets/emus_preview/poster-segacd.png",
+      "size": 45911,
+      "sha256": "b87a386ffb08f0e99b146a57c12e36794893963a2737168b53ea6b999a34c3c8"
+    },
+    {
+      "path": "assets/emus_preview/poster-sfc.png",
+      "size": 26390,
+      "sha256": "8bba021ba08adf7b67b2f8a21f5f2d3f7d1846c98cfecac28183579b467063bd"
+    },
+    {
+      "path": "assets/emus_preview/poster-wsc.png",
+      "size": 37680,
+      "sha256": "974348dd3956a46679c9d2812c636b1cb1c7e10ad432395f3685c596fd254fc5"
     },
     {
       "path": "assets/fallback.ttf",
@@ -342,13 +882,13 @@
     },
     {
       "path": "assets/icons_preview/burst.png",
-      "size": 1110314,
-      "sha256": "77634f4032e58fe534f02e4a6374c57c8d0d2737dfebc1be5ebc7097ac90024f"
+      "size": 46033,
+      "sha256": "54bf0e17a8638dc77b9e6e068aebc1b6eed4ad665f31438036ead19e2290870f"
     },
     {
       "path": "assets/icons_preview/stock.png",
-      "size": 811804,
-      "sha256": "f55281034f732a8762cdd9d10ce42b0e0383d68a1fb1f95fe1a46a648af174e6"
+      "size": 46342,
+      "sha256": "cbeef5527009b3103cb2c37c58dece11d8a822b4ee5394a27c88b3dd10a63e1b"
     },
     {
       "path": "assets/qr_bmc.png",
@@ -367,623 +907,623 @@
     },
     {
       "path": "assets/themes_preview/Animal_Crossing.png",
-      "size": 463160,
-      "sha256": "74941c8f7d552ed6dfeca7bdf0afee888bf3c3a7250b498a9c619394ecd06035"
+      "size": 51755,
+      "sha256": "d14523e84b04347c9cebfe54adfb2ccec8fc583c4291e3da2cec590af0548650"
     },
     {
       "path": "assets/themes_preview/Animal_Crossing_-_Alternate.png",
-      "size": 671615,
-      "sha256": "ef158aa8f8817edca9b2bed3fc256f2ed0643e722f69e13d8754539ba660cebe"
+      "size": 54325,
+      "sha256": "32bab72eada8fea810e4f8274eb9bd58a4341b1fdbc43ff0859d2a9b13481e97"
     },
     {
       "path": "assets/themes_preview/Assassins_Creed.png",
-      "size": 490200,
-      "sha256": "c95784aa816f6c8da30feb1389f1c7dd975e50f9d8bfc2e0c0065758fcc4c33b"
+      "size": 60782,
+      "sha256": "7f2f4792dd11b6032ebff3ede1e5d89195dd15c84f9ba591b2c41c475a97333b"
     },
     {
       "path": "assets/themes_preview/Assassins_Creed_-_Alternate.png",
-      "size": 277839,
-      "sha256": "9e22b4e82ea6bd7d25d7bed1413df42266252bbeff010bc636963310fe9d8373"
+      "size": 37707,
+      "sha256": "1a0639a27cd396cb83236fa1dd9d4dc7d391b882502a2e0b91210f9d8836c1f7"
     },
     {
       "path": "assets/themes_preview/Attack_on_Titan.png",
-      "size": 563320,
-      "sha256": "b798f0395bd980a4e3254abf5f299c1f79edde8af75877b74c70c1490a769bbf"
+      "size": 55830,
+      "sha256": "ef2e665ddbba1d3fe7f6f0fec19e802b00ded2d5ed8a411cddd8dfb5aa208ca7"
     },
     {
       "path": "assets/themes_preview/Attack_on_Titan_-_Attack.png",
-      "size": 546282,
-      "sha256": "e0d4635697957a3e995ae1762d048360962b7f308fe3ddace5c63db8adeb181b"
+      "size": 54848,
+      "sha256": "55f737aeeb5b18587ee900f469c715196f8f22100c05258c69e274e3de0b8cb2"
     },
     {
       "path": "assets/themes_preview/Attack_on_Titan_-_Levi.png",
-      "size": 607640,
-      "sha256": "17f7ff0f2236e8c61c68dba352c0a58567402c92c23e49b04d07b5699d63f624"
+      "size": 56917,
+      "sha256": "3c389fce76418cbf51d8594a90815fbfde530630e868867e6e976c99875857c3"
     },
     {
       "path": "assets/themes_preview/Attack_on_Titan_-_Mikasa.png",
-      "size": 643976,
-      "sha256": "193da27a9d4b4ec77ea19e359347ff04b0a545db7e704c09853df90628f00600"
+      "size": 59962,
+      "sha256": "bcfb725c0b4d5b8a21b39da210b7a97a4b80ef3957e451a85e34c86791929e7b"
     },
     {
       "path": "assets/themes_preview/Baki_the_Grappler.png",
-      "size": 527975,
-      "sha256": "0e30142f68325a7e59fcb729406e39c05f7abd8a0edcabff447e88f6ce3c7487"
+      "size": 56805,
+      "sha256": "c235a0fbee6d027660cb7c3c8781edc793be8a93d695bd72304f2095f5b83cf4"
     },
     {
       "path": "assets/themes_preview/Basic_-_Black.png",
-      "size": 78053,
-      "sha256": "1d1bf198c38c826b0b740b7554f091cef16f352e4ca991f02d0152d9feeb9154"
+      "size": 10715,
+      "sha256": "d901aff10cab455af568cb012d98d2a483d1acd2defd2e8925e6eb5fdb98f629"
     },
     {
       "path": "assets/themes_preview/Basic_-_Black___Red.png",
-      "size": 278440,
-      "sha256": "d6c76083e9526f853cc989963b328bcd17a3d9bf158a7c750da2aad29a04d476"
+      "size": 50276,
+      "sha256": "5aa8c3bf98024a8b5a0f9c176bb53fe73c6747a56e31663d3b26cb7649a1e2a8"
     },
     {
       "path": "assets/themes_preview/Basic_-_Canyon.png",
-      "size": 535244,
-      "sha256": "bba06d0e501e46e327269ff437a5b4a8613725e64182b97e71645f040f9ebceb"
+      "size": 55902,
+      "sha256": "338b376dbf10b08c475813704115e421ac856f974c869dd4a7b0e453c651b38d"
     },
     {
       "path": "assets/themes_preview/Basic_-_Clouds.png",
-      "size": 258228,
-      "sha256": "ee28ff9ca0507e7027ba86c3f47b950dbd127a997c08b57725090b450f5dfeca"
+      "size": 55499,
+      "sha256": "84b418a0a6914d8112a5e5d84e5e7ae7f36e3e4dc372fcd0db46ae4cad03a303"
     },
     {
       "path": "assets/themes_preview/Basic_-_Night_Sky.png",
-      "size": 463114,
-      "sha256": "33bd7545a56bb1a2e1bb3926eb2f50ea56e6d2965f29faae3c54a8de4aa50588"
+      "size": 50649,
+      "sha256": "1b3f4f04fb40d6fa07909260be24d457b7100ce2175577073ffaa6257d61eded"
     },
     {
       "path": "assets/themes_preview/Basic_-_Prism.png",
-      "size": 214480,
-      "sha256": "027e23877201a0286ee6bc8cb4b24b28d24111486528fd493672249f1b72b6fe"
+      "size": 26357,
+      "sha256": "0cc890af22a7c9db7a0c8fc291ee9ce756ef3226d4ce2c0b6a7035c0e151a5a5"
     },
     {
       "path": "assets/themes_preview/Basic_-_Space.png",
-      "size": 388799,
-      "sha256": "4ac986a5e41615797d36e5b3307c84e23c3370ab8a74bb424a515b26e010285b"
+      "size": 50346,
+      "sha256": "eaad82ee5905c08c8dca625a48694be79cf22c5815600e6d5b40a9b7a352b2df"
     },
     {
       "path": "assets/themes_preview/Basic_-_Triangles.png",
-      "size": 224063,
-      "sha256": "004ba3f03fd0cfab8f7212a0da6024f672cf628c488cf8b49af724b93d9a40fd"
+      "size": 33885,
+      "sha256": "6f853ef5e2228cc5080c88c61dd473e7e586c4b3d10455d6fdf47d9efc49b187"
     },
     {
       "path": "assets/themes_preview/Basic_-_Yosemite.png",
-      "size": 581228,
-      "sha256": "652e618fd7dd62f429b0ac71b1d52c87fa38fca9469832b9235865004debd9e6"
+      "size": 61947,
+      "sha256": "9ca5c790a90084971a2c70fe96ed02618ae5091c7f5d8742a7f0154be98ebc77"
     },
     {
       "path": "assets/themes_preview/Batman.png",
-      "size": 273250,
-      "sha256": "1d6b9875366a145cf147dbb2bee5978a13418a5edd31dfe72eeb9a27ba2d902f"
+      "size": 38579,
+      "sha256": "939aeeeda2c204f0c2b225dbc69aac9f23894da70e6ea918b0faf46c658c9313"
     },
     {
       "path": "assets/themes_preview/Berserk.png",
-      "size": 370119,
-      "sha256": "1b0ca14a33d75b783c1de1d8bc17727a3c4dea402bcdb0b78930fb672daa9402"
+      "size": 54175,
+      "sha256": "9b3176d642bbc8e9e8c2253a631858c5433e2d40e9f07a473ba3a42e8e996a1d"
     },
     {
       "path": "assets/themes_preview/Berserk_-_Alternate.png",
-      "size": 271478,
-      "sha256": "eab91a32d67cebdac149ff0ba1144292d5982716ea52c3220cd9b627b74010f8"
+      "size": 52870,
+      "sha256": "8ad1b63796d46c802303a564a8e1c252b0d5ed5ec68a617d3257dbb346c6f08f"
     },
     {
       "path": "assets/themes_preview/Bleach.png",
-      "size": 212735,
-      "sha256": "14d572f71ba7cb137666a99838627efc1df9a367fb4c1f72831560518e822f7b"
+      "size": 30578,
+      "sha256": "1c7a9fce15d81d2a4fbd386d3efd7a92a5aecf23f2879da73992808b246401ab"
     },
     {
       "path": "assets/themes_preview/Bleach_-_Ichigo.png",
-      "size": 322143,
-      "sha256": "f7fa4924dfc587a72fe3a10edff40ca6bb7ea3f4ac023a3de851d6f722fe23f5"
+      "size": 44575,
+      "sha256": "19a0449c2f034ed30336b396b585b3510911b7d89259c6ee5b17fbd99e825f13"
     },
     {
       "path": "assets/themes_preview/Bully.png",
-      "size": 404337,
-      "sha256": "8f17806788b2040e0e094f1235cf32ed4adf2e54673dba7389816e6416b60467"
+      "size": 56132,
+      "sha256": "8fc1890724ea4eddf16dc0b4e0bd2378860fb094894af8ddf6ea3e703716b9de"
     },
     {
       "path": "assets/themes_preview/Castlevania_-_Alucard.png",
-      "size": 539191,
-      "sha256": "7b22d556818fcbaa398815b3d6204dace728ff6c5e1049e14f3f8ad39949d67e"
+      "size": 69570,
+      "sha256": "f9439b62a5d1320672934a112dd7304992f410e008b061625b54e30524a14d48"
     },
     {
       "path": "assets/themes_preview/Castlevania_-_Lords_of_Shadow.png",
-      "size": 409718,
-      "sha256": "806471e14d972af3a8429426afb61c23cf5ed80d317546c95b8c514be0fc1a69"
+      "size": 55543,
+      "sha256": "2118c463e9b03f3cc11d56a6dede534ac9f5481aa510b319b635d8a7f207cf87"
     },
     {
       "path": "assets/themes_preview/Castlevania_-_Nocturne.png",
-      "size": 335954,
-      "sha256": "941914ac89729d0049c70d4589b943d736382f95f6669e82b31107e14ccb5933"
+      "size": 41985,
+      "sha256": "027d8d499567b0b88b76efe80b75619ce192a0e51f9cb44d156881a41ebe6149"
     },
     {
       "path": "assets/themes_preview/Cowboy_Bebop.png",
-      "size": 378682,
-      "sha256": "76e947708250054c4a3e13068a49ab165adc8cb08362570b4c87192364c547ac"
+      "size": 53948,
+      "sha256": "b04dc268c245d7ece2bfde090d633166974d017ad4ccb764ab4d07819c8a44ae"
     },
     {
       "path": "assets/themes_preview/Cowboy_Bebop_-_Spike.png",
-      "size": 178263,
-      "sha256": "3f44c83c136fb31a59691b95b57b10601518a6c826fd83f6fae9e939d7b7c0d7"
+      "size": 27977,
+      "sha256": "59fb485360e6d7913e32c804df821430bf57467f278c562af7a1f651c3eba616"
     },
     {
       "path": "assets/themes_preview/Cyberpunk_2077_-_Alternate.png",
-      "size": 359946,
-      "sha256": "5e64ee6d5c76cf3d857c1a84bd28a6731cbcf3ed2072acd9391418adafaf3d2e"
+      "size": 56755,
+      "sha256": "ccbbdd2a201a1dec7c259a91c428f2ce8a9feec832d226673edc7d4435ba3320"
     },
     {
       "path": "assets/themes_preview/Digimon.png",
-      "size": 484389,
-      "sha256": "d3e7a47004f213bd7cffdb7ffa90f6698c1a61556a5f53b839a64df5cfe8e183"
+      "size": 48627,
+      "sha256": "ebd0fb7af732a4c416286b1f820ccfcc3cd67087461a09acb2f17ac1dd5bfef3"
     },
     {
       "path": "assets/themes_preview/Digimon_-_Alternate.png",
-      "size": 552623,
-      "sha256": "66252b305922d363f4545f8dad02344ff3bcac30201fa6cc0c7771ba5eca398e"
+      "size": 61814,
+      "sha256": "7d62a038a75a15b207c99dc068b8d4cf41b0e201e376c1b33589647d2e003357"
     },
     {
       "path": "assets/themes_preview/Digimon_-_Omnimon.png",
-      "size": 414290,
-      "sha256": "4bfd8f7a1794690e821a8787d0edd987964b8f45e44f149d21e1402abef3ebf4"
+      "size": 48448,
+      "sha256": "f8cfaf46cc8d00d44c16f26c39adb0c8f7a73b85cc84aa61c80a953ccbb67d49"
     },
     {
       "path": "assets/themes_preview/Dragon_Ball_-_Super_Saiyans.png",
-      "size": 406178,
-      "sha256": "c1f801491839ba50dc84cb1cc64d82195440bda7dec5ec33f580ae574ebbf7d6"
+      "size": 44016,
+      "sha256": "ddce5cba91fc1897c12d674937ce275433d7e91459013ac56351fc40884774ae"
     },
     {
       "path": "assets/themes_preview/Dragon_Ball_-_Ultra_Instinct.png",
-      "size": 244683,
-      "sha256": "392af9d76b233c39ec111af33e219e4a7b13d9c73bd3dc8b318b39854c0949fb"
+      "size": 29729,
+      "sha256": "1f05d54920ed308c80e078ddc48cfe1ae4898ae01347017b64d88f94fab45ded"
     },
     {
       "path": "assets/themes_preview/Elden_Ring.png",
-      "size": 415509,
-      "sha256": "d1e2382e2afa45e1ba0f5b442face0e7b835f7714b528363a03af0982fd69906"
+      "size": 61688,
+      "sha256": "ac19523fca49c78dbd8cb2431d15694c387f6185e81170a75202ee3f2ccc9a79"
     },
     {
       "path": "assets/themes_preview/Elden_Ring_-_Malenia.png",
-      "size": 338850,
-      "sha256": "f924d3ac9cf3fb61830cb3c5c61eaca6d071dc5d1c1d067af370a09e9f312a38"
+      "size": 53571,
+      "sha256": "6a4a4d414611997c312d4a773f80480c3bca31a989990dbca92a92e23ff2a0cf"
     },
     {
       "path": "assets/themes_preview/Evangelion_-_Asuka___Rei.png",
-      "size": 316635,
-      "sha256": "8a6a37993182f467c9d058789a59b5086aec240123353ed0ef30b0a3cfc3968a"
+      "size": 38943,
+      "sha256": "4babb2837425135747b252115b3b3f777fa12b9a92d835d9a9dac232fcb72812"
     },
     {
       "path": "assets/themes_preview/Evangelion_-_NERV.png",
-      "size": 136240,
-      "sha256": "023ec7e95f879d62b8100ff74491ae0fd13cec3fc932e515c7f51d04e6f2761f"
+      "size": 20661,
+      "sha256": "0b8eaa311d173744d8c5d06e77819fe168e1d3fe76e348911d89442312eab0d9"
     },
     {
       "path": "assets/themes_preview/Final_Fantasy_-_Airship.png",
-      "size": 404014,
-      "sha256": "2ab55d8e3793cb431611163b0e3bbaafded7bcb49f23635b5c5c51a557f04844"
+      "size": 41641,
+      "sha256": "ce77a892ee626fd1dc7aef79980709a36b8e237edafc0681cd574e801aa283a5"
     },
     {
       "path": "assets/themes_preview/Final_Fantasy_IX.png",
-      "size": 249342,
-      "sha256": "57c2772a13381579cd9139eb7a74978bd0da34de6b2cb2448f6c169edd79f944"
+      "size": 28797,
+      "sha256": "4cf7bf010caa3b3c6400a01757e71e42b17bdf106476d250ec8a9f830546d4c5"
     },
     {
       "path": "assets/themes_preview/Final_Fantasy_IX_-_Vivi.png",
-      "size": 534777,
-      "sha256": "fbe3471beb4e8e7bc1602c43ee2a3f32cb523d5f288ddbd4004de8fed8e90335"
+      "size": 59287,
+      "sha256": "e5ed1b40cb980e87b1011ac8496f1ca192847a660f5a32e8eaf09d48785e151d"
     },
     {
       "path": "assets/themes_preview/Final_Fantasy_VII.png",
-      "size": 483338,
-      "sha256": "acef0591408a6f88130eec91f4cca4f70d82fa309d20bb4f7ba1768cedc69fc2"
+      "size": 62297,
+      "sha256": "bb1593cb257a8af5732686dad8978417b8d2f4920c596d608970d02677e1045c"
     },
     {
       "path": "assets/themes_preview/Final_Fantasy_VII_-_Alternate.png",
-      "size": 409829,
-      "sha256": "7513a004e2404d666a2fc8b8d9089dbe8cac729568476248d6c736db54478dd9"
+      "size": 48368,
+      "sha256": "6bd7ab960e1baaa341a5d889c281de504bd03033e9a63e52e5c2601f3677821d"
     },
     {
       "path": "assets/themes_preview/Final_Fantasy_XVI.png",
-      "size": 435700,
-      "sha256": "cdd3a04cb07cf11f9338e2faf14b3c26d7d4f300e587848279ee68eb3faa4d2e"
+      "size": 54734,
+      "sha256": "14d041504e7656216cb191d60e2ef30ea42c391ecbc2c58d19c454e5c939273a"
     },
     {
       "path": "assets/themes_preview/Fire_Emblem.png",
-      "size": 537575,
-      "sha256": "ece872b859650e3e1feb0a3ff7fd71e363fa183cba995526f005e50bb59f5c6f"
+      "size": 64934,
+      "sha256": "b4d84e182ed9914d3b95bc85948545c1e7d6df1e7cfa30535130d2730b61cae6"
     },
     {
       "path": "assets/themes_preview/Fullmetal_Alchemist_-_Brothers.png",
-      "size": 185208,
-      "sha256": "7523b0bcf06e6b5555b282abadc633bfc99a968f6b235e4d729084f39544f298"
+      "size": 26909,
+      "sha256": "0c8139aba91f083e14f2897a40c3d02801500c025ba8e82b25bafd7a2d71ce4c"
     },
     {
       "path": "assets/themes_preview/God_of_War.png",
-      "size": 421326,
-      "sha256": "2dd95b397a3e141c5e4564ac1bead081bf5af296ffeaa5ab57d357ec3e85d709"
+      "size": 51769,
+      "sha256": "0088d02bab5db091cf554a37059c4254938629223e303c5aaa3e4e221531608e"
     },
     {
       "path": "assets/themes_preview/Halo_-_Alternate.png",
-      "size": 550161,
-      "sha256": "c6e6b8756df1be104b64bd07c0ef062db5106da50421f4720233ae1e93bc07e1"
+      "size": 69195,
+      "sha256": "8fc422ba49bcaf42ac1e1528566e986594ed2ed7b042cb81d53008c13464a94c"
     },
     {
       "path": "assets/themes_preview/Halo_-_Stealth.png",
-      "size": 269903,
-      "sha256": "04db064d5a7a466d99307d618e6ede1b0b2aac9b61b1aa66789e37f0f2126f0c"
+      "size": 37847,
+      "sha256": "edb543b21766e160d0333432688a5d617e6ca52908f6d8f865116a282521e0b1"
     },
     {
       "path": "assets/themes_preview/Harry_Potter_-_Hogwarts.png",
-      "size": 414203,
-      "sha256": "bcee650da8bd346a6f5ae56a01bab3184d4a19c72916322bd0856b3b65821197"
+      "size": 56663,
+      "sha256": "8c654d5f17cce1257632bd5bc4b82ef4d11b86d94dd51ee5330d8ae2dfbeb9f7"
     },
     {
       "path": "assets/themes_preview/Helldivers_2.png",
-      "size": 432804,
-      "sha256": "7c3df0723ebeaf1f383a04e702d74eb513fb0d13473e5b3bff59592917c6fc9b"
+      "size": 47886,
+      "sha256": "3e952a66fb98332b457cad3b9fc93b4e1c608f11cd7bc60cd2ca794f1e17328e"
     },
     {
       "path": "assets/themes_preview/Howl_s_Moving_Castle.png",
-      "size": 335942,
-      "sha256": "666ac993a49e56c2597209d4b325f47f0f104420e079dde268c9f311e5eb36f4"
+      "size": 36087,
+      "sha256": "f76990463c0f9515c22c3e4ec344713bff6714f18d1bdd71832edb2dd837a715"
     },
     {
       "path": "assets/themes_preview/Howl_s_Moving_Castle_-_Alternate.png",
-      "size": 400346,
-      "sha256": "0807ebb93993af5e31ae1dbe284d00194af31246bb3b771c7f3ea7ac2135635b"
+      "size": 48490,
+      "sha256": "91e57df1e5963ae7dda54c567428a35af871552afe81d8792f2fe3705ede0bb7"
     },
     {
       "path": "assets/themes_preview/Initial_D.png",
-      "size": 367197,
-      "sha256": "8767019b17fef2b020d6424fc6430da327c7a73870c6d2908b08e38c3211eca7"
+      "size": 53222,
+      "sha256": "bfefb22628282e2764c5686d476bdbe976d60883bb894a2094c6ce64a4c877fc"
     },
     {
       "path": "assets/themes_preview/Initial_D_-_Alternate.png",
-      "size": 367448,
-      "sha256": "16bc4ed300716c40739f9cfcd696099ffd97a71729bd856109ff4d4bd974ebae"
+      "size": 59627,
+      "sha256": "1f68455f0c7237c4fd5809b8aadc5035840e0b5fb50bae44f8ac066ca593ec39"
     },
     {
       "path": "assets/themes_preview/Initial_D_-_Trueno.png",
-      "size": 391582,
-      "sha256": "f528b0a84222b3fe7da9d59a8df7ad566e2b564b4669b4738f991bfd8f0840ed"
+      "size": 47713,
+      "sha256": "898639c492d41950664ca93f189523b4aafefc849a3f4a55b1a09483fe1d1570"
     },
     {
       "path": "assets/themes_preview/Jujutsu_Kaisen_-_Gojo.png",
-      "size": 376333,
-      "sha256": "1d854caadba1e7c927d586d32795c640d6e748218a9b8881532916d030fc9dbe"
+      "size": 48001,
+      "sha256": "d0b48bd3e4402a8322cf10722491733ac8846b203e6ec82d770e6a53730497ce"
     },
     {
       "path": "assets/themes_preview/Jujutsu_Kaisen_-_Yuji.png",
-      "size": 473406,
-      "sha256": "d4194a096da061f32403fdd8de7d48c1a2bfc96de3d35fb082290b01a811d84f"
+      "size": 62308,
+      "sha256": "c228174f23105aeeb27c5f8501dbe9ae37b9ab3c9e720278f243ba5caab37ef0"
     },
     {
       "path": "assets/themes_preview/Jujutsu_Kaisen_-_Yuta.png",
-      "size": 415334,
-      "sha256": "0240a303dbfa18e6e44ca23f1784d25034df2301eb5ec8a48979901936d402ea"
+      "size": 50651,
+      "sha256": "8cb80a2f67dcb26a01b7830afa449c8ae949dca75d0ea0da093184e15c10b760"
     },
     {
       "path": "assets/themes_preview/Kill_Bill.png",
-      "size": 176598,
-      "sha256": "9cfb70d2313c688ed6eec4d9065c39d20259b2039a88b3d0b1651324ea30fd08"
+      "size": 22361,
+      "sha256": "a6f12eb74e5343a21a2e6bec6e64bac30598c656bfe193184d98f311a34644a7"
     },
     {
       "path": "assets/themes_preview/Kingdom_Hearts.png",
-      "size": 424614,
-      "sha256": "b235e056c4cc208a9df3ca9c6e6b7ab6ab041d42620ad381a121d8272ceff9dc"
+      "size": 48150,
+      "sha256": "516a347672f045483e445d2c3c0c7c43bb5368e9c00f0e93d5a4b086ad5bf66b"
     },
     {
       "path": "assets/themes_preview/Kingdom_Hearts_2.png",
-      "size": 483257,
-      "sha256": "f9a07c9e715b0781dd62724d4758e89759db5946aebf3e24b4b4a9d39e52529e"
+      "size": 55820,
+      "sha256": "35f57bdbb9c95c4d2d59d6d1cf41f070426deb29d5a118efcb0757ba418387db"
     },
     {
       "path": "assets/themes_preview/Kingdom_Hearts_Birth_By_Sleep.png",
-      "size": 605677,
-      "sha256": "640abee8ed472e688348402f9ad979ed3c38192660853318016403e5642f39e1"
+      "size": 63961,
+      "sha256": "1b4f93874dc91773533ab53728d7fe442896296d4a1512ad45d818860e721bf4"
     },
     {
       "path": "assets/themes_preview/Legend_of_Zelda_-_Alternate.png",
-      "size": 448018,
-      "sha256": "1f74f7b7f93a741f9dde20882426ab9d9f4c5e7eacbc7a3941984b6153269c43"
+      "size": 56767,
+      "sha256": "55a7c04099978181f337d11777ae928a55d4bf581a8836fdccc024d1635ef7f3"
     },
     {
       "path": "assets/themes_preview/Lord_of_the_Rings.png",
-      "size": 601408,
-      "sha256": "e3c17c558012159167fe2298ccb333368d9661e654628f02c991619504854e60"
+      "size": 73723,
+      "sha256": "2317c991f6ba9868d70ea15c7ac3deb5b4c920e4b6e7f5cc8a08d63eee224af6"
     },
     {
       "path": "assets/themes_preview/Lord_of_the_Rings_-_Gandalf.png",
-      "size": 609742,
-      "sha256": "aa11ddb7bb5dc07008eb291bf8a352471a9dbbef14856bab539b9b159d83715b"
+      "size": 72596,
+      "sha256": "9676c8e66c35fce58bd595076b2e91c88212b3a50ab163147167e261d9180817"
     },
     {
       "path": "assets/themes_preview/MF_Ghost.png",
-      "size": 545304,
-      "sha256": "c88a089c259719f5b8c8e177ae4ded3e30d37d4d371c5755fd9d65e572f4e93a"
+      "size": 52522,
+      "sha256": "3450758b534b02e7532175cf0acbd5a3ad8b4a8b1bbc97231c84479e051a6efe"
     },
     {
       "path": "assets/themes_preview/Mario.png",
-      "size": 477223,
-      "sha256": "b40c0e57c047f9be945a78d15aa0a45e65b428b9c38cb1f6cd8d4ddaadc48781"
+      "size": 68655,
+      "sha256": "64031823a99ab2a451dd5d2b76d7ae8c6832b68890fbbd3dcba3467172a11a8a"
     },
     {
       "path": "assets/themes_preview/Mario_-_Alternate.png",
-      "size": 458061,
-      "sha256": "94ca05e39c78319f8f758bad0d89c659d29dbcf0e2097c77017b084989d9aaee"
+      "size": 48950,
+      "sha256": "7e413a135000e03e988f06d327b247b49278ad4af12c28cd41fadf878ebf7907"
     },
     {
       "path": "assets/themes_preview/Metal_Gear.png",
-      "size": 591573,
-      "sha256": "19eb7003beff178b15f736bc4b014fe1403a108c04af5001b5316f4c7f8cc666"
+      "size": 77102,
+      "sha256": "88c23b3bbbe77e312e31eb7ae6e23f7699b4d81ee616c11df5ac98e9cce5177b"
     },
     {
       "path": "assets/themes_preview/Metal_Gear_Rising.png",
-      "size": 453296,
-      "sha256": "60594cb7f30cdf2769b2fdd7de232b04799ecdaed9f900b857cc8c93c14dce6a"
+      "size": 60317,
+      "sha256": "f331778fa1402626ba352a3172054c3f154688442a69c29b92caed63b6328351"
     },
     {
       "path": "assets/themes_preview/Metaphor_ReFantazio.png",
-      "size": 451894,
-      "sha256": "4963dbe88727ce0d23c541287d14cc7b67c166bddab4de70bc48fd6f0402b7f5"
+      "size": 52112,
+      "sha256": "9290d97624a70a43b351530489ecc9bc7908f4640da6d0b0b02de92dd658cd85"
     },
     {
       "path": "assets/themes_preview/Metroid_-_Dread.png",
-      "size": 170614,
-      "sha256": "b300bc9b2ed079d16802a7b83f61edcb02363b411ade9ba18c159a9443c8a3b4"
+      "size": 30536,
+      "sha256": "95f1b1f7b11821c18b4f5fe8d938967052e89ef2dca1784091f545db17aea23b"
     },
     {
       "path": "assets/themes_preview/Naruto_-_Akatsuki.png",
-      "size": 528883,
-      "sha256": "d3ef874e10a03abe1b16dd53becfbaaec537d0d513b43d90c9bc4372d64d43aa"
+      "size": 67364,
+      "sha256": "b117b294c88de8170ad1aa8da565d4d97d757a0be79d5021eede1024b117509e"
     },
     {
       "path": "assets/themes_preview/Nier_Automata.png",
-      "size": 278880,
-      "sha256": "d553beef172c6adb023fadc150b31c3227580cdc63025e975782552700d683bb"
+      "size": 39285,
+      "sha256": "c7f41f420c55388452082461570cf6fde647603d76c2168fd317e47f7cb6fc56"
     },
     {
       "path": "assets/themes_preview/One-Punch_Man.png",
-      "size": 492967,
-      "sha256": "f07202a2768e394565de470ca702fc365706838826e34a6cbcef35ab71295f27"
+      "size": 51553,
+      "sha256": "0ae8bc818a3ffaaf0c5d84dc4b9c5dcf879e9b16319bc3ccfeb5b4574680ef55"
     },
     {
       "path": "assets/themes_preview/One_Piece_-_Cover.png",
-      "size": 655635,
-      "sha256": "a2811aa3f1d7c1b52619f25a834a69ad7ce7200a2756c77db551a50a521dc58d"
+      "size": 69922,
+      "sha256": "f12a8880016e7bd1a3d80b6324f614c46b76d8ad309dab20d514ac6db3b96849"
     },
     {
       "path": "assets/themes_preview/One_Piece_-_Gear_5.png",
-      "size": 427869,
-      "sha256": "62e7e570fcdce85b8d54a394afaef91891461ebc5e64479c953807a35fa79765"
+      "size": 45761,
+      "sha256": "243df51776a2c8f35763647bba6affca01b96e26960bc79ed6aab0a4f636a208"
     },
     {
       "path": "assets/themes_preview/One_Piece_-_Luffy.png",
-      "size": 340777,
-      "sha256": "e7ee41e447b79724b558fc4879682a033abaa3be99da3b6db617c33944d55b2d"
+      "size": 44054,
+      "sha256": "0d35add1bcfc2f97fed0b4fbfab38da7bc46d6d11ffcd15355fb7912d5e6a06c"
     },
     {
       "path": "assets/themes_preview/One_Piece_-_Straw_Hats.png",
-      "size": 576662,
-      "sha256": "1214be838f6f45eda194193eda97d819e2e3aaf502e72f655a585c332685cc99"
+      "size": 63530,
+      "sha256": "73f46084f83173bfa04865eeaf7b293e207e9e2a4c3e5be91118d5b9ce4d9a89"
     },
     {
       "path": "assets/themes_preview/PSP.png",
-      "size": 240652,
-      "sha256": "26d44d95e6a4a4ffbc6835d2f4922745df8f604d7370aabcbf748cb894154944"
+      "size": 26543,
+      "sha256": "248db1eba43a0f8437549f78037b27658dfd1e13813eb3cc7c1805b98de4bd8d"
     },
     {
       "path": "assets/themes_preview/Persona_3_-_Memories.png",
-      "size": 420407,
-      "sha256": "d9d08a72311014dba9ad02dc9adec61f046a62e978c4b1b0f91cb90893c42781"
+      "size": 53417,
+      "sha256": "7fff4f80d48a02f0b099c10c70115d6e0a5ee37d160e5ef6ae20f05f3a9d06b5"
     },
     {
       "path": "assets/themes_preview/Persona_5.png",
-      "size": 324502,
-      "sha256": "220cbd91e6427cee15101d6e207182fae78004f69c2458819a57f20029817338"
+      "size": 38901,
+      "sha256": "bc1dc96fe8b528571255bb8a4e162d1fd6972e053611ea1b1fc15c8cc7e02373"
     },
     {
       "path": "assets/themes_preview/Persona_5_-_Alternate.png",
-      "size": 271383,
-      "sha256": "cc10ab07c151e84397ddedc4f2e4d11b63d8295c77c3073352fbaefba7ec2644"
+      "size": 36473,
+      "sha256": "a58f0bf13469de175ff1bc56782e324d4050e4470d7e599c56a2daacb076f0f0"
     },
     {
       "path": "assets/themes_preview/Persona_5_-_Kasumi.png",
-      "size": 227847,
-      "sha256": "d5e2885f3b45fdd1ef20da6618ca2ff66a50441428b071ef4e6c7ce574529b03"
+      "size": 32768,
+      "sha256": "f40026296abe50ecca1e578ee3993c754efa5f164ce4ee9281f12fbcaeda2e30"
     },
     {
       "path": "assets/themes_preview/Persona_5_-_Ladies.png",
-      "size": 339513,
-      "sha256": "0c83f21bc762ffbc916f18fb4eeb049249db661d6590aa5c0117c87a8ed7849d"
+      "size": 48046,
+      "sha256": "aee562303f19e638b264502ac84199ccb36a0e3bcf40d7cd9323b664118a828b"
     },
     {
       "path": "assets/themes_preview/Playstation.png",
-      "size": 201236,
-      "sha256": "a99976191a90aca3aee405861af73086384ca411253d5ce1750dd1f7312a15a0"
+      "size": 30510,
+      "sha256": "001fcc267767bf6ae7bb068d1d802c573bf92fc86819d4c7547f8cd87316323a"
     },
     {
       "path": "assets/themes_preview/Playstation_-_Anniversary.png",
-      "size": 241161,
-      "sha256": "9d2322b3f70723f31c2a1d9892e8d94063496cf9f255fc501fd9a721e033dfab"
+      "size": 46096,
+      "sha256": "11b586bf397bfe15e8c96240843d565dc6b08f7571159fcf9f3fdd0c7c02d412"
     },
     {
       "path": "assets/themes_preview/Pokeball.png",
-      "size": 362027,
-      "sha256": "5a2cba2dce46b217eb614fc3c903981577b19bfafcb5990cb202ddce1f794a2a"
+      "size": 56271,
+      "sha256": "a0ce064e8d4d43deff180f19715f19a6a16367d8d0942fde763b3a15ed9dbb5a"
     },
     {
       "path": "assets/themes_preview/Pokedex_-_Blue.png",
-      "size": 184418,
-      "sha256": "0684fcc9e769a93c30b2edcffff35dc0fa4033b1c6d37f9cbf337c8ac7c3c77e"
+      "size": 23464,
+      "sha256": "986de348bf2928b9a852f0af60b7c22dea1227987ee2738f012d8ccaf939f2f0"
     },
     {
       "path": "assets/themes_preview/Pokemon_Sleep.png",
-      "size": 563642,
-      "sha256": "a4b5ace01691b975228fbfdf5428794eb494caee1289ac7bd4852f062d24b297"
+      "size": 59228,
+      "sha256": "1414c17ac972bdc66bc3e2f603561eee2b2bb63034164d558e5217f197eccf55"
     },
     {
       "path": "assets/themes_preview/Pokemon_Trainer_Red.png",
-      "size": 452535,
-      "sha256": "ec9bf24cb9a790bf0c76f2b479bb422b6686b0c8a2e42d98d2f1c9e3e3d69d2d"
+      "size": 52396,
+      "sha256": "c3ac2991b642ef6d79894a824d45879c82e5a9b534440c28873f7e9a0d96b33a"
     },
     {
       "path": "assets/themes_preview/Princess_Mononoke.png",
-      "size": 254360,
-      "sha256": "d26f98433c6da611180a63ecfb09f9f7a33f0c56e1af70efd828bc930a58c464"
+      "size": 29771,
+      "sha256": "085bed91e51367c224e8b1015bcd4ef75a63a0223bfd87c2c702ad9ff2fbfbab"
     },
     {
       "path": "assets/themes_preview/Princess_Mononoke_-_Alternate.png",
-      "size": 558166,
-      "sha256": "10bfc31e9e0dd8697e26a3b0c41318adb4eed53da6d6758cb6c29d01be46a77c"
+      "size": 63468,
+      "sha256": "c9d8e26bd2278cf18b36aa6030356741ac0ebbaaa4bd08402ac08a6cb88773fd"
     },
     {
       "path": "assets/themes_preview/Princess_Mononoke_-_Ashitaka.png",
-      "size": 706859,
-      "sha256": "d0f1bc849b18e6902628540a3a97f9220722523d6173f36ba7bdb2a9f6f67a0e"
+      "size": 63515,
+      "sha256": "be3ee9bc84ed51a748265495adaae4451d78988c7bcc57d50c2c75cb4dabda16"
     },
     {
       "path": "assets/themes_preview/Retro_Game_Corps.png",
-      "size": 108205,
-      "sha256": "b4f0a7c5db9420c340e494d68d818ad13993f8ef09e0e68fc46875f84117c701"
+      "size": 13897,
+      "sha256": "8cbf9e2d48cae5e8b075f48ecfd34c659b0ae2b0359ac93c71878f115322bb08"
     },
     {
       "path": "assets/themes_preview/Sanrio_-_Cinnamoroll.png",
-      "size": 175382,
-      "sha256": "d9b6c1d2a604e8ff7e92a86d25ff3db28eaf63894a9e7820d4711069f733e37c"
+      "size": 24879,
+      "sha256": "196468e5f52e6fea35ae88216461c29db3c81409f836aad8de66370b596546af"
     },
     {
       "path": "assets/themes_preview/Shrek___Miku.png",
-      "size": 398395,
-      "sha256": "9952f0f786a5e2082cb3a080e404519207261b122aee96571db62f9e1fdab18d"
+      "size": 36369,
+      "sha256": "bb3d86359140dbc8b88f63ec1968929f992953a391ec7d19cdcad6ff5a9f40f1"
     },
     {
       "path": "assets/themes_preview/Skyrim.png",
-      "size": 578560,
-      "sha256": "c91ff32cfed61536a1c72022e6d77d017cd28b893497b047bdd6042153d5373f"
+      "size": 64881,
+      "sha256": "71cb31f08f4a96f9ad44138cb12da5c42ccda7573e13c27a5333af18170069cd"
     },
     {
       "path": "assets/themes_preview/Smash_Bros.png",
-      "size": 239067,
-      "sha256": "fea8d8fb976441b70535139336de467573612a2efa5ee4b0d88f197c402e9394"
+      "size": 25219,
+      "sha256": "41b2b5d4549e71d8fd1623cfbcca2157005080125b58f56c4f2ad9251f5bc84a"
     },
     {
       "path": "assets/themes_preview/Smash_Bros_-_Alternate.png",
-      "size": 396176,
-      "sha256": "2ecf26ab5358ffc0270765641e44f804a52cec6b80283ac4b887b08b6dbe97ca"
+      "size": 60798,
+      "sha256": "17ad53d74d22c3837ad8c17a209022406a1422262959d7cb31578677edfb0c95"
     },
     {
       "path": "assets/themes_preview/Spiderman.png",
-      "size": 655990,
-      "sha256": "672111efe42d575fa9caba185aea1280f2d6dde07b974a787f90c50392e38264"
+      "size": 70298,
+      "sha256": "9088595945766c9d22f46153831d11f44852cee4e8856512a25e7924ea5b98b4"
     },
     {
       "path": "assets/themes_preview/Spiderman_-_Alternate.png",
-      "size": 224411,
-      "sha256": "04e81a9e45529670e93c20badf432e824c770a2630c951578127f615cebf30cc"
+      "size": 24751,
+      "sha256": "e20b7b8d169dc5ab0549d0fd35825b6841a29e264e83d5e90aedf2813c61c575"
     },
     {
       "path": "assets/themes_preview/Spiderman_-_Venom.png",
-      "size": 618134,
-      "sha256": "dcaa00b6dbba7793dce9a8dac68f463bcb2c1caa0fa8bb4f9edb7065a48ec14f"
+      "size": 67911,
+      "sha256": "5d93596218cdb101395ab01b2abe0dd6769428a13e9875026de62ea7a61fdf2d"
     },
     {
       "path": "assets/themes_preview/Spirited_Away_-_Alternate.png",
-      "size": 600069,
-      "sha256": "d5d72ab563ec692d991eca6fcfc04d179e7c9272513e3322b7e9103e6bff2953"
+      "size": 68931,
+      "sha256": "c7ca6cf1221b926d743e5ecc377440d473bd184809e1096ff17d1369b5ba3f05"
     },
     {
       "path": "assets/themes_preview/Stalker.png",
-      "size": 622296,
-      "sha256": "39d8c81b5bc11e922cb0398e872dc356cdc104de15e2a66291b7b0e41520b8fb"
+      "size": 73434,
+      "sha256": "6728cb476aede14c64105c81bb38a2bd0d19ce18c283a4d1a1a8a49b59650500"
     },
     {
       "path": "assets/themes_preview/Star_Wars.png",
-      "size": 297891,
-      "sha256": "8cdaebd644fd4105abfa6022e26d8bca429b91743fd707ac964413d3e0496bea"
+      "size": 45309,
+      "sha256": "d5ca8d3e84b462230d603dfa1d04c7c33caefeff60249ea6342a6ad64243b2d9"
     },
     {
       "path": "assets/themes_preview/Starfield.png",
-      "size": 518810,
-      "sha256": "ff9444f55a61ac0b30f931d0d50062faa5bf670be35996a074ca6316aea3991c"
+      "size": 55699,
+      "sha256": "570fbeaa3fe72c2d887eebc98345b29ef01e34d6792dd4bdd3baeddb6f9618f2"
     },
     {
       "path": "assets/themes_preview/Steam_Deck.png",
-      "size": 313160,
-      "sha256": "8815860642348a11ee06b687e04e6d4b7ada8ce89278f51409557475e2f29ec7"
+      "size": 31192,
+      "sha256": "d8e4bc13fde2dab1efab8e1dd3db960eaa789109f6076fdccfefcc4a42b43b35"
     },
     {
       "path": "assets/themes_preview/TRIMUI_Blue.png",
-      "size": 151077,
-      "sha256": "315a306c98af80ad4769db7960737274e57c40dcdbc4da87723fd7378d7a4115"
+      "size": 26574,
+      "sha256": "3e519a222ec0cb0fe95942a771ed52459f41faf569095ee9e214bf3367822006"
     },
     {
       "path": "assets/themes_preview/TRIMUI_Energy.png",
-      "size": 81601,
-      "sha256": "65ff3fddcfc1462512edbe5ec1cd68afec2d408e842eaa1035b6304aa1c86eef"
+      "size": 12661,
+      "sha256": "ab526210829a97bea71d8354768a69d64dc144de01ffd114b4d34730bbbd19b0"
     },
     {
       "path": "assets/themes_preview/Totoro.png",
-      "size": 181948,
-      "sha256": "ea9bae5f9ddcabeea468ba958005eee5e8bfe0ddf869fb3588d831c3b1aed7d3"
+      "size": 23809,
+      "sha256": "e0771326812fb0473b5a1ea567c4423f4f6610996cd1f23fd977b3afe1925014"
     },
     {
       "path": "assets/themes_preview/Totoro_-_Alternate.png",
-      "size": 494762,
-      "sha256": "b10572929f80110a50baa4e1ad66e7d28e294eaf9d7ed32bd07be5da95fab4f1"
+      "size": 45907,
+      "sha256": "7f92bac28ecf1b420eeeb254d721cfc7dc95ca1002f4203bce276f6ef3387b06"
     },
     {
       "path": "assets/themes_preview/Wii.png",
-      "size": 142907,
-      "sha256": "ad87f0785230955b36e7a41e7a61da0d01b471c719e4f9df89f28c3c9b560707"
+      "size": 24211,
+      "sha256": "a5ebc834f716cecd1ac4e1d82856172dcc03435e407bc00f108a6da6acfddd12"
     },
     {
       "path": "assets/themes_preview/Witcher_3.png",
-      "size": 563492,
-      "sha256": "ab8ec083877b06e730949fa5579d927357794b08f033d5fb297bc37f67a0adba"
+      "size": 66682,
+      "sha256": "92cb658825dd07cb9169508914ffd83377caaead42c00fc5888d7eb1de83391a"
     },
     {
       "path": "assets/themes_preview/Witcher_3_-_Alternate.png",
-      "size": 523113,
-      "sha256": "38d8832c10d6460ed047b59d80f2564cf48910f8eb2c9b1b279272f0accb2bcc"
+      "size": 48077,
+      "sha256": "44f468dc191e11ae46d87a8611f6a6c13e764f90d8f06b279551c3cd44d693de"
     },
     {
       "path": "assets/themes_preview/Xenoblade.png",
-      "size": 533615,
-      "sha256": "64081c2787960096a92bb43bd5da204eaca57511f7f38258712bc76bb3a2f69c"
+      "size": 45197,
+      "sha256": "ff76e4d532b93ea021c8887476c3841e694dc8d116aa2f026af0c1def8d18712"
     },
     {
       "path": "assets/themes_preview/Xenoblade_-_Alternate.png",
-      "size": 284661,
-      "sha256": "629403e6c2884bc5aa40405772e23fa13b9a9bb8491e86279991b7a8b707bbfe"
+      "size": 37692,
+      "sha256": "da5f341b785c0a9ba3c7812467207929db81b9619d3c5a786a3f2597e0c90156"
     },
     {
       "path": "assets/themes_preview/Xenoblade_-_Day.png",
-      "size": 406834,
-      "sha256": "2242ad91088002a005875e6b74bf4cdeb31843f97bec2628c4e3e41b58278fdb"
+      "size": 39878,
+      "sha256": "677d9b29629fa8fd7f07d87287ce87db411fbd3f3598a115b4b336ba58c40ba1"
     },
     {
       "path": "assets/themes_preview/Xenoblade_-_Night.png",
-      "size": 409411,
-      "sha256": "23843d54c5eb781576fb75afa515c8ac5f36754c80b5bd3c9279a4e3ac2e94a7"
+      "size": 55947,
+      "sha256": "0bdb890fa62936432a9a7582a474f8b51c982084b191eabb5b09697e8fd613d4"
     },
     {
       "path": "assets/themes_preview/Your_Lie_in_April.png",
-      "size": 500929,
-      "sha256": "e626bee0c6a5f1674ab261e2c3a61b8e595931c21c8f1dde9ce650f856d703ca"
+      "size": 52736,
+      "sha256": "beea903247ddbcc650d23dc1a286c007244bde230c2def67f83b27da85b4cfe0"
     },
     {
       "path": "assets/themes_preview/Yugioh.png",
-      "size": 267663,
-      "sha256": "066d802e8ec8be12a4b61eb10884179692403799edd777ec83101dcbea0d86c0"
+      "size": 31151,
+      "sha256": "ac45abd1aff9dfdb7db96cca144407a99216284b12c44894df0a50201ee46f6d"
     },
     {
       "path": "assets/themes_preview/Yugioh_-_Alternate.png",
-      "size": 594407,
-      "sha256": "ac80c2ecd950fd116277096124b14b0812dce159440423b845dc5f9feba2ed48"
+      "size": 68919,
+      "sha256": "892ade27901d0feae7bd8062606e199b42e186b61498c1ee858bf246a2c1dfba"
     },
     {
       "path": "bin/7zz-License.txt",
@@ -999,6 +1539,11 @@
       "path": "bin/yt-dlp",
       "size": 3072469,
       "sha256": "1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6"
+    },
+    {
+      "path": "catalog/emus_catalog.json",
+      "size": 27528,
+      "sha256": "faee730851dc55f66d2fcf180349d96b4f6c99e5a93a1e75a62b15eba0b0f5b7"
     },
     {
       "path": "catalog/icons_catalog.json",
@@ -1117,8 +1662,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 69702,
-      "sha256": "24546c2851cf8f4784754f405a3373e82ed9b902e57f0d68783e28776a251586"
+      "size": 71739,
+      "sha256": "e818f2f6847137ab99665b5bee2c538bad405a082ced29b62f39687e3936d22d"
     },
     {
       "path": "icon.png",
@@ -1191,6 +1736,11 @@
       "sha256": "2761fc884fe8753e9653b6bfc8a7ffd39dbb16829ae64f4219d228183130ec0e"
     },
     {
+      "path": "rh/emulator_store.py",
+      "size": 8342,
+      "sha256": "b99605af02bec36f42f68df511039b0065d1c38508d0649922f61ca168ca7482"
+    },
+    {
       "path": "rh/emulators.py",
       "size": 10034,
       "sha256": "5b0d23a6f70f7be4d22c77cf7c8fef9e95417835977fb5922738aa6e902675e6"
@@ -1212,8 +1762,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 58344,
-      "sha256": "790da5cc1f1d42d61038af99e370ffc7aea2328cc11f25ea14fb00256dd36440"
+      "size": 60057,
+      "sha256": "ef1ef2522badbf1e769616dcb110434d97f2237f5983f0fca0f6cc3b0b89931c"
     },
     {
       "path": "rh/icon_manager.py",
@@ -1327,8 +1877,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 7223,
-      "sha256": "e4e06c1e054761a8f7d0da9f8458235a8162a08ef9105d2e0ed065e29d2dd774"
+      "size": 7967,
+      "sha256": "539ce45e9d0a61b836e5258e0b98c3a79e2ceee8cf9f338762979a7ad2c3953f"
     },
     {
       "path": "rh/romfiles.py",
@@ -1349,6 +1899,11 @@
       "path": "rh/screens/base.py",
       "size": 1086,
       "sha256": "0c3ce172bea32f04ce155ab4459e3b353ef7b857575e9413fff50b84a2680c19"
+    },
+    {
+      "path": "rh/screens/emu_store.py",
+      "size": 17307,
+      "sha256": "f935b126000ccd78e38b0a6cc3a395ce234d92d450d983fc5d6eb7eaa3e60570"
     },
     {
       "path": "rh/screens/home.py",
@@ -1402,8 +1957,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 8942,
-      "sha256": "77e0706c945075d23c2fe2f6ee4b669f2712ef11d4c4341d658a72809269f215"
+      "size": 9132,
+      "sha256": "772ae1e04d65d3892f81f369acdb962f42c04dfec5a4ddffeef7c1a0db1f8941"
     },
     {
       "path": "rh/screens/youtube.py",
@@ -1478,7 +2033,7 @@
     {
       "path": "rh/version.py",
       "size": 855,
-      "sha256": "9b164db560c01fe1c3d0ee0709b9193bbd5a0eb2edf9cffa38f727c2392fdd04"
+      "sha256": "df6725f4c1d64360835314ef82d1de5f4e666a9c52279d63698aee317daf4b1c"
     },
     {
       "path": "rh/yt.py",
@@ -1907,18 +2462,18 @@
     },
     {
       "path": "web/app.js",
-      "size": 84839,
-      "sha256": "8a1581c5c1a7b83146eef7af03ba7c03a0664d6fc03915185dc54f4a75f634c6"
+      "size": 103682,
+      "sha256": "363f02bf2f260edfdf1f8a17a2cf6c3a0293679b5d5bf6f536da5228837ee304"
     },
     {
       "path": "web/index.html",
-      "size": 30246,
-      "sha256": "0b1c11961723633b9913324b5d53f1d2864d06235c526d14ffabcb14bffd7f3f"
+      "size": 34795,
+      "sha256": "f32e2d285a89d76ec55ee17a5e3b67299d2761efc2b32620f75e65ef421e44e1"
     },
     {
       "path": "web/style.css",
-      "size": 22992,
-      "sha256": "ad308e861446a6805cc7b99438ce74978f955bd679395d543b4e8cd12b63a0e5"
+      "size": 25547,
+      "sha256": "c0fbfcd994e06885280bb7912be6eab6d4c617621d0dfcfb9a4e2e0175011d4f"
     },
     {
       "path": "yt.py",

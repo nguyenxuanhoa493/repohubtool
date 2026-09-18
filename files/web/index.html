@@ -284,7 +284,8 @@
                     <h2 style="font-size:16px; font-weight:800; color:#fff; margin:0 0 2px 0;">Trợ lý ảo AI Chatbot</h2>
                     <div style="font-size:12px; color:#10b981; font-weight:600;">● Đang trực tuyến</div>
                 </div>
-                <div style="margin-left:auto; display:flex; gap:6px;">
+                <div style="margin-left:auto; display:flex; gap:6px; flex-wrap:wrap;">
+                    <button id="btn-quick-debug" class="btn btn-sm" style="background:#7c3aed; color:#fff; border:1px solid #8b5cf6;" onclick="quickDebugLogsAI()">🔍 Quét log lỗi</button>
                     <button id="btn-send-info" class="btn btn-sm btn-green" onclick="sendDeviceInfoToAI()">📡 Gửi info</button>
                     <button class="btn btn-sm btn-secondary" onclick="showSystemPrompt()">ℹ️ Prompt</button>
                     <button class="btn btn-sm btn-danger" onclick="clearAIChat()">🗑️ Xóa</button>

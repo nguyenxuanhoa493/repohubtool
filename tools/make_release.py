@@ -151,14 +151,14 @@ def step_4_ota_simulation_suite():
         manifest = json.load(f)
 
     # 1. Version check
-    target_ver = manifest.get("version", "2.34")
+    target_ver = manifest.get("version", "2.35")
     def version_tuple(v):
         try:
             return tuple(int(p) for p in str(v).strip().lstrip("v").split("."))
         except Exception:
             return (0,)
 
-    legacy_tags = ["1.20", "1.46", "1.80", "1.98", "2.00", "2.10", "2.19", "2.24", "2.27", "2.29", "2.31", "2.33"]
+    legacy_tags = ["1.20", "1.46", "1.80", "1.98", "2.00", "2.10", "2.19", "2.24", "2.27", "2.29", "2.31", "2.33", "2.34"]
     for tag in legacy_tags:
         if not (version_tuple(target_ver) > version_tuple(tag)):
             print(f"FAILED: Version so sanh loi: {target_ver} khong lon hon {tag}")
@@ -208,7 +208,7 @@ def step_5_package_dist():
     os.makedirs(dist_dir, exist_ok=True)
 
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
-        ver = json.load(f).get("version", "2.34")
+        ver = json.load(f).get("version", "2.35")
 
     def make_zip(out_path, prefix="Apps/RetroHub"):
         with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as z:
@@ -240,7 +240,7 @@ def step_6_build_site():
 def step_7_publish_github_release(publish: bool = False):
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         manifest = json.load(f)
-    ver = manifest.get("version", "2.34")
+    ver = manifest.get("version", "2.35")
     note_en = manifest.get("note", {}).get("en", f"RetroHub v{ver} Release")
     dist_dir = os.path.join(ROOT, "dist")
     
