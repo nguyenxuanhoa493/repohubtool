@@ -301,11 +301,13 @@ def load_icons_catalog(force_reload: bool = False) -> List[Dict]:
         is_active = (folder == active_id or it.get("id") == active_id)
 
         # Fast preview path resolution
-        img_name = f"{folder}.png"
+        icon_id = str(it.get("id") or "").lower()
         preview_path = None
-        if img_name in available_previews:
-            preview_path = os.path.join(preview_dir, img_name)
-        else:
+        for candidate_name in (f"{icon_id}.png", f"{folder}.png", f"{folder.replace(' ', '_')}.png"):
+            if candidate_name in available_previews:
+                preview_path = os.path.join(preview_dir, candidate_name)
+                break
+        if not preview_path:
             local_p = os.path.join(LOCAL_ICONS_REPO_DIR, folder, "preview.png")
             if os.path.isfile(local_p):
                 preview_path = local_p
@@ -321,14 +323,16 @@ def load_icons_catalog(force_reload: bool = False) -> List[Dict]:
     return results
 
 
-def get_icon_preview_path(folder_name: str) -> Optional[str]:
+def get_icon_preview_path(folder_name: str, icon_id: str = "") -> Optional[str]:
     """Returns local path to icon preview image or None."""
     candidates = [
+        os.path.join(APP_DIR, "assets", "icons_preview", f"{icon_id}.png") if icon_id else None,
         os.path.join(APP_DIR, "assets", "icons_preview", f"{folder_name}.png"),
+        os.path.join(APP_DIR, "assets", "icons_preview", f"{folder_name.replace(' ', '_')}.png"),
         os.path.join(LOCAL_ICONS_REPO_DIR, folder_name, "preview.png"),
     ]
     for c in candidates:
-        if os.path.isfile(c):
+        if c and os.path.isfile(c):
             return c
     return None
 

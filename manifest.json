@@ -237,6 +237,16 @@
       "sha256": "f55281034f732a8762cdd9d10ce42b0e0383d68a1fb1f95fe1a46a648af174e6"
     },
     {
+      "path": "assets/icons_preview/burst.png",
+      "size": 1110314,
+      "sha256": "77634f4032e58fe534f02e4a6374c57c8d0d2737dfebc1be5ebc7097ac90024f"
+    },
+    {
+      "path": "assets/icons_preview/stock.png",
+      "size": 811804,
+      "sha256": "f55281034f732a8762cdd9d10ce42b0e0383d68a1fb1f95fe1a46a648af174e6"
+    },
+    {
       "path": "assets/qr_bmc.png",
       "size": 2502,
       "sha256": "fc9c509a7fca1b576973c2fe4cf7a59ee4bc4106a164d4def92e8960c5e721a4"
@@ -1103,8 +1113,8 @@
     },
     {
       "path": "rh/icon_manager.py",
-      "size": 21364,
-      "sha256": "0c384b28edeefbc1252a21b8936155a9ab9e9f06b1bcba4e9555948a32ef9e21"
+      "size": 21758,
+      "sha256": "2fd917f38b552e953ee2f7fa1fdc6514e2e6ac2d2022458a560a10455f5680d5"
     },
     {
       "path": "rh/inputs.py",
@@ -1358,8 +1368,8 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 27632,
-      "sha256": "87397f376b66f50c8f182319e6503329225f150ee85b1eea87a8fb3c3f3c1c9f"
+      "size": 27934,
+      "sha256": "96e3c580cfcd4ed30c968f6485ec6ecc838221b050610d5e5a4b3c1362809eaf"
     },
     {
       "path": "rh/version.py",
