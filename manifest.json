@@ -10,6 +10,8 @@
   },
   "remove": [
     "app.pyc",
+    "assets/icons_preview/Burst - Stock OS v1.1.0.png",
+    "assets/icons_preview/Stock - TrimUI Stock OS 1.1.0.png",
     "db.pyc",
     "emus/JAVA/zulu17/bin/quickchat.txt",
     "led_daemon.pyc",
@@ -225,16 +227,6 @@
       "path": "assets/flag_vi.png",
       "size": 1273,
       "sha256": "95cc00c7cdcc250ef7bf5b4af058e662a21cc4976ecf88da6eec5ba73b50b32f"
-    },
-    {
-      "path": "assets/icons_preview/Burst - Stock OS v1.1.0.png",
-      "size": 1110314,
-      "sha256": "77634f4032e58fe534f02e4a6374c57c8d0d2737dfebc1be5ebc7097ac90024f"
-    },
-    {
-      "path": "assets/icons_preview/Stock - TrimUI Stock OS 1.1.0.png",
-      "size": 811804,
-      "sha256": "f55281034f732a8762cdd9d10ce42b0e0383d68a1fb1f95fe1a46a648af174e6"
     },
     {
       "path": "assets/icons_preview/burst.png",
