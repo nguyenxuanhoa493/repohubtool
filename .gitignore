@@ -31,3 +31,7 @@ catalog/roms_store.sqlite3
 *.class
 _src/*.orig
 _src/*.bak
+
+# Desktop runner (run-desktop.ps1)
+.venv-desktop/
+.sdcard-desktop/

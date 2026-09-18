@@ -5,8 +5,8 @@
   "built": "2026-09-18T17:21:25+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Trợ lý AI Web Manager: Sửa lỗi mã hóa ký tự lệnh Shell, Thêm nút Quét Log lỗi Chẩn đoán nhanh, Quét động phần cứng & màn hình",
-    "en": "Web Manager AI Assistant: Fix Shell Command HTML Encoding, Add 1-Click Quick Debug Log Scanner, Dynamic Hardware & Display Probing"
+    "vi": "Kho Theme/Icon/Giả lập: tải gói trực tiếp từ GitHub Releases, đồng bộ lại catalog và sửa lỗi cài đặt",
+    "en": "Theme/Icon/Emulator Store: packages download from GitHub Releases, catalogs resynced and install fixes"
   },
   "remove": [
     "app.pyc",
@@ -2481,6 +2481,6 @@
       "sha256": "e75d1efb93a87df447a045595093378d03003684da13ac7ccd7551774b80d349"
     }
   ],
-  "notes": "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm",
-  "notes_en": "Integrate full-featured OTA UpdateModal dialog, fix manual update check in Settings & optimize background self-updater"
+  "notes": "Chuyển nguồn tải gói Theme/Icon/Giả lập sang asset của GitHub Release thay vì git, đồng bộ lại catalog của cửa hàng, và đánh lại số 2.36 để máy đang ở 2.35 thực sự thấy bản mới hơn.",
+  "notes_en": "Serve theme, icon and emulator packages from the GitHub Release assets instead of git, resync the store catalogs, and re-cut 2.36 so devices stuck on 2.35 see a genuinely newer build."
 }

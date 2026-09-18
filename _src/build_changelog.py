@@ -26,6 +26,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.36", "2026-09-18",
+     ("Theme/Icon/Emulator Store: packages served from GitHub Releases, catalogs resynced and install fixes",
+      "Kho Theme/Icon/Giả lập: tải gói trực tiếp từ GitHub Releases, đồng bộ catalog và sửa lỗi cài đặt"),
+     [("Theme, icon and emulator packages were fetched from git paths that no longer exist; the download URLs now point at the GitHub Release assets, so installing a theme, an icon pack or an emulator works again.",
+       "Gói Theme/Icon/Giả lập trước đây tải từ đường dẫn git đã bị dọn khỏi repo; nay trỏ thẳng vào asset của GitHub Release nên cài theme, icon pack, giả lập hoạt động trở lại."),
+      ("Re-cut as 2.36: 2.35 had been republished under the same version number, so a device already running 2.35 was never offered a newer build.",
+       "Đánh lại số 2.36: bản 2.35 từng được phát hành lại dưới đúng số phiên bản đó, nên máy đang chạy 2.35 không bao giờ thấy bản mới hơn.")]),
     ("2.35", "2026-09-18",
      ("Web Manager AI Assistant: Fix Shell Command HTML Encoding, Add 1-Click Quick Debug Log Scanner, Dynamic Hardware & Display Probing",
       "Trợ lý AI Web Manager: Sửa lỗi mã hóa ký tự lệnh Shell, Thêm nút Quét Log lỗi Chẩn đoán nhanh, Quét động phần cứng & màn hình"),

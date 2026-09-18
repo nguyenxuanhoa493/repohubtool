@@ -13,6 +13,8 @@ import sys
 import json
 import hashlib
 import py_compile
+import subprocess
+import tempfile
 import zipfile
 import re
 from datetime import datetime, timezone, timedelta
@@ -28,6 +30,52 @@ REPO = "nguyenxuanhoa493/repohubtool"
 BRANCH = "main"
 FULL = False
 TZ = timezone(timedelta(hours=7))
+
+# ---------------------------------------------------------------------------
+# Payload bytes
+# ---------------------------------------------------------------------------
+
+def _git_blobs(specs):
+    """{spec: bytes} for git object specs such as ':files/rh/paths.py'.
+
+    None means the path is not in the index - that is what an uncommitted new
+    file looks like. The spec list goes through a file rather than a pipe:
+    Windows pipe buffers are small enough that writing every spec before
+    reading any output deadlocks once the child fills its own stdout buffer."""
+    with tempfile.TemporaryFile() as spec_file:
+        for spec in specs:
+            spec_file.write((spec + "\n").encode("utf-8"))
+        spec_file.seek(0)
+        proc = subprocess.Popen(["git", "-C", ROOT, "cat-file", "--batch"],
+                                stdin=spec_file, stdout=subprocess.PIPE)
+        blobs = {}
+        for spec in specs:
+            header = proc.stdout.readline().split()
+            if len(header) != 3:
+                blobs[spec] = None
+                continue
+            size = int(header[2])
+            blobs[spec] = proc.stdout.read(size)
+            proc.stdout.read(1)
+        proc.wait()
+    return blobs
+
+def payload_bytes(data, blob):
+    """The bytes GitHub serves for a payload file, or None when they differ.
+
+    A device checks every download against the sha256 in the manifest, so the
+    hash has to describe the committed blob, not whatever the working tree
+    holds. A Windows checkout (CRLF) or a blob committed with CRLF while
+    .gitattributes asks for LF puts other bytes on the wire, and the device
+    then downloads the file, fails the hash check and refuses the whole
+    update. Nineteen files were published that way once."""
+    if blob is None:
+        return None
+    if data == blob:
+        return data
+    if data.replace(b"\r\n", b"\n") == blob:
+        return blob          # working tree has CRLF, the committed blob does not
+    return None
 
 
 def app_version():
@@ -124,10 +172,7 @@ def step_3_update_manifest():
     }
     remove_list = set(manifest.get("remove", []))
 
-    current_files = []
-    scanned_paths = set()
-    scanned = 0
-
+    payload = []
     for root, _, files in os.walk(FILES_DIR):
         for fn in sorted(files):
             if fn.startswith(".") or fn.endswith(".pyc") or fn == "desktop.ini":
@@ -135,17 +180,41 @@ def step_3_update_manifest():
             fp = os.path.join(root, fn)
             rel = os.path.relpath(fp, FILES_DIR).replace(os.sep, "/")
             with open(fp, "rb") as fh:
-                data = fh.read()
-            sha = hashlib.sha256(data).hexdigest()
-            size = len(data)
+                payload.append((rel, fh.read()))
 
-            current_files.append({
-                "path": rel,
-                "size": size,
-                "sha256": sha
-            })
-            scanned_paths.add(rel)
-            scanned += 1
+    blobs = _git_blobs([":files/%s" % rel for rel, _ in payload])
+
+    current_files = []
+    scanned_paths = set()
+    scanned = 0
+    not_committed = []
+    eol_fixed = 0
+
+    for rel, data in payload:
+        served = payload_bytes(data, blobs[":files/%s" % rel])
+        if served is None:
+            not_committed.append(rel)
+            continue
+        if served is not data:
+            eol_fixed += 1
+        current_files.append({
+            "path": rel,
+            "size": len(served),
+            "sha256": hashlib.sha256(served).hexdigest()
+        })
+        scanned_paths.add(rel)
+        scanned += 1
+
+    if not_committed:
+        print("FAILED: %d tep trong files/ khac voi ban da commit:" % len(not_committed))
+        for rel in not_committed[:10]:
+            print("  - files/%s" % rel)
+        print("  GitHub chi phuc vu ban da commit, nen hash se sai va may se tai xong")
+        print("  roi tu choi cap nhat. Commit cac tep nay truoc, roi chay lai.")
+        sys.exit(1)
+
+    if eol_fixed:
+        print("  -> Da lay bytes cua ban commit cho %d tep (working tree dang CRLF)." % eol_fixed)
 
     # Tự động thêm các tệp đã xóa hoặc đổi tên vào danh sách remove
     deleted_paths = old_paths - scanned_paths
@@ -156,14 +225,21 @@ def step_3_update_manifest():
     manifest["remove"] = sorted(list(remove_list))
 
     # Cap nhat luon ca cac tep trong runtime neu co
-    for rf in manifest.get("runtime", {}).get("files", []):
-        rel_url = rf.get("url", "")
-        local_fp = os.path.join(ROOT, rel_url)
-        if os.path.isfile(local_fp):
-            with open(local_fp, "rb") as fh:
-                data = fh.read()
-            rf["size"] = len(data)
-            rf["sha256"] = hashlib.sha256(data).hexdigest()
+    runtime = manifest.get("runtime", {}).get("files", [])
+    rt_specs = [":" + rf.get("url", "") for rf in runtime]
+    rt_blobs = _git_blobs([sp for sp in rt_specs if os.path.isfile(os.path.join(ROOT, sp[1:]))])
+    for rf, spec in zip(runtime, rt_specs):
+        local_fp = os.path.join(ROOT, rf.get("url", ""))
+        if not os.path.isfile(local_fp):
+            continue
+        with open(local_fp, "rb") as fh:
+            data = fh.read()
+        served = payload_bytes(data, rt_blobs.get(spec))
+        if served is None:
+            print("FAILED: %s khac voi ban da commit (runtime)." % rf.get("url", ""))
+            sys.exit(1)
+        rf["sha256"] = hashlib.sha256(served).hexdigest()
+        rf["size"] = len(served)
 
     with open(MANIFEST_PATH, "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)

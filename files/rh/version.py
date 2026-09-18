@@ -5,7 +5,9 @@ The build script reads APP_VERSION from here to name the release, and the
 updater compares it against the version in the published manifest, so the
 constant must stay in sync with the git tag."""
 
-APP_VERSION = "2.35"
+# 2.35 da duoc phat hanh lai (ban refactor repo) duoi dung so phien ban do,
+# nen may dang chay 2.35 khong thay co ban moi. 2.36 la ban dau tien lon hon no.
+APP_VERSION = "2.36"
 
 
 def version_tuple(v=None):
