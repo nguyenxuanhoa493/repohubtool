@@ -42,6 +42,7 @@ from rh.screens.led import LedScreen
 from rh.screens.splash import SplashScreen
 from rh.screens.theme_store import ThemeStoreScreen
 from rh.screens.icon_store import IconStoreScreen
+from rh.screens.emu_store import EmuStoreScreen
 
 
 def main():
@@ -77,6 +78,7 @@ def main():
     engine.register_screen("splash", SplashScreen(engine))
     engine.register_screen("theme_store", ThemeStoreScreen(engine))
     engine.register_screen("icon_store", IconStoreScreen(engine))
+    engine.register_screen("emu_store", EmuStoreScreen(engine))
 
     # Run Main Loop
     engine.run()

@@ -122,6 +122,25 @@ def _detect_icons_repo_dir():
 
 LOCAL_ICONS_REPO_DIR = _detect_icons_repo_dir()
 
+# ------------------------------------------------------------------------------
+# Emulators Store & Packages Paths
+# ------------------------------------------------------------------------------
+EMUS_CATALOG_FILE = os.path.join(APP_DIR, "catalog", "emus_catalog.json")
+
+def _detect_emus_packages_dir():
+    candidates = [
+        os.path.join(SDCARD_PATH, "emus"),
+        os.path.join(APP_DIR, "emus"),
+        os.path.join(os.path.dirname(APP_DIR), "emus"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "emus"),
+    ]
+    for cand in candidates:
+        if os.path.isdir(cand):
+            return cand
+    return os.path.join(SDCARD_PATH, "emus")
+
+LOCAL_EMUS_PACKAGES_DIR = _detect_emus_packages_dir()
+
 
 
 def get_yt_cache_dir():

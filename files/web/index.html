@@ -24,6 +24,9 @@
                 <button id="nav-btn-themes" class="nav-tab" onclick="switchMainTab('themes')">
                     <span>🎨</span> Theme Store
                 </button>
+                <button id="nav-btn-emus" class="nav-tab" onclick="switchMainTab('emus')">
+                    <span>🕹️</span> Kho Giả lập
+                </button>
                 <button id="nav-btn-youtube" class="nav-tab" onclick="switchMainTab('youtube')">
                     <span>📺</span> Playlist YouTube
                 </button>
@@ -169,6 +172,57 @@
             </div>
             <div id="theme-empty" style="display: none; text-align: center; padding: 40px; color: var(--text-sub);">
                 <div style="font-size: 14px;">Không tìm thấy theme nào phù hợp!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB: EMULATOR STORE (KHO & QUẢN LÝ GIẢ LẬP) -->
+    <!-- ================================================================= -->
+    <div id="tab-view-emus" class="tab-view" style="flex-direction: column; width: 100%; height: calc(100vh - 60px); overflow-y: auto; padding: 18px;">
+        <div style="max-width: 1400px; margin: 0 auto; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px;">
+                <div>
+                    <h2 style="font-size: 18px; font-weight: 800; color: #fff; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+                        <span>🕹️</span> Kho & Quản lý Hệ máy Giả lập
+                    </h2>
+                    <p style="color: var(--text-sub); font-size: 12.5px; margin: 0;">
+                        Kiểm tra các hệ máy trên thẻ nhớ TrimUI, cài đặt thêm giả lập còn thiếu hoặc cập nhật chỉ bằng 1 thao tác bấm.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <div style="font-size: 13px; color: var(--text-sub); background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);">
+                        Đã cài: <strong id="emus-stat-installed" style="color: #4ade80;">0</strong> / <span id="emus-stat-total">0</span> hệ máy
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadEmus(true)" style="padding: 8px 14px; border-radius: 8px;">
+                        <span>🔄</span> Làm mới
+                    </button>
+                </div>
+            </div>
+
+            <div class="toolbar" style="margin-bottom: 16px;">
+                <div class="search-box" style="flex: 1; max-width: 360px;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="emu-search-input" placeholder="Tìm kiếm hệ máy, core, định dạng..." oninput="filterEmusWeb()">
+                </div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button id="emu-filter-all" class="btn btn-primary" onclick="setEmuFilter('all')">Tất cả (<span id="emu-count-all">0</span>)</button>
+                    <button id="emu-filter-installed" class="btn btn-secondary" onclick="setEmuFilter('installed')">Đã cài (<span id="emu-count-installed">0</span>)</button>
+                    <button id="emu-filter-missing" class="btn btn-secondary" onclick="setEmuFilter('missing')">Chưa cài (<span id="emu-count-missing">0</span>)</button>
+                    <button id="emu-filter-retro" class="btn btn-secondary" onclick="setEmuFilter('retro')">8/16-Bit</button>
+                    <button id="emu-filter-handheld" class="btn btn-secondary" onclick="setEmuFilter('handheld')">Handheld</button>
+                    <button id="emu-filter-3d" class="btn btn-secondary" onclick="setEmuFilter('3d')">3D Consoles</button>
+                    <button id="emu-filter-arcade" class="btn btn-secondary" onclick="setEmuFilter('arcade')">Arcade</button>
+                    <button id="emu-filter-engine" class="btn btn-secondary" onclick="setEmuFilter('engine')">Engines</button>
+                </div>
+            </div>
+
+            <div id="emu-grid-container" class="emu-grid"></div>
+            <div id="emu-loading" style="display: none; text-align: center; padding: 40px; color: var(--primary);">
+                <div style="font-size: 14px; font-weight: 700;">Đang quét danh sách hệ máy giả lập...</div>
+            </div>
+            <div id="emu-empty" style="display: none; text-align: center; padding: 40px; color: var(--text-sub);">
+                <div style="font-size: 14px;">Không tìm thấy hệ máy nào phù hợp!</div>
             </div>
         </div>
     </div>

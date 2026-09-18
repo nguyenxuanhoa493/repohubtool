@@ -52,6 +52,8 @@ let currentTab = 'games';
                 if (!storeCategories.length) loadStoreInit();
             } else if (tab === 'themes') {
                 if (!allThemes.length) loadThemes();
+            } else if (tab === 'emus') {
+                if (!allEmus.length) loadEmus();
             } else if (tab === 'youtube') {
                 if (!ytPlaylists.length) loadYouTubeInit();
             } else if (tab === 'stream') {
@@ -64,7 +66,229 @@ let currentTab = 'games';
             if (currentTab === 'games') loadSystems(true);
             else if (currentTab === 'store') loadStoreGames();
             else if (currentTab === 'themes') loadThemes(true);
+            else if (currentTab === 'emus') loadEmus(true);
             else if (currentTab === 'youtube') loadYouTubeVideos(currentYtTab);
+        }
+
+        // ==================== EMULATOR STORE ====================
+        let allEmus = [];
+        let currentEmuFilter = 'all';
+
+        async function loadEmus(force = false) {
+            const loading = document.getElementById('emu-loading');
+            const container = document.getElementById('emu-grid-container');
+            const empty = document.getElementById('emu-empty');
+            if (loading) loading.style.display = 'block';
+            if (empty) empty.style.display = 'none';
+            if (container && force) container.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/emus');
+                const data = await res.json();
+                if (data.ok && Array.isArray(data.emus)) {
+                    allEmus = data.emus;
+                    updateEmuStats(data);
+                    renderEmusGrid();
+                } else {
+                    showToast('Lỗi khi tải danh sách giả lập: ' + (data.error || ''));
+                    if (empty) empty.style.display = 'block';
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối máy chủ: ' + e.message);
+                if (empty) empty.style.display = 'block';
+            } finally {
+                if (loading) loading.style.display = 'none';
+            }
+        }
+
+        function updateEmuStats(data) {
+            const totalEl = document.getElementById('emus-stat-total');
+            const instEl = document.getElementById('emus-stat-installed');
+            const countAll = document.getElementById('emu-count-all');
+            const countInst = document.getElementById('emu-count-installed');
+            const countMiss = document.getElementById('emu-count-missing');
+
+            const total = data.total || allEmus.length;
+            const installed = data.installed_count !== undefined ? data.installed_count : allEmus.filter(e => e.installed).length;
+            const missing = total - installed;
+
+            if (totalEl) totalEl.innerText = total;
+            if (instEl) instEl.innerText = installed;
+            if (countAll) countAll.innerText = total;
+            if (countInst) countInst.innerText = installed;
+            if (countMiss) countMiss.innerText = missing;
+        }
+
+        function setEmuFilter(filter) {
+            currentEmuFilter = filter;
+            document.querySelectorAll('[id^="emu-filter-"]').forEach(b => {
+                b.className = 'btn btn-secondary';
+            });
+            const activeBtn = document.getElementById(`emu-filter-${filter}`);
+            if (activeBtn) activeBtn.className = 'btn btn-primary';
+            renderEmusGrid();
+        }
+
+        function filterEmusWeb() {
+            renderEmusGrid();
+        }
+
+        function renderEmusGrid() {
+            const container = document.getElementById('emu-grid-container');
+            const empty = document.getElementById('emu-empty');
+            if (!container) return;
+
+            const query = (document.getElementById('emu-search-input')?.value || '').trim().toLowerCase();
+            
+            let filtered = allEmus.filter(item => {
+                if (query) {
+                    const matchName = (item.name || '').toLowerCase().includes(query);
+                    const matchId = (item.id || '').toLowerCase().includes(query);
+                    const matchCore = (item.active_core || item.core || '').toLowerCase().includes(query);
+                    const matchDesc = (item.desc || '').toLowerCase().includes(query);
+                    const matchExt = (item.extlist || '').toLowerCase().includes(query);
+                    if (!matchName && !matchId && !matchCore && !matchDesc && !matchExt) return false;
+                }
+
+                if (currentEmuFilter === 'installed') return !!item.installed;
+                if (currentEmuFilter === 'missing') return !item.installed;
+                if (currentEmuFilter === 'retro') return item.category === '8-Bit' || item.category === '16-Bit';
+                if (currentEmuFilter === 'handheld') return item.category === 'Handheld';
+                if (currentEmuFilter === '3d') return item.category === '3D Consoles';
+                if (currentEmuFilter === 'arcade') return item.category === 'Arcade';
+                if (currentEmuFilter === 'engine') return item.category === 'Engines' || item.category === 'Media';
+
+                return true;
+            });
+
+            if (!filtered.length) {
+                container.innerHTML = '';
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            container.innerHTML = filtered.map(item => {
+                const isInst = !!item.installed;
+                const iconSrc = item.icon_url || `/assets/emus_preview/ic-${item.id.toLowerCase()}.png`;
+                const category = item.category || 'Other';
+                const core = item.active_core || item.core || 'RetroArch';
+                const romCount = item.rom_count || 0;
+                const sizeStr = item.package_size || '';
+
+                return `
+                <div class="emu-card ${isInst ? 'installed' : ''}" id="emu-card-${item.id}">
+                    <div class="emu-card-header">
+                        <img src="${iconSrc}" class="emu-icon-img" onerror="this.src='/icon.png'" alt="${item.id}">
+                        <div class="emu-title-wrap">
+                            <div class="emu-title">${item.name} (${item.id})</div>
+                            <div class="emu-subtitle">
+                                <span>${item.company || ''} ${item.year ? '• ' + item.year : ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="emu-card-body">
+                        <div class="emu-meta-row">
+                            <span class="emu-tag ${isInst ? 'installed-badge' : 'missing-badge'}">
+                                ${isInst ? '🟢 Đã cài đặt' : '⚪ Chưa cài'}
+                            </span>
+                            <span class="emu-tag">${category}</span>
+                            <span class="emu-tag core-badge">⚡ ${core}</span>
+                            <span class="emu-tag">💾 ${romCount} ROMs</span>
+                        </div>
+                        <div class="emu-desc">${item.desc || 'Hệ máy giả lập cho TrimUI.'}</div>
+                        ${item.extlist ? `<div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">Định dạng: ${item.extlist}</div>` : ''}
+                    </div>
+                    <div class="emu-card-footer">
+                        ${!isInst ? `
+                            <button class="btn btn-primary" style="flex: 1;" onclick="installEmuWeb('${item.id}', this)">
+                                <span>📥</span> Cài đặt ngay ${sizeStr ? '(' + sizeStr + ')' : ''}
+                            </button>
+                        ` : `
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="installEmuWeb('${item.id}', this)">
+                                <span>🔄</span> Cài lại / Update
+                            </button>
+                            <button class="btn btn-danger" style="padding: 6px 12px;" title="Gỡ bỏ khỏi Emus (Giữ nguyên ROM)" onclick="uninstallEmuWeb('${item.id}', this)">
+                                <span>🗑️</span>
+                            </button>
+                        `}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function installEmuWeb(sysId, btnEl) {
+            if (!sysId) return;
+            const oldText = btnEl ? btnEl.innerHTML : '';
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.innerHTML = `<span>⏳</span> Đang cài...`;
+            }
+
+            try {
+                const res = await fetch('/api/emus/install', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sys_id: sysId })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || `Đã cài đặt thành công ${sysId}!`);
+                    await loadEmus(false);
+                    if (typeof loadSystems === 'function') loadSystems(true);
+                } else {
+                    showToast('Lỗi: ' + (data.error || 'Cài đặt thất bại'));
+                    if (btnEl) {
+                        btnEl.disabled = false;
+                        btnEl.innerHTML = oldText;
+                    }
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e.message);
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = oldText;
+                }
+            }
+        }
+
+        async function uninstallEmuWeb(sysId, btnEl) {
+            if (!sysId) return;
+            if (!confirm(`Bạn có chắc muốn gỡ bỏ hệ máy ${sysId} khỏi danh sách giả lập?\n\nLƯU Ý: Toàn bộ file ROM game trong Roms/${sysId} của bạn vẫn được giữ an toàn!`)) {
+                return;
+            }
+
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.innerHTML = `<span>⏳</span>`;
+            }
+
+            try {
+                const res = await fetch('/api/emus/uninstall', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sys_id: sysId })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || `Đã gỡ bỏ ${sysId}!`);
+                    await loadEmus(false);
+                    if (typeof loadSystems === 'function') loadSystems(true);
+                } else {
+                    showToast('Lỗi: ' + (data.error || 'Gỡ bỏ thất bại'));
+                    if (btnEl) {
+                        btnEl.disabled = false;
+                        btnEl.innerHTML = `<span>🗑️</span>`;
+                    }
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e.message);
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = `<span>🗑️</span>`;
+                }
+            }
         }
 
         // ==================== THEME STORE ====================

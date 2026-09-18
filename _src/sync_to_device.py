@@ -113,7 +113,7 @@ def sync(ip=None, port=22, user="root", pwd="root"):
 
     # Tu dong gom toan bo cac file ma nguon trong files/rh/, files/web/, files/assets/
     all_targets = list(TARGET_FILES)
-    for sub in ["rh", "web", "assets/themes_preview", "assets/icons_preview", "catalog"]:
+    for sub in ["rh", "web", "assets/themes_preview", "assets/icons_preview", "assets/emus_preview", "catalog", "emus"]:
         sub_dir = os.path.join(local_root, sub)
         if os.path.isdir(sub_dir):
             for root, dirs, files in os.walk(sub_dir):
@@ -124,6 +124,16 @@ def sync(ip=None, port=22, user="root", pwd="root"):
                         entry = (rel_f, rel_f)
                         if entry not in all_targets:
                             all_targets.append(entry)
+
+    # Sync emus tar.gz packages from root emus/
+    root_emus_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "emus")
+    if os.path.isdir(root_emus_dir):
+        for fname in os.listdir(root_emus_dir):
+            if fname.endswith(".tar.gz"):
+                abs_f = os.path.join(root_emus_dir, fname)
+                entry = (os.path.relpath(abs_f, local_root), f"/mnt/SDCARD/emus/{fname}")
+                if entry not in all_targets:
+                    all_targets.append(entry)
 
     print("[*] Bắt đầu đồng bộ tệp...")
     for rel_src, rel_dst in all_targets:

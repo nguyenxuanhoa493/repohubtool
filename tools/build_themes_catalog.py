@@ -61,13 +61,12 @@ def generate_preview(theme_path: str, item_name: str) -> bool:
 
     try:
         with Image.open(src_preview) as im:
-            if im.mode not in ("RGB", "RGBA"):
-                im = im.convert("RGBA")
-            target_w = 800
+            target_w = 400
             ratio = target_w / float(im.width)
             target_h = max(1, int(im.height * ratio))
             resized = im.resize((target_w, target_h), Image.Resampling.LANCZOS)
-            resized.save(dst_preview, "PNG", optimize=True)
+            quantized = resized.convert("RGB").convert("P", palette=Image.ADAPTIVE, colors=256)
+            quantized.save(dst_preview, "PNG", optimize=True)
         return True
     except Exception as e:
         print(f"  [!] Failed to generate preview for {item_name}: {e}")

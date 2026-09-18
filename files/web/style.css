@@ -1032,6 +1032,11 @@ main {
         margin-bottom: 8px;
     }
 
+    .emu-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
     .yt-grid {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 10px;
@@ -1041,6 +1046,138 @@ main {
         padding: 16px;
         width: 95%;
     }
+}
+
+/* ==================== EMULATOR STORE ==================== */
+.emu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    padding-bottom: 30px;
+}
+
+.emu-card {
+    background: #101726;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.emu-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.emu-card.installed {
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.emu-card.installed:hover {
+    border-color: #22c55e;
+}
+
+.emu-card-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border);
+}
+
+.emu-icon-img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.emu-title-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.emu-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.emu-subtitle {
+    font-size: 11.5px;
+    color: var(--text-sub);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.emu-card-body {
+    padding: 14px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.emu-desc {
+    font-size: 12.5px;
+    color: var(--text-sub);
+    line-height: 1.45;
+    flex: 1;
+}
+
+.emu-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.emu-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #1b2838;
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.emu-tag.installed-badge {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.3);
+    font-weight: 700;
+}
+
+.emu-tag.missing-badge {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+}
+
+.emu-tag.core-badge {
+    background: rgba(26, 159, 255, 0.12);
+    color: #66c0f4;
+    border-color: rgba(26, 159, 255, 0.25);
+}
+
+.emu-card-footer {
+    padding: 10px 16px 14px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 @media (max-width: 480px) {

@@ -89,6 +89,11 @@ try:
         get_icon_preview_path,
         has_stock_backup,
     )
+    from rh.emulator_store import (
+        get_emus_status,
+        install_emu,
+        uninstall_emu,
+    )
     import db
 except ImportError:
     # Standalone mock fallbacks
@@ -939,6 +944,20 @@ class GameWebHandler(BaseHTTPRequestHandler):
       self.end_headers()
       return
 
+    if path == "/api/emus":
+      try:
+        emus = get_emus_status()
+        installed_count = sum(1 for e in emus if e.get("installed"))
+        self.send_json({
+            "ok": True,
+            "emus": emus,
+            "total": len(emus),
+            "installed_count": installed_count,
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
     if path == "/api/saves":
       self.send_json({
           "ok": True,
@@ -1350,6 +1369,42 @@ class GameWebHandler(BaseHTTPRequestHandler):
           self.send_json({"ok": True, "message": msg})
         else:
           self.send_json({"ok": False, "error": msg}, 500)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/emus/install":
+      try:
+        payload = {}
+        if content_len > 0:
+          payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        sys_id = payload.get("sys_id") or payload.get("id") or query.get("sys_id", [""])[0]
+        if not sys_id:
+          self.send_json({"ok": False, "error": "Thiếu mã hệ máy sys_id!"}, 400)
+          return
+        res = install_emu(sys_id)
+        if res.get("success"):
+          self.send_json({"ok": True, "message": res.get("message"), "data": res})
+        else:
+          self.send_json({"ok": False, "error": res.get("error", "Cài đặt thất bại")}, 500)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/emus/uninstall":
+      try:
+        payload = {}
+        if content_len > 0:
+          payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        sys_id = payload.get("sys_id") or payload.get("id") or query.get("sys_id", [""])[0]
+        if not sys_id:
+          self.send_json({"ok": False, "error": "Thiếu mã hệ máy sys_id!"}, 400)
+          return
+        res = uninstall_emu(sys_id)
+        if res.get("success"):
+          self.send_json({"ok": True, "message": res.get("message"), "data": res})
+        else:
+          self.send_json({"ok": False, "error": res.get("error", "Gỡ bỏ thất bại")}, 500)
       except Exception as e:
         self.send_json({"ok": False, "error": str(e)}, 500)
       return
