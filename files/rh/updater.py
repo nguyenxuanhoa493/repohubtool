@@ -17,6 +17,7 @@ import shutil
 import ssl
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from . import state
@@ -134,8 +135,17 @@ def _get(url, max_bytes, timeout=TIMEOUT, progress=None):
         "Pragma": "no-cache",
     }
     req = urllib.request.Request(url, headers=headers)
-    ctx = ssl._create_unverified_context()
-    with urllib.request.urlopen(req, context=ctx, timeout=timeout) as resp:
+    kwargs = {"timeout": timeout}
+    try:
+        ctx = ssl._create_unverified_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        if url.startswith("https://"):
+            kwargs["context"] = ctx
+    except Exception:
+        pass
+
+    with urllib.request.urlopen(req, **kwargs) as resp:
         content_length = resp.headers.get("Content-Length")
         total_size = int(content_length) if (content_length and content_length.isdigit()) else 0
         buf = bytearray()
@@ -158,8 +168,9 @@ def _fetch_blob(rel_path, max_bytes, expected_sha=None, progress=None):
     de tranh bi Fastly / CDN cache giu trang 404 hoac file cu.
     """
     last_err = None
+    quoted_rel_path = urllib.parse.quote(rel_path, safe="/:")
     for base in candidate_base_urls(rel_path):
-        url = "%s/%s" % (base, rel_path)
+        url = "%s/%s" % (base, quoted_rel_path)
         for attempt in range(2):
             try:
                 # Luon gui kem query timestamp de bypass cache cua proxy/CDN
