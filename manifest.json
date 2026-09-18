@@ -30,6 +30,7 @@
     "assets/themes_preview/Basic - Space.png",
     "assets/themes_preview/Basic - Triangles.png",
     "assets/themes_preview/Basic - Yosemite.png",
+    "assets/themes_preview/Basic_-_Black_&_Red.png",
     "assets/themes_preview/Berserk - Alternate.png",
     "assets/themes_preview/Bleach - Ichigo.png",
     "assets/themes_preview/Castlevania - Alucard.png",
@@ -46,6 +47,7 @@
     "assets/themes_preview/Elden Ring.png",
     "assets/themes_preview/Evangelion - Asuka & Rei.png",
     "assets/themes_preview/Evangelion - NERV.png",
+    "assets/themes_preview/Evangelion_-_Asuka_&_Rei.png",
     "assets/themes_preview/Final Fantasy - Airship.png",
     "assets/themes_preview/Final Fantasy IX - Vivi.png",
     "assets/themes_preview/Final Fantasy IX.png",
@@ -61,6 +63,8 @@
     "assets/themes_preview/Helldivers 2.png",
     "assets/themes_preview/Howl's Moving Castle - Alternate.png",
     "assets/themes_preview/Howl's Moving Castle.png",
+    "assets/themes_preview/Howl's_Moving_Castle.png",
+    "assets/themes_preview/Howl's_Moving_Castle_-_Alternate.png",
     "assets/themes_preview/Initial D - Alternate.png",
     "assets/themes_preview/Initial D - Trueno.png",
     "assets/themes_preview/Initial D.png",
@@ -102,6 +106,7 @@
     "assets/themes_preview/Retro Game Corps.png",
     "assets/themes_preview/Sanrio - Cinnamoroll.png",
     "assets/themes_preview/Shrek & Miku.png",
+    "assets/themes_preview/Shrek_&_Miku.png",
     "assets/themes_preview/Smash Bros - Alternate.png",
     "assets/themes_preview/Smash Bros.png",
     "assets/themes_preview/Spiderman - Alternate.png",
@@ -411,7 +416,7 @@
       "sha256": "1d1bf198c38c826b0b740b7554f091cef16f352e4ca991f02d0152d9feeb9154"
     },
     {
-      "path": "assets/themes_preview/Basic_-_Black_&_Red.png",
+      "path": "assets/themes_preview/Basic_-_Black___Red.png",
       "size": 278440,
       "sha256": "d6c76083e9526f853cc989963b328bcd17a3d9bf158a7c750da2aad29a04d476"
     },
@@ -546,7 +551,7 @@
       "sha256": "f924d3ac9cf3fb61830cb3c5c61eaca6d071dc5d1c1d067af370a09e9f312a38"
     },
     {
-      "path": "assets/themes_preview/Evangelion_-_Asuka_&_Rei.png",
+      "path": "assets/themes_preview/Evangelion_-_Asuka___Rei.png",
       "size": 316635,
       "sha256": "8a6a37993182f467c9d058789a59b5086aec240123353ed0ef30b0a3cfc3968a"
     },
@@ -621,12 +626,12 @@
       "sha256": "7c3df0723ebeaf1f383a04e702d74eb513fb0d13473e5b3bff59592917c6fc9b"
     },
     {
-      "path": "assets/themes_preview/Howl's_Moving_Castle.png",
+      "path": "assets/themes_preview/Howl_s_Moving_Castle.png",
       "size": 335942,
       "sha256": "666ac993a49e56c2597209d4b325f47f0f104420e079dde268c9f311e5eb36f4"
     },
     {
-      "path": "assets/themes_preview/Howl's_Moving_Castle_-_Alternate.png",
+      "path": "assets/themes_preview/Howl_s_Moving_Castle_-_Alternate.png",
       "size": 400346,
       "sha256": "0807ebb93993af5e31ae1dbe284d00194af31246bb3b771c7f3ea7ac2135635b"
     },
@@ -851,7 +856,7 @@
       "sha256": "d9b6c1d2a604e8ff7e92a86d25ff3db28eaf63894a9e7820d4711069f733e37c"
     },
     {
-      "path": "assets/themes_preview/Shrek_&_Miku.png",
+      "path": "assets/themes_preview/Shrek___Miku.png",
       "size": 398395,
       "sha256": "9952f0f786a5e2082cb3a080e404519207261b122aee96571db62f9e1fdab18d"
     },
@@ -1003,7 +1008,7 @@
     {
       "path": "catalog/themes_catalog.json",
       "size": 73346,
-      "sha256": "a29377fb552e93ed8cda2fa92de4fcc26be50cae6644d4cf4d4b7b2d52439aa7"
+      "sha256": "3a0feb5ef3e084bf640afde7bb2fca25436d8048d6191306620b552be164db2e"
     },
     {
       "path": "config.json",
@@ -1442,8 +1447,8 @@
     },
     {
       "path": "rh/theme_manager.py",
-      "size": 10095,
-      "sha256": "4bf3d84864d82662182b08eaf9771e37512e734a32b21a03bcc7a2d85af3917a"
+      "size": 10290,
+      "sha256": "83098a39aafa139d04e13ce8863532197318c1cd1cd1bf4de645b8557a19e03f"
     },
     {
       "path": "rh/ui/__init__.py",

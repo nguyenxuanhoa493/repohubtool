@@ -31,6 +31,13 @@ def clean_junk(directory: str):
                     pass
 
 
+import re
+
+def safe_slug(text: str) -> str:
+    """Sanitizes filename for 100% URL and OTA compatibility across all systems."""
+    return re.sub(r"[^a-zA-Z0-9_\-\.]", "_", text)
+
+
 def generate_preview(theme_path: str, item_name: str) -> bool:
     """Generates an 800px-wide thumbnail preview if an original preview image exists."""
     candidates = ["preview.png", "preview.jpg", "theme-preview.png", "p.png"]
@@ -45,7 +52,7 @@ def generate_preview(theme_path: str, item_name: str) -> bool:
         return False
 
     os.makedirs(PREVIEWS_DIR, exist_ok=True)
-    safe_name = item_name.replace(" ", "_")
+    safe_name = safe_slug(item_name)
     dst_preview = os.path.join(PREVIEWS_DIR, f"{safe_name}.png")
 
     # If destination already exists and is newer than source, skip regenerating
@@ -137,7 +144,7 @@ def scan_and_build():
                 pass
 
         # 1. Preview generation
-        safe_name = item.replace(" ", "_")
+        safe_name = safe_slug(item)
         has_preview = generate_preview(theme_path, item)
         preview_rel = f"assets/themes_preview/{safe_name}.png" if has_preview else ""
 
