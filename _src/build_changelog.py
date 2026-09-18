@@ -26,6 +26,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.35", "2026-09-18",
+     ("Web Manager AI Assistant: Fix Shell Command HTML Encoding, Add 1-Click Quick Debug Log Scanner, Dynamic Hardware & Display Probing",
+      "Trợ lý AI Web Manager: Sửa lỗi mã hóa ký tự lệnh Shell, Thêm nút Quét Log lỗi Chẩn đoán nhanh, Quét động phần cứng & màn hình"),
+     [("Fix Shell Command HTML Encoding & Execution: Tokenized code blocks prior to HTML escaping, ensuring 100% clean raw shell commands without HTML entity contamination (&lt;, &gt;, &amp;, <em>) when executing on BusyBox ash terminal.",
+       "Sửa lỗi Mã hóa Ký tự Lệnh Shell: Phân tách và trích xuất khối lệnh trước khi xử lý HTML escape và markdown, đảm bảo 100% câu lệnh truyền lên terminal Busybox là chuỗi thô sạch sẽ, không còn bị dính các ký tự mã hóa HTML (&lt;, &gt;, &amp;, <em>)."),
+      ("1-Click Quick Debug Log Scanner: Added Quick Debug button to Web Assistant toolbar, aggregating recently modified logs (<30min), RetroHub, RetroArch, PortMaster, and dmesg kernel errors into a single prompt for instant root-cause analysis.",
+       "Nút Quét Log lỗi Chẩn đoán nhanh: Bổ sung nút 'Quét log lỗi' 1 chạm trên thanh công cụ Chat, tự động tổng hợp toàn bộ file log vừa thay đổi (<30 phút), log RetroHub, RetroArch, game port và dmesg kernel nạp thẳng vào AI để phát hiện và đưa câu lệnh fix lỗi trong 1 lượt chat duy nhất."),
+      ("Dynamic Hardware & Display Resolution Probing: Upgraded Send Info button to dynamically inspect framebuffer resolution (/sys/class/graphics/fb0/virtual_size), SoC model, RAM, Disk, ROM directories, emulator cores, and actual log paths.",
+       "Quét động Thông số Phần cứng & Độ phân giải Màn hình: Nâng cấp nút 'Gửi info' tự động đọc trực tiếp độ phân giải thực tế từ Framebuffer hệ thống, cấu hình phần cứng, dung lượng thẻ nhớ, giả lập và cores thực tế trên thiết bị."),
+      ("Hardened AI System Prompt & Fast Investigation Protocol: Removed static hardcoded specs from prompt, enforcing strict single-command markdown block formatting and immediate direct technical solutions upon receiving logs.",
+       "Chuẩn hóa Quy tắc Phản hồi & System Prompt: Tinh gọn System Prompt theo cơ chế điều tra thực tế, loại bỏ thông số hardcode, ràng buộc AI xuất lệnh rõ ràng và đưa ra giải pháp kỹ thuật dứt điểm khi nhận được log.")]),
+
     ("2.34", "2026-09-18",
      ("Theme Store & Emu Icon Store with 1-Click Online Install, Auto-Backup & Fail-Safe Recovery",
       "Thêm Thư viện Theme, Thư viện Icon Giả Lập trực quan, Tải Online 1 chạm, Tự động Sao lưu & Khôi phục"),
