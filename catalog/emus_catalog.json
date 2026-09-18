@@ -1,0 +1,876 @@
+{
+  "version": "1.0.0",
+  "total_systems": 37,
+  "systems": [
+    {
+      "id": "ATARI2600",
+      "name": "Atari 2600",
+      "label": "ATARI2600",
+      "category": "8-Bit",
+      "company": "Atari",
+      "year": "1977",
+      "core": "Stella",
+      "desc": "Cội nguồn ngành công nghiệp trò chơi điện tử gia đình.",
+      "rompath": "../../Roms/ATARI2600",
+      "extlist": "",
+      "themecolor": "AF7AC5",
+      "launchlist": [],
+      "package_file": "emus/ATARI2600.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-atari2600.png",
+      "poster_url": "/assets/emus_preview/poster-atari2600.png",
+      "bg_url": "/assets/emus_preview/bg-atari2600.png"
+    },
+    {
+      "id": "ATARI7800",
+      "name": "Atari 7800",
+      "label": "ATARI7800",
+      "category": "8-Bit",
+      "company": "Atari",
+      "year": "1986",
+      "core": "ProSystem",
+      "desc": "Hệ máy thế hệ thứ 3 của Atari cải tiến đồ họa.",
+      "rompath": "../../Roms/ATARI7800",
+      "extlist": "",
+      "themecolor": "A569BD",
+      "launchlist": [],
+      "package_file": "emus/ATARI7800.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-atari7800.png",
+      "poster_url": "/assets/emus_preview/poster-atari7800.png",
+      "bg_url": "/assets/emus_preview/bg-atari7800.png"
+    },
+    {
+      "id": "MS",
+      "name": "Master System",
+      "label": "MS",
+      "category": "8-Bit",
+      "company": "Sega",
+      "year": "1985",
+      "core": "Genesis Plus GX",
+      "desc": "Hệ máy 8-bit đối đầu trực tiếp với Famicom của Sega.",
+      "rompath": "../../Roms/MS",
+      "extlist": "sms|rom|gg|sg|zip",
+      "themecolor": "740009",
+      "launchlist": [],
+      "package_file": "emus/MS.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-ms.png",
+      "poster_url": "/assets/emus_preview/poster-ms.png",
+      "bg_url": "/assets/emus_preview/bg-ms.png"
+    },
+    {
+      "id": "FC",
+      "name": "NES / Famicom",
+      "label": "FC",
+      "category": "8-Bit",
+      "company": "Nintendo",
+      "year": "1983",
+      "core": "FCEUmm / Nestopia",
+      "desc": "Hệ máy 8-bit huyền thoại của Nintendo (Mario, Contra, Tank 1990...)",
+      "rompath": "../../Roms/FC",
+      "extlist": "nes|fds|unf|unif|zip",
+      "themecolor": "991615",
+      "launchlist": [
+        {
+          "name": "FCEUmm",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "Nestopia",
+          "launch": "launch_nestopia.sh"
+        }
+      ],
+      "package_file": "emus/FC.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-fc.png",
+      "poster_url": "/assets/emus_preview/poster-fc.png",
+      "bg_url": "/assets/emus_preview/bg-fc.png"
+    },
+    {
+      "id": "MD",
+      "name": "Mega Drive / Genesis",
+      "label": "MD",
+      "category": "16-Bit",
+      "company": "Sega",
+      "year": "1988",
+      "core": "Genesis Plus GX / PicoDrive",
+      "desc": "Hệ máy 16-bit lừng danh của Sega (Sonic the Hedgehog, Streets of Rage...)",
+      "rompath": "../../Roms/MD",
+      "extlist": "bin|gen|md|smd|32x|zip",
+      "themecolor": "0088CF",
+      "launchlist": [
+        {
+          "name": "PicoDrive",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "GenesisPlusGX",
+          "launch": "launch_genplus.sh"
+        },
+        {
+          "name": "GenesisPlusGX Wide",
+          "launch": "launch_genplus_wide.sh"
+        }
+      ],
+      "package_file": "emus/MD.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-md.png",
+      "poster_url": "/assets/emus_preview/poster-md.png",
+      "bg_url": "/assets/emus_preview/bg-md.png"
+    },
+    {
+      "id": "PCE",
+      "name": "PC Engine / TG16",
+      "label": "PCE",
+      "category": "16-Bit",
+      "company": "NEC",
+      "year": "1987",
+      "core": "Mednafen PCE Fast",
+      "desc": "Hệ máy liên minh NEC và Hudson Soft (Castlevania: Rondo of Blood...)",
+      "rompath": "../../Roms/PCE",
+      "extlist": "pce|cue|zip",
+      "themecolor": "EA483F",
+      "launchlist": [],
+      "package_file": "emus/PCE.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-pce.png",
+      "poster_url": "/assets/emus_preview/poster-pce.png",
+      "bg_url": "/assets/emus_preview/bg-pce.png"
+    },
+    {
+      "id": "SEGACD",
+      "name": "Sega CD / Mega CD",
+      "label": "SEGACD",
+      "category": "16-Bit",
+      "company": "Sega",
+      "year": "1991",
+      "core": "Genesis Plus GX",
+      "desc": "Phụ kiện ổ đĩa CD mở rộng cho Sega Genesis.",
+      "rompath": "../../Roms/SEGACD",
+      "extlist": "bin|chd|cue|iso|md|smd|32x|zip",
+      "themecolor": "0088CF",
+      "launchlist": [
+        {
+          "name": "PicoDrive",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "GenesisPlusGX",
+          "launch": "launch_genplus.sh"
+        },
+        {
+          "name": "GenesisPlusGX Wide",
+          "launch": "launch_genplus_wide.sh"
+        }
+      ],
+      "package_file": "emus/SEGACD.tar.gz",
+      "package_size": "1 KB",
+      "icon_url": "/assets/emus_preview/ic-segacd.png",
+      "poster_url": "/assets/emus_preview/poster-segacd.png",
+      "bg_url": "/assets/emus_preview/bg-segacd.png"
+    },
+    {
+      "id": "SFC",
+      "name": "Super Famicom / SNES",
+      "label": "SFC",
+      "category": "16-Bit",
+      "company": "Nintendo",
+      "year": "1990",
+      "core": "Snes9x",
+      "desc": "Hệ máy 16-bit đình đám của Nintendo (Chrono Trigger, Mario World...)",
+      "rompath": "../../Roms/SFC",
+      "extlist": "smc|fig|sfc|gd3|gd7|dx2|bsx|swc|zip",
+      "themecolor": "FF0000",
+      "launchlist": [
+        {
+          "name": "Snes9x2005",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "Snes9x2005 Plus",
+          "launch": "launch_snes9x2005_plus.sh"
+        },
+        {
+          "name": "Snes9x2010",
+          "launch": "launch_snes9x2010.sh"
+        },
+        {
+          "name": "Snes9x Latest",
+          "launch": "launch_snes9x.sh"
+        }
+      ],
+      "package_file": "emus/SFC.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-sfc.png",
+      "poster_url": "/assets/emus_preview/poster-sfc.png",
+      "bg_url": "/assets/emus_preview/bg-sfc.png"
+    },
+    {
+      "id": "LYNX",
+      "name": "Atari Lynx",
+      "label": "ATARI LYNX",
+      "category": "Handheld",
+      "company": "Atari",
+      "year": "1989",
+      "core": "Handy Libretro",
+      "desc": "Máy chơi game cầm tay màn hình màu đầu tiên trên thế giới.",
+      "rompath": "../../Roms/LYNX",
+      "extlist": "",
+      "themecolor": "88FF88",
+      "launchlist": [],
+      "package_file": "emus/LYNX.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-lynx.png",
+      "poster_url": "/assets/emus_preview/poster-lynx.png",
+      "bg_url": "/assets/emus_preview/bg-lynx.png"
+    },
+    {
+      "id": "GW",
+      "name": "Game & Watch",
+      "label": "GAME&WATCH",
+      "category": "Handheld",
+      "company": "Nintendo",
+      "year": "1980",
+      "core": "GW Libretro",
+      "desc": "Dòng máy game màn hình LCD cầm tay đời đầu của Nintendo.",
+      "rompath": "../../Roms/GW",
+      "extlist": "",
+      "themecolor": "FF0000",
+      "launchlist": [],
+      "package_file": "emus/GW.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-gw.png",
+      "poster_url": "/assets/emus_preview/poster-gw.png",
+      "bg_url": "/assets/emus_preview/bg-gw.png"
+    },
+    {
+      "id": "GB",
+      "name": "Game Boy",
+      "label": "GB",
+      "category": "Handheld",
+      "company": "Nintendo",
+      "year": "1989",
+      "core": "Gambatte",
+      "desc": "Máy chơi game cầm tay màn hình đơn sắc đầu tiên của Nintendo.",
+      "rompath": "../../Roms/GB",
+      "extlist": "gb|gbc|zip|7z",
+      "themecolor": "00FF00",
+      "launchlist": [
+        {
+          "name": "GamBatte",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "mGBA",
+          "launch": "launch_mgba.sh"
+        }
+      ],
+      "package_file": "emus/GB.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-gb.png",
+      "poster_url": "/assets/emus_preview/poster-gb.png",
+      "bg_url": "/assets/emus_preview/bg-gb.png"
+    },
+    {
+      "id": "GBA",
+      "name": "Game Boy Advance",
+      "label": "GBA",
+      "category": "Handheld",
+      "company": "Nintendo",
+      "year": "2001",
+      "core": "mGBA / gpSP",
+      "desc": "Hệ máy cầm tay 32-bit thành công nhất (Pokemon, Zelda, MegaMan...)",
+      "rompath": "../../Roms/GBA",
+      "extlist": "gba|agb|gbz|zip|7z",
+      "themecolor": "FF00FF",
+      "launchlist": [
+        {
+          "name": "mGBA",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "gPSP",
+          "launch": "launch_gpsp.sh"
+        }
+      ],
+      "package_file": "emus/GBA.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-gba.png",
+      "poster_url": "/assets/emus_preview/poster-gba.png",
+      "bg_url": "/assets/emus_preview/bg-gba.png"
+    },
+    {
+      "id": "GBC",
+      "name": "Game Boy Color",
+      "label": "GBC",
+      "category": "Handheld",
+      "company": "Nintendo",
+      "year": "1998",
+      "core": "Gambatte",
+      "desc": "Phiên bản nâng cấp màn hình màu của dòng Game Boy.",
+      "rompath": "../../Roms/GBC",
+      "extlist": "gb|gbc|zip|7z",
+      "themecolor": "FFB800",
+      "launchlist": [
+        {
+          "name": "GamBatte",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "mGBA",
+          "launch": "launch_mgba.sh"
+        }
+      ],
+      "package_file": "emus/GBC.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-gbc.png",
+      "poster_url": "/assets/emus_preview/poster-gbc.png",
+      "bg_url": "/assets/emus_preview/bg-gbc.png"
+    },
+    {
+      "id": "GG",
+      "name": "Game Gear",
+      "label": "GAME GEAR",
+      "category": "Handheld",
+      "company": "Sega",
+      "year": "1990",
+      "core": "Genesis Plus GX",
+      "desc": "Máy cầm tay màn hình màu đầu tiên của Sega.",
+      "rompath": "../../Roms/GG",
+      "extlist": "",
+      "themecolor": "FFFFFF",
+      "launchlist": [],
+      "package_file": "emus/GG.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-gg.png",
+      "poster_url": "/assets/emus_preview/poster-gg.png",
+      "bg_url": "/assets/emus_preview/bg-gg.png"
+    },
+    {
+      "id": "NGP",
+      "name": "Neo Geo Pocket",
+      "label": "NGP",
+      "category": "Handheld",
+      "company": "SNK",
+      "year": "1998",
+      "core": "Mednafen NGP",
+      "desc": "Máy cầm tay phím điều hướng micro-switch của SNK.",
+      "rompath": "../../Roms/NGP",
+      "extlist": "ngc|ngp|zip",
+      "themecolor": "FFFFFF",
+      "launchlist": [],
+      "package_file": "emus/NGP.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-ngp.png",
+      "poster_url": "/assets/emus_preview/poster-ngp.png",
+      "bg_url": "/assets/emus_preview/bg-ngp.png"
+    },
+    {
+      "id": "NDS",
+      "name": "Nintendo DS",
+      "label": "NDS",
+      "category": "Handheld",
+      "company": "Nintendo",
+      "year": "2004",
+      "core": "DraStic Standalone",
+      "desc": "Máy chơi game 2 màn hình cảm ứng của Nintendo.",
+      "rompath": "../../Roms/NDS",
+      "extlist": "",
+      "themecolor": "FF8800",
+      "launchlist": [
+        {
+          "name": "Drastic SDL2 MOD(凯)",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "Drastic",
+          "launch": "launch_original.sh"
+        }
+      ],
+      "package_file": "emus/NDS.tar.gz",
+      "package_size": "26.0 MB",
+      "icon_url": "/assets/emus_preview/ic-nds.png",
+      "poster_url": "/assets/emus_preview/poster-nds.png",
+      "bg_url": "/assets/emus_preview/bg-nds.png"
+    },
+    {
+      "id": "PPSSPP",
+      "name": "PlayStation Portable (PSP)",
+      "label": "PPSSPP",
+      "category": "Handheld",
+      "company": "Sony",
+      "year": "2004",
+      "core": "PPSSPP Standalone",
+      "desc": "Máy chơi game cầm tay đồ họa 3D ấn tượng của Sony (God of War, GTA...)",
+      "rompath": "../../Roms/PSP",
+      "extlist": "",
+      "themecolor": "64A8BD",
+      "launchlist": [
+        {
+          "name": "PPSSPP Vulkan Performance Mode",
+          "launch": "launch_performance_vulkan.sh"
+        },
+        {
+          "name": "PPSSPP Vulkan",
+          "launch": "launch_vulkan.sh"
+        },
+        {
+          "name": "PPSSPP Performance Mode",
+          "launch": "launch_performance.sh"
+        },
+        {
+          "name": "PPSSPP",
+          "launch": "launch.sh"
+        }
+      ],
+      "package_file": "emus/PPSSPP.tar.gz",
+      "package_size": "35.3 MB",
+      "icon_url": "/assets/emus_preview/ic-ppsspp.png",
+      "poster_url": "/assets/emus_preview/poster-ppsspp.png",
+      "bg_url": "/assets/emus_preview/bg-ppsspp.png"
+    },
+    {
+      "id": "WSC",
+      "name": "WonderSwan Color",
+      "label": "WSC",
+      "category": "Handheld",
+      "company": "Bandai",
+      "year": "1999",
+      "core": "Mednafen WSwan",
+      "desc": "Máy cầm tay sáng tạo bởi Gunpei Yokoi (cha đẻ Game Boy).",
+      "rompath": "../../Roms/WS",
+      "extlist": "wsc|ws|zip",
+      "themecolor": "3C4593",
+      "launchlist": [],
+      "package_file": "emus/WSC.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-wsc.png",
+      "poster_url": "/assets/emus_preview/poster-wsc.png",
+      "bg_url": "/assets/emus_preview/bg-wsc.png"
+    },
+    {
+      "id": "N64",
+      "name": "Nintendo 64",
+      "label": "N64",
+      "category": "3D Consoles",
+      "company": "Nintendo",
+      "year": "1996",
+      "core": "Mupen64Plus / Parallel",
+      "desc": "Hệ máy 3D 64-bit kinh điển (Super Mario 64, Ocarina of Time...)",
+      "rompath": "../../Roms/N64",
+      "extlist": "",
+      "themecolor": "FFFF88",
+      "launchlist": [
+        {
+          "name": "Mupen64Plus",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "Standalone RICE GFX",
+          "launch": "launch_mupen64_standalone_rice.sh"
+        },
+        {
+          "name": "Parellel N64",
+          "launch": "launch_paralleln64.sh"
+        },
+        {
+          "name": "Standalone Glide64MK2 GFX",
+          "launch": "launch_mupen64_standalone_glide64mk2.sh"
+        }
+      ],
+      "package_file": "emus/N64.tar.gz",
+      "package_size": "1 KB",
+      "icon_url": "/assets/emus_preview/ic-n64.png",
+      "poster_url": "/assets/emus_preview/poster-n64.png",
+      "bg_url": "/assets/emus_preview/bg-n64.png"
+    },
+    {
+      "id": "PS",
+      "name": "PlayStation 1 (PSX)",
+      "label": "PS",
+      "category": "3D Consoles",
+      "company": "Sony",
+      "year": "1994",
+      "core": "PCSX ReARMed / SwanStation",
+      "desc": "Hệ máy đĩa CD mở đầu đế chế game của Sony (Final Fantasy, Resident Evil...)",
+      "rompath": "../../Roms/PS",
+      "extlist": "bin|cue|img|mdf|pbp|toc|cbn|m3u|chd",
+      "themecolor": "00FF00",
+      "launchlist": [],
+      "package_file": "emus/PS.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-ps.png",
+      "poster_url": "/assets/emus_preview/poster-ps.png",
+      "bg_url": "/assets/emus_preview/bg-ps.png"
+    },
+    {
+      "id": "DC",
+      "name": "Sega Dreamcast",
+      "label": "DC",
+      "category": "3D Consoles",
+      "company": "Sega",
+      "year": "1998",
+      "core": "Flycast",
+      "desc": "Hệ máy 128-bit cuối cùng và đỉnh cao của Sega.",
+      "rompath": "../../Roms/DC",
+      "extlist": "",
+      "themecolor": "FFFFFF",
+      "launchlist": [],
+      "package_file": "emus/DC.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-dc.png",
+      "poster_url": "/assets/emus_preview/poster-dc.png",
+      "bg_url": "/assets/emus_preview/bg-dc.png"
+    },
+    {
+      "id": "SS",
+      "name": "Sega Saturn",
+      "label": "SS",
+      "category": "3D Consoles",
+      "company": "Sega",
+      "year": "1994",
+      "core": "Yaba Sanshiro",
+      "desc": "Hệ máy 32-bit đĩa CD cao cấp của Sega.",
+      "rompath": "../../Roms/SS",
+      "extlist": "",
+      "themecolor": "E4007F",
+      "launchlist": [
+        {
+          "name": "YabaSanshiro SA",
+          "launch": "launch_yabasanshiro_standalone.sh"
+        },
+        {
+          "name": "YabaSanshiro Libretro",
+          "launch": "launch.sh"
+        }
+      ],
+      "package_file": "emus/SS.tar.gz",
+      "package_size": "1 KB",
+      "icon_url": "",
+      "poster_url": "",
+      "bg_url": "/assets/emus_preview/bg-ss.png"
+    },
+    {
+      "id": "ARCADE",
+      "name": "Arcade (Máy thùng)",
+      "label": "Arcade",
+      "category": "Arcade",
+      "company": "Arcade",
+      "year": "1980s",
+      "core": "FBNeo / MAME",
+      "desc": "Tổng hợp các trò chơi điện tử xèng / máy thùng cổ điển.",
+      "rompath": "../../Roms/ARCADE",
+      "extlist": "zip",
+      "themecolor": "CD6155",
+      "launchlist": [],
+      "package_file": "emus/ARCADE.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-arcade.png",
+      "poster_url": "/assets/emus_preview/poster-arcade.png",
+      "bg_url": "/assets/emus_preview/bg-arcade.png"
+    },
+    {
+      "id": "CPS1",
+      "name": "Capcom CPS-1",
+      "label": "CPS1",
+      "category": "Arcade",
+      "company": "Capcom",
+      "year": "1988",
+      "core": "FBNeo / FBA2012",
+      "desc": "Bo mạch máy thùng Capcom (Street Fighter II, Final Fight...)",
+      "rompath": "../../Roms/CPS1",
+      "extlist": "zip",
+      "themecolor": "0000FF",
+      "launchlist": [],
+      "package_file": "emus/CPS1.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-cps1.png",
+      "poster_url": "/assets/emus_preview/poster-cps1.png",
+      "bg_url": "/assets/emus_preview/bg-cps1.png"
+    },
+    {
+      "id": "CPS2",
+      "name": "Capcom CPS-2",
+      "label": "CPS2",
+      "category": "Arcade",
+      "company": "Capcom",
+      "year": "1993",
+      "core": "FBNeo / FBA2012",
+      "desc": "Bo mạch máy thùng Capcom (Marvel vs Capcom, Street Fighter Alpha...)",
+      "rompath": "../../Roms/CPS2",
+      "extlist": "zip",
+      "themecolor": "FFFF00",
+      "launchlist": [],
+      "package_file": "emus/CPS2.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-cps2.png",
+      "poster_url": "/assets/emus_preview/poster-cps2.png",
+      "bg_url": "/assets/emus_preview/bg-cps2.png"
+    },
+    {
+      "id": "CPS3",
+      "name": "Capcom CPS-3",
+      "label": "CPS3",
+      "category": "Arcade",
+      "company": "Capcom",
+      "year": "1996",
+      "core": "FBNeo / FBA2012",
+      "desc": "Bo mạch máy thùng Capcom (Street Fighter III: 3rd Strike, JoJo...)",
+      "rompath": "../../Roms/CPS3",
+      "extlist": "zip",
+      "themecolor": "FF4400",
+      "launchlist": [
+        {
+          "name": "FBNEO",
+          "launch": "launch_fbneo.sh"
+        },
+        {
+          "name": "FBA2012 CPS3",
+          "launch": "launch.sh"
+        }
+      ],
+      "package_file": "emus/CPS3.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-cps3.png",
+      "poster_url": "/assets/emus_preview/poster-cps3.png",
+      "bg_url": "/assets/emus_preview/bg-cps3.png"
+    },
+    {
+      "id": "FBNEO",
+      "name": "FinalBurn Neo",
+      "label": "FBNEO",
+      "category": "Arcade",
+      "company": "Multi",
+      "year": "2000s",
+      "core": "FBNeo Libretro",
+      "desc": "Trình giả lập arcade đa năng và chính xác cao.",
+      "rompath": "../../Roms/FBNEO",
+      "extlist": "zip",
+      "themecolor": "EC7063",
+      "launchlist": [
+        {
+          "name": "FBNEO Performance Mode",
+          "launch": "launch_performance.sh"
+        },
+        {
+          "name": "FBNEO",
+          "launch": "launch.sh"
+        }
+      ],
+      "package_file": "emus/FBNEO.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-fbneo.png",
+      "poster_url": "/assets/emus_preview/poster-fbneo.png",
+      "bg_url": "/assets/emus_preview/bg-fbneo.png"
+    },
+    {
+      "id": "PGM",
+      "name": "IGS PolyGame Master",
+      "label": "PGM",
+      "category": "Arcade",
+      "company": "IGS",
+      "year": "1997",
+      "core": "FBNeo",
+      "desc": "Hệ máy thùng arcade Đài Loan (Knights of Valour, Oriental Legend...)",
+      "rompath": "../../Roms/PGM",
+      "extlist": "zip",
+      "themecolor": "FAF792",
+      "launchlist": [
+        {
+          "name": "FBA2012 Auto",
+          "launch": "launch.sh"
+        },
+        {
+          "name": "FBNEO",
+          "launch": "launch_fbneo.sh"
+        }
+      ],
+      "package_file": "emus/PGM.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-pgm.png",
+      "poster_url": "/assets/emus_preview/poster-pgm.png",
+      "bg_url": "/assets/emus_preview/bg-pgm.png"
+    },
+    {
+      "id": "MAME2003PLUS",
+      "name": "MAME 2003 Plus",
+      "label": "MAME PLUS",
+      "category": "Arcade",
+      "company": "Multi",
+      "year": "2003",
+      "core": "MAME 2003+",
+      "desc": "Bản MAME tối ưu hiệu năng tuyệt vời cho máy cấu hình nhẹ.",
+      "rompath": "../../Roms/MAME2003PLUS",
+      "extlist": "zip",
+      "themecolor": "00CCFF",
+      "launchlist": [],
+      "package_file": "emus/MAME2003PLUS.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-mame2003plus.png",
+      "poster_url": "/assets/emus_preview/poster-mame2003plus.png",
+      "bg_url": "/assets/emus_preview/bg-mame2003plus.png"
+    },
+    {
+      "id": "MAME2010",
+      "name": "MAME 2010",
+      "label": "MAME2010",
+      "category": "Arcade",
+      "company": "Multi",
+      "year": "2010",
+      "core": "MAME 2010",
+      "desc": "Bản MAME hỗ trợ mở rộng thêm nhiều đầu game thập niên 90/2000.",
+      "rompath": "../../Roms/MAME2010",
+      "extlist": "zip",
+      "themecolor": "C01A2E",
+      "launchlist": [],
+      "package_file": "emus/MAME2010.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-mame2010.png",
+      "poster_url": "/assets/emus_preview/poster-mame2010.png",
+      "bg_url": "/assets/emus_preview/bg-mame2010.png"
+    },
+    {
+      "id": "MAME",
+      "name": "MAME Arcade",
+      "label": "MAME",
+      "category": "Arcade",
+      "company": "Multi",
+      "year": "1997",
+      "core": "MAME Arcade",
+      "desc": "Trình giả lập bảo tồn phần cứng máy thùng thế giới.",
+      "rompath": "../../Roms/MAME",
+      "extlist": "zip",
+      "themecolor": "63C3F3",
+      "launchlist": [],
+      "package_file": "emus/MAME.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-mame.png",
+      "poster_url": "/assets/emus_preview/poster-mame.png",
+      "bg_url": "/assets/emus_preview/bg-mame.png"
+    },
+    {
+      "id": "NEOGEO",
+      "name": "SNK Neo Geo",
+      "label": "NEOGEO",
+      "category": "Arcade",
+      "company": "SNK",
+      "year": "1990",
+      "core": "FBNeo / NeoCD",
+      "desc": "Hệ máy game đối kháng và hành động đỉnh cao (Metal Slug, King of Fighters...)",
+      "rompath": "../../Roms/NEOGEO",
+      "extlist": "zip",
+      "themecolor": "FFD200",
+      "launchlist": [
+        {
+          "name": "FBNEO",
+          "launch": "launch_fbneo.sh"
+        },
+        {
+          "name": "FBA2012 NEOGEO",
+          "launch": "launch.sh"
+        }
+      ],
+      "package_file": "emus/NEOGEO.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-neogeo.png",
+      "poster_url": "/assets/emus_preview/poster-neogeo.png",
+      "bg_url": "/assets/emus_preview/bg-neogeo.png"
+    },
+    {
+      "id": "EASYRPG",
+      "name": "EasyRPG Player",
+      "label": "EasyRPG",
+      "category": "Engines",
+      "company": "Community",
+      "year": "2010s",
+      "core": "EasyRPG Libretro",
+      "desc": "Trình thông dịch chạy các tựa game làm từ RPG Maker 2000 & 2003.",
+      "rompath": "../../Roms/EASYRPG",
+      "extlist": "ldb|zip|easyrpg",
+      "themecolor": "FFFF88",
+      "launchlist": [],
+      "package_file": "emus/EASYRPG.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-easyrpg.png",
+      "poster_url": "/assets/emus_preview/poster-easyrpg.png",
+      "bg_url": "/assets/emus_preview/bg-easyrpg.png"
+    },
+    {
+      "id": "JAVA",
+      "name": "J2ME Mobile (Java)",
+      "label": "JAVA",
+      "category": "Engines",
+      "company": "Zulu/FreeJ2ME",
+      "year": "2000s",
+      "core": "FreeJ2ME Standalone",
+      "desc": "Giả lập kho game Java phím bấm điện thoại Nokia/Sony Ericsson kinh điển.",
+      "rompath": "../../Roms/JAVA",
+      "extlist": "jar",
+      "themecolor": "CD6155",
+      "launchlist": [],
+      "package_file": "emus/JAVA.tar.gz",
+      "package_size": "62.8 MB",
+      "icon_url": "",
+      "poster_url": "",
+      "bg_url": ""
+    },
+    {
+      "id": "OPENBOR",
+      "name": "OpenBOR",
+      "label": "OpenBOR",
+      "category": "Engines",
+      "company": "ChronoCrash",
+      "year": "2000s",
+      "core": "OpenBOR Standalone",
+      "desc": "Engine game hành động đi cảnh chặt chém (Beat 'em up) mã nguồn mở.",
+      "rompath": "../../Roms/OPENBOR",
+      "extlist": "pak|Pak|PAK",
+      "themecolor": "FFFF00",
+      "launchlist": [],
+      "package_file": "emus/OPENBOR.tar.gz",
+      "package_size": "580 KB",
+      "icon_url": "/assets/emus_preview/ic-openbor.png",
+      "poster_url": "/assets/emus_preview/poster-openbor.png",
+      "bg_url": "/assets/emus_preview/bg-openbor.png"
+    },
+    {
+      "id": "PICO8",
+      "name": "PICO-8 Fantasy Console",
+      "label": "PICO8",
+      "category": "Engines",
+      "company": "Lexaloffle",
+      "year": "2015",
+      "core": "Fake08 / Retro8",
+      "desc": "Hệ máy ảo phong cách retro 8-bit với hàng ngàn game indie sáng tạo.",
+      "rompath": "../../Roms/PICO8",
+      "extlist": "",
+      "themecolor": "00FF88",
+      "launchlist": [],
+      "package_file": "emus/PICO8.tar.gz",
+      "package_size": "0 KB",
+      "icon_url": "/assets/emus_preview/ic-pico8.png",
+      "poster_url": "/assets/emus_preview/poster-pico8.png",
+      "bg_url": "/assets/emus_preview/bg-pico8.png"
+    },
+    {
+      "id": "FFMPEG",
+      "name": "Media Player (FFMPEG)",
+      "label": "FFMPEG",
+      "category": "Media",
+      "company": "TrimUI",
+      "year": "2024",
+      "core": "FFMPEG",
+      "desc": "Trình phát video và âm nhạc đa định dạng.",
+      "rompath": "../../Roms/FFMPEG",
+      "extlist": "mp4|mkv|avi|mpg|mpeg|wmv|asf|rm|rmvb|m4v|ts|mp3|wma|jpg|png|bmp",
+      "themecolor": "DDEEFF",
+      "launchlist": [],
+      "package_file": "emus/FFMPEG.tar.gz",
+      "package_size": "7.2 MB",
+      "icon_url": "/assets/emus_preview/ic-ffmpeg.png",
+      "poster_url": "/assets/emus_preview/poster-ffmpeg.png",
+      "bg_url": "/assets/emus_preview/bg-ffmpeg.png"
+    }
+  ]
+}
