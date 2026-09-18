@@ -1,14 +1,33 @@
 __pycache__/
 .DS_Store
-catalog/roms_store.sqlite3
+Thumbs.db
+*.swp
+*~
 
 # Release packages - binaries are published to GitHub Releases, not tracked in git
 dist/
+*.zip
+*.tar.gz
+*.7z
+*.rar
 
 # Archived legacy patch scripts
 tools/_archive/
 
-# Ignore unzipped theme folders (to keep repo clean), only track zips
-Themes/*
-!Themes/zips/
-!Themes/zips/**
+# ---------------------------------------------------------------------------
+# Large asset stores moved to GitHub Releases (see _src/publish_assets.py).
+# The app downloads them over HTTP; they are not source.
+# ---------------------------------------------------------------------------
+/Themes/zips/
+/EmuIcons/zips/
+
+# The plain database is a local build product; the .gz is the OTA payload and
+# MUST stay in git: manifest.catalog.url is a repo-relative path that both old
+# and new clients resolve against the branch.
+catalog/roms_store.sqlite3
+
+# Python build artefacts / editor backups
+*.py[cod]
+*.class
+_src/*.orig
+_src/*.bak

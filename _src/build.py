@@ -20,31 +20,53 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOMAIN = "https://retrohub.xuanhoa493.com"
 
 
-def _published_version(fallback="1.50"):
-    """The version this repo is actually serving, read from manifest.json."""
-    try:
-        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
-            v = json.load(f).get("version")
-        if isinstance(v, str) and v.strip():
-            return v.strip()
-    except Exception as e:
-        print("  canh bao: khong doc duoc manifest.json (%s), dung %s" % (e, fallback))
-    return fallback
+VERSION_PY = os.path.join(ROOT, "files", "rh", "version.py")
 
 
-def _full_release_version(fallback="1.63"):
-    """The latest full installer release on GitHub Releases."""
+def _app_version():
+    """The one version constant, read from files/rh/version.py.
+
+    The site, the manifest and the release tag all derive from this. There is
+    deliberately no hardcoded fallback: a stale fallback is how the page once
+    advertised v2.35 while the download card still claimed 8.3 MB.
+    """
     try:
-        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
-            v = json.load(f).get("full_release_version")
-        if isinstance(v, str) and v.strip():
-            return v.strip()
-    except Exception:
+        with open(VERSION_PY, encoding="utf-8") as f:
+            m = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', f.read())
+        if m:
+            return m.group(1).strip().lstrip("v")
+    except OSError:
         pass
-    return fallback
+    raise SystemExit("khong doc duoc APP_VERSION tu files/rh/version.py")
 
 
-VERSION = _published_version()
+def _manifest():
+    try:
+        with open(os.path.join(ROOT, "manifest.json"), encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _full_release_version():
+    """The latest full installer on GitHub Releases, read from manifest.json."""
+    m = _manifest()
+    v = m.get("full_release_version") or m.get("version")
+    if isinstance(v, str) and v.strip():
+        return v.strip()
+    raise SystemExit("manifest.json thieu full_release_version")
+
+
+def _zip_size(filename):
+    """Real size of a built archive, so the site never shows a stale number."""
+    try:
+        mb = os.path.getsize(os.path.join(ROOT, "dist", filename)) / 1024 / 1024
+    except OSError:
+        return "Latest"
+    return "%.1f MB" % mb
+
+
+VERSION = _app_version()
 FULL_VERSION = _full_release_version()
 VER_FULL = "RetroHub-%s-full.zip" % FULL_VERSION
 VER_NEXTUI = "RetroHub-%s-NextUI.zip" % FULL_VERSION
@@ -226,6 +248,17 @@ T = {
            'Nếu bạn là chủ sở hữu bản quyền và muốn gỡ một tựa game khỏi danh mục, <a href="mailto:nguyenxuanhoa493@gmail.com">hãy liên hệ với tôi</a> — tôi sẽ gỡ ngay.'],
  },
 }
+
+# Download cards used to hardcode "8.3 MB" and drifted from the real assets.
+# Fill the figure from the archives CI just built; fall back to "Latest" when
+# building the site locally without dist/.
+_SIZE_FULL = _zip_size(VER_FULL)
+_SIZE_NEXTUI = _zip_size(VER_NEXTUI)
+for _t in T.values():
+    for _k in ("dl_trimui_sub", "card_trimui_s"):
+        _t[_k] = _t[_k].replace("8.3 MB", _SIZE_FULL)
+    for _k in ("dl_nextui_sub", "card_nextui_s"):
+        _t[_k] = _t[_k].replace("8.3 MB", _SIZE_NEXTUI)
 
 SVG_TG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.9 4.3 18.7 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.3 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.3c.9-.3 1.6.2 1.4 1.5z"/></svg>'
 SVG_MAIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm9 7.2 8-4.7V6.5l-8 4.7-8-4.7v1L12 12.2z"/></svg>'

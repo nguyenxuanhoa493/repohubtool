@@ -26,6 +26,9 @@ from .paths import (
 from . import state
 from .i18n import tr
 
+# Theme zips are served from a GitHub Release, not committed to git.
+ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+
 _SSL_CTX = None
 try:
     _SSL_CTX = ssl.create_default_context()
@@ -206,16 +209,18 @@ def install_theme(theme_info: Dict, on_progress: Optional[Callable[[int, str], N
             return True, tr("theme_install_success")
 
         # 3. Online Download from Git / CDN / Hosting
-        enc_folder = urllib.parse.quote(folder)
-        zip_name = f"{enc_folder}.zip"
-        
-        download_urls = [
-            f"https://retrohub.xuanhoa493.com/Themes/zips/{zip_name}",
-            f"https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main/Themes/zips/{zip_name}",
-            f"https://github.com/nguyenxuanhoa493/repohubtool/raw/main/Themes/zips/{zip_name}",
-        ]
+        zip_name = f"{urllib.parse.quote(folder)}.zip"
+
+        # Theme zips live on a GitHub Release, not in git. The catalog carries
+        # the exact asset URL; the fallback mirrors GitHub's filename rule
+        # (spaces become dots) in case the catalog entry is ever missing.
+        download_urls = []
         if theme_info.get("download_url"):
-            download_urls.insert(0, theme_info["download_url"])
+            download_urls.append(theme_info["download_url"])
+        if theme_info.get("raw_git_url"):
+            download_urls.append(theme_info["raw_git_url"])
+        download_urls.append(
+            ASSET_BASE + urllib.parse.quote(folder.replace(" ", ".")) + ".zip")
 
         tmp_zip = f"/tmp/{folder}.zip"
         download_ok = False
