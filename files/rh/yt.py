@@ -283,7 +283,7 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
         return
 
     if isinstance(node, dict):
-        v = node.get("videoRenderer") or node.get("gridVideoRenderer")
+        v = node.get("videoRenderer") or node.get("gridVideoRenderer") or node.get("compactVideoRenderer")
         if v:
             vid = v.get("videoId")
             if vid:
@@ -468,6 +468,80 @@ def get_trending(limit: int = 24) -> list:
     if items:
         save_feed_cache("Music", items)
     return items
+
+
+def _deep_find(node, key):
+    """Return the first value stored under *key* anywhere in a nested JSON tree."""
+    if isinstance(node, dict):
+        if key in node:
+            return node[key]
+        for val in node.values():
+            found = _deep_find(val, key)
+            if found is not None:
+                return found
+    elif isinstance(node, list):
+        for item in node:
+            found = _deep_find(item, key)
+            if found is not None:
+                return found
+    return None
+
+
+def fetch_watch_metadata(video_id: str) -> dict:
+    """Fetch a video's detail page: title, channel, views, description, related.
+
+    Uses the InnerTube `next` endpoint. Returns None on network failure so the
+    caller can fall back to the data already known from the grid.
+    """
+    if not video_id:
+        return None
+    payload = {"context": WEB_CONTEXT, "videoId": video_id}
+    try:
+        data = _make_request("next", payload, timeout=7)
+    except Exception as e:
+        print(f"[rh.yt] Watch metadata error for {video_id}: {e}")
+        return None
+
+    primary = _deep_find(data, "videoPrimaryInfoRenderer") or {}
+    secondary = _deep_find(data, "videoSecondaryInfoRenderer") or {}
+
+    title_runs = primary.get("title", {}).get("runs", [])
+    title = title_runs[0].get("text", "") if title_runs else primary.get("title", {}).get("simpleText", "")
+
+    views = ""
+    vc = primary.get("viewCount", {})
+    if isinstance(vc, dict):
+        views = (
+            vc.get("videoViewCountRenderer", {}).get("viewCount", {}).get("simpleText", "")
+            or vc.get("simpleText", "")
+        )
+
+    published = primary.get("dateText", {}).get("simpleText", "")
+
+    owner = secondary.get("owner", {}).get("videoOwnerRenderer", {})
+    o_runs = owner.get("title", {}).get("runs", [])
+    channel = o_runs[0].get("text", "") if o_runs else ""
+
+    description = secondary.get("attributedDescription", {}).get("content", "")
+    if not description:
+        d_runs = secondary.get("description", {}).get("runs", [])
+        description = " ".join(r.get("text", "") for r in d_runs)
+
+    related = []
+    try:
+        _extract_videos_from_json(data, related, limit=13)
+    except Exception:
+        pass
+    related = [r for r in related if r.get("id") != video_id][:12]
+
+    return {
+        "title": clean_yt_text(title),
+        "channel": clean_yt_text(channel),
+        "views": clean_yt_text(views),
+        "published": clean_yt_text(published),
+        "description": clean_yt_text(description),
+        "related": related,
+    }
 
 
 # Aliases for cross-module compatibility
@@ -867,6 +941,34 @@ def extract_stream_url(video_id: str) -> tuple:
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(yt_url, download=False)
         return info.get("url"), info.get("title", video_id)
+
+
+def resolve_audio_stream(video_id: str) -> tuple:
+    """Resolve an audio-only stream (m4a/webm) for audio-only playback."""
+    yt_dlp = resolve_ytdlp()
+    if not yt_dlp:
+        return None, None
+
+    yt_url = f"https://www.youtube.com/watch?v={video_id}"
+    ydl_opts = {
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "nocheckcertificate": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "ios"]
+            }
+        },
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(yt_url, download=False)
+            return info.get("url"), info.get("title", video_id)
+    except Exception as e:
+        print(f"[rh.yt] Audio stream error for {video_id}: {e}")
+        return None, None
 
 
 def get_cached_video_path(video_id: str) -> str:
