@@ -2,11 +2,11 @@
   "version": "2.39",
   "full_release_version": "2.39",
   "python": "any",
-  "built": "2026-09-19T12:53:03+07:00",
+  "built": "2026-09-19T12:57:29+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa hàng chờ tải, vòng lặp cập nhật OTA, Switch emulator core và màn Storage trắng; thêm trang xem & queue YouTube; màn chi tiết game hết tràn panel phải",
-    "en": "Fix the download queue, the OTA update loop, Switch emulator core and the blank Storage screen; add the YouTube watch page and queue; stop the game detail panel from overflowing"
+    "vi": "Sửa hàng chờ tải, vòng lặp cập nhật OTA, Switch emulator core; thêm trang xem & queue YouTube; màn chi tiết game; Kho game trống",
+    "en": "Fix the download queue, the OTA update loop, Switch emulator core; add the YouTube watch page and queue; detail screen; empty ROMs Store"
   },
   "remove": [
     "app.pyc",
