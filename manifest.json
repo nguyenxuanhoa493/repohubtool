@@ -1,8 +1,8 @@
 {
-  "version": "2.38",
-  "full_release_version": "2.38",
+  "version": "2.39",
+  "full_release_version": "2.39",
   "python": "any",
-  "built": "2026-09-19T10:58:55+07:00",
+  "built": "2026-09-19T11:44:38+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa hàng chờ tải, vòng lặp cập nhật OTA, Switch emulator core và màn Storage trắng; thêm trang xem & queue YouTube; màn chi tiết game hết tràn panel phải",
@@ -317,8 +317,8 @@
     },
     {
       "path": "app.py",
-      "size": 4074,
-      "sha256": "cb4a5f11087a424b4a4a9242b2fc4e34d0e9417e60d089f48917b3a6fcdf2dc8"
+      "size": 4270,
+      "sha256": "1bafe3f0bd798fe0be69088e945e820ace9d94e73ac47285c5d54036adab699d"
     },
     {
       "path": "assets/emus_preview/bg-arcade.png",
@@ -1662,8 +1662,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 71739,
-      "sha256": "e818f2f6847137ab99665b5bee2c538bad405a082ced29b62f39687e3936d22d"
+      "size": 72170,
+      "sha256": "ba91e0ceaee48c84225ea2c271c4785c0c1968741d2f5be7b85d0c9b60b89890"
     },
     {
       "path": "icon.png",
@@ -1672,8 +1672,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 9751,
-      "sha256": "4f5331b3496234003bca0d43bfa72b773cca041c838750522ec03d1d40ccb6b2"
+      "size": 9771,
+      "sha256": "6c4e293dae94458827d88ce84cb6b687921adb4bb5cc1bc98d130a18ca85c473"
     },
     {
       "path": "led_daemon.py",
@@ -1697,8 +1697,13 @@
     },
     {
       "path": "rh/archive.py",
-      "size": 11843,
-      "sha256": "ec758260ce493499babaa5257527dfc8f710c16cbe4293c4e3bb1bf21b5ba774"
+      "size": 13731,
+      "sha256": "71e470509f4842aaa9d37a8f791c93a10906e28ab1d0ae33726c3c4064ef1949"
+    },
+    {
+      "path": "rh/backlight.py",
+      "size": 1707,
+      "sha256": "e62c35ffab3532381a8d4dd6fdbafd9664db7dcfbcfe5ceeeb190e4d613c7fe4"
     },
     {
       "path": "rh/boxart.py",
@@ -1712,8 +1717,8 @@
     },
     {
       "path": "rh/catalog.py",
-      "size": 14543,
-      "sha256": "4a3d733d1ce04b3fe118bd2a9538e5cf3de04ee0453db76b7a20f682fd5c82d7"
+      "size": 14762,
+      "sha256": "e6fe0fb654247457e48eef1e3e4298806a2bd417f29b26e76b23359791ff02c0"
     },
     {
       "path": "rh/cheat_manager.py",
@@ -1732,8 +1737,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 43417,
-      "sha256": "2761fc884fe8753e9653b6bfc8a7ffd39dbb16829ae64f4219d228183130ec0e"
+      "size": 51261,
+      "sha256": "3930674646fdbdd3855d747a901c7b511c473d75f0f5422812bd244320cbd838"
     },
     {
       "path": "rh/emulator_store.py",
@@ -1747,8 +1752,8 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 19853,
-      "sha256": "2937d3069c616d998c5c4137905c55246455654871ecc83b3e47b5686949ded5"
+      "size": 22017,
+      "sha256": "f0524f94abde53742fe8b0ff51f6404ca4eb4eb762be07ee1979f5852d629723"
     },
     {
       "path": "rh/env.py",
@@ -1762,8 +1767,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 60057,
-      "sha256": "ef1ef2522badbf1e769616dcb110434d97f2237f5983f0fca0f6cc3b0b89931c"
+      "size": 69844,
+      "sha256": "1e46e85957612a4e147cfc823daec7dbc43239d3159442328898e31e767ef940"
     },
     {
       "path": "rh/icon_manager.py",
@@ -1776,9 +1781,14 @@
       "sha256": "576ae419779c68673c1f8ed7849e98a03e13089d53e61a853f5578cd9fb2dd95"
     },
     {
+      "path": "rh/installed.py",
+      "size": 5565,
+      "sha256": "02a55c9a33b2233d6e1b2c288933ddf3ec8e0e13f94811e3497e8b9c07a2c38b"
+    },
+    {
       "path": "rh/j2me.py",
-      "size": 40241,
-      "sha256": "0441f8d2f3df63e9168b5ed996e3301d7944ff8fe51498a2e44c8b3f3f8b3849"
+      "size": 40637,
+      "sha256": "0dbea392f6bb77f421929457401a85cbb87a00991da15ab089337212948f4b41"
     },
     {
       "path": "rh/led.py",
@@ -1842,13 +1852,18 @@
     },
     {
       "path": "rh/modals/common.py",
-      "size": 52015,
-      "sha256": "3becf7b06209d491abb9cf6746e2e46e6f8be4e02304c91743430d9785371d2e"
+      "size": 52392,
+      "sha256": "903836b7f548bfe66aa46c4d4d0c2846d7a29130ed543e6f65d5fecee7baf583"
+    },
+    {
+      "path": "rh/modals/corepicker.py",
+      "size": 4852,
+      "sha256": "d35e4acadf8cf77a9bb075f09318389f298c0f89f693cb2a8986e4a362e77a75"
     },
     {
       "path": "rh/modals/game_action.py",
-      "size": 26701,
-      "sha256": "41c308d05a23c189d90fe2dab0d5b252fb4a1464500d6a66c887eadf1537a24d"
+      "size": 26259,
+      "sha256": "589867c7002c0b4b1eb4aa8db9329b5a3560ad688b1d56833ceb4db189f69801"
     },
     {
       "path": "rh/modals/j2me.py",
@@ -1862,8 +1877,13 @@
     },
     {
       "path": "rh/modals/update.py",
-      "size": 18255,
-      "sha256": "a0ddd875cee4842fd147c7e72a2a2dfd26f20279835dbdae10c19502acbbfca7"
+      "size": 19525,
+      "sha256": "59808e367247bb212943a8b1fce4fcf59071449230e365aa13925779424658f1"
+    },
+    {
+      "path": "rh/modals/yt_loading.py",
+      "size": 1870,
+      "sha256": "0e04fe788412ef18d8befbe6e18fb267e789ae6e4be22228420cdb022cc8b57f"
     },
     {
       "path": "rh/neterrors.py",
@@ -1877,13 +1897,23 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 7967,
-      "sha256": "539ce45e9d0a61b836e5258e0b98c3a79e2ceee8cf9f338762979a7ad2c3953f"
+      "size": 8197,
+      "sha256": "d8b87f5df45a0c629f6ae2f04bc1f76a1b76b5ad517b82e21431e322c8b5a80c"
+    },
+    {
+      "path": "rh/playback.py",
+      "size": 11068,
+      "sha256": "b080717235be40295be8d20cd75a2e5668ba59816d637d06e92019edd28fd910"
+    },
+    {
+      "path": "rh/player.py",
+      "size": 4695,
+      "sha256": "6b101a7f98f34bcfe6ad0611ce70ae531927171cbee9dd9fa6424db5650f9952"
     },
     {
       "path": "rh/romfiles.py",
-      "size": 1993,
-      "sha256": "ae5b2cc187056e96c225144499ac675f2a2a77f25c8b5e35dd504d2f2a55c1f4"
+      "size": 3178,
+      "sha256": "2fb65396c1bbeb20900128d6070c26d0d63dbe9b886ab63424913809ce906b79"
     },
     {
       "path": "rh/save_manager.py",
@@ -1902,8 +1932,8 @@
     },
     {
       "path": "rh/screens/emu_store.py",
-      "size": 20590,
-      "sha256": "6f4cc1159aea17878a41533bfd1d2697adc6acb98630bf35d7d6f186e40621bf"
+      "size": 20721,
+      "sha256": "4b7c8ffd622d69bc4c04ec551983acdddd6bfbb2abdf244d786fdc78be2a10f1"
     },
     {
       "path": "rh/screens/home.py",
@@ -1912,8 +1942,8 @@
     },
     {
       "path": "rh/screens/icon_store.py",
-      "size": 17831,
-      "sha256": "863bdd945c5c0e13c11c5140b0f645b85cf45b1dc3c44d4e598ec60543a534ca"
+      "size": 17765,
+      "sha256": "6e5848a6d7b0eaf7e707d82bea96ab881f5dfe4ba9e50d2173454bbed489a65e"
     },
     {
       "path": "rh/screens/keyboard.py",
@@ -1936,6 +1966,11 @@
       "sha256": "12b8d59ff822768db073114a436aabcc6524233347bd44bb018d1808e7702c35"
     },
     {
+      "path": "rh/screens/queue.py",
+      "size": 7173,
+      "sha256": "a273ab894bc73c6487e97ca91a851a335b0d0c5805061603c54d079e1da393bb"
+    },
+    {
       "path": "rh/screens/settings.py",
       "size": 7568,
       "sha256": "4cd72a390537290d3ffd5b4d5a5422dacfe4a95286f9bd4d026cd076149a7994"
@@ -1947,23 +1982,28 @@
     },
     {
       "path": "rh/screens/store.py",
-      "size": 21644,
-      "sha256": "d16c4c324338714e94c30c2881e232fc90e1a630057271c869d0b708509bf44e"
+      "size": 22549,
+      "sha256": "e25b9b9e1884aed10148d19d31999ef2d8edc8dc3d0b63ef0d47501b24da13b5"
     },
     {
       "path": "rh/screens/theme_store.py",
-      "size": 17824,
-      "sha256": "e35276c9a1bd950aeb0943eb5b2cd800f4e37b227e104c5f72fa85dc2895d184"
+      "size": 17742,
+      "sha256": "4bb0f9ada1c2506c483594384bfc86152987088eb8332808d52a48987348c477"
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 8166,
-      "sha256": "ea439f486c7190d686d6654b8064adb487eb7ea90b3d2275e029cf832efb578e"
+      "size": 8458,
+      "sha256": "104f07a6428c09885ec854385a322d1c0288093e864484b52966452f5d7e06f9"
+    },
+    {
+      "path": "rh/screens/watch.py",
+      "size": 13645,
+      "sha256": "2fdf74f8ecb21314c4e229ef02708ccd2f530f23fbf78afc881d64b237f34ed4"
     },
     {
       "path": "rh/screens/youtube.py",
-      "size": 15744,
-      "sha256": "76041f496d9674f81b2781ee978e5571ab12007348a2ddaad4d47ca25925d847"
+      "size": 18354,
+      "sha256": "fe39bfdaeeda17d1bbfb989775877e94e0954107fd5f588cd38cb75fc751276f"
     },
     {
       "path": "rh/secrets.py",
@@ -1997,8 +2037,8 @@
     },
     {
       "path": "rh/sysinfo.py",
-      "size": 13527,
-      "sha256": "67f4725333314c30623917d02ce90601dc92fc3a0f02ad05543d72e28731b31d"
+      "size": 14359,
+      "sha256": "f2e1e30f988ec5571f48770242170289f61edecc9a168eaf593090eed00fbae9"
     },
     {
       "path": "rh/theme_manager.py",
@@ -2012,8 +2052,8 @@
     },
     {
       "path": "rh/ui/boxart.py",
-      "size": 5003,
-      "sha256": "ba84f6c21c88b04d2a12d7b7b075757695e9f788df576bd3bef3a5145842644a"
+      "size": 5218,
+      "sha256": "d7490bd8f9e53965e859aa3d9baa99991da088165a3500f1c5aa0bd3ef560fec"
     },
     {
       "path": "rh/ui/primitives.py",
@@ -2027,28 +2067,23 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 27934,
-      "sha256": "96e3c580cfcd4ed30c968f6485ec6ecc838221b050610d5e5a4b3c1362809eaf"
+      "size": 28212,
+      "sha256": "1c06d9713500c2d72b695f2772bd2b29273e1dd09d9795398581025694ffe6b1"
     },
     {
       "path": "rh/version.py",
-      "size": 1012,
-      "sha256": "beb6e168f4be274ef87998291cb115e91bec27b6492b7a6dc2c616f2bca03b9a"
+      "size": 1172,
+      "sha256": "bf7a79642ceb10bc9d76b199192f13fd315ad106a516172e6a21a1ab1df49722"
     },
     {
       "path": "rh/yt.py",
-      "size": 36658,
-      "sha256": "1cf832c8e7a698f538ee447593fb50e4c781b520d611d9d1375ffe2d86558f2a"
+      "size": 42546,
+      "sha256": "64634b33285ea07560fdf1eccbea8d354d128f0e94efa71cebf69c9ab8ca6149"
     },
     {
       "path": "rh/yt_player.py",
-      "size": 16795,
-      "sha256": "a91119067cde545541e9b606d8f5ae2a869025dfe4ed7093b186103d54655b7f"
-    },
-    {
-      "path": "settings.json",
-      "size": 267,
-      "sha256": "0e1f97d22994d3a2e53c6d56e4f2f6ae5e2d8df967bfd3fc0a798c3288df9284"
+      "size": 20967,
+      "sha256": "c814c8c7aafdc266779db56a61a5f724d33eca2d1541e505af9bc4b656fe1979"
     },
     {
       "path": "streamer.py",
