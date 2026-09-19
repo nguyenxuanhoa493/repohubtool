@@ -1,8 +1,8 @@
 {
   "version": "2.42",
-  "full_release_version": "2.41",
+  "full_release_version": "2.42",
   "python": "any",
-  "built": "2026-09-19T16:32:02+07:00",
+  "built": "2026-09-19T20:15:24+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Máy mát hơn, pin lâu hơn: giảm render thừa, LED theo màn hình",
@@ -168,6 +168,11 @@
     "rh/yt.pyc",
     "rh/yt_player.pyc",
     "streamer.pyc",
+    "update_files_center.py",
+    "update_files_tab.py",
+    "update_js.py",
+    "update_stream.py",
+    "update_toggle.py",
     "vendor/sdl2/__init__.pyc",
     "vendor/sdl2/_internal.pyc",
     "vendor/sdl2/_sdl_init.pyc",
@@ -242,7 +247,8 @@
     "vendor/sdl2/touch.pyc",
     "vendor/sdl2/version.pyc",
     "vendor/sdl2/video.pyc",
-    "vendor/sdl2/vulkan.pyc"
+    "vendor/sdl2/vulkan.pyc",
+    "yt.py"
   ],
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
@@ -1702,8 +1708,8 @@
     },
     {
       "path": "rh/backlight.py",
-      "size": 1707,
-      "sha256": "e62c35ffab3532381a8d4dd6fdbafd9664db7dcfbcfe5ceeeb190e4d613c7fe4"
+      "size": 3992,
+      "sha256": "8ea9bf0241d73ee02ad64e5d05f9f1778831eab3a105fe7db8e0da89ef4037e6"
     },
     {
       "path": "rh/boxart.py",
@@ -1712,8 +1718,8 @@
     },
     {
       "path": "rh/boxart_scraper.py",
-      "size": 33831,
-      "sha256": "073355473ea7e8d378c520d6bb8419cf67f4071c7cbf3745a1930a8818c57fc9"
+      "size": 34519,
+      "sha256": "3df54db971f7a37cef452abdb29b772ac5d28d7c95547a99b3c17132a9bcf3d3"
     },
     {
       "path": "rh/catalog.py",
@@ -1752,8 +1758,8 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 23524,
-      "sha256": "1159d4e4556bb13238378b4ecb94ecdee177273e03d09c941ef860e94e3d9156"
+      "size": 27829,
+      "sha256": "f9e41be4952e37c192f1d93c6691788307bf5ec7ee2874540314db37ea67b04d"
     },
     {
       "path": "rh/env.py",
@@ -1782,8 +1788,8 @@
     },
     {
       "path": "rh/installed.py",
-      "size": 5565,
-      "sha256": "02a55c9a33b2233d6e1b2c288933ddf3ec8e0e13f94811e3497e8b9c07a2c38b"
+      "size": 6250,
+      "sha256": "c17687bf67c273fa39c3db20a4712f9764b24bc769243763cfc5aaefba77d0e8"
     },
     {
       "path": "rh/j2me.py",
@@ -1807,8 +1813,8 @@
     },
     {
       "path": "rh/leddaemon.py",
-      "size": 6112,
-      "sha256": "b261ff2f4861ac5c183d9445e5de8d4ec517bc5d934b97bfbc38d499e029e307"
+      "size": 8166,
+      "sha256": "27297b65b3a58f429c2d5aee430a8d95d23ee2c10c5814802712ed48aacc8ad4"
     },
     {
       "path": "rh/ledfx.py",
@@ -1957,8 +1963,8 @@
     },
     {
       "path": "rh/screens/library.py",
-      "size": 22116,
-      "sha256": "5b982f6bb3e85e475a7b2e964c4e5ad40a752b92c8a439e72637efb782c6abe4"
+      "size": 23320,
+      "sha256": "af7f6b767cb0d4a279677bd649278104ed2f422a60aec5d1ac5e76cde22f4836"
     },
     {
       "path": "rh/screens/network.py",
@@ -1997,18 +2003,18 @@
     },
     {
       "path": "rh/screens/watch.py",
-      "size": 13645,
-      "sha256": "2fdf74f8ecb21314c4e229ef02708ccd2f530f23fbf78afc881d64b237f34ed4"
+      "size": 14300,
+      "sha256": "25d55988af4d8ebdc615b3842a3f96e68d6265e411889f01b4bcc944ce1e1de4"
     },
     {
       "path": "rh/screens/youtube.py",
-      "size": 18354,
-      "sha256": "fe39bfdaeeda17d1bbfb989775877e94e0954107fd5f588cd38cb75fc751276f"
+      "size": 19441,
+      "sha256": "68fcc7e8811f7b867b963dcdabc9bc609f2e97a78aa3e9401f8750d27ccb69e7"
     },
     {
       "path": "rh/secrets.py",
       "size": 629,
-      "sha256": "e54c8a2f9cbc67aed74a7197bd6678d67e590bada3664b7022ac5e4ed2c53221"
+      "sha256": "f29fade219ff89dfcfc2e3915fb0e543ea2a745acdb5347648393d79a186b154"
     },
     {
       "path": "rh/security.py",
@@ -2057,8 +2063,8 @@
     },
     {
       "path": "rh/ui/primitives.py",
-      "size": 11898,
-      "sha256": "1de757034087803b33e277e0e728c93b45d308de09606e5778c2f3b948cf91ed"
+      "size": 12789,
+      "sha256": "f08894a720bfa873329b5214f4b02f3ee73a8c4e81671745d2afe3458e45e0de"
     },
     {
       "path": "rh/ui/toast.py",
@@ -2072,13 +2078,13 @@
     },
     {
       "path": "rh/version.py",
-      "size": 1609,
-      "sha256": "d3ef3dcdbe4fab31a8c96717f9ecc462ce7c86b8f67bd74c7fbc57aef65301a4"
+      "size": 1963,
+      "sha256": "dabdc556845cdbaf42dbf78c3f4045f18f3e9578b45a3ea0a117d72f6aff462a"
     },
     {
       "path": "rh/yt.py",
-      "size": 42546,
-      "sha256": "64634b33285ea07560fdf1eccbea8d354d128f0e94efa71cebf69c9ab8ca6149"
+      "size": 42943,
+      "sha256": "972cca32e1c1f6606ba8eff83c13ab46f6c5e8df759e2344470c22f47eb23698"
     },
     {
       "path": "rh/yt_player.py",
@@ -2089,31 +2095,6 @@
       "path": "streamer.py",
       "size": 30863,
       "sha256": "44d064c982bfe7bf60927c092531a98f7779299d32e411771f65f334211c2ea8"
-    },
-    {
-      "path": "update_files_center.py",
-      "size": 484,
-      "sha256": "8bb984f5091b4e633782938cf3a11e59554f315c0fc6a05c9f68c998ab05ce98"
-    },
-    {
-      "path": "update_files_tab.py",
-      "size": 3507,
-      "sha256": "311a9c1ec3d3071324c52feb22132b1f0b47ad47b00bf66548712b89e31a44b4"
-    },
-    {
-      "path": "update_js.py",
-      "size": 715,
-      "sha256": "02140dc2bb14ad35cb97c6a5172c8fc739d0f9a598302ef627a14b834a2d3749"
-    },
-    {
-      "path": "update_stream.py",
-      "size": 4046,
-      "sha256": "4f327c88d1d8af08a7e09ef045477046f60364246e89110e930b2585ede6eaa1"
-    },
-    {
-      "path": "update_toggle.py",
-      "size": 2548,
-      "sha256": "e2f8cce9918f2b14c7210b5661e00960072f0245bcd21b0d03b9dcda2df481e9"
     },
     {
       "path": "vendor/sdl2/COPYING.txt",
@@ -2509,13 +2490,8 @@
       "path": "web/style.css",
       "size": 25547,
       "sha256": "c0fbfcd994e06885280bb7912be6eab6d4c617621d0dfcfb9a4e2e0175011d4f"
-    },
-    {
-      "path": "yt.py",
-      "size": 37688,
-      "sha256": "eb157ac7874bb6e87525c52e4c4c22ae214cfd933dc153dd511f8cb4db8cff16"
     }
   ],
-  "notes": "• Cập nhật OTA chạy hết: sửa lỗi khiến bước cài bộ giả lập Java bị bỏ qua và màn hình đứng im giữa lúc cập nhật.\n• Huỷ giữa lúc tải: bấm B dừng ngay và luôn có nhắc ở thanh dưới cùng; app không còn đứng im.\n• Kho game không còn mời cập nhật sai trên máy cài từ file zip, và nút Bỏ qua giờ có tác dụng thật.\n• Giả lập J2ME đọc đúng chế độ bàn phím đã chọn trong app; chỉ tải lại tệp khi thật sự đổi (bớt tải thừa từ CDN).",
-  "notes_en": "• OTA now runs to the end: fixed the bug that silently skipped the Java emulator step and froze the screen mid-update.\n• Cancel while downloading: pressing B stops right away and the footer always says so; the app no longer freezes.\n• No more bogus game-library prompts on devices installed from the zip, and Skip now really skips.\n• The J2ME emulator honours the keypad mode chosen in the app, and files are re-downloaded only when they really changed (less wasted traffic from the CDN)."
+  "notes": "• Chỉ render khi có thay đổi\n• Tắt màn hình là app ngủ theo\n• Màn hình tắt thì LED tắt hẳn\n• Thư viện mượt hơn và bớt đọc thẻ\n• Bớt tốn RAM và bớt việc thừa",
+  "notes_en": "• Redraws only when something changes.\n• The app sleeps when the screen goes off.\n• LEDs turn fully off with the screen.\n• Smoother library, less card access\n• Lower RAM and less wasted work"
 }
