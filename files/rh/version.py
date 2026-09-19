@@ -7,7 +7,9 @@ constant must stay in sync with the git tag."""
 
 # 2.35 da duoc phat hanh lai (ban refactor repo) duoi dung so phien ban do,
 # nen may dang chay 2.35 khong thay co ban moi. 2.36 la ban dau tien lon hon no.
-APP_VERSION = "2.38"
+# 2.39: ban gom cac fix sau 2.38 - hang cho tai, OTA lap lai, Switch emulator
+# core, Storage trang, tran panel phai o man chi tiet game, va tinh nang YouTube.
+APP_VERSION = "2.39"
 
 
 def version_tuple(v=None):
