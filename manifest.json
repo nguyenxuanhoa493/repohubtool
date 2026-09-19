@@ -2,7 +2,7 @@
   "version": "2.38",
   "full_release_version": "2.38",
   "python": "any",
-  "built": "2026-09-19T10:58:00+07:00",
+  "built": "2026-09-19T10:58:55+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Khắc phục triệt để lỗi chứng chỉ SSL và bổ sung cURL fallback khi tải giả lập online",
