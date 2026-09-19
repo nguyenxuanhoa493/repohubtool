@@ -279,6 +279,10 @@ class RetroHubEngine:
     # Modals
     # --------------------------------------------------------------------------
     def open_modal(self, modal, data=None):
+        # Never open a modal while the app is shutting down: a background thread
+        # (e.g. the auto-update check) could otherwise pop one up after exit.
+        if not self.running:
+            return
         modal.engine = self
         modal.open(data)
         self.active_modal = modal
@@ -407,6 +411,11 @@ class RetroHubEngine:
             elif self.current_screen:
                 self.current_screen.handle_input(inputs)
 
+            # A screen or modal may have requested exit; leave immediately so no
+            # extra frame is drawn and nothing can reopen during shutdown.
+            if not self.running:
+                break
+
             # Update
             if self.active_modal and self.active_modal.is_active():
                 self.active_modal.update(0.016)
@@ -468,7 +477,13 @@ class RetroHubEngine:
         self.cleanup()
 
     def cleanup(self):
-        """Free resources and shutdown SDL2."""
+        """Free resources and shutdown SDL2 (never raises)."""
+        try:
+            self._cleanup()
+        except Exception as e:
+            print(f"[ENGINE] cleanup error: {e}")
+
+    def _cleanup(self):
         for c in self.controllers:
             sdl2.SDL_GameControllerClose(c)
         for j in self.joysticks:
