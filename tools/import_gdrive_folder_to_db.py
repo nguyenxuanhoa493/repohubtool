@@ -172,14 +172,27 @@ def main():
     parser = argparse.ArgumentParser(description="Quét Google Drive Folders và import vào catalog DB.")
     parser.add_argument("--api-key", "-k", default="",
                         help="Google API Key dự phòng (mặc định script sẽ ưu tiên dùng Cloudflare Worker Proxy).")
+    parser.add_argument("--folder-id", "-f", default="",
+                        help="Chỉ quét 1 folder ID cụ thể thay vì toàn bộ danh sách mặc định.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Chỉ quét và in kết quả ra màn hình, KHÔNG ghi vào cơ sở dữ liệu.")
     args = parser.parse_args()
 
     api_key = (args.api_key or os.environ.get("GDRIVE_API_KEY", "")).strip()
 
+    folders_to_scan = DRIVE_FOLDERS
+    if args.folder_id:
+        # Tìm xem folder_id có trong danh sách chuẩn không
+        matched = [f for f in DRIVE_FOLDERS if f[0] == args.folder_id]
+        if matched:
+            folders_to_scan = matched
+        else:
+            folders_to_scan = [(args.folder_id, "Custom Folder", "TEST")]
+
     all_items = []
     print("--- Scanning Google Drive Folders (Worker Proxy / Direct) ---")
-    for fid, ftitle, sys_code in DRIVE_FOLDERS:
-        print(f"Fetching '{ftitle}' ({sys_code})...", end="", flush=True)
+    for fid, ftitle, sys_code in folders_to_scan:
+        print(f"Fetching '{ftitle}' ({sys_code}) [ID: {fid}]...", end="", flush=True)
         try:
             files = list_drive_folder(fid, api_key)
             print(f" {len(files)} files")
@@ -190,8 +203,16 @@ def main():
         except Exception as e:
             print(f" ERROR: {e}")
 
+    print(f"\nTotal scanned files: {len(all_items)}")
 
-    print(f"\nTotal scanned files across all systems: {len(all_items)}")
+    if args.dry_run:
+        print("\n[DRY RUN] Danh sách mẫu (tối đa 15 file đầu tiên):")
+        for i, it in enumerate(all_items[:15], 1):
+            print(f"  {i:2d}. [{it['sys_code']}] {it['filename']} ({it.get('size_str', '--')}) - ID: {it['id']}")
+        if len(all_items) > 15:
+            print(f"  ... và còn {len(all_items) - 15} file khác.")
+        print("\nĐã chạy xong chế độ Dry-run (không thay đổi Database).")
+        return
 
     # Update both DB locations
     db_paths = [

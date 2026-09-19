@@ -255,6 +255,11 @@ export default {
           body: JSON.stringify(queryBody),
         });
 
+        if (!resp.ok) {
+          const errText = await resp.text();
+          return errorResponse(`Lỗi từ Google Drive API (${resp.status}): ${errText}`, 502);
+        }
+
         const resJson = await resp.json();
         const items = resJson && resJson[0] && Array.isArray(resJson[0]) ? resJson[0] : [];
         const fileList = [];
