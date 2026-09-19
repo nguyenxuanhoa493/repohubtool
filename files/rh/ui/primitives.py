@@ -3,6 +3,7 @@
 
 import time
 import ctypes
+from itertools import islice
 import sdl2
 import sdl2.sdlttf as sdlttf
 from ..i18n import tr
@@ -29,8 +30,11 @@ def measure_text(text, font, cache=_text_w_cache):
     h = ctypes.c_int(0)
     sdlttf.TTF_SizeUTF8(font, text.encode("utf-8"), ctypes.byref(w), ctypes.byref(h))
     if cache is not None:
+        # Nhu cache texture chu: bot 1/4 cu nhat thay vi xoa sach, vi xoa sach
+        # lam moi nhan tinh phai do lai do rong ngay sau do.
         if len(cache) > 600:
-            cache.clear()
+            for old_key in list(islice(cache, 150)):
+                cache.pop(old_key, None)
         cache[key] = w.value
     return w.value
 
@@ -90,6 +94,17 @@ def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center
     if cached:
         tex, w, h = cached[0], cached[1], cached[2]
         cached[3] = now_ts
+        if text_texture_cache is not None:
+            # Day khoa vua dung xuong cuoi dict. Dict cua Python giu thu tu them
+            # vao, nen lan bot sau nho bo nho chi can lay tu dau: nhan tinh dang
+            # hien luon o cuoi, chuoi dong (%, MB/s) troi dan len dau va bi bo
+            # truoc. Ban cu sort toan bo cache theo timestamp roi huy 50 texture
+            # moi lan cache day, keo theo hang chuc nhan tinh bi ve lai - do:
+            # _src/selftest_perf.py T7.
+            try:
+                text_texture_cache[key] = text_texture_cache.pop(key)
+            except KeyError:
+                pass
     else:
         color = sdl2.SDL_Color(r, g, b, a)
         surf = sdlttf.TTF_RenderUTF8_Blended(font, text.encode("utf-8"), color)
@@ -104,9 +119,9 @@ def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center
 
         if text_texture_cache is not None:
             if len(text_texture_cache) >= max_cache:
-                old_keys = sorted(text_texture_cache.keys(), key=lambda k: text_texture_cache[k][3])[:50]
-                for ok in old_keys:
-                    item = text_texture_cache.pop(ok, None)
+                # Bo 1/4 CU NHAT theo thu tu dung gan nhat, khong xoa sach cache.
+                for old_key in list(islice(text_texture_cache, max(1, max_cache // 4))):
+                    item = text_texture_cache.pop(old_key, None)
                     if item and item[0]:
                         sdl2.SDL_DestroyTexture(item[0])
             text_texture_cache[key] = [tex, w, h, now_ts]

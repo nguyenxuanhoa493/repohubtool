@@ -43,6 +43,9 @@ class WatchScreen(BaseScreen):
         self.saved = False            # da luu vao yeu thich (de to vang nut Save)
         self._title_lines = None      # cache dong da wrap: do font moi frame rat cham
         self._desc_lines = None
+        # The he cua lan nap thong tin: mo video lien tiep thi ket qua cu khong
+        # duoc ghi de len video dang xem (xem _bg_fetch).
+        self._gen = 0
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -67,27 +70,39 @@ class WatchScreen(BaseScreen):
         dur = playback.duration_seconds(self.video.get("duration", ""))
         self.resume_pos = playback.resume_position(self.video_id, dur)
         self.loading = bool(self.video_id)
+        self._gen += 1
         if self.video_id:
-            threading.Thread(target=self._bg_fetch, daemon=True).start()
+            gen, vid = self._gen, self.video_id
+            threading.Thread(target=lambda: self._bg_fetch(gen, vid), daemon=True).start()
 
-    def _ensure_thumb(self):
+    def on_exit(self):
+        self._gen += 1
+
+    def _ensure_thumb(self, video_id=None):
         """Tai thumbnail neu chua co: video mo tu 'Video lien quan' khong nam trong luoi
         nen chua ai tai anh ve, man chi tiet se trong."""
+        vid = video_id or self.video_id
         try:
-            path = os.path.join(YT_CACHE_DIR, "%s.jpg" % self.video_id)
-            if self.video_id and not os.path.exists(path):
-                url = self.video.get("thumb") or ("https://i.ytimg.com/vi/%s/mqdefault.jpg" % self.video_id)
-                yt.fetch_thumbnail(url, YT_CACHE_DIR, self.video_id)
+            path = os.path.join(YT_CACHE_DIR, "%s.jpg" % vid)
+            if vid and not os.path.exists(path):
+                url = self.video.get("thumb") or ("https://i.ytimg.com/vi/%s/mqdefault.jpg" % vid)
+                yt.fetch_thumbnail(url, YT_CACHE_DIR, vid)
         except Exception as e:
             print("[rh.watch] thumbnail error: %s" % e)
 
-    def _bg_fetch(self):
-        self._ensure_thumb()
+    def _bg_fetch(self, gen=None, video_id=None):
+        # vid duoc chup luc mo video, khong doc lai self.video_id: neu khong, mot
+        # thread cham se di hoi thong tin cua video MOI roi ghi vao cho video cu.
+        vid = video_id or self.video_id
+        self._ensure_thumb(vid)
         try:
-            self.meta = yt.fetch_watch_metadata(self.video_id)
+            meta = yt.fetch_watch_metadata(vid)
         except Exception:
-            self.meta = None
-        self.related = (self.meta or {}).get("related", []) if self.meta else []
+            meta = None
+        if gen is not None and gen != self._gen:
+            return                    # nguoi dung da mo video khac
+        self.meta = meta
+        self.related = (meta or {}).get("related", []) if meta else []
         self.loading = False
 
     def get_header_title(self):

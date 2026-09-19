@@ -2,6 +2,36 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.42",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Máy mát hơn, pin lâu hơn: giảm render thừa, LED theo màn hình",
+        "en": "Cooler and lighter on battery: less redundant rendering, LED follows screen"
+      },
+      "bullets": [
+        {
+          "vi": "Chỉ render khi có thay đổi",
+          "en": "Redraws only when something changes."
+        },
+        {
+          "vi": "Tắt màn hình là app ngủ theo",
+          "en": "The app sleeps when the screen goes off."
+        },
+        {
+          "vi": "Màn hình tắt thì LED tắt hẳn",
+          "en": "LEDs turn fully off with the screen."
+        },
+        {
+          "vi": "Thư viện mượt hơn và bớt đọc thẻ",
+          "en": "Smoother library, less card access"
+        },
+        {
+          "vi": "Bớt tốn RAM và bớt việc thừa",
+          "en": "Lower RAM and less wasted work"
+        }
+      ]
+    },
+    {
       "version": "2.41",
       "date": "2026-09-19",
       "headline": {

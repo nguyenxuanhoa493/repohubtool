@@ -34,6 +34,20 @@ BOXART_TOTAL_TIMEOUT = 30
 BOXART_MAX_BYTES = 12 * 1024 * 1024
 
 _LIBRETRO_INDEX_CACHE = {}
+# Mỗi mục là danh sách tên file PNG của một hệ máy (hàng nghìn chuỗi), nên số
+# mục phải có trần: mở cả kho ảnh bìa rồi để hết trong RAM máy 1 GB là không ổn.
+# Khoá là (hệ máy, category) nên chỉ cần vài mục cho một phiên làm việc.
+INDEX_CACHE_MAX = 8
+
+def _remember_index(cache_key, value):
+    """Ghi cache danh sách file, tự bỏ mục cũ nhất khi chạm trần.
+
+    Hàm này tự lấy _CACHE_LOCK, nên chỗ gọi KHÔNG được giữ khoá sẵn (Lock
+    thường, không phải RLock)."""
+    with _CACHE_LOCK:
+        if len(_LIBRETRO_INDEX_CACHE) >= INDEX_CACHE_MAX:
+            _LIBRETRO_INDEX_CACHE.pop(next(iter(_LIBRETRO_INDEX_CACHE)), None)
+        _LIBRETRO_INDEX_CACHE[cache_key] = value
 _CACHE_LOCK = threading.Lock()
 
 LIBRETRO_MAP = {
@@ -319,8 +333,7 @@ def get_libretro_file_list(sys_folder, category="Named_Boxarts", allow_fetch=Tru
                 with open(tmp_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     if data:
-                        with _CACHE_LOCK:
-                            _LIBRETRO_INDEX_CACHE[cache_key] = data
+                        _remember_index(cache_key, data)
                         return data
         except Exception:
             pass
@@ -353,8 +366,7 @@ def get_libretro_file_list(sys_folder, category="Named_Boxarts", allow_fetch=Tru
         files = pattern.findall(html)
         decoded = [urllib.parse.unquote(f) for f in files]
         if decoded:
-            with _CACHE_LOCK:
-                _LIBRETRO_INDEX_CACHE[cache_key] = decoded
+            _remember_index(cache_key, decoded)
             try:
                 with open(tmp_path, "w", encoding="utf-8") as f:
                     json.dump(decoded, f)

@@ -29,12 +29,20 @@ class LibraryScreen(BaseScreen):
         self.scroll_top = 0
         self.scroll_row = 0
         self.sort_mode = "downloads"  # "downloads" or "alpha"
+        # Duong dan anh bia theo (he, ten file). resolve_game_img_path() phai
+        # stat thu muc anh + thu muc ROM, ma render_grid/render_list goi no cho
+        # tung o moi khung hinh (do: 5.3 ms/o voi thu muc 300 file - xem
+        # _src/selftest_perf.py). Xoa cache khi vao lai man va sau khi dong mot
+        # modal, vi modal co the vua tai anh bia moi.
+        self._boxart_cache = {}
+        self._modal_seen = False
 
     def on_enter(self, params=None):
         self.refresh_games()
 
     def refresh_games(self):
         """Scan and build system tabs list."""
+        self._boxart_cache.clear()
         self.all_games = scan_all_downloaded_games()
         
         # Build available system tabs
@@ -49,6 +57,20 @@ class LibraryScreen(BaseScreen):
             self.current_tab_idx = 0
 
         self.apply_filter()
+
+    def _boxart(self, sys_code, filename):
+        """Duong dan anh bia (None neu khong co), cache theo tung lan xem man.
+
+        Tra ve path da kiem tra ton tai, nen vong render khong con phai
+        os.path.exists() lai tung khung hinh."""
+        key = (sys_code, filename)
+        if key in self._boxart_cache:
+            return self._boxart_cache[key]
+        path = resolve_game_img_path(sys_code, filename)
+        if path and not os.path.exists(path):
+            path = None
+        self._boxart_cache[key] = path
+        return path
 
     def apply_filter(self):
         """Filter games by selected system tab."""
@@ -345,6 +367,12 @@ cd "{emu_dir or os.path.dirname(script_path)}"
         self.refresh_games()
 
     def render(self, engine):
+        # Modal vua dong co the da tai anh bia moi cho game dang xem.
+        if engine and engine.active_modal:
+            self._modal_seen = True
+        elif self._modal_seen:
+            self._modal_seen = False
+            self._boxart_cache.clear()
         # 1. System Tabs Bar (L1 / R1)
         tab_h = 38
         tab_y = 64
@@ -430,7 +458,7 @@ cd "{emu_dir or os.path.dirname(script_path)}"
             # Boxart Image
             sc = g.get("sys_code", "ROM")
             fn = g.get("filename", "")
-            ip = resolve_game_img_path(sc, fn)
+            ip = self._boxart(sc, fn)
             img_pad = 8
             img_w = card_w - img_pad * 2
             img_h = card_h - img_pad * 2 - 42
@@ -438,7 +466,7 @@ cd "{emu_dir or os.path.dirname(script_path)}"
             iy = by + img_pad
 
             drawn = False
-            if ip and os.path.exists(ip):
+            if ip:
                 drawn = engine.draw_proportional_boxart(ip, ix, iy, img_w, img_h)
             if not drawn:
                 engine.draw_default_boxart_avatar(ix, iy, img_w, img_h, sc, g.get("title", ""))
@@ -520,10 +548,10 @@ cd "{emu_dir or os.path.dirname(script_path)}"
             sc = sel_g.get("sys_code", "ROM")
             fn = sel_g.get("filename", "")
             clean_title = clean_game_title(sel_g.get("title", ""))
-            ip = resolve_game_img_path(sc, fn)
+            ip = self._boxart(sc, fn)
 
             drawn = False
-            if ip and os.path.exists(ip):
+            if ip:
                 drawn = engine.draw_proportional_boxart(ip, preview_x, preview_y, preview_w, preview_h)
             if not drawn:
                 engine.draw_default_boxart_avatar(preview_x, preview_y, preview_w, preview_h, sc, clean_title)

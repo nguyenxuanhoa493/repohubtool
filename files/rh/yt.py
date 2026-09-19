@@ -405,6 +405,10 @@ def _find_continuation_token(node) -> str:
 
 
 _CONTINUATION_TOKENS = {}
+# Every keyword the user types leaves one entry behind, and the token is only
+# useful for the "load more" tap right after that search. Cap it so a long
+# session cannot grow the dict without bound.
+CONTINUATION_CACHE_MAX = 32
 
 
 def get_continuation_token(query: str) -> str:
@@ -413,11 +417,13 @@ def get_continuation_token(query: str) -> str:
 
 
 def set_continuation_token(query: str, token: str):
-    """Store continuation token for pagination."""
-    if token:
-        _CONTINUATION_TOKENS[query] = token
-    else:
+    """Store continuation token for pagination (bounded, oldest query dropped)."""
+    if not token:
         _CONTINUATION_TOKENS.pop(query, None)
+        return
+    if len(_CONTINUATION_TOKENS) >= CONTINUATION_CACHE_MAX:
+        _CONTINUATION_TOKENS.pop(next(iter(_CONTINUATION_TOKENS)), None)
+    _CONTINUATION_TOKENS[query] = token
 
 
 def fetch_more_youtube(query: str, cont_token: str = None) -> tuple:

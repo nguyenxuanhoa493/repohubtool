@@ -15,7 +15,11 @@ constant must stay in sync with the git tag."""
 # trong modal, man hinh dung o 95%), them nut Huy khi dang tai, nut Bo qua co tac
 # dung that, kho game khong con moi cap nhat sai tren may cai tu file zip, va
 # gia lap J2ME doc dung che do ban phim nguoi dung chon.
-APP_VERSION = "2.41"
+# 2.42: giam nhiet/pin - chi ve khi co thay doi (4 khung/giay khi ranh), nhan dien dung
+# man hinh tat tren TrimUI Brick (Allwinner disp), man hinh tat thi LED tat han, cache
+# duong dan anh bia + tran cache (RAM anh bia 70MB -> 21MB), huy ket qua cu khi doi tab/video.
+# 2.41 da phat hanh (tag v2.41) voi ban sua vong lap OTA, nen dot nay phai la 2.42.
+APP_VERSION = "2.42"
 
 
 def version_tuple(v=None):
