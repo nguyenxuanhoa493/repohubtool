@@ -166,6 +166,8 @@ class GameActionModal(BaseModal):
 
     def is_downloaded(self):
         if self.rom_path and os.path.exists(self.rom_path):
+            self.game_info["rom_path"] = self.rom_path
+            self.game_info["path"] = self.rom_path
             return True
         fname = self.game_info.get("filename", "")
         if not fname or not self.sys_code:
@@ -173,12 +175,16 @@ class GameActionModal(BaseModal):
         r_dir = resolve_rom_dir(self.sys_code)
         if r_dir and os.path.exists(os.path.join(r_dir, fname)):
             self.rom_path = os.path.join(r_dir, fname)
+            self.game_info["rom_path"] = self.rom_path
+            self.game_info["path"] = self.rom_path
             return True
         # Kho ghi ten goi tai ve (.zip) con thu muc Roms giu ten ROM da bung
         # (.gba): cung mot game, khac ten file.
         entry = find_installed(self.sys_code, fname)
         if entry:
             self.rom_path = entry["path"]
+            self.game_info["rom_path"] = self.rom_path
+            self.game_info["path"] = self.rom_path
             return True
         return False
 
@@ -211,6 +217,9 @@ class GameActionModal(BaseModal):
                     self.rom_path = dl_state.get("extracted_rom_path")
 
             if downloaded:
+                if self.rom_path:
+                    self.game_info["rom_path"] = self.rom_path
+                    self.game_info["path"] = self.rom_path
                 if not self.img_path:
                     self.img_path = resolve_game_img_path(self.sys_code, fname)
                 self.selected_opt = 0
@@ -318,11 +327,21 @@ class GameActionModal(BaseModal):
                 return True
             elif act_id == "PLAY":
                 self.close()
+                if not self.rom_path or not os.path.exists(self.rom_path):
+                    self.is_downloaded()
+                if self.rom_path:
+                    self.game_info["rom_path"] = self.rom_path
+                    self.game_info["path"] = self.rom_path
                 if self.on_launch_cb:
                     self.on_launch_cb(self.sys_code, self.game_info, with_cheat=False)
                 return True
             elif act_id == "PLAY_CHEAT":
                 self.close()
+                if not self.rom_path or not os.path.exists(self.rom_path):
+                    self.is_downloaded()
+                if self.rom_path:
+                    self.game_info["rom_path"] = self.rom_path
+                    self.game_info["path"] = self.rom_path
                 if self.on_launch_cb:
                     self.on_launch_cb(self.sys_code, self.game_info, with_cheat=True)
                 return True

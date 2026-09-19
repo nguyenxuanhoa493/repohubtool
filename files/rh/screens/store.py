@@ -283,6 +283,9 @@ class StoreScreen(BaseScreen):
         if not rp and entry:
             # Ten goi tai ve khac ten ROM da bung: duong dan that nam trong entry.
             rp = entry.get("path", "")
+        if rp and os.path.exists(rp):
+            g["path"] = rp
+            g["rom_path"] = rp
         ip = resolve_game_img_path(sc, entry.get("filename") if entry else fn)
 
         def _on_launch(s_code, g_info, with_cheat=False, netplay_param=None):
@@ -311,8 +314,12 @@ class StoreScreen(BaseScreen):
 
         def _on_download_success(s_code, g_info):
             invalidate_installed()
-            item["installed"] = find_installed(s_code, g_info.get("filename", ""))
+            inst_entry = find_installed(s_code, g_info.get("filename", ""))
+            item["installed"] = inst_entry
             item["downloaded"] = True
+            if inst_entry and inst_entry.get("path"):
+                g_info["path"] = inst_entry["path"]
+                g_info["rom_path"] = inst_entry["path"]
 
         self.engine.open_modal(GameActionModal(self.engine), {
             "sys_code": sc,
@@ -339,6 +346,11 @@ class StoreScreen(BaseScreen):
                 if fn and os.path.exists(c):
                     rom_p = c
                     break
+
+        if not rom_p or not os.path.exists(rom_p):
+            entry = find_installed(sys_code, fn)
+            if entry and entry.get("path") and os.path.exists(entry["path"]):
+                rom_p = entry["path"]
 
         if not rom_p or not os.path.exists(rom_p):
             self.engine.toast(tr("store_err_no_rom"))

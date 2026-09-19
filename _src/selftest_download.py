@@ -239,6 +239,25 @@ with open(os.path.join(FILES, "rh", "modals", "game_action.py"), "r", encoding="
 check("T12c. khong con glyph mui ten ◄►▲▼ trong modal", "◄►▲▼" not in ga_content)
 check("T12d. da doi sang nhan DPAD", '"DPAD"' in ga_content)
 
+print("T13. Tim ROM da bung de khoi dong game (.zip -> .gba)")
+reset_state()
+dk_gba = write(sd_path("Roms", "GBA", "Donkey Kong Country 3 GBA.gba"), b"GBA_ROM_DATA")
+g_dk = {"filename": "Donkey Kong Country 3 GBA.zip", "title": "Donkey Kong Country 3"}
+found_dk = installed.find("GBA", g_dk["filename"])
+check("T13a. find_installed tim duoc file .gba tu ten .zip", bool(found_dk) and found_dk["path"] == dk_gba)
+
+def resolve_launch_rom(sys_code, game_info):
+    rom_p = game_info.get("path") or game_info.get("rom_path") or ""
+    fn = game_info.get("filename", "")
+    if not rom_p or not os.path.exists(rom_p):
+        entry = installed.find(sys_code, fn)
+        if entry and entry.get("path") and os.path.exists(entry["path"]):
+            rom_p = entry["path"]
+    return rom_p
+
+check("T13b. resolve_launch_rom tra dung duong dan file .gba",
+      resolve_launch_rom("GBA", g_dk) == dk_gba)
+
 print()
 if FAILED:
     print("FAILED %d test: %s" % (len(FAILED), ", ".join(FAILED)))

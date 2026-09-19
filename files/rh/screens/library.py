@@ -285,7 +285,13 @@ class LibraryScreen(BaseScreen):
                     break
 
         if not rom_p or not os.path.exists(rom_p):
-            self.engine.toast("Không tìm thấy file ROM trên thẻ nhớ!")
+            from ..installed import find as find_installed
+            entry = find_installed(sys_code, fn)
+            if entry and entry.get("path") and os.path.exists(entry["path"]):
+                rom_p = entry["path"]
+
+        if not rom_p or not os.path.exists(rom_p):
+            self.engine.toast(tr("store_err_no_rom"))
             return
 
         emu_dir, script_path = resolve_emulator(sys_code)
