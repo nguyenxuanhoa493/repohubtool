@@ -164,6 +164,8 @@ def format_storage_bytes(bytes_val):
         return f"{bytes_val // 1024} KB"
 
 def get_storage_info_rows():
+    import time as _time
+    _t0 = _time.time()
     rows = []
     
     # 1. Main SD Card Storage
@@ -289,6 +291,9 @@ def get_storage_info_rows():
     except Exception:
         pass
 
+    # Do thoi gian + so dong: neu man hinh trong thi log nay noi ngay la
+    # do du lieu rong hay do quet qua lau tren the.
+    print("[sysinfo] storage rows=%d trong %.1fs" % (len(rows), _time.time() - _t0))
     return rows
 def get_battery_info():
     """Returns (capacity_percent, is_charging) with dynamic sysfs scan & fallback."""
