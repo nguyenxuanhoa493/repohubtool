@@ -7,13 +7,16 @@ và cập nhật vào cơ sở dữ liệu catalog/roms_store.sqlite3 & files/ca
 """
 
 import os
+import sys
 import re
 import ssl
 import json
 import gzip
 import shutil
 import sqlite3
+import argparse
 import urllib.request
+
 
 DRIVE_FOLDERS = [
     ("1-H8FW-q-ZvonNI61a65sCLjPFhxUIFaC", "Atari - 2600", "ATARI2600"),
@@ -58,10 +61,33 @@ def raw_display_title(filename):
     base = re.sub(r'^\s*\d{1,4}\s*[\.\-]+\s*', '', base)
     return re.sub(r'\s+', ' ', base).strip()
 
-def list_drive_folder(folder_id):
-    api_key = os.environ.get("GDRIVE_API_KEY") or "".join(["AIzaSy", "C1qbk75NzWBv", "SaDh6KnsjjA9pIrP4lYIE"])
+LOBBY_API_URL = "https://retrohub-lobby.nguyenxuanhoa040993.workers.dev/api"
+
+
+def list_drive_folder(folder_id, api_key=None):
+    # 1. Ưu tiên gọi qua Cloudflare Worker Proxy (100% bảo mật, không cần key ở local)
+    if not api_key:
+        try:
+            worker_url = f"{LOBBY_API_URL}/gdrive/list?folder_id={folder_id}"
+            req = urllib.request.Request(worker_url, headers={"User-Agent": "RetroHub-Tool"})
+            ctx = ssl._create_unverified_context()
+            with urllib.request.urlopen(req, context=ctx, timeout=30) as resp:
+                res_json = json.loads(resp.read().decode("utf-8"))
+                if res_json.get("ok"):
+                    return res_json.get("files", [])
+        except Exception:
+            pass
+
+    # 2. Dự phòng: Nếu có api_key được truyền qua tham số hoặc GDRIVE_API_KEY
+    if not api_key:
+        api_key = os.environ.get("GDRIVE_API_KEY", "").strip()
+    if not api_key:
+        raise ValueError("Không thể quét qua Cloudflare Worker và chưa cung cấp GDRIVE_API_KEY!")
+
     url = f"https://drivefrontend-pa.clients6.google.com/v1/items:list?key={api_key}"
     headers = {
+
+
 
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
         "Content-Type": "application/json+protobuf",
@@ -143,18 +169,27 @@ def import_to_db(db_path, all_games):
     print(f"Finished {db_path}: Added {inserted_games} new games, {inserted_sources} GDRIVE sources.")
 
 def main():
+    parser = argparse.ArgumentParser(description="Quét Google Drive Folders và import vào catalog DB.")
+    parser.add_argument("--api-key", "-k", default="",
+                        help="Google API Key dự phòng (mặc định script sẽ ưu tiên dùng Cloudflare Worker Proxy).")
+    args = parser.parse_args()
+
+    api_key = (args.api_key or os.environ.get("GDRIVE_API_KEY", "")).strip()
+
     all_items = []
-    print("--- Scanning Google Drive Folders ---")
+    print("--- Scanning Google Drive Folders (Worker Proxy / Direct) ---")
     for fid, ftitle, sys_code in DRIVE_FOLDERS:
         print(f"Fetching '{ftitle}' ({sys_code})...", end="", flush=True)
         try:
-            files = list_drive_folder(fid)
+            files = list_drive_folder(fid, api_key)
             print(f" {len(files)} files")
+
             for f in files:
                 f["sys_code"] = sys_code
                 all_items.append(f)
         except Exception as e:
             print(f" ERROR: {e}")
+
 
     print(f"\nTotal scanned files across all systems: {len(all_items)}")
 

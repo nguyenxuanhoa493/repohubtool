@@ -131,8 +131,24 @@ class TestSecrets(unittest.TestCase):
             self.assertEqual(sent_data["filename"], "test.log")
             self.assertEqual(sent_data["content"], "Log content 123")
 
+    def test_no_google_api_key_in_codebase(self):
+        """Quét toàn bộ thư mục tools/ và files/ đảm bảo không chứa chuỗi AIzaSy hoặc Google key."""
+        import re
+        pattern = re.compile(r"AIza[0-9A-Za-z-_]{35}")
+        for scan_dir in [os.path.join(ROOT, "tools"), os.path.join(ROOT, "files")]:
+            for root, _, files in os.walk(scan_dir):
+                for f in files:
+                    if f.endswith((".py", ".json", ".js", ".sh")):
+                        p = os.path.join(root, f)
+                        with open(p, "r", encoding="utf-8", errors="ignore") as fp:
+                            content = fp.read()
+                            matches = pattern.findall(content)
+                            self.assertEqual(len(matches), 0, f"Phát hiện Google API key trong {p}: {matches}")
+                            self.assertNotIn("AIzaSy", content, f"Phát hiện chuỗi AIzaSy trong {p}")
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
