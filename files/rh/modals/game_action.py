@@ -9,12 +9,13 @@ from ..i18n import tr
 from ..storage import human_bytes
 from ..catalog import clean_game_title, get_system_display_name
 from ..cheat_manager import has_cheat_file, check_or_download_single_cheat
-from ..boxart_scraper import scrape_boxart_for_single_rom
+from ..boxart import is_real_boxart_url
+from ..boxart_scraper import scrape_boxart_for_single_rom, download_image_to_file
 from ..j2me import (resolution_of_path, pretty_resolution,
                    DEFAULT_PHONE_MODE, load_default_phone_mode)
 from ..ui.boxart import resolve_game_img_path
 from ..downloader import (enqueue_download, dl_state, game_key, download_state_for,
-                         cancel_download, release_result_slot)
+                         cancel_download, release_result_slot, probe_game_file_size)
 from ..installed import find as find_installed
 from .base import BaseModal
 
@@ -42,6 +43,8 @@ class GameActionModal(BaseModal):
         self.on_res_cb = None
         self.on_download_success_cb = None
         self.was_downloading = False
+        self.probing_size = False
+        self.fetching_boxart = False
 
     def open(self, data=None):
         super().open(data)
@@ -56,6 +59,8 @@ class GameActionModal(BaseModal):
         self.on_res_cb = self.data.get("on_res")
         self.on_download_success_cb = self.data.get("on_download_success")
         self.was_downloading = False
+        self.probing_size = False
+        self.fetching_boxart = False
 
         # Auto-resolve rom path if not provided
         fname = self.game_info.get("filename", "")
@@ -69,6 +74,84 @@ class GameActionModal(BaseModal):
         # Auto-resolve boxart if not provided
         if not self.img_path and fname and self.sys_code:
             self.img_path = resolve_game_img_path(self.sys_code, fname)
+
+        # Auto-fetch boxart in background if not present on disk
+        if not self.img_path or not os.path.exists(self.img_path):
+            self._fetch_boxart_auto()
+
+        # Auto-probe remote file size in background if size unknown
+        if not self.is_downloaded() and not self.game_info.get("file_size_str"):
+            self._fetch_file_size_auto()
+
+    def _fetch_boxart_auto(self):
+        """Tu dong tai anh bia ve the nho khi chua co anh bia cuc bo."""
+        if self.fetching_boxart:
+            return
+        fname = self.game_info.get("filename", "")
+        g_title = self.game_info.get("title", "")
+        sys_code = self.sys_code
+        if not fname or not sys_code:
+            return
+
+        self.fetching_boxart = True
+
+        def _bg():
+            try:
+                img_url = self.game_info.get("img_url", "")
+                rom_base = os.path.splitext(fname)[0]
+                target_img_dir = os.path.join(SDCARD_PATH, "Imgs", sys_code)
+                os.makedirs(target_img_dir, exist_ok=True)
+                target_art = os.path.join(target_img_dir, f"{rom_base}.png")
+
+                saved = False
+                if is_real_boxart_url(img_url):
+                    ok, _ = download_image_to_file(img_url, target_art, timeout=10)
+                    if ok and os.path.exists(target_art):
+                        saved = True
+                        if g_title and g_title != rom_base:
+                            try:
+                                import shutil
+                                shutil.copyfile(target_art, os.path.join(target_img_dir, f"{g_title}.png"))
+                            except Exception:
+                                pass
+
+                if not saved:
+                    ok, res_path, _ = scrape_boxart_for_single_rom(
+                        sys_code, fname, g_title, self.rom_path
+                    )
+                    if ok and res_path and os.path.exists(res_path):
+                        target_art = res_path
+                        saved = True
+
+                if saved and os.path.exists(target_art):
+                    self.img_path = target_art
+            except Exception as e:
+                print(f"Auto-fetch boxart error: {e}")
+            finally:
+                self.fetching_boxart = False
+
+        threading.Thread(target=_bg, daemon=True).start()
+
+    def _fetch_file_size_auto(self):
+        """Tham do dung luong file tu xa truoc khi nguoi dung bam tai."""
+        if self.probing_size:
+            return
+        if not self.game_info:
+            return
+        self.probing_size = True
+
+        def _bg_size():
+            try:
+                s_fmt = probe_game_file_size(self.game_info, timeout=6)
+                if s_fmt:
+                    self.game_info["file_size_str"] = s_fmt
+            except Exception as e:
+                print(f"Auto-probe file size error: {e}")
+            finally:
+                self.probing_size = False
+
+        threading.Thread(target=_bg_size, daemon=True).start()
+
 
     def close(self):
         """Dong modal ket qua: tra slot tai ve idle cho hang cho chay tiep.
@@ -186,23 +269,6 @@ class GameActionModal(BaseModal):
                 self.was_downloading = True
                 if msg and self.engine:
                     self.engine.toast(msg)
-                return True
-            if btn_x:
-                # Fetch Boxart
-                fname = self.game_info.get("filename", "")
-                g_title = self.game_info.get("title", "")
-                if self.engine:
-                    self.engine.toast(tr("dl_toast_boxart_loading"))
-                def _bg_boxart_predl():
-                    ok, res_path, msg = scrape_boxart_for_single_rom(self.sys_code, fname, g_title, self.rom_path)
-                    if ok and res_path:
-                        self.img_path = res_path
-                        if self.engine:
-                            self.engine.toast(tr("dl_toast_boxart_done"))
-                    else:
-                        if self.engine:
-                            self.engine.toast(msg or tr("dl_toast_boxart_none"))
-                threading.Thread(target=_bg_boxart_predl, daemon=True).start()
                 return True
             return True
 
@@ -361,11 +427,10 @@ class GameActionModal(BaseModal):
         elif not is_dl:
             fx = 32
             fx = engine.draw_footer_btn(fx, fy, foot_h, "A", tr("dl_footer_download"), (0, 230, 150), is_dark_btn=True)
-            fx = engine.draw_footer_btn(fx, fy, foot_h, "X", tr("dl_footer_boxart"), (0, 210, 255), is_dark_btn=False)
             engine.draw_footer_btn(state.SCREEN_W - 165, fy, foot_h, "B", tr("dl_footer_close"), (255, 75, 75), is_dark_btn=False)
         else:
             fx = 32
-            fx = engine.draw_footer_btn(fx, fy, foot_h, "◄►▲▼", tr("dl_footer_nav"), (70, 95, 140), is_dark_btn=False)
+            fx = engine.draw_footer_btn(fx, fy, foot_h, "DPAD", tr("dl_footer_nav"), (70, 95, 140), is_dark_btn=False)
             fx = engine.draw_footer_btn(fx, fy, foot_h, "A", tr("dl_footer_confirm"), (0, 230, 150))
             engine.draw_footer_btn(state.SCREEN_W - 165, fy, foot_h, "B", tr("dl_footer_back"), (255, 70, 70), is_dark_btn=False)
 
@@ -414,6 +479,8 @@ class GameActionModal(BaseModal):
         if not f_size_str:
             if self.rom_path and os.path.exists(self.rom_path):
                 f_size_str = human_bytes(os.path.getsize(self.rom_path))
+            elif self.probing_size:
+                f_size_str = tr("dl_info_size_loading")
             else:
                 f_size_str = "--"
 
