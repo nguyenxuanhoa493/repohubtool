@@ -10,6 +10,7 @@ sinh ra tu chinh muc do va khong vuot gioi han 4096 ky tu, va script Telegram
 khong con noi dung hardcode cua ban cu.
 """
 
+import html
 import io
 import json
 import os
@@ -92,9 +93,9 @@ import notify_ota_telegram as notify
 msg = notify.build_message(ver, entry)
 check("T4a. trong gioi han Telegram (4096)", len(msg) <= 4096, len(msg))
 check("T4b. co headline cua ban dang phat hanh",
-      not entry or head.get("vi", "x")[:25] in msg)
+      not entry or (html.escape(head.get("vi", "x"))[:25] in msg or head.get("vi", "x")[:25] in msg))
 check("T4c. co it nhat 1 bullet cua ban dang phat hanh",
-      not entry or any(b["vi"][:25] in msg for b in (entry.get("bullets") or [])))
+      not entry or any((html.escape(b["vi"])[:25] in msg or b["vi"][:25] in msg) for b in (entry.get("bullets") or [])))
 check("T4d. khong vuot tran 4000 khi bullet rat dai",
       len(notify.build_message(ver, {"headline": {"vi": "x"},
                                      "bullets": [{"vi": "y" * 300} for _ in range(40)]})) <= 4096)

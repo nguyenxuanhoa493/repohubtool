@@ -22,7 +22,8 @@ constant must stay in sync with the git tag."""
 # 2.44: bao mat toan dien - loai bo token Telegram va API key AI khoi codebase, chuyen sang Cloudflare Worker Proxy.
 # 2.45: sua loi cai gia lap Java J2ME tren the nho FAT32 ([Errno 5] Input/output error), co che giai nen da tang an toan va tiet kiem RAM.
 # 2.46: bao mat & nang cap - proxy quet Google Drive qua Cloudflare Worker, ho tro dry-run va toi uu bo nap secrets.
-APP_VERSION = "2.46"
+# 2.47: ha tang CDN - tich hop Cloudflare R2 CDN (cdn.xuanhoa493.com) tai sieu toc cho gia lap, theme, icon va catalog.
+APP_VERSION = "2.47"
 
 
 

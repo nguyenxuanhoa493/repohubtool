@@ -1,12 +1,12 @@
 {
-  "version": "2.46",
+  "version": "2.47",
   "full_release_version": "2.46",
   "python": "any",
-  "built": "2026-09-20T01:48:58+07:00",
+  "built": "2026-09-20T02:25:00+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Bảo mật & Nâng cấp: Proxy quét Google Drive qua Cloudflare Worker, công cụ hỗ trợ dry-run và tối ưu nạp secrets",
-    "en": "Security & Upgrades: Proxy Google Drive scanning via Cloudflare Worker, dry-run scanner tool and secrets loader optimization"
+    "vi": "Hạ tầng CDN: Tích hợp Cloudflare R2 CDN tải siêu tốc cho giả lập, theme, icon và kho game",
+    "en": "CDN Infrastructure: Integrated Cloudflare R2 CDN for high-speed emulator, theme, icon and catalog downloads"
   },
   "remove": [
     "app.pyc",

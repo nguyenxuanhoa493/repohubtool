@@ -2,6 +2,28 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.47",
+      "date": "2026-09-20",
+      "headline": {
+        "vi": "Hạ tầng CDN: Tích hợp Cloudflare R2 CDN tải siêu tốc cho giả lập, theme, icon và kho game",
+        "en": "CDN Infrastructure: Integrated Cloudflare R2 CDN for high-speed emulator, theme, icon and catalog downloads"
+      },
+      "bullets": [
+        {
+          "vi": "Phân phối tài nguyên qua Cloudflare R2 CDN (cdn.xuanhoa493.com): Toàn bộ 170 gói tài nguyên (Theme, Icon pack, Emulator tarball và ROM store catalog) được ưu tiên tải qua mạng Edge APAC tốc độ cao, độ trễ thấp và miễn phí băng thông egress.",
+          "en": "Resource distribution via Cloudflare R2 CDN (cdn.xuanhoa493.com): All 170 release assets (Themes, Icon packs, Emulator tarballs and ROM store catalog) are now prioritized via Cloudflare APAC high-speed edge with zero egress fees."
+        },
+        {
+          "vi": "Cơ chế dự phòng đa tầng (High Availability Fallback): Tự động chuyển tiếp mượt mà sang GitHub Releases và các mirror dự phòng nếu kết nối CDN gặp sự cố.",
+          "en": "Multi-tier High Availability Fallback: Smoothly fails over to GitHub Releases and secondary mirrors if the CDN connection encounters issues."
+        },
+        {
+          "vi": "Bổ sung công cụ đồng bộ R2 tự động (_src/sync_to_r2.py) hỗ trợ chuẩn AWS SigV4 độc lập, tự động nạp cấu hình .env an toàn.",
+          "en": "Added automated R2 sync tool (_src/sync_to_r2.py) with standalone AWS SigV4 implementation and secure .env configuration support."
+        }
+      ]
+    },
+    {
       "version": "2.46",
       "date": "2026-09-20",
       "headline": {
