@@ -257,10 +257,10 @@ class EmuStoreScreen(BaseScreen):
             self.installing_emu = False
             if res.get("success"):
                 if self.engine:
-                    self.engine.toast(f"✓ {tr('emu_install_success')} ({sys_id})")
+                    self.engine.toast(f"{tr('emu_install_success')} ({sys_id})", text_color=(0, 255, 160))
             else:
                 if self.engine:
-                    self.engine.toast(f"✗ {res.get('error', tr('emu_install_failed'))}")
+                    self.engine.toast(res.get('error', tr('emu_install_failed')), text_color=(255, 100, 100))
             self.refresh_catalog()
 
         t = threading.Thread(target=run_task, daemon=True)
@@ -277,10 +277,12 @@ class EmuStoreScreen(BaseScreen):
             self.installing_emu = False
             if res.get("success"):
                 if self.engine:
-                    self.engine.toast(f"✓ {tr('emu_uninstall_success')}")
+                    self.engine.toast(f"{tr('emu_uninstall_success')}", text_color=(0, 255, 160))
             else:
                 if self.engine:
-                    self.engine.toast(f"✗ {res.get('error') or tr('emu_err_remove')}")
+                    # Giu ban dich cua nhanh minh (tr) nhung them mau do cua upstream
+                    self.engine.toast(f"✗ {res.get('error') or tr('emu_err_remove')}",
+                                      text_color=(255, 100, 100))
             self.refresh_catalog()
 
         t = threading.Thread(target=run_task, daemon=True)

@@ -7,7 +7,9 @@ core status, ROM directory creation, and uninstallation.
 
 import os
 import json
+import ssl
 import shutil
+import subprocess
 import tarfile
 import urllib.request
 
@@ -142,21 +144,72 @@ def install_emu(sys_id):
             f"{GITHUB_RAW_BASE}{tar_name}",
         ]
         downloaded = False
+        last_error = ""
+
+        # Build unverified SSL context to bypass missing CA certificates on TrimUI
+        ssl_ctx = None
+        try:
+            ssl_ctx = ssl._create_unverified_context()
+        except Exception:
+            try:
+                ssl_ctx = ssl.create_default_context()
+                ssl_ctx.check_hostname = False
+                ssl_ctx.verify_mode = ssl.CERT_NONE
+            except Exception:
+                ssl_ctx = None
+
         for url in urls_to_try:
+            # Clean any stale/partial download
+            if os.path.isfile(temp_download):
+                try:
+                    os.remove(temp_download)
+                except OSError:
+                    pass
+
+            # 1. Try urllib with unverified SSL context
             try:
                 print(f"[EmulatorStore] Downloading {url}...")
                 req = urllib.request.Request(url, headers={"User-Agent": "RetroHub-EmulatorStore/1.0"})
-                with urllib.request.urlopen(req, timeout=60) as resp, open(temp_download, "wb") as out:
+                open_kwargs = {"timeout": 60}
+                if ssl_ctx:
+                    open_kwargs["context"] = ssl_ctx
+                with urllib.request.urlopen(req, **open_kwargs) as resp, open(temp_download, "wb") as out:
                     shutil.copyfileobj(resp, out)
                 if os.path.isfile(temp_download) and os.path.getsize(temp_download) > 0:
                     target_archive = temp_download
                     downloaded = True
                     break
             except Exception as e:
-                print(f"[EmulatorStore] Download failed from {url}: {e}")
+                last_error = str(e)
+                print(f"[EmulatorStore] urllib download failed from {url}: {e}")
+
+            # 2. Fallback to curl (immune to TrimUI Python SSL issues & supports redirects)
+            try:
+                print(f"[EmulatorStore] Fallback to curl for {url}...")
+                cmd = ["curl", "-fsSLk", "--connect-timeout", "15", "--max-time", "180", "-o", temp_download, url]
+                ret = subprocess.run(cmd, capture_output=True, timeout=190)
+                if ret.returncode == 0 and os.path.isfile(temp_download) and os.path.getsize(temp_download) > 0:
+                    target_archive = temp_download
+                    downloaded = True
+                    break
+                else:
+                    err_out = ret.stderr.decode("utf-8", errors="ignore").strip()
+                    if err_out:
+                        last_error = f"curl: {err_out}"
+            except Exception as ce:
+                last_error = f"curl error: {ce}"
+                print(f"[EmulatorStore] curl download failed from {url}: {ce}")
 
         if not downloaded or not target_archive:
-            return {"success": False, "error": f"Không tìm thấy gói cài đặt cho hệ máy {sys_id}."}
+            if os.path.isfile(temp_download):
+                try:
+                    os.remove(temp_download)
+                except OSError:
+                    pass
+            err_msg = f"Tải {sys_id} online thất bại. Vui lòng kiểm tra Wi-Fi."
+            if last_error:
+                err_msg = f"Lỗi tải {sys_id}: {last_error[:40]}"
+            return {"success": False, "error": err_msg}
 
     os.makedirs(paths.EMUS_DIR, exist_ok=True)
     target_emu_dir = os.path.join(paths.EMUS_DIR, sys_id)

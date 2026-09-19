@@ -41,7 +41,7 @@
   "operatingSystem": "TrimUI & NextUI (Linux)",
   "url": "https://retrohub.xuanhoa493.com/vi/",
   "downloadUrl": "https://github.com/nguyenxuanhoa493/repohubtool/releases/latest",
-  "softwareVersion": "2.37",
+  "softwareVersion": "2.38",
   "inLanguage": "vi",
   "description": "RetroHub: kho gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi và tự động cập nhật cho máy chơi game cầm tay TrimUI và NextUI. Cài một lần, tự cập nhật mãi.",
   "offers": {
@@ -228,6 +228,21 @@
     text-overflow:ellipsis;white-space:nowrap}
   .chips i{display:block;font-style:normal;color:var(--muted);font-size:.78rem}
 
+  .team-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .team-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:16px 20px;display:flex;gap:16px;align-items:center;
+    transition:border-color .18s,transform .18s,background .18s}
+  .team-card:hover{border-color:var(--accent-dim);background:#182642;transform:translateY(-2px)}
+  .team-ava{width:56px;height:56px;border-radius:50%;background:#0a1120;
+    border:2px solid var(--line);flex:none;object-fit:cover;transition:border-color .18s}
+  .team-card:hover .team-ava{border-color:var(--accent)}
+  .team-info{min-width:0;flex:1}
+  .team-info b{display:block;font-size:1.08rem;letter-spacing:-.2px;color:var(--text);margin-bottom:4px}
+  .team-gh{display:inline-flex;align-items:center;gap:6px;color:var(--muted);
+    font-size:.88rem;text-decoration:none;transition:color .15s}
+  .team-gh:hover{color:var(--accent)}
+  .team-gh svg{width:16px;height:16px;fill:currentColor;flex:none}
+
   .disc{border-left:3px solid var(--accent-dim);background:#111b2e;
     border-radius:0 12px 12px 0;padding:20px 24px}
   .disc p{color:var(--muted);font-size:.92rem;margin:0 0 10px;line-height:1.6}
@@ -253,7 +268,7 @@
     .logo{animation:none}
     .rise{opacity:1;transform:none;transition:none}
     .stage img{transition:none;transform:none}
-    .btn:hover,.card:hover,.tab:hover,.chips a:hover{transform:none}
+    .btn:hover,.card:hover,.tab:hover,.chips a:hover,.team-card:hover{transform:none}
   }
 </style>
 </head>
@@ -270,13 +285,13 @@
 
 <header id="top">
   <div class="wrap">
-    <a class="badge-hero" href="/vi/changelog/"><b>v2.37</b> Trợ lý AI Web Manager: Sửa lỗi mã hóa Shell & Nút Quét Log lỗi 1 chạm →</a>
+    <a class="badge-hero" href="/vi/changelog/"><b>v2.38</b> Trợ lý AI Web Manager: Sửa lỗi mã hóa Shell & Nút Quét Log lỗi 1 chạm →</a>
     <img class="logo" src="/logo.png" alt="RetroHub">
     <h1>RetroHub</h1>
     <p class="sub">Kho game và tiện ích cho máy cầm tay (TrimUI & NextUI)</p>
     <div class="cta">
-      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.37/RetroHub-2.37-full.zip">Tải bản TrimUI (Hệ gốc) — v2.37<small>17.4 MB · Đầy đủ Core · Tự đồng bộ Java</small></a>
-      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.37/RetroHub-2.37-NextUI.zip">Tải bản NextUI (Pak) — v2.37<small>17.4 MB · Chuẩn Pak NextUI · Mới nhất</small></a>
+      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.38/RetroHub-2.38-full.zip">Tải bản TrimUI (Hệ gốc) — v2.38<small>17.4 MB · Đầy đủ Core · Tự đồng bộ Java</small></a>
+      <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.38/RetroHub-2.38-NextUI.zip">Tải bản NextUI (Pak) — v2.38<small>17.4 MB · Chuẩn Pak NextUI · Mới nhất</small></a>
       <a class="btn alt" href="https://github.com/DTH-RetroHandheld/assets_brickpro/releases">ROMs Stock Full (Brick Pro)<small>Trọn bộ giả lập & ROM gốc từ DTH</small></a>
       <a class="btn ghost" href="/vi/guide/">Hướng dẫn người mới<small>Cài ROM full & App từ A-Z</small></a>
     </div>
@@ -296,7 +311,7 @@
 
   <section id="cach-cai" class="rise">
     <h2>7 Bước cài đặt trọn gói cho TrimUI Brick Pro</h2>
-    <ol><li><b>Tải ROMs Stock Full:</b> Tải trọn bộ giả lập và ROM gốc tại <a href="https://github.com/DTH-RetroHandheld/assets_brickpro/releases" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">DTH-RetroHandheld Releases</a>.</li><li><b>Format thẻ về exFAT:</b> Cắm thẻ nhớ MicroSD vào máy tính và định dạng chuẩn <code>exFAT</code>.</li><li><b>Giải nén ROM ra thẻ nhớ:</b> Giải nén toàn bộ tệp ROM vừa tải trực tiếp vào thư mục gốc của thẻ nhớ.</li><li><b>Khởi động lại máy để cài ROM:</b> Cắm thẻ vào máy cầm tay và bật nguồn để hệ thống nhận diện giả lập.</li><li><b>Tải RetroHub mới nhất:</b> Tải bản <code>RetroHub-2.37-full.zip</code>.</li><li><b>Copy RetroHub vào Apps:</b> Chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ nhớ.</li><li><b>Khởi động lại & mở app:</b> Bật máy, vào <b>Apps → RetroHub</b> để sử dụng kho 40.000 game và tự động cập nhật qua Wi-Fi.</li></ol>
+    <ol><li><b>Tải ROMs Stock Full:</b> Tải trọn bộ giả lập và ROM gốc tại <a href="https://github.com/DTH-RetroHandheld/assets_brickpro/releases" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">DTH-RetroHandheld Releases</a>.</li><li><b>Format thẻ về exFAT:</b> Cắm thẻ nhớ MicroSD vào máy tính và định dạng chuẩn <code>exFAT</code>.</li><li><b>Giải nén ROM ra thẻ nhớ:</b> Giải nén toàn bộ tệp ROM vừa tải trực tiếp vào thư mục gốc của thẻ nhớ.</li><li><b>Khởi động lại máy để cài ROM:</b> Cắm thẻ vào máy cầm tay và bật nguồn để hệ thống nhận diện giả lập.</li><li><b>Tải RetroHub mới nhất:</b> Tải bản <code>RetroHub-2.38-full.zip</code>.</li><li><b>Copy RetroHub vào Apps:</b> Chép thư mục <code>RetroHub</code> vào thư mục <code>/Apps/</code> trên thẻ nhớ.</li><li><b>Khởi động lại & mở app:</b> Bật máy, vào <b>Apps → RetroHub</b> để sử dụng kho 40.000 game và tự động cập nhật qua Wi-Fi.</li></ol>
     <p class="note">Chỉ cần cài tay đúng một lần. Từ đó ứng dụng tự kiểm tra bản mới qua Wi-Fi mỗi lần mở và chỉ tải phần thay đổi cho cả TrimUI Stock OS lẫn NextUI.</p>
   </section>
 
@@ -304,14 +319,14 @@
     <h2>Tải về</h2>
     <div class="dl">
       <div class="card main">
-        <h3>Bản cho TrimUI (Stock OS / CrossMix) — v2.37</h3><span class="size">17.4 MB</span>
+        <h3>Bản cho TrimUI (Stock OS / CrossMix) — v2.38</h3><span class="size">17.4 MB</span>
         <p>Dành cho máy TrimUI Brick, Brick Pro và Smart Pro chạy hệ điều hành gốc hoặc CrossMix-OS. Giải nén và chép thư mục RetroHub vào /Apps/ trên thẻ nhớ.</p>
-        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.37/RetroHub-2.37-full.zip">Tải bản TrimUI (Hệ gốc) — v2.37</a>
+        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.38/RetroHub-2.38-full.zip">Tải bản TrimUI (Hệ gốc) — v2.38</a>
       </div>
       <div class="card main">
-        <h3>Bản cho NextUI (Tool Pak) — v2.37</h3><span class="size">17.4 MB</span>
+        <h3>Bản cho NextUI (Tool Pak) — v2.38</h3><span class="size">17.4 MB</span>
         <p>Gói ứng dụng Tool Pak đóng gói sẵn cho NextUI (tg5040 & tg5050). Giải nén và chép thư mục Tools trực tiếp vào thư mục gốc thẻ nhớ.</p>
-        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.37/RetroHub-2.37-NextUI.zip">Tải bản NextUI (Pak) — v2.37</a>
+        <a class="btn" href="https://github.com/nguyenxuanhoa493/repohubtool/releases/download/v2.38/RetroHub-2.38-NextUI.zip">Tải bản NextUI (Pak) — v2.38</a>
       </div>
     </div>
     <p style="margin:18px 0 0;color:var(--muted);font-size:.94rem">Định chơi game Java? Có hướng dẫn riêng: <a href="/vi/java/" style="color:var(--accent)">Chơi game Java J2ME trên RetroHub</a> — thư mục độ phân giải, chế độ máy, bố trí nút và kiểu hiển thị.</p>
@@ -340,6 +355,30 @@
   <section id="lo-trinh" class="rise">
     <h2>Lộ trình phát triển</h2>
     <ul class="road"><li class="done"><span class="pin"></span><b>Kho game và tiện ích cơ bản<span class="badge ok">Đã xong</span></b><span>Gần 40.000 game, giả lập Java J2ME, truyền file qua Wi-Fi, tự động cập nhật</span></li><li class="done"><span class="pin"></span><b>Hỗ trợ NextUI và các bản CFW<span class="badge ok">Đã xong</span></b><span>Đóng gói Tool Pak cho NextUI, lưu ảnh bìa .media, nhận diện tag ROM</span></li><li class=""><span class="pin"></span><b>Kho ứng dụng online<span class="badge next">Dự kiến</span></b><span>Cài thêm tiện ích và paks ngay trên máy, không cần rút thẻ nhớ</span></li></ul>
+  </section>
+
+  <section id="thanh-vien" class="rise">
+    <h2>Thành viên dự án</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <img class="team-ava" src="https://github.com/nguyenxuanhoa493.png" alt="Nguyễn Xuân Hòa" loading="lazy" onerror="this.src='/logo.png'">
+        <div class="team-info">
+          <b>Nguyễn Xuân Hòa</b>
+          <a class="team-gh" href="https://github.com/nguyenxuanhoa493" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg> <span>@nguyenxuanhoa493</span>
+          </a>
+        </div>
+      </div>
+      <div class="team-card">
+        <img class="team-ava" src="https://github.com/swptsreal.png" alt="Thanh Sơn" loading="lazy" onerror="this.src='/logo.png'">
+        <div class="team-info">
+          <b>Thanh Sơn</b>
+          <a class="team-gh" href="https://github.com/swptsreal" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg> <span>@swptsreal</span>
+          </a>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="lien-he" class="rise">
