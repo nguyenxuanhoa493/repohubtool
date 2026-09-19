@@ -340,9 +340,10 @@ class GameActionModal(BaseModal):
         engine.draw_text(header_str, engine.font_title, 28, head_h // 2, 0, 246, 246, center_y=True)
 
         g_title = clean_game_title(self.game_info.get("title") or "Game")
-        disp_gt = f"[{self.sys_code}] {g_title}"
-        if len(disp_gt) > 34:
-            disp_gt = disp_gt[:31] + "..."
+        # Cat theo pixel: tieng Viet co dau dai hon ky tu ASCII nen cat theo so ky
+        # tu se de tran ra le phai voi ten game dai.
+        disp_gt = engine.truncate_text(f"[{self.sys_code}] {g_title}",
+                                       engine.font_badge, state.SCREEN_W // 2)
         gt_w = engine.measure_text(disp_gt, engine.font_badge)
         engine.draw_text(disp_gt, engine.font_badge, state.SCREEN_W - 28 - gt_w, head_h // 2, 255, 215, 0, center_y=True)
 
@@ -423,11 +424,14 @@ class GameActionModal(BaseModal):
         row_h = 30
         sys_disp = get_system_display_name(self.sys_code)
         info_rows = (
-            (f'{tr("dl_info_title")} {g_title[:40]}', (255, 255, 255)),
+            (f'{tr("dl_info_title")} {g_title}', (255, 255, 255)),
             (f'{tr("dl_info_system")} {self.sys_code} ({sys_disp})', (0, 230, 255)),
-            (f'{tr("dl_info_file")} {fname[:40]}', (200, 215, 235)),
+            (f'{tr("dl_info_file")} {fname}', (200, 215, 235)),
             (f'{tr("dl_info_size")} {f_size_str}', (255, 215, 0)),
         )
+        # max_w tinh theo be ngang that cua card: ten game/file dai (nhat la tieng
+        # Viet co dau) truoc day bi ve tran qua khoi card roi ra sat le man hinh.
+        info_text_w = right_w - info_pad_x * 2
 
         # Chua tai thi khong con card "tai game" ben duoi nua, nen card thong tin
         # dung ca chieu cao con lai cua panel phai.
@@ -440,7 +444,8 @@ class GameActionModal(BaseModal):
 
         for i, (text, col) in enumerate(info_rows):
             engine.draw_text(text, engine.font_sub, right_x + info_pad_x,
-                             body_y + info_pad_y + row_h * i, col[0], col[1], col[2])
+                             body_y + info_pad_y + row_h * i, col[0], col[1], col[2],
+                             max_w=info_text_w)
 
         bottom_y = body_y + info_h + 14
         bottom_h = body_h - info_h - 14
@@ -456,7 +461,8 @@ class GameActionModal(BaseModal):
 
             # Sub-Header
             engine.fill_rect(right_x + 2, bottom_y + 2, right_w - 4, 44, 24, 36, 62, 255)
-            engine.draw_text(tr("dl_progress_title"), engine.font_sub, right_x + 18, bottom_y + 24, 0, 246, 246, center_y=True)
+            engine.draw_text(tr("dl_progress_title"), engine.font_sub, right_x + 18, bottom_y + 24,
+                             0, 246, 246, center_y=True, max_w=right_w - 36)
 
             bar_margin = 18
             bar_w = right_w - bar_margin * 2
@@ -487,7 +493,8 @@ class GameActionModal(BaseModal):
             engine.draw_text(f"{pct}% ({speed_str})", engine.font_badge, bar_x + bar_w, bar_y - 18, 0, 255, 160, center_y=True, right_align=True)
 
             # Text Below Bar
-            engine.draw_text(status_msg[:54], engine.font_sub, bar_x, bar_y + 36, 200, 220, 245)
+            engine.draw_text(status_msg, engine.font_sub, bar_x, bar_y + 36, 200, 220, 245,
+                             max_w=bar_w)
 
 
         # CASE B: PRE-DOWNLOAD - card thong tin o tren da chiem ca panel phai,
@@ -559,4 +566,8 @@ class GameActionModal(BaseModal):
                 engine.draw_action_vector_icon(act_id, ib_x + ib_sz // 2, ib_y + ib_sz // 2, 70, t_col[0], t_col[1], t_col[2], 255)
 
                 txt_y = ib_y + ib_sz + 20
-                engine.draw_text(t_title, engine.font_sub, tx + tile_w // 2, txt_y, 255, 255, 255, center_x=True, center_y=True)
+                # Nhan nut tieng Anh ("RE-DOWNLOAD", "PLAY+CHEAT") dai hon be ngang
+                # tile nen phai cat theo pixel, khong thi chu tran ra ngoai card.
+                engine.draw_text(t_title, engine.font_sub, tx + tile_w // 2, txt_y,
+                                 255, 255, 255, center_x=True, center_y=True,
+                                 max_w=tile_w - 10)

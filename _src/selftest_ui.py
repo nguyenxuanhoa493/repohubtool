@@ -39,18 +39,27 @@ from rh.screens.store import StoreScreen
 eng = RetroHubEngine(); eng.init_sdl()
 if not eng.init_fonts():
     print("khong nap duoc font"); sys.exit(1)
+# Kich thuoc may that (TrimUI Brick) de phep do ben duoi co dinh, khong phu thuoc
+# display mode ma driver gia lap tra ve.
+state.SCREEN_W = 1024
+state.SCREEN_H = 768
 
-def mk_rom():
-    d = os.path.join(SD, "Roms", "GBA"); os.makedirs(d, exist_ok=True)
-    with open(os.path.join(d, "Demo Game (USA).gba"), "wb") as f:
+def mk_rom(sys_code="GBA", fname="Demo Game (USA).gba"):
+    d = os.path.join(SD, "Roms", sys_code); os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, fname), "wb") as f:
         f.write(b"\x00" * 4096)
 
 info = {"id": 7, "filename": "Demo Game (USA).zip", "title": "Demo Game", "file_size_str": "4.0 MB", "sys_code": "GBA"}
+# Ten dai: bug "panel phai overflow" chi lo ra khi text vuot be ngang card phai.
+long_info = {"id": 8, "filename": "Pokemon - Fire Red Version (USA) (Rev 1).zip",
+             "title": "Pokemon - Fire Red Version (USA) (Rev 1)", "file_size_str": "16.0 MB",
+             "sys_code": "GBA"}
 # Dem so lan ve icon cua luoi hanh dong: chi trang thai "da tai" moi co luoi.
 class CountingEngine(object):
     def __init__(self, base):
         self._base = base
         self.tiles = 0
+        self.overflow = []
     def __getattr__(self, name):
         attr = getattr(self._base, name)
         if name == "draw_action_vector_icon":
@@ -59,6 +68,23 @@ class CountingEngine(object):
                 return attr(*a, **k)
             return wrapped
         return attr
+    def draw_text(self, text, font, x, y, *a, **k):
+        """Ghi lai text tran ra ngoai card phai (right_edge = SCREEN_W - 28).
+
+        Panel phai bat dau quanh x=408 va ket thuc o 996. Text dai (ten game, ten
+        file) tung bi cat theo KY TU chu khong theo pixel nen ve tran ra le phai."""
+        if text:
+            raw = str(text)
+            t = self._base.truncate_text(raw, font, k.get("max_w"))
+            w = self._base.measure_text(t, font)
+            right_edge = state.SCREEN_W - 28
+            if k.get("center_x") and x >= 400:
+                # Text canh giua (nhan tile hanh dong): hai dau khong duoc vuot card.
+                if x - w // 2 < 408 or x + w // 2 > right_edge:
+                    self.overflow.append((raw, x, w))
+            elif not k.get("right_align") and x >= 400 and x + w > right_edge:
+                self.overflow.append((raw, x, w))
+        return self._base.draw_text(text, font, x, y, *a, **k)
 
 ok = True
 for lang in ("VI", "EN"):
@@ -71,13 +97,27 @@ for lang in ("VI", "EN"):
     if spy.tiles != 0:
         print("  LOI: game chua tai ma van ve luoi hanh dong (%d tile)" % spy.tiles)
         ok = False
+    if spy.overflow:
+        print("  LOI: card thong tin (chua tai) tran le phai:", spy.overflow[:2])
+        ok = False
     # 2. dang tai
     downloader.dl_state.update({"active": True, "status": "downloading", "title": "Demo Game",
                                 "game_info": info, "progress_pct": 42, "source_name": "Retrostic Fast CDN",
                                 "msg": "dang tai"})
     m2 = GameActionModal(eng); m2.open({"sys_code": "GBA", "game_info": info, "rom_path": ""})
-    eng.active_modal = m2; m2.render(eng); m2.close()
+    spy2 = CountingEngine(eng)
+    eng.active_modal = m2; m2.render(spy2); m2.close()
     downloader.dl_state.update({"active": False, "status": "idle", "game_info": None})
+    if spy2.overflow:
+        print("  LOI: card tien trinh tai tran le phai:", spy2.overflow[:2])
+        ok = False
+    # 2b. ten dai + ten file dai: truong hop tung lam tran panel phai
+    m2b = GameActionModal(eng); m2b.open({"sys_code": "GBA", "game_info": long_info, "rom_path": ""})
+    spy2b = CountingEngine(eng)
+    eng.active_modal = m2b; m2b.render(spy2b); m2b.close()
+    if spy2b.overflow:
+        print("  LOI: ten/file dai tran le phai (chua tai):", spy2b.overflow[:2])
+        ok = False
     # 3. da tai
     mk_rom()
     from rh import installed; installed.invalidate()
@@ -87,6 +127,18 @@ for lang in ("VI", "EN"):
     eng.active_modal = m3; m3.render(spy3); m3.close()
     if spy3.tiles == 0:
         print("  LOI: game da tai ma khong ve luoi hanh dong")
+        ok = False
+    if spy3.overflow:
+        print("  LOI: card thong tin (da tai) tran le phai:", spy3.overflow[:2])
+        ok = False
+    # 3b. ten dai + da tai (co luoi hanh dong ben duoi)
+    mk_rom("GBA", "Pokemon - Fire Red Version (USA) (Rev 1).gba")
+    installed.invalidate()
+    m4 = GameActionModal(eng); m4.open({"sys_code": "GBA", "game_info": long_info, "rom_path": ""})
+    spy4 = CountingEngine(eng)
+    eng.active_modal = m4; m4.render(spy4); m4.close()
+    if spy4.overflow:
+        print("  LOI: ten/file dai tran le phai (da tai):", spy4.overflow[:2])
         ok = False
     # 4. store: header ket qua tim kiem + footer
     sc = StoreScreen(eng)
@@ -152,7 +204,7 @@ else:
     print("  OK   key core_* co du VI+EN")
 
 if ok and not missing:
-    print("TAT CA UI SMOKE TEST OK")
+    print("TAT CA UI SMOKE TEST OK (khong co text tran card phai)")
 else:
     print("CO LOI")
     sys.exit(1)   # de khong ai commit nham mot case do
