@@ -194,6 +194,70 @@ write(sd_path("Roms", "PICO8", "Celeste Classic.p8.png"), b"\x00" * 512)
 check("T10b. nhan dien duoc game PICO-8",
       installed.find("PICO8", "Celeste Classic.p8.png") is not None)
 
+print("T11. Format byte size va probe size truoc khi tai")
+check("T11a1. 1 GB+", downloader.format_byte_size(1024 * 1024 * 1024 * 2) == "2.00 GB")
+check("T11a2. MB", downloader.format_byte_size(1024 * 1024 * 15 + 512 * 1024) == "15.5 MB")
+check("T11a3. KB", downloader.format_byte_size(1024 * 500) == "500.0 KB")
+check("T11a4. 0 hoac None -> --", downloader.format_byte_size(0) == "--" and downloader.format_byte_size(None) == "--")
+
+candidates = downloader.get_game_url_candidates({
+    "rom_url": "http://example.com/rom.zip",
+    "mirror_url": "http://example.com/rom.zip",
+    "topo_url": "http://example.com/rom2.zip"
+})
+check("T11b. loai trung URL candidates", candidates == ["http://example.com/rom.zip", "http://example.com/rom2.zip"], "%r" % (candidates,))
+
+g_with_sz = {"file_size_str": "12.3 MB"}
+check("T11c. tra ngay neu da co file_size_str", downloader.probe_game_file_size(g_with_sz) == "12.3 MB")
+
+# Stub transport kiem tra Content-Range parse
+class _MockResp:
+    def __init__(self, headers):
+        self.headers = headers
+    def __enter__(self):
+        return self
+    def __exit__(self, *a):
+        pass
+
+import urllib.request
+orig_urlopen = urllib.request.urlopen
+try:
+    urllib.request.urlopen = lambda req, **kw: _MockResp({"Content-Range": "bytes 0-0/15728640"})
+    g_probe = {"rom_url": "http://mock.test/game.zip"}
+    sz_res = downloader.probe_game_file_size(g_probe)
+    check("T11d. probe size tu Content-Range thanh cong", sz_res == "15.0 MB", "sz_res=%r" % (sz_res,))
+    check("T11d2. cap nhat truc tiep vao dict game_info", g_probe.get("file_size_str") == "15.0 MB")
+finally:
+    urllib.request.urlopen = orig_urlopen
+
+print("T12. Modal tai game: khong chua glyph mui ten va co du i18n")
+check("T12a. dl_info_size_loading co trong VI va EN",
+      "dl_info_size_loading" in TEXTS["VI"] and "dl_info_size_loading" in TEXTS["EN"])
+check("T12b. dl_footer_nav la Di chuyen trong VI", TEXTS["VI"]["dl_footer_nav"] == "Di chuyển")
+with open(os.path.join(FILES, "rh", "modals", "game_action.py"), "r", encoding="utf-8") as f:
+    ga_content = f.read()
+check("T12c. khong con glyph mui ten ◄►▲▼ trong modal", "◄►▲▼" not in ga_content)
+check("T12d. da doi sang nhan DPAD", '"DPAD"' in ga_content)
+
+print("T13. Tim ROM da bung de khoi dong game (.zip -> .gba)")
+reset_state()
+dk_gba = write(sd_path("Roms", "GBA", "Donkey Kong Country 3 GBA.gba"), b"GBA_ROM_DATA")
+g_dk = {"filename": "Donkey Kong Country 3 GBA.zip", "title": "Donkey Kong Country 3"}
+found_dk = installed.find("GBA", g_dk["filename"])
+check("T13a. find_installed tim duoc file .gba tu ten .zip", bool(found_dk) and found_dk["path"] == dk_gba)
+
+def resolve_launch_rom(sys_code, game_info):
+    rom_p = game_info.get("path") or game_info.get("rom_path") or ""
+    fn = game_info.get("filename", "")
+    if not rom_p or not os.path.exists(rom_p):
+        entry = installed.find(sys_code, fn)
+        if entry and entry.get("path") and os.path.exists(entry["path"]):
+            rom_p = entry["path"]
+    return rom_p
+
+check("T13b. resolve_launch_rom tra dung duong dan file .gba",
+      resolve_launch_rom("GBA", g_dk) == dk_gba)
+
 print()
 if FAILED:
     print("FAILED %d test: %s" % (len(FAILED), ", ".join(FAILED)))

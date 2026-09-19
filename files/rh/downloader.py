@@ -275,6 +275,124 @@ def range_start_ok(header, expected):
     cuoi van du so byte, chi co noi dung la sai - khong con dau hieu nao."""
     return range_start(header) == expected
 
+def format_byte_size(total_bytes):
+    """Dinh dang so byte thanh chuoi KB/MB/GB de doc."""
+    try:
+        total_bytes = int(total_bytes or 0)
+    except (ValueError, TypeError):
+        return "--"
+    if total_bytes <= 0:
+        return "--"
+    if total_bytes >= 1024 * 1024 * 1024:
+        return f"{total_bytes / (1024*1024*1024):.2f} GB"
+    elif total_bytes >= 1024 * 1024:
+        return f"{total_bytes / (1024*1024):.1f} MB"
+    elif total_bytes >= 1024:
+        return f"{total_bytes / 1024:.1f} KB"
+    else:
+        return f"{total_bytes} B"
+
+def get_game_url_candidates(game_info):
+    """Liet ke danh sach cac URL tai ROM theo thu tu uu tien (da loai trung)."""
+    if not game_info:
+        return []
+    candidates = []
+    if db and game_info.get("id"):
+        try:
+            mirrors = db.get_game_mirrors(game_info["id"])
+            for m in mirrors:
+                if m.get("rom_url"):
+                    candidates.append(m.get("rom_url"))
+        except Exception as e:
+            print(f"DB get_game_mirrors error: {e}")
+
+    if not candidates:
+        if game_info.get("rom_url"):
+            candidates.append(game_info.get("rom_url"))
+        if game_info.get("mirror_url"):
+            candidates.append(game_info.get("mirror_url"))
+        if game_info.get("topo_url"):
+            candidates.append(game_info.get("topo_url"))
+
+    dedup_candidates = []
+    for c in candidates:
+        if c and c not in dedup_candidates:
+            dedup_candidates.append(c)
+    return dedup_candidates
+
+def probe_game_file_size(game_info, timeout=6):
+    """Tham do dung luong file tu xa truoc khi nguoi dung bam tai.
+
+    Neu da co san file_size_str hop le thi tra ve ngay.
+    Neu chua co, gui request Range 0-0 den server de lay Content-Range hoac Content-Length.
+    Ket qua duoc luu vao game_info va ghi vao SQLite DB de lan sau khong can hoi lai mang.
+    """
+    if not game_info:
+        return None
+    sz = game_info.get("file_size_str")
+    if sz and sz != "--":
+        return sz
+
+    if db and game_info.get("id"):
+        try:
+            mirrors = db.get_game_mirrors(game_info["id"])
+            for m in mirrors:
+                if m.get("file_size_str"):
+                    s_fmt = m["file_size_str"]
+                    game_info["file_size_str"] = s_fmt
+                    return s_fmt
+        except Exception:
+            pass
+
+    candidates = get_game_url_candidates(game_info)
+    if not candidates:
+        return None
+
+    try:
+        ctx = ssl._create_unverified_context()
+    except Exception:
+        ctx = None
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Range": "bytes=0-0"
+    }
+
+    for url in candidates:
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            kwargs = {"timeout": timeout}
+            if ctx:
+                kwargs["context"] = ctx
+            with urllib.request.urlopen(req, **kwargs) as resp:
+                total_bytes = 0
+                cr = resp.headers.get("Content-Range", "")
+                if cr and "/" in cr:
+                    try:
+                        total_bytes = int(cr.split("/")[-1])
+                    except (ValueError, TypeError, IndexError):
+                        pass
+                if total_bytes == 0:
+                    try:
+                        total_bytes = int(resp.headers.get("Content-Length", 0))
+                    except (ValueError, TypeError):
+                        total_bytes = 0
+
+                if total_bytes > 0:
+                    s_fmt = format_byte_size(total_bytes)
+                    game_info["file_size_str"] = s_fmt
+                    s_id = game_info.get("source_id")
+                    if db and s_id:
+                        try:
+                            db.update_source_file_size(s_id, s_fmt)
+                        except Exception:
+                            pass
+                    return s_fmt
+        except Exception:
+            continue
+
+    return None
+
+
 def _safe_member_path(name):
     """Duong dan tuong doi an toan cua mot muc trong zip, None khi ten doc hai.
 
@@ -445,30 +563,7 @@ def start_download_thread(sys_code, game_info, background=False):
             except OSError:
                 pass
 
-        candidates = []
-        if db and game_info.get("id"):
-            try:
-                mirrors = db.get_game_mirrors(game_info["id"])
-                for m in mirrors:
-                    if m.get("rom_url"):
-                        candidates.append(m.get("rom_url"))
-            except Exception as e:
-                print(f"DB get_game_mirrors error: {e}")
-
-        if not candidates:
-            if game_info.get("rom_url"):
-                candidates.append(game_info.get("rom_url"))
-            if game_info.get("mirror_url"):
-                candidates.append(game_info.get("mirror_url"))
-            if game_info.get("topo_url"):
-                candidates.append(game_info.get("topo_url"))
-
-        # Deduplicate candidates while preserving priority order
-        dedup_candidates = []
-        for c in candidates:
-            if c and c not in dedup_candidates:
-                dedup_candidates.append(c)
-        candidates = dedup_candidates
+        candidates = get_game_url_candidates(game_info)
 
         def get_source_label(url_str):
             if not url_str:
@@ -572,14 +667,7 @@ def start_download_thread(sys_code, game_info, background=False):
                             total_bytes = int(probe_resp.headers.get("Content-Length", 0))
 
                         if total_bytes > 0 and game_info.get("source_id"):
-                            if total_bytes >= 1024 * 1024 * 1024:
-                                s_fmt = f"{total_bytes / (1024*1024*1024):.2f} GB"
-                            elif total_bytes >= 1024 * 1024:
-                                s_fmt = f"{total_bytes / (1024*1024):.1f} MB"
-                            elif total_bytes >= 1024:
-                                s_fmt = f"{total_bytes / 1024:.1f} KB"
-                            else:
-                                s_fmt = f"{total_bytes} B"
+                            s_fmt = format_byte_size(total_bytes)
                             game_info["file_size_str"] = s_fmt
                             dl_state["size"] = s_fmt
                             try:
@@ -730,14 +818,7 @@ def start_download_thread(sys_code, game_info, background=False):
 
                             tot_len = int(resp.headers.get("Content-Length", 0))
                             if tot_len > 0 and game_info.get("source_id"):
-                                if tot_len >= 1024 * 1024 * 1024:
-                                    s_fmt = f"{tot_len / (1024*1024*1024):.2f} GB"
-                                elif tot_len >= 1024 * 1024:
-                                    s_fmt = f"{tot_len / (1024*1024):.1f} MB"
-                                elif tot_len >= 1024:
-                                    s_fmt = f"{tot_len / 1024:.1f} KB"
-                                else:
-                                    s_fmt = f"{tot_len} B"
+                                s_fmt = format_byte_size(tot_len)
                                 game_info["file_size_str"] = s_fmt
                                 dl_state["size"] = s_fmt
                                 try:
