@@ -2,7 +2,7 @@
   "version": "2.39",
   "full_release_version": "2.39",
   "python": "any",
-  "built": "2026-09-19T11:50:15+07:00",
+  "built": "2026-09-19T12:08:38+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa hàng chờ tải, vòng lặp cập nhật OTA, Switch emulator core; thêm trang xem & queue YouTube; sửa UI chi tiết game",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "rh/archive.py",
-      "size": 13731,
-      "sha256": "71e470509f4842aaa9d37a8f791c93a10906e28ab1d0ae33726c3c4064ef1949"
+      "size": 16009,
+      "sha256": "6e557fb460b6effe77dccbfbcb7bbe8ba72260e2a3200c38778853c4cd2fe45c"
     },
     {
       "path": "rh/backlight.py",
@@ -1737,8 +1737,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 51261,
-      "sha256": "3930674646fdbdd3855d747a901c7b511c473d75f0f5422812bd244320cbd838"
+      "size": 54898,
+      "sha256": "a729e2e3522df5954406366d27d828322ea776f38bcdc9acd4322e8d870ae991"
     },
     {
       "path": "rh/emulator_store.py",
@@ -1767,8 +1767,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 69844,
-      "sha256": "1e46e85957612a4e147cfc823daec7dbc43239d3159442328898e31e767ef940"
+      "size": 70779,
+      "sha256": "ca9f16bac3e922257d7780225a9bfd1da5e69db49a61e43625776a751efdfe9e"
     },
     {
       "path": "rh/icon_manager.py",
@@ -2032,8 +2032,8 @@
     },
     {
       "path": "rh/storage.py",
-      "size": 1510,
-      "sha256": "396c24a129948c52d28fe6a056e2c603c77dba5380271421841199b8599140fa"
+      "size": 1756,
+      "sha256": "663e3098e91e074b0c1561127015e186a9cf22accf6b8fe64deba54a05a32b8c"
     },
     {
       "path": "rh/sysinfo.py",
