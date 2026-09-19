@@ -8,8 +8,6 @@ from ..boxart_scraper import scraper_runner
 from ..cheat_manager import cheat_runner
 from ..save_manager import create_save_backup, restore_save_backup
 from ..sysinfo import get_device_info_rows, get_storage_info_rows
-from ..j2me import is_j2me_runtime_ready, runtime_is_stale, runtime_supports_renderer
-from ..modals.j2me import J2meModal
 from ..modals.common import TwoColInfoModal, BoxartScraperModal, CheatModal, SaveManagerModal
 from .base import BaseScreen
 
@@ -35,13 +33,6 @@ class UtilitiesScreen(BaseScreen):
         scrape_badge = f"{scraper_runner.progress_pct}%" if scraper_runner.is_running() else tr("view")
         cheat_badge = f"{cheat_runner.progress_pct}%" if cheat_runner.is_running() else tr("view")
 
-        is_j2me_installed = is_j2me_runtime_ready()
-        j2me_label = "ĐÃ CÓ" if is_j2me_installed else "TỰ CÀI"
-        if state.current_lang != "VI":
-            j2me_label = "READY" if is_j2me_installed else "AUTO"
-        if is_j2me_installed and runtime_is_stale():
-            j2me_label = tr("j2me_needs_upgrade")
-
         self.items = [
             {"id": "nav_splash", "title": tr("util_item_splash"), "label": tr("view")},
             {"id": "nav_theme_store", "title": tr("util_item_theme_store"), "label": tr("view")},
@@ -50,14 +41,7 @@ class UtilitiesScreen(BaseScreen):
             {"id": "nav_auto_scrape", "title": tr("util_auto_scrape"), "label": scrape_badge},
             {"id": "nav_save_manager", "title": tr("util_save_manager"), "label": tr("view")},
             {"id": "nav_cheats", "title": tr("util_cheat_title"), "label": cheat_badge},
-            {"id": "install_j2me_emu", "title": tr("util_j2me_title"), "label": j2me_label},
         ]
-
-        if is_j2me_installed:
-            can_render = runtime_supports_renderer()
-            self.items.append({"id": "nav_j2me_render", "title": tr("util_j2me_render"),
-                               "label": tr("view") if can_render else tr("j2me_render_old"),
-                               "sub": True})
 
         if not is_nextui():
             self.items.append({"id": "nav_core_sys", "title": tr("util_core_title"), "label": tr("view")})
@@ -139,8 +123,6 @@ class UtilitiesScreen(BaseScreen):
                 self.engine.open_modal(CheatModal(self.engine))
             elif it_id == "nav_save_manager":
                 self.engine.open_modal(SaveManagerModal(self.engine))
-            elif it_id == "install_j2me_emu":
-                self.engine.open_modal(J2meModal(self.engine))
             elif it_id == "nav_led":
                 self.engine.push_screen("led")
             elif it_id == "device_info":
