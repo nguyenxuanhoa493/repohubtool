@@ -1,8 +1,8 @@
 {
   "version": "2.40",
-  "full_release_version": "2.39",
+  "full_release_version": "2.40",
   "python": "any",
-  "built": "2026-09-19T14:47:58+07:00",
+  "built": "2026-09-19T14:48:48+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Tự động tải ảnh bìa và dung lượng khi xem game; sửa lỗi chơi ngay sau khi tải; sửa font điều hướng",
