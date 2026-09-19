@@ -30,7 +30,19 @@ function errorResponse(message, status = 400) {
   return jsonResponse({ ok: false, error: message }, status);
 }
 
+function formatBytes(bytes) {
+  const size = Number(bytes) || 0;
+  if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  } else if (size < 1024 * 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  } else {
+    return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  }
+}
+
 export default {
+
   async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: CORS_HEADERS });
@@ -43,8 +55,8 @@ export default {
     if (path === "" || path === "/api") {
       return jsonResponse({
         ok: true,
-        service: "RetroHub Netplay Lobby, Telegram & AI Proxy",
-        version: "1.2.0",
+        service: "RetroHub Netplay Lobby, Telegram, AI & Google Drive Proxy",
+        version: "1.3.0",
         docs: {
           list_rooms: "GET /api/rooms",
           create_room: "POST /api/rooms",
@@ -53,9 +65,11 @@ export default {
           telegram_send_msg: "POST /api/telegram/send-message",
           telegram_send_log: "POST /api/telegram/send-log",
           ai_chat: "POST /api/ai/chat",
+          gdrive_list: "GET /api/gdrive/list?folder_id=:id",
         },
       });
     }
+
 
 
     // --- TELEGRAM PROXY ENDPOINTS (Không yêu cầu KV) ---
@@ -201,10 +215,83 @@ export default {
       }
     }
 
+    // --- GOOGLE DRIVE FOLDER PROXY ENDPOINT (Không yêu cầu KV) ---
+
+    if (path === "/api/gdrive/list" && (request.method === "GET" || request.method === "POST")) {
+      const gdriveKey = env.GDRIVE_API_KEY || "";
+      if (!gdriveKey) {
+        return errorResponse("GDRIVE_API_KEY chưa được cấu hình trên Worker.", 500);
+      }
+
+      let folderId = url.searchParams.get("folder_id") || "";
+      if (!folderId && request.method === "POST") {
+        try {
+          const b = await request.json();
+          folderId = b.folder_id || b.id || "";
+        } catch {}
+      }
+
+      if (!folderId) {
+        return errorResponse("Thiếu folder_id.", 400);
+      }
+
+      const gdriveUrl = `https://drivefrontend-pa.clients6.google.com/v1/items:list?key=${gdriveKey}`;
+      const queryBody = [
+        [null, null, null, null, 0, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null, [4, 1, 1], null, null, null, null, null, null, null, null, null, null, [[1]], null, null, null, null, null, null, null, [[folderId, 0]]],
+        [1000, "", [2, 5]]
+      ];
+
+      try {
+        const resp = await fetch(gdriveUrl, {
+          method: "POST",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Content-Type": "application/json+protobuf",
+            "Origin": "https://drive.google.com",
+            "Referer": "https://drive.google.com/",
+            "x-goog-drive-client-version": "drive.web-frontend_20260910.12_p2",
+            "x-goog-fieldmask": "items(id,title,mime_type,file_size)",
+          },
+          body: JSON.stringify(queryBody),
+        });
+
+        const resJson = await resp.json();
+        const items = resJson && resJson[0] && Array.isArray(resJson[0]) ? resJson[0] : [];
+        const fileList = [];
+
+        for (const it of items) {
+          if (Array.isArray(it) && it.length > 2) {
+            const fid = it[0];
+            const fname = it[2];
+            const fsize = (it.length > 13 && it[13] != null) ? it[13] : 0;
+            const mime = (it.length > 3 && it[3] != null) ? it[3] : "";
+            if (mime !== "application/vnd.google-apps.folder") {
+              fileList.push({
+                id: fid,
+                filename: fname,
+                size: fsize,
+                size_str: formatBytes(fsize),
+              });
+            }
+          }
+        }
+
+        return jsonResponse({
+          ok: true,
+          folder_id: folderId,
+          count: fileList.length,
+          files: fileList,
+        });
+      } catch (e) {
+        return errorResponse(`Lỗi truy vấn Google Drive: ${e.message}`, 502);
+      }
+    }
+
     // Ensure KV is bound for room management
     if (!env.LOBBY_KV) {
       return errorResponse("KV binding 'LOBBY_KV' is not configured.", 500);
     }
+
 
 
 
