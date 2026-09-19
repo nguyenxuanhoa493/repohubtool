@@ -33,8 +33,9 @@ from .paths import (
 from . import state
 from .i18n import tr
 
-# Icon zips are served from a GitHub Release, not committed to git.
-ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+# Icon zips phan phoi uu tien qua Cloudflare R2 CDN; fallback GitHub Releases.
+ASSET_BASE = "https://cdn.xuanhoa493.com/"
+GITHUB_ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
 
 _SSL_CTX = None
 try:
@@ -484,12 +485,14 @@ def install_icon_pack(icon_info: Dict, on_progress: Optional[Callable[[int, str]
         zip_name = f"{enc_folder}.zip"
 
         download_urls = []
-        if icon_info.get("raw_git_url"):
-            download_urls.append(icon_info["raw_git_url"])
         if icon_info.get("download_url"):
             download_urls.append(icon_info["download_url"])
         download_urls.append(
             ASSET_BASE + urllib.parse.quote(folder.replace(" ", ".")) + ".zip")
+        if icon_info.get("raw_git_url"):
+            download_urls.append(icon_info["raw_git_url"])
+        download_urls.append(
+            GITHUB_ASSET_BASE + urllib.parse.quote(folder.replace(" ", ".")) + ".zip")
 
         # Deduplicate while preserving priority
         dedup_urls = []

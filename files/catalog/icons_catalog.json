@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "total": 2,
-  "base_cdn_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/",
+  "base_cdn_url": "https://cdn.xuanhoa493.com/",
   "icons": [
     {
       "id": "Burst - Stock OS v1.1.0",
@@ -18,7 +18,7 @@
       "zip_size_bytes": 43888406,
       "size_str": "41.86 MB",
       "preview_rel": "assets/icons_preview/Burst - Stock OS v1.1.0.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Burst.-.Stock.OS.v1.1.0.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Burst.-.Stock.OS.v1.1.0.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Burst.-.Stock.OS.v1.1.0.zip"
     },
     {
@@ -36,7 +36,7 @@
       "zip_size_bytes": 41266662,
       "size_str": "39.35 MB",
       "preview_rel": "assets/icons_preview/Stock - TrimUI Stock OS 1.1.0.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Stock.-.TrimUI.Stock.OS.1.1.0.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Stock.-.TrimUI.Stock.OS.1.1.0.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Stock.-.TrimUI.Stock.OS.1.1.0.zip"
     }
   ]

@@ -17,11 +17,11 @@ OUTPUT_JSON = os.path.join(CATALOG_DIR, "themes_catalog.json")
 APP_CATALOG_JSON = os.path.join(ROOT, "files", "catalog", "themes_catalog.json")
 
 # Theme zips live on a GitHub Release (uploaded by _src/publish_assets.py).
-# GitHub rewrites spaces to dots in asset names; run
-# _src/migrate_assets_urls.py after uploading to correct any edge cases.
-ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
-CDN_BASE_URL = ASSET_BASE
-RAW_GIT_BASE_URL = ASSET_BASE
+# Theme zips phan phoi uu tien qua Cloudflare R2 CDN; GitHub Releases giu vai tro backup
+CDN_BASE_URL = "https://cdn.xuanhoa493.com/"
+GITHUB_RELEASE_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+ASSET_BASE = CDN_BASE_URL
+RAW_GIT_BASE_URL = GITHUB_RELEASE_BASE
 
 
 def clean_junk(directory: str):

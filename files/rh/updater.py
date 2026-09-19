@@ -30,6 +30,7 @@ from .version import APP_VERSION, is_newer
 UPDATE_BASE_URL = "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main"
 CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/nguyenxuanhoa493/repohubtool@main"
 GHPROXY_BASE_URL = "https://ghproxy.net/" + UPDATE_BASE_URL
+CLOUDFLARE_CDN_BASE = "https://cdn.xuanhoa493.com"
 
 # Nhung dinh dang jsDelivr chan (HTTP 403 Forbidden) thi bo qua khong goi CDN
 CDN_EXCLUDED_EXTS = (".jar", ".zip", ".exe")
@@ -156,6 +157,12 @@ def candidate_base_urls(rel_path=""):
     candidates = []
     # Uu tien GHProxy va GitHub Raw cho manifest.json de lay thong tin cap nhat real-time
     if rel_path.lower().endswith(CDN_EXCLUDED_EXTS) or "manifest" in rel_path.lower() or rel_path.lower().endswith(".json"):
+        candidates.append(GHPROXY_BASE_URL)
+        candidates.append(UPDATE_BASE_URL)
+    elif "roms_store.sqlite3.gz" in rel_path.lower():
+        # ROM store catalog duoc uu tien tai tu Cloudflare R2 CDN toc do cao
+        candidates.append(CLOUDFLARE_CDN_BASE)
+        candidates.append(CDN_BASE_URL)
         candidates.append(GHPROXY_BASE_URL)
         candidates.append(UPDATE_BASE_URL)
     else:

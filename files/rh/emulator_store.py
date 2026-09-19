@@ -17,12 +17,11 @@ from . import paths
 from .storage import unlock
 from .emulators import resolve_core_name, _config_of
 
-# Emulator tarballs are content, not source. They live as assets on a GitHub
-# Release (see _src/publish_assets.py) instead of in git, which keeps a fresh
-# clone small. Asset filenames here contain no spaces, so the name is unchanged.
-ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
-ONLINE_CDN_BASE = ASSET_BASE
-GITHUB_RAW_BASE = ASSET_BASE
+# Cloudflare R2 CDN la kenh phan phoi uu tien so 1 (APAC edge, egress free).
+# GitHub Releases giu vai tro du phong (fallback) khi mat mang hoac loi edge.
+ONLINE_CDN_BASE = "https://cdn.xuanhoa493.com/"
+GITHUB_RAW_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+ASSET_BASE = ONLINE_CDN_BASE
 
 
 def get_emus_catalog():

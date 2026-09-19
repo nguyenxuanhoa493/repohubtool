@@ -26,8 +26,9 @@ from .paths import (
 from . import state
 from .i18n import tr
 
-# Theme zips are served from a GitHub Release, not committed to git.
-ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+# Theme zips phan phoi uu tien qua Cloudflare R2 CDN; fallback GitHub Releases.
+ASSET_BASE = "https://cdn.xuanhoa493.com/"
+GITHUB_ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
 
 _SSL_CTX = None
 try:
@@ -211,16 +212,23 @@ def install_theme(theme_info: Dict, on_progress: Optional[Callable[[int, str], N
         # 3. Online Download from Git / CDN / Hosting
         zip_name = f"{urllib.parse.quote(folder)}.zip"
 
-        # Theme zips live on a GitHub Release, not in git. The catalog carries
-        # the exact asset URL; the fallback mirrors GitHub's filename rule
-        # (spaces become dots) in case the catalog entry is ever missing.
+        # Theme zips phan phoi uu tien qua Cloudflare CDN, fallback GitHub Releases
         download_urls = []
         if theme_info.get("download_url"):
             download_urls.append(theme_info["download_url"])
+        download_urls.append(
+            ASSET_BASE + urllib.parse.quote(folder.replace(" ", ".")) + ".zip")
         if theme_info.get("raw_git_url"):
             download_urls.append(theme_info["raw_git_url"])
         download_urls.append(
-            ASSET_BASE + urllib.parse.quote(folder.replace(" ", ".")) + ".zip")
+            GITHUB_ASSET_BASE + urllib.parse.quote(folder.replace(" ", ".")) + ".zip")
+
+        # Loc trung lap nhung giu nguyen thu tu uu tien
+        dedup_urls = []
+        for u in download_urls:
+            if u and u not in dedup_urls:
+                dedup_urls.append(u)
+        download_urls = dedup_urls
 
         tmp_zip = f"/tmp/{folder}.zip"
         download_ok = False
