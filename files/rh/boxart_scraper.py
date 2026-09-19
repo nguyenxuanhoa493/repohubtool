@@ -27,6 +27,12 @@ try:
 except Exception:
     _SSL_CONTEXT = None
 
+# Mot tam anh bia nen xong trong vai giay. Mang cham hoac anh nang lam lan tai
+# keo dai vo han (timeout cua urlopen chi chan tung lan doc, khong chan tong
+# thoi gian), nen dat han muc tong cho ca lan tai: qua 30s hoac qua 12MB thi bo.
+BOXART_TOTAL_TIMEOUT = 30
+BOXART_MAX_BYTES = 12 * 1024 * 1024
+
 _LIBRETRO_INDEX_CACHE = {}
 _CACHE_LOCK = threading.Lock()
 
@@ -440,8 +446,32 @@ def search_web_bing(query):
     return None
 
 
-def download_image_to_file(img_url, target_path, timeout=12):
-    """Tải file ảnh từ URL về target_path và chuyển đổi chuẩn sang PNG."""
+def _read_body_within_deadline(resp, deadline_at, max_bytes, limit_s):
+    """Doc body theo tung khuc, dung han khi qua deadline hoac qua nang.
+
+    Tra ve (data, None) khi xong, (None, ly_do) khi phai bo."""
+    chunks = []
+    total = 0
+    # read1 tra ve ngay khi co du lieu; read(n) se doi du n byte nen mot server
+    # nho giot tung byte se giu ham nay mai mai du da qua han muc.
+    reader = getattr(resp, "read1", None) or resp.read
+    while True:
+        if time.time() > deadline_at:
+            return None, "het thoi gian cho anh bia (%ds)" % limit_s
+        chunk = reader(65536)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            return None, "anh qua nang (>%dMB)" % (max_bytes // (1024 * 1024))
+        chunks.append(chunk)
+    return b"".join(chunks), None
+
+def download_image_to_file(img_url, target_path, timeout=12, total_timeout=BOXART_TOTAL_TIMEOUT):
+    """Tải file ảnh từ URL về target_path và chuyển đổi chuẩn sang PNG.
+
+    Do tren may cam tay: mang cham thi mot anh co the chay mai. Vi vay dat han
+    muc cho ca lan tai (total_timeout) chu khong chi cho tung lan doc."""
     if not img_url:
         return False, "Empty URL"
     if img_url.startswith("//"):
@@ -453,33 +483,43 @@ def download_image_to_file(img_url, target_path, timeout=12):
         "Referer": img_url,
     }
 
+    deadline_at = time.time() + total_timeout
     raw_data = None
+    last_err = None
     try:
         req = urllib.request.Request(img_url, headers=headers)
-        kwargs = {"timeout": timeout}
+        kwargs = {"timeout": min(timeout, total_timeout)}
         if _SSL_CONTEXT:
             kwargs["context"] = _SSL_CONTEXT
         with urllib.request.urlopen(req, **kwargs) as resp:
             if resp.status in (200, 206):
-                data = resp.read()
-                if len(data) > 32:
+                data, last_err = _read_body_within_deadline(resp, deadline_at, BOXART_MAX_BYTES,
+                                                           total_timeout)
+                if data and len(data) > 32:
                     raw_data = data
-    except Exception:
-        pass
+            else:
+                last_err = "HTTP %s" % resp.status
+    except Exception as e:
+        last_err = str(e)
 
-    if not raw_data:
+    if not raw_data and time.time() < deadline_at:
+        # curl co --max-time tinh theo tong thoi gian, dung phan ngan sach con lai.
+        left = max(1, int(deadline_at - time.time()))
         try:
             cmd = [
                 "curl", "-k", "-s", "-L",
-                "--max-time", str(timeout),
+                "--max-time", str(left),
+                "--max-filesize", str(BOXART_MAX_BYTES),
                 "-A", headers["User-Agent"],
                 img_url
             ]
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout + 2)
-            if res.returncode == 0 and res.stdout and len(res.stdout) > 32:
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=left + 2)
+            if res.returncode == 0 and res.stdout and 32 < len(res.stdout) <= BOXART_MAX_BYTES:
                 raw_data = res.stdout
-        except Exception:
-            pass
+            elif res.stdout and len(res.stdout) > BOXART_MAX_BYTES:
+                last_err = "anh qua nang (>%dMB)" % (BOXART_MAX_BYTES // (1024 * 1024))
+        except Exception as e:
+            last_err = str(e)
 
     if raw_data:
         try:
@@ -494,7 +534,7 @@ def download_image_to_file(img_url, target_path, timeout=12):
             except Exception as e:
                 return False, str(e)
 
-    return False, "Download failed"
+    return False, last_err or "Download failed"
 
 
 def find_best_boxart(sys_code, clean_title, filename="", fast_only=False):
