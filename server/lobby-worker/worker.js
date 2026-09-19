@@ -168,10 +168,42 @@ export default {
       }
     }
 
+    // --- AI CHATBOT PROXY ENDPOINT (Không yêu cầu KV) ---
+    if (path === "/api/ai/chat" && request.method === "POST") {
+      const aiKey = env.AI_API_KEY || env.OPENAI_API_KEY || "";
+      if (!aiKey) {
+        return errorResponse("AI_API_KEY chưa được cấu hình trên Worker.", 500);
+      }
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return errorResponse("Invalid JSON body.");
+      }
+
+      const aiEndpoint = env.AI_API_ENDPOINT || "https://ai.xuanhoa493.com/v1/chat/completions";
+
+      try {
+        const aiResp = await fetch(aiEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${aiKey}`,
+          },
+          body: JSON.stringify(body),
+        });
+        const aiData = await aiResp.json();
+        return jsonResponse(aiData, aiResp.status);
+      } catch (e) {
+        return errorResponse(`Lỗi kết nối tới máy chủ AI: ${e.message}`, 502);
+      }
+    }
+
     // Ensure KV is bound for room management
     if (!env.LOBBY_KV) {
       return errorResponse("KV binding 'LOBBY_KV' is not configured.", 500);
     }
+
 
 
     try {
