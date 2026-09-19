@@ -269,6 +269,11 @@ def get_source_systems_counts(source_type):
         rows = cursor.fetchall()
         total = sum(r["cnt"] for r in rows)
         res = [("ALL", total)] + [(r["sys_code"], r["cnt"]) for r in rows]
+    elif source_type == "GDRIVE":
+        cursor.execute("SELECT g.sys_code, COUNT(DISTINCT g.id) as cnt FROM games g JOIN game_sources s ON g.id = s.game_id WHERE s.source_name = 'GDRIVE' AND s.is_alive = 1 GROUP BY g.sys_code ORDER BY cnt DESC")
+        rows = cursor.fetchall()
+        total = sum(r["cnt"] for r in rows)
+        res = [("ALL", total)] + [(r["sys_code"], r["cnt"]) for r in rows]
     else:
         cursor.execute("SELECT sys_code, COUNT(*) as cnt FROM games GROUP BY sys_code ORDER BY cnt DESC")
         rows = cursor.fetchall()
@@ -343,7 +348,8 @@ def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offse
     nen mot tran cung o day se lam bien mat phan duoi danh sach."""
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE 1=1"
+    source_filter = f"AND source_name = '{source_type}'" if source_type in ("ARCHIVE", "RETROSTIC", "GDRIVE") else ""
+    query = f"SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id {source_filter} AND is_alive = 1 ORDER BY (CASE WHEN source_name = 'GDRIVE' THEN 0 ELSE priority END) ASC, priority ASC, id ASC LIMIT 1) WHERE 1=1"
     params = []
     
     if source_type == "VIET":
@@ -360,6 +366,8 @@ def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offse
         query += " AND EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id AND source_name = 'ARCHIVE' AND is_alive = 1)"
     elif source_type == "RETROSTIC":
         query += " AND EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id AND source_name = 'RETROSTIC' AND is_alive = 1)"
+    elif source_type == "GDRIVE":
+        query += " AND EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id AND source_name = 'GDRIVE' AND is_alive = 1)"
         
     if sys_code != "ALL":
         query += " AND g.sys_code = ?"
@@ -394,7 +402,7 @@ def get_games_page(source_type, sys_code, sort_by="downloads", limit=None, offse
 def get_game_mirrors(game_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, source_name, rom_url, filename, file_size_str, priority FROM game_sources WHERE game_id = ? AND is_alive = 1 ORDER BY priority ASC, id ASC", (game_id,))
+    cursor.execute("SELECT id, source_name, rom_url, filename, file_size_str, priority FROM game_sources WHERE game_id = ? AND is_alive = 1 ORDER BY (CASE WHEN source_name = 'GDRIVE' THEN 0 ELSE priority END) ASC, priority ASC, id ASC", (game_id,))
     mirrors = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return mirrors
@@ -410,6 +418,8 @@ _SOURCE_CLAUSE = {
                 " AND source_name = 'ARCHIVE' AND is_alive = 1)"),
     "RETROSTIC": (" AND EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id"
                   " AND source_name = 'RETROSTIC' AND is_alive = 1)"),
+    "GDRIVE": (" AND EXISTS (SELECT 1 FROM game_sources WHERE game_id = g.id"
+               " AND source_name = 'GDRIVE' AND is_alive = 1)"),
 }
 
 
@@ -424,7 +434,7 @@ def search_games_fts(query_str, sys_code="ALL", limit=100, source_type="ALL", of
         conn.close()
         return []
 
-    base_sql = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY priority ASC, id ASC LIMIT 1) WHERE "
+    base_sql = "SELECT g.id, g.sys_code, g.title, g.img_url, g.region, g.genre, g.is_viet, g.is_hit, g.is_hack, g.download_count, g.rating, s.id as source_id, s.source_name, s.rom_url, s.filename, s.file_size_str FROM games g LEFT JOIN game_sources s ON s.id = (SELECT id FROM game_sources WHERE game_id = g.id AND is_alive = 1 ORDER BY (CASE WHEN source_name = 'GDRIVE' THEN 0 ELSE priority END) ASC, priority ASC, id ASC LIMIT 1) WHERE "
     where_clauses = []
     params = []
     for w in words:

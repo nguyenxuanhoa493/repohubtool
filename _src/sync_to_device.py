@@ -22,13 +22,20 @@ TARGET_FILES = [
     ("rh/paths.py", "rh/paths.py"),
     ("rh/version.py", "rh/version.py"),
     ("rh/catalog.py", "rh/catalog.py"),
+    ("rh/downloader.py", "rh/downloader.py"),
     ("rh/boxart_scraper.py", "rh/boxart_scraper.py"),
     ("rh/media.py", "rh/media.py"),
     ("rh/cheat_manager.py", "rh/cheat_manager.py"),
     ("rh/j2me.py", "rh/j2me.py"),
     ("rh/emulator_store.py", "rh/emulator_store.py"),
     ("rh/screens/emu_store.py", "rh/screens/emu_store.py"),
-    ("rh/updater.py", "rh/updater.py"),
+    ("rh/gdrive.py", "rh/gdrive.py"),
+    ("rh/screens/retro_store.py", "rh/screens/retro_store.py"),
+    ("assets/ic-boxart.png", "assets/ic-boxart.png"),
+    ("rh/screens/home.py", "rh/screens/home.py"),
+    ("rh/screens/store.py", "rh/screens/store.py"),
+    ("rh/screens/utilities.py", "rh/screens/utilities.py"),
+    ("../catalog/roms_store.sqlite3", "catalog/roms_store.sqlite3"),
     ("db.py", "db.py"),
     ("app.py", "app.py"),
     ("led_daemon.py", "led_daemon.py"),
@@ -151,6 +158,15 @@ def sync(ip=None, port=22, user="root", pwd="root"):
                 pass
 
         try:
+            local_sz = os.path.getsize(src)
+            try:
+                r_stat = sftp.stat(dst)
+                if r_stat.st_size == local_sz and local_sz > 500000:
+                    print(f"  = {rel_src} -> {dst} (đã khớp kích thước {local_sz} bytes)")
+                    continue
+            except Exception:
+                pass
+
             sftp.put(src, dst)
             print(f"  ✓ {rel_src} -> {dst}")
         except Exception as e:

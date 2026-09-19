@@ -42,6 +42,7 @@ from rh.screens.settings import SettingsScreen
 from rh.screens.utilities import UtilitiesScreen
 from rh.screens.led import LedScreen
 from rh.screens.splash import SplashScreen
+from rh.screens.retro_store import RetroStoreScreen
 from rh.screens.theme_store import ThemeStoreScreen
 from rh.screens.icon_store import IconStoreScreen
 from rh.screens.emu_store import EmuStoreScreen
@@ -80,6 +81,7 @@ def main():
     engine.register_screen("utilities", UtilitiesScreen(engine))
     engine.register_screen("led", LedScreen(engine))
     engine.register_screen("splash", SplashScreen(engine))
+    engine.register_screen("retro_store", RetroStoreScreen(engine))
     engine.register_screen("theme_store", ThemeStoreScreen(engine))
     engine.register_screen("icon_store", IconStoreScreen(engine))
     engine.register_screen("emu_store", EmuStoreScreen(engine))
