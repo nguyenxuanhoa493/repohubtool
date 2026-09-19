@@ -26,6 +26,8 @@ TARGET_FILES = [
     ("rh/media.py", "rh/media.py"),
     ("rh/cheat_manager.py", "rh/cheat_manager.py"),
     ("rh/j2me.py", "rh/j2me.py"),
+    ("rh/emulator_store.py", "rh/emulator_store.py"),
+    ("rh/screens/emu_store.py", "rh/screens/emu_store.py"),
     ("rh/updater.py", "rh/updater.py"),
     ("db.py", "db.py"),
     ("app.py", "app.py"),
