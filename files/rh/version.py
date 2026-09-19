@@ -20,7 +20,8 @@ constant must stay in sync with the git tag."""
 # duong dan anh bia + tran cache (RAM anh bia 70MB -> 21MB), huy ket qua cu khi doi tab/video.
 # 2.43: menu Retro Store (Grid 3x2), tich hop 1.400+ ROMs Google Drive va nang cap Webgame.
 # 2.44: bao mat toan dien - loai bo token Telegram va API key AI khoi codebase, chuyen sang Cloudflare Worker Proxy.
-APP_VERSION = "2.44"
+# 2.45: sua loi cai gia lap Java J2ME tren the nho FAT32 ([Errno 5] Input/output error), co che giai nen da tang an toan va tiet kiem RAM.
+APP_VERSION = "2.45"
 
 
 

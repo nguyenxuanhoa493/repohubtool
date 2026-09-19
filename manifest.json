@@ -1,12 +1,12 @@
 {
-  "version": "2.44",
-  "full_release_version": "2.44",
+  "version": "2.45",
+  "full_release_version": "2.45",
   "python": "any",
-  "built": "2026-09-20T00:49:57+07:00",
+  "built": "2026-09-20T01:12:00+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Bảo mật toàn diện: Loại bỏ key Telegram & AI trong codebase, chuyển sang Cloudflare Worker Proxy",
-    "en": "Comprehensive Security: Decoupled Telegram & AI keys via Cloudflare Worker Proxy"
+    "vi": "Sửa lỗi cài đặt giả lập Java J2ME: Khắc phục lỗi [Errno 5] Input/output error trên thẻ nhớ FAT32/exFAT, giải nén an toàn 3 tầng và tối ưu RAM",
+    "en": "Fix Java J2ME Installation: Resolved [Errno 5] Input/output error on FAT32/exFAT, 3-tier safe extraction and RAM optimization"
   },
   "remove": [
     "app.pyc",

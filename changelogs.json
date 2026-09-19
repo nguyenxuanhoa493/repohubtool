@@ -2,6 +2,28 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.45",
+      "date": "2026-09-20",
+      "headline": {
+        "vi": "Sửa lỗi cài đặt giả lập Java J2ME: Khắc phục lỗi [Errno 5] Input/output error trên thẻ nhớ FAT32/exFAT, giải nén an toàn 3 tầng và tối ưu RAM",
+        "en": "Fix Java J2ME Installation: Resolved [Errno 5] Input/output error on FAT32/exFAT, 3-tier safe extraction and RAM optimization"
+      },
+      "bullets": [
+        {
+          "vi": "Khắc phục lỗi [Errno 5] Input/output error: Áp dụng cơ chế giải nén an toàn 3 tầng (BusyBox tar native, 7-Zip 7zzs, và Python tarfile với set_attrs=False), loại bỏ hoàn toàn các lỗi xung đột quyền POSIX khi giải nén đè lên thẻ nhớ FAT32/exFAT.",
+          "en": "Resolved [Errno 5] Input/output error: Implemented a 3-tier safe extraction mechanism (native BusyBox tar, 7-Zip 7zzs, and Python tarfile with set_attrs=False), eliminating POSIX attribute conflicts on FAT32/exFAT SD cards."
+        },
+        {
+          "vi": "Tối ưu dung lượng RAM khi tải gói cài: Chuyển vị trí tải file nén 62.8 MB sang bộ nhớ đệm trên thẻ SD (paths.TEMP_DOWNLOAD_DIR) thay vì ghi vào /tmp (tmpfs trong RAM), loại trừ nguy cơ cạn kiệt RAM và lỗi I/O trên máy handheld.",
+          "en": "RAM optimization during package download: Relocated temporary downloads for the 62.8 MB archive to SD card cache (paths.TEMP_DOWNLOAD_DIR) instead of /tmp (tmpfs in RAM), preventing memory exhaustion and I/O failures on handhelds."
+        },
+        {
+          "vi": "Mở khóa file tự động và đồng bộ cấu hình Java: Tự động gỡ cờ DOS Read-Only trước khi ghi đè, tự động kích hoạt tạo JAVA.pak cho NextUI, thiết lập cấu hình phím/render và bảo toàn dữ liệu save game (RMS).",
+          "en": "Automated file unlock and Java configuration: Auto-unlocked DOS Read-Only flags before overwrite, and automatically wired NextUI JAVA.pak generation, keypad/renderer profiles, and RMS save persistence."
+        }
+      ]
+    },
+    {
       "version": "2.44",
       "date": "2026-09-20",
       "headline": {
