@@ -289,7 +289,7 @@ def _lockup_video(node):
     lk = node.get("lockupViewModel")
     if not isinstance(lk, dict):
         return None, ""
-    vid = lk.get("contentId") or _deep_find(lk, "videoId") or ""
+    vid = lk.get("contentId") or ""
     title = ""
     meta = lk.get("metadata", {})
     if isinstance(meta, dict):
@@ -303,9 +303,16 @@ def _lockup_video(node):
     return (vid or None), title
 
 
-def _extract_videos_from_json(node, found_list: list, limit: int = 30):
+# Tran so node duyet qua: response "next" cua YouTube vai MB, duyet het tren CPU
+# may cam tay ton vai giay va giu GIL -> vong render 60 FPS bi khung.
+_MAX_WALK_NODES = 40000
+
+def _extract_videos_from_json(node, found_list: list, limit: int = 30, _seen=None):
     """Recursively traverse JSON structure to find all videoRenderer objects."""
-    if len(found_list) >= limit:
+    if _seen is None:
+        _seen = [0]
+    _seen[0] += 1
+    if _seen[0] > _MAX_WALK_NODES or len(found_list) >= limit:
         return
 
     if isinstance(node, dict):
@@ -367,13 +374,13 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                     })
 
         for val in node.values():
-            _extract_videos_from_json(val, found_list, limit)
+            _extract_videos_from_json(val, found_list, limit, _seen)
             if len(found_list) >= limit:
                 break
 
     elif isinstance(node, list):
         for item in node:
-            _extract_videos_from_json(item, found_list, limit)
+            _extract_videos_from_json(item, found_list, limit, _seen)
             if len(found_list) >= limit:
                 break
 
@@ -501,6 +508,29 @@ def get_trending(limit: int = 24) -> list:
     return items
 
 
+def _deep_find_bounded(node, key, max_nodes: int = 20000):
+    """Nhu _deep_find nhung co tran so node duyet qua.
+
+    Response `next` cua YouTube nang vai MB; quet het bang de quy tren CPU cua
+    may cam tay ton vai giay va giu GIL, lam vong render 60 FPS bi khung. Tra
+    None khi khong thay trong pham vi cho phep de nguoi goi tu fallback.
+    """
+    stack = [node]
+    seen = 0
+    while stack:
+        cur = stack.pop()
+        seen += 1
+        if seen > max_nodes:
+            return None
+        if isinstance(cur, dict):
+            if key in cur:
+                return cur[key]
+            stack.extend(cur.values())
+        elif isinstance(cur, list):
+            stack.extend(cur)
+    return None
+
+
 def _deep_find(node, key):
     """Return the first value stored under *key* anywhere in a nested JSON tree."""
     if isinstance(node, dict):
@@ -533,8 +563,8 @@ def fetch_watch_metadata(video_id: str) -> dict:
         print(f"[rh.yt] Watch metadata error for {video_id}: {e}")
         return None
 
-    primary = _deep_find(data, "videoPrimaryInfoRenderer") or {}
-    secondary = _deep_find(data, "videoSecondaryInfoRenderer") or {}
+    primary = _deep_find_bounded(data, "videoPrimaryInfoRenderer", 4000) or {}
+    secondary = _deep_find_bounded(data, "videoSecondaryInfoRenderer", 12000) or {}
 
     title_runs = primary.get("title", {}).get("runs", [])
     title = title_runs[0].get("text", "") if title_runs else primary.get("title", {}).get("simpleText", "")
@@ -560,7 +590,10 @@ def fetch_watch_metadata(video_id: str) -> dict:
 
     related = []
     try:
-        _extract_videos_from_json(data, related, limit=13)
+        # Danh sach lien quan nam trong secondaryResults; duyet rieng nhanh do thay
+        # vi ca response (nhanh hon nhieu lan tren CPU cua may).
+        scope = _deep_find_bounded(data, "secondaryResults", 20000) or data
+        _extract_videos_from_json(scope, related, limit=13)
     except Exception:
         pass
     related = [r for r in related if r.get("id") != video_id][:12]

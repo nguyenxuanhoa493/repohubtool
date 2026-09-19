@@ -8,9 +8,12 @@ the whole queue keeps playing without returning to the app between videos.
 
 import os
 import threading
+import time
 
 from .. import playback, state, yt
 from ..i18n import tr
+from ..modals.yt_loading import YtLoadingModal
+from ..modals.base import BaseModal
 from ..paths import YT_CACHE_DIR
 from ..player import launch_session
 from .base import BaseScreen
@@ -19,7 +22,7 @@ from .base import BaseScreen
 class WatchScreen(BaseScreen):
     """Detail page for one video: metadata, actions, related list."""
 
-    ACTIONS = 4  # play, save, add-to-queue, audio-only
+    ACTIONS = 3  # play, save, add-to-queue
 
     def __init__(self, engine=None):
         super().__init__(engine)
@@ -36,7 +39,10 @@ class WatchScreen(BaseScreen):
         self.scroll = 0
         self.resume_pos = 0.0
         self.audio_only = False
+        self.starting = False
         self.saved = False            # da luu vao yeu thich (de to vang nut Save)
+        self._title_lines = None      # cache dong da wrap: do font moi frame rat cham
+        self._desc_lines = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -53,7 +59,10 @@ class WatchScreen(BaseScreen):
         self.related = []
         self.focus = 0
         self.scroll = 0
+        self._title_lines = None
+        self._desc_lines = None
         self.audio_only = bool(params.get("audio_only", False))
+        self.starting = False
         self.saved = yt.is_favorite(self.video_id) if self.video_id else False
         dur = playback.duration_seconds(self.video.get("duration", ""))
         self.resume_pos = playback.resume_position(self.video_id, dur)
@@ -61,7 +70,19 @@ class WatchScreen(BaseScreen):
         if self.video_id:
             threading.Thread(target=self._bg_fetch, daemon=True).start()
 
+    def _ensure_thumb(self):
+        """Tai thumbnail neu chua co: video mo tu 'Video lien quan' khong nam trong luoi
+        nen chua ai tai anh ve, man chi tiet se trong."""
+        try:
+            path = os.path.join(YT_CACHE_DIR, "%s.jpg" % self.video_id)
+            if self.video_id and not os.path.exists(path):
+                url = self.video.get("thumb") or ("https://i.ytimg.com/vi/%s/mqdefault.jpg" % self.video_id)
+                yt.fetch_thumbnail(url, YT_CACHE_DIR, self.video_id)
+        except Exception as e:
+            print("[rh.watch] thumbnail error: %s" % e)
+
     def _bg_fetch(self):
+        self._ensure_thumb()
         try:
             self.meta = yt.fetch_watch_metadata(self.video_id)
         except Exception:
@@ -84,6 +105,23 @@ class WatchScreen(BaseScreen):
     # Actions
     # ------------------------------------------------------------------
     def _start_playback(self):
+        """Hien popup roi moi trao tay sang yt_player/RetroArch.
+
+        Viec trich stream URL ton vai giay va chay o tien trinh sau khi app thoat, nen
+        popup nay la thu duy nhat cho nguoi dung biet dang cho gi.
+        """
+        if self.starting:
+            return
+        self.starting = True
+        self.engine.open_modal(YtLoadingModal(self.engine), {
+            "video": self.video, "position": self.index + 1,
+            "total": len(self.queue or [self.video]),
+        })
+        threading.Thread(target=self._bg_handoff, daemon=True).start()
+
+    def _bg_handoff(self):
+        # Cho mot nhip de popup kip ve; vong render van chay trong luc nay.
+        time.sleep(1.6)
         queue = self.queue or [self.video]
         sess = playback.PlaybackSession(
             queue=queue,
@@ -93,7 +131,6 @@ class WatchScreen(BaseScreen):
             audio_only=self.audio_only,
         )
         launch_session(self.engine, sess)
-
     def _toggle_favorite(self):
         favs = yt.load_favorites()
         _, added = yt.toggle_favorite(self.video, favs)
@@ -107,11 +144,6 @@ class WatchScreen(BaseScreen):
         sess.add(self.video)
         playback.save_session(sess)
         self.engine.toast(tr("yt_watch_queued"))
-
-    def _toggle_audio_only(self):
-        self.audio_only = not self.audio_only
-        label = tr("yt_on") if self.audio_only else tr("yt_off")
-        self.engine.toast(f"{tr('yt_audio_only')}: {label}")
 
     def _open_related(self, idx):
         if 0 <= idx < len(self.related):
@@ -130,8 +162,6 @@ class WatchScreen(BaseScreen):
             self._toggle_favorite()
         elif self.focus == 2:
             self._add_to_queue()
-        elif self.focus == 3:
-            self._toggle_audio_only()
         else:
             self._open_related(self.focus - self.ACTIONS)
 
@@ -147,10 +177,10 @@ class WatchScreen(BaseScreen):
             return True
 
         # L/R di giua cac nut thao tac; len/xuong di trong danh sach video lien quan.
-        if inputs.get("btn_r1"):
+        if inputs.get("btn_r1") or inputs.get("btn_right"):
             self.focus = (self.focus + 1) % max(1, self.ACTIONS)
             return True
-        if inputs.get("btn_l1"):
+        if inputs.get("btn_l1") or inputs.get("btn_left"):
             self.focus = (self.focus - 1) % max(1, self.ACTIONS)
             return True
 
@@ -181,6 +211,8 @@ class WatchScreen(BaseScreen):
         rel = self.focus - self.ACTIONS
         if rel < 0:
             return self.ACTIONS
+        if rel == 0 and step < 0:
+            return 0            # tu video lien quan dau tien thi len lai hang nut
         return self.ACTIONS + max(0, min(n - 1, rel + step))
 
     def _visible_rows(self):
@@ -217,7 +249,9 @@ class WatchScreen(BaseScreen):
         mw = state.SCREEN_W - mx - pad
         my = ty
         title = meta.get("title") or self.video.get("title", "YouTube")
-        for line in engine.wrap_text_to_width(title, engine.font_item, mw, max_lines=3):
+        if self._title_lines is None:
+            self._title_lines = engine.wrap_text_to_width(title, engine.font_item, mw, max_lines=3)
+        for line in self._title_lines:
             engine.draw_text(line, engine.font_item, mx, my, 255, 255, 255)
             my += 30
         channel = meta.get("channel") or self.video.get("channel", "")
@@ -238,7 +272,9 @@ class WatchScreen(BaseScreen):
         if desc:
             engine.draw_text(tr("yt_watch_desc"), engine.font_footer, mx, my + 6, 120, 145, 180)
             my += 26
-            for line in engine.wrap_text_to_width(desc, engine.font_footer, mw, max_lines=4):
+            if self._desc_lines is None:
+                self._desc_lines = engine.wrap_text_to_width(desc, engine.font_footer, mw, max_lines=4)
+            for line in self._desc_lines:
                 engine.draw_text(line, engine.font_footer, mx, my, 160, 180, 205)
                 my += 24
         elif self.loading:
@@ -248,12 +284,10 @@ class WatchScreen(BaseScreen):
 
         # Action buttons
         btn_y = ty + thumb_h + 18
-        audio_state = tr("yt_on") if self.audio_only else tr("yt_off")
         btn_labels = [
             tr("yt_watch_play"),
             tr("yt_watch_saved_btn") if self.saved else tr("yt_watch_save"),
             tr("yt_watch_queue_add"),
-            f"{tr('yt_audio_only')}: {audio_state}",
         ]
         btn_w = 224
         btn_h = 52

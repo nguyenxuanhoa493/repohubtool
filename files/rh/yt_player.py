@@ -527,7 +527,9 @@ def run_session(session_path: str):
 
         # A natural end means we played at least the video's duration (minus a
         # small margin). Anything shorter means the user exited early.
-        ended = dur > 0 and elapsed >= (dur - 5)
+        # Khong biet thoi luong thi coi nhu ket thuc khi da phat du lau, neu khong
+        # ca hang doi se dung sau video dau tien.
+        ended = (dur > 0 and elapsed >= (dur - 5)) or (dur <= 0 and elapsed >= 30)
         if not ended:
             log("Nguoi dung thoat giua video hoac phat loi, ket thuc phien.")
             break

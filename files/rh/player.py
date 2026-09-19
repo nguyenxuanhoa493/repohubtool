@@ -46,7 +46,7 @@ class RetroArchBackend(PlayerBackend):
         "seek_absolute": False,
         # Audio-only plays an audio stream with video_driver=null and turns the
         # backlight off (see rh.backlight); falls back gracefully if unsupported.
-        "audio_only": True,
+        "audio_only": False,   # RetroArch van hien hinh -> khong dung duoc tren may
         # Only progressive 360p (format 18) plays reliably through the core.
         "quality_select": False,
         "speed": True,            # fast-forward toggle

@@ -7,8 +7,11 @@ file so the runner picks them up.
 """
 
 from .. import playback, state
+import threading
+import time
 from ..i18n import tr
 from ..player import launch_session
+from ..modals.yt_loading import YtLoadingModal
 from .base import BaseScreen
 
 _REPEAT_CYCLE = ("off", "all", "one")
@@ -17,6 +20,7 @@ _REPEAT_CYCLE = ("off", "all", "one")
 class QueueScreen(BaseScreen):
     def __init__(self, engine=None):
         super().__init__(engine)
+        self.starting = False
         self.queue = []
         self.sel = 0
         self.scroll = 0
@@ -58,6 +62,24 @@ class QueueScreen(BaseScreen):
         playback.save_session(sess)
 
     def _play(self):
+        """Hien popup roi moi trao tay sang RetroArch (giong man chi tiet)."""
+        if self.starting:
+            return
+        self.starting = True
+        sess = playback.load_session()
+        queue = (sess.queue if sess else []) or []
+        self.engine.open_modal(YtLoadingModal(self.engine), {
+            "video": queue[0] if queue else {},
+            "position": 1, "total": max(1, len(queue)),
+        })
+        threading.Thread(target=self._bg_do_play, daemon=True).start()
+
+    def _bg_do_play(self):
+        # Cho mot nhip de popup kip ve; vong render van chay trong luc nay.
+        time.sleep(1.6)
+        self._do_play()
+
+    def _do_play(self):
         if not self.queue:
             self.engine.toast(tr("yt_queue_empty"))
             return
