@@ -18,6 +18,11 @@ Kiem nhung thu khong the kiem bang doc code:
 """
 
 import os, sys, tempfile
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")   # console Windows hay la cp1252
+except Exception:
+    pass
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); FILES = os.path.join(ROOT, "files")
 SD = tempfile.mkdtemp(prefix="rh-ui-")
 os.environ["SDCARD_PATH"] = SD

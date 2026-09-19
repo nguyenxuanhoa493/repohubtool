@@ -273,7 +273,8 @@ def resolve_retroarch_and_ffmpeg():
     return ra_bin, ra_dir, ffmpeg_core
 
 
-def play_video(video_id: str, direct_stream_url: str = None, direct_title: str = None):
+def play_video(video_id: str, direct_stream_url: str = None, direct_title: str = None,
+               audio_only: bool = False):
     # Reset error marker
     if os.path.exists(ERR_MARKER):
         try:
@@ -288,6 +289,14 @@ def play_video(video_id: str, direct_stream_url: str = None, direct_title: str =
         stream_url = direct_stream_url
         title = direct_title or video_id
         log(f"Su dung stream URL da trich xuat san tu app (Bo qua buoc phan tich).")
+    elif audio_only:
+        from .yt import resolve_audio_stream
+        stream_url, title = resolve_audio_stream(video_id)
+        if not stream_url:
+            log("Khong lay duoc luong audio-only, fallback sang video.")
+            stream_url, title = extract_stream_fast(video_id)
+        else:
+            log("Dung luong audio-only (chi phat tieng).")
     else:
         stream_url, title = extract_stream_fast(video_id)
 
@@ -374,6 +383,11 @@ fps_show = "false"
 input_driver = "sdl2"
 input_joypad_driver = "sdl2"
 """
+    if audio_only:
+        ra_override_content += (
+            '\n# Audio-only: tat xuat hinh de tiet kiem pin\n'
+            'video_driver = "null"\n'
+        )
     try:
         with open(ra_override_path, "w", encoding="utf-8") as f:
             f.write(ra_override_content)
@@ -389,6 +403,7 @@ input_joypad_driver = "sdl2"
     emu_dir = os.path.dirname(ffmpeg_core) if ffmpeg_core else os.path.join(SDCARD_PATH, "Emus", "FFMPEG")
 
     success = False
+    saved_bl = None
     try:
         if ra_bin and ffmpeg_core and os.path.exists(ra_bin) and os.path.exists(ffmpeg_core):
             log(f"Khoi chay RetroArch: {ra_bin}, Core: {ffmpeg_core}")
@@ -408,6 +423,14 @@ input_joypad_driver = "sdl2"
                 play_url,
             ]
             log(f"Command: {' '.join(cmd)}")
+            if audio_only:
+                try:
+                    from . import backlight
+                    saved_bl = backlight.screen_off()
+                    log("Audio-only: da tat man hinh." if saved_bl else
+                        "Audio-only: khong tim thay dieu khien den nen.")
+                except Exception as e:
+                    log(f"Audio-only: loi tat man hinh: {e}")
             subprocess.call("echo 1 > /tmp/stay_awake 2>/dev/null", shell=True)
             res = subprocess.run(cmd, cwd=ra_dir, env=env)
             subprocess.call("rm -f /tmp/stay_awake 2>/dev/null", shell=True)
@@ -426,6 +449,13 @@ input_joypad_driver = "sdl2"
         return False
 
     finally:
+        if saved_bl is not None:
+            try:
+                from . import backlight
+                backlight.screen_on(saved_bl)
+                log("Audio-only: da bat lai man hinh.")
+            except Exception:
+                pass
         if proxy_server:
             try:
                 proxy_server.shutdown()
@@ -444,18 +474,93 @@ input_joypad_driver = "sdl2"
     return success
 
 
+def run_session(session_path: str):
+    """Play a queue of videos in order, advancing automatically.
+
+    Runs inside the handoff process: the app has already exited, so this owns
+    the whole viewing session until the queue ends or the user exits early.
+    """
+    from . import playback
+    from .player import get_backend
+
+    sess = playback.load_session_file(session_path)
+    if not sess or not sess.queue:
+        log("Session rong hoac khong doc duoc, khong co gi de phat.")
+        return
+
+    backend = get_backend()
+    log(f"Bat dau phien phat: {len(sess.queue)} video, bat dau tu #{sess.index + 1}")
+
+    while True:
+        v = sess.current()
+        if not v:
+            break
+
+        vid = v.get("id")
+        dur = playback.duration_seconds(v.get("duration"))
+        start = playback.resume_position(vid, dur)
+        if start > 0 and not backend.capabilities.get("seek_absolute"):
+            start = 0.0  # backend cannot seek yet; stored position is display-only
+
+        sess.state = "playing"
+        playback.save_session_file(session_path, sess)
+        log(f"Phat [{sess.index + 1}/{len(sess.queue)}]: {v.get('title', vid)}")
+
+        t0 = time.time()
+        try:
+            ok = backend.play(v, start=start, audio_only=sess.audio_only,
+                              duration=dur, session=sess)
+        except Exception as e:
+            record_error(f"Loi phat video {vid}: {e}")
+            ok = False
+        elapsed = time.time() - t0
+
+        playback.add_watched(v, elapsed)
+        if dur > 0:
+            pos = min(elapsed, float(dur))
+            if (dur - pos) < playback.RESUME_TAIL:
+                playback.clear_progress(vid)
+            elif pos >= playback.RESUME_MIN_POS:
+                playback.set_progress(vid, pos, dur, v.get("title", ""), v.get("channel", ""))
+        else:
+            playback.set_progress(vid, elapsed, 0, v.get("title", ""), v.get("channel", ""))
+
+        # A natural end means we played at least the video's duration (minus a
+        # small margin). Anything shorter means the user exited early.
+        ended = dur > 0 and elapsed >= (dur - 5)
+        if not ended:
+            log("Nguoi dung thoat giua video hoac phat loi, ket thuc phien.")
+            break
+        if not sess.advance():
+            log("Het hang doi.")
+            break
+        playback.save_session_file(session_path, sess)
+
+    sess.state = "idle"
+    playback.save_session_file(session_path, sess)
+    log("Ket thuc phien phat.")
+
+
 if __name__ == "__main__":
     import argparse
     import json
 
     parser = argparse.ArgumentParser(description="RetroHub YouTube Player")
-    parser.add_argument("video_id", help="YouTube Video ID or URL")
+    parser.add_argument("video_id", nargs="?", default=None, help="YouTube Video ID or URL")
+    parser.add_argument("--session", default=None, help="Play a saved playback session (queue)")
     parser.add_argument("--stream-url", default=None, help="Pre-extracted direct stream URL")
     parser.add_argument("--title", default=None, help="Video title")
     parser.add_argument("--info-file", default=None, help="Path to JSON file with stream info")
 
     args = parser.parse_args()
-    v_id = args.video_id.strip()
+
+    if args.session:
+        run_session(args.session)
+        sys.exit(0)
+
+    v_id = (args.video_id or "").strip()
+    if not v_id:
+        parser.error("video_id is required when --session is not given")
     if "v=" in v_id:
         v_id = v_id.split("v=")[1].split("&")[0]
     elif "youtu.be/" in v_id:
