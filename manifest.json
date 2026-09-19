@@ -2,7 +2,7 @@
   "version": "2.39",
   "full_release_version": "2.39",
   "python": "any",
-  "built": "2026-09-19T11:44:38+07:00",
+  "built": "2026-09-19T11:50:15+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa hàng chờ tải, vòng lặp cập nhật OTA, Switch emulator core; thêm trang xem & queue YouTube; sửa UI chi tiết game",
@@ -1712,8 +1712,8 @@
     },
     {
       "path": "rh/boxart_scraper.py",
-      "size": 31766,
-      "sha256": "933f44a515245a7a0d4e43c14b3705a480b66b4f09f1aea78c3c8fcdd4aae7c3"
+      "size": 33831,
+      "sha256": "073355473ea7e8d378c520d6bb8419cf67f4071c7cbf3745a1930a8818c57fc9"
     },
     {
       "path": "rh/catalog.py",
