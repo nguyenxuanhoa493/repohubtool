@@ -201,6 +201,81 @@ header {
     font-weight: 700;
 }
 
+.stat-badge-compact {
+    background: rgba(10, 14, 23, 0.85);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 11.5px;
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.stat-badge-compact strong {
+    color: #38bdf8;
+    font-weight: 600;
+}
+
+/* Sub-Navigation for Quản lý Game */
+.games-subnav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: #0d131f;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.games-subnav::-webkit-scrollbar {
+    display: none;
+}
+
+.games-subnav-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-sub);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.games-subnav-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.games-subnav-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.35);
+}
+
+.games-subview {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.games-subview.active {
+    display: flex;
+}
+
 /* ==========================================================================
    BUTTONS (STEAM ACCENTS & TOUCH-FRIENDLY)
    ========================================================================== */

@@ -306,19 +306,29 @@ def get_game_url_candidates(game_info):
         except Exception as e:
             print(f"DB get_game_mirrors error: {e}")
 
-    if not candidates:
-        if game_info.get("rom_url"):
-            candidates.append(game_info.get("rom_url"))
-        if game_info.get("mirror_url"):
-            candidates.append(game_info.get("mirror_url"))
-        if game_info.get("topo_url"):
-            candidates.append(game_info.get("topo_url"))
+    # Ho tro mirrors truyen san trong dict
+    if isinstance(game_info.get("mirrors"), list):
+        for m in game_info["mirrors"]:
+            if isinstance(m, dict):
+                u = m.get("rom_url") or m.get("url")
+                if u:
+                    candidates.append(u)
+
+    if game_info.get("rom_url"):
+        candidates.append(game_info.get("rom_url"))
+    if game_info.get("mirror_url"):
+        candidates.append(game_info.get("mirror_url"))
+    if game_info.get("topo_url"):
+        candidates.append(game_info.get("topo_url"))
 
     dedup_candidates = []
     for c in candidates:
         if c and c not in dedup_candidates:
             dedup_candidates.append(c)
-    return dedup_candidates
+    # Uu tien nguon link Google Drive len dau danh sach
+    gdrive_cands = [c for c in dedup_candidates if "drive.google.com" in c or "drive.usercontent.google.com" in c]
+    other_cands = [c for c in dedup_candidates if c not in gdrive_cands]
+    return gdrive_cands + other_cands
 
 def probe_game_file_size(game_info, timeout=6):
     """Tham do dung luong file tu xa truoc khi nguoi dung bam tai.
@@ -359,7 +369,20 @@ def probe_game_file_size(game_info, timeout=6):
 
     for url in candidates:
         try:
-            req = urllib.request.Request(url, headers=headers)
+            probe_url = url
+            if "drive.google.com" in url or "drive.usercontent.google.com" in url:
+                try:
+                    from .gdrive import resolve_gdrive_info
+                    gd_res = resolve_gdrive_info(url, timeout=timeout)
+                    if gd_res and gd_res.get("direct_link"):
+                        probe_url = gd_res["direct_link"]
+                        if gd_res.get("file_size") and gd_res["file_size"] != "--":
+                            s_fmt = gd_res["file_size"]
+                            game_info["file_size_str"] = s_fmt
+                            return s_fmt
+                except Exception:
+                    pass
+            req = urllib.request.Request(probe_url, headers=headers)
             kwargs = {"timeout": timeout}
             if ctx:
                 kwargs["context"] = ctx
@@ -572,6 +595,8 @@ def start_download_thread(sys_code, game_info, background=False):
                 if "romhacks" in url_str:
                     return "Retrostic ROM Hacks CDN"
                 return "Retrostic Fast CDN"
+            elif "drive.google.com" in url_str or "drive.usercontent.google.com" in url_str:
+                return "Google Drive Fast CDN"
             elif "toposhop.vn" in url_str:
                 return "TOPO SHOP"
             elif "github" in url_str:
@@ -621,9 +646,19 @@ def start_download_thread(sys_code, game_info, background=False):
         max_workers_cfg = 4
         num_workers = max_workers_cfg
 
-        for target_url in candidates:
+        for orig_target_url in candidates:
             if download_success or dl_state["cancel_requested"]:
                 break
+
+            target_url = orig_target_url
+            if "drive.google.com" in target_url or "drive.usercontent.google.com" in target_url:
+                try:
+                    from .gdrive import resolve_gdrive_info
+                    gd_info = resolve_gdrive_info(target_url, timeout=15)
+                    if gd_info and gd_info.get("direct_link"):
+                        target_url = gd_info["direct_link"]
+                except Exception as e:
+                    print(f"Resolve Google Drive link error: {e}")
 
             source_name = get_source_label(target_url)
             dl_state["source_name"] = source_name

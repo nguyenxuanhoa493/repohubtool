@@ -178,6 +178,9 @@ SYSTEM_NAMES = {
     "J2ME": "Java J2ME (Mobile .jar)",
     "RETROSTIC": "Retrostic CDN",
     "ARCHIVE": "Internet Archive",
+    "GDRIVE": "Google Drive",
+    "PORTS": "PortMaster",
+    "NGC": "Nintendo GameCube",
     "VIET": "Game Việt Hóa",
     "HITS": "Top 100 Game Hay",
     "TOPO": "Nguồn Game TopoShop"

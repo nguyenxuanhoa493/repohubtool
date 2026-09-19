@@ -3,7 +3,7 @@
 from .security import decrypt_key
 
 # Chuỗi đã được mã hóa (Không lưu plain-text trong codebase)
-_ENC_TELEGRAM_BOT_TOKEN = "(F@EwVbDnvW)XvCkt4%ZPUBt|QX9K^nt9_OQT0m-c^j4~lz+Tb7q2Wz1Y!"
+_ENC_TELEGRAM_BOT_TOKEN = "_hPXXYV~e7aWSP-(k<;LUHDx$2^XGs&K1EX7wT*Xc^j4~lz+Tb7q2Wz1Y!"
 _ENC_AI_API_KEY = ""
 
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RetroHub - Web Manager</title>
+    <title>RetroHub</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -12,14 +12,10 @@
         <div class="header-left">
             <div class="logo-box" onclick="switchMainTab('games')">
                 <h1>RetroHub</h1>
-                <span class="badge-device">Web Manager</span>
             </div>
             <nav class="main-nav">
                 <button id="nav-btn-games" class="nav-tab active" onclick="switchMainTab('games')">
                     <span>🎮</span> Quản lý game
-                </button>
-                <button id="nav-btn-store" class="nav-tab" onclick="switchMainTab('store')">
-                    <span>⚡</span> Tải game online
                 </button>
                 <button id="nav-btn-themes" class="nav-tab" onclick="switchMainTab('themes')">
                     <span>🎨</span> Theme Store
@@ -42,94 +38,168 @@
             </nav>
         </div>
         <div class="header-stats">
-            <div class="stat-badge" id="storage-stat">Bộ nhớ: <strong>Đang đọc...</strong></div>
-            <button class="btn btn-sm btn-secondary" onclick="openSavesCheatsModal('saves')">Save & Cheats</button>
-            <button class="btn btn-sm btn-secondary" onclick="reloadCurrentView()">Nạp lại</button>
+            <div class="stat-badge-compact" id="storage-stat" title="Dung lượng thẻ nhớ SD">
+                <span>💾</span> <span id="storage-text">SD: Đang đọc...</span>
+            </div>
         </div>
     </header>
 
     <!-- ================================================================= -->
-    <!-- TAB 1: QUẢN LÝ GAME TRÊN THẺ NHỚ -->
+    <!-- TAB 1: QUẢN LÝ GAME (CÓ SUB-MENU 3 MỤC) -->
     <!-- ================================================================= -->
-    <div id="tab-view-games" class="tab-view active">
-        <div class="app-container">
-            <aside id="sidebar">
-                <div class="sidebar-header">Hệ máy trên thẻ nhớ</div>
-                <div id="systems-list"></div>
-            </aside>
-
-            <main>
-                <div class="toolbar">
-                    <div class="search-box">
-                        <span class="search-icon"></span>
-                        <input type="text" id="search-input" placeholder="Tìm game trong hệ..." oninput="filterGames()">
-                    </div>
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <input type="file" id="rom-file-input-direct" multiple style="display:none" onchange="handleDirectRomFiles(event)">
-                        <button id="btn-batch-scrape-top" class="btn btn-primary" style="display:none;" onclick="toggleDirectBatchScrape()">Cào toàn bộ ảnh</button>
-                        <button class="btn btn-green" onclick="handleUploadRomClick()">+ Tải ROM lên</button>
-                    </div>
-                </div>
-
-                <div id="batch-inline-bar" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <div style="flex:1; min-width:0;">
-                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
-                            <span id="batch-inline-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Đang tự động cào ảnh...</span>
-                            <span id="batch-inline-pct" style="color:#10b981; font-weight:700;">0%</span>
-                        </div>
-                        <div class="progress-bar-bg" style="height: 8px;">
-                            <div id="batch-inline-fill" class="progress-bar-fill" style="width:0%;"></div>
-                        </div>
-                    </div>
-                    <button class="btn btn-sm btn-secondary" onclick="stopDirectBatchScrape()">Dừng cào</button>
-                </div>
-
-                <div id="games-container" class="games-grid"></div>
-                <div id="empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
-                    <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">(Trống)</div>
-                    <p>Không có game nào trong hệ máy này hoặc chưa tìm thấy tệp phù hợp.</p>
-                </div>
-            </main>
+    <div id="tab-view-games" class="tab-view active" style="flex-direction: column; width: 100%; height: calc(100vh - 60px); overflow: hidden;">
+        <!-- SUB-NAVIGATION BAR -->
+        <div class="games-subnav">
+            <button id="subtab-btn-library" class="games-subnav-btn active" onclick="switchGamesSubTab('library')">
+                <span>📂</span> Thư viện game đã tải
+            </button>
+            <button id="subtab-btn-online" class="games-subnav-btn" onclick="switchGamesSubTab('online')">
+                <span>⚡</span> Tải game online
+            </button>
+            <button id="subtab-btn-boxart" class="games-subnav-btn" onclick="switchGamesSubTab('boxart')">
+                <span>🖼️</span> Cào boxart
+            </button>
         </div>
-    </div>
 
-    <!-- ================================================================= -->
-    <!-- TAB 2: TẢI GAME ONLINE (ROMS STORE) -->
-    <!-- ================================================================= -->
-    <div id="tab-view-store" class="tab-view">
-        <div class="app-container">
-            <aside id="store-sidebar">
-                <div class="sidebar-header">Danh mục tuyển chọn</div>
-                <div id="store-categories-list"></div>
-            </aside>
+        <!-- SUB-VIEW 1: THƯ VIỆN GAME ĐÃ TẢI -->
+        <div id="subview-games-library" class="games-subview active">
+            <div class="app-container" style="width:100%; height:100%;">
+                <aside id="sidebar">
+                    <div class="sidebar-header">Hệ máy trên thẻ nhớ</div>
+                    <div id="systems-list"></div>
+                </aside>
 
-            <main>
-                <div class="toolbar">
-                    <div class="search-box">
-                        <span class="search-icon"></span>
-                        <input type="text" id="store-search-input" placeholder="Tìm kiếm trong 40,000+ game..." oninput="debounceStoreSearch()">
+                <main>
+                    <div class="toolbar">
+                        <div class="search-box">
+                            <span class="search-icon"></span>
+                            <input type="text" id="search-input" placeholder="Tìm game trong hệ..." oninput="filterGames()">
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <input type="file" id="rom-file-input-direct" multiple style="display:none" onchange="handleDirectRomFiles(event)">
+                            <button id="btn-batch-scrape-top" class="btn btn-primary" style="display:none;" onclick="toggleDirectBatchScrape()">Cào toàn bộ ảnh</button>
+                            <button class="btn btn-primary" onclick="openDownloadByUrlModal()">🔗 Tải ROM từ Link (Drive / Direct)</button>
+                            <button class="btn btn-green" onclick="handleUploadRomClick()">+ Tải ROM lên</button>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <select id="store-system-filter" style="background: var(--bg-input); color: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: var(--radius); font-size: 13px; outline: none;" onchange="changeStoreSystemFilter()">
-                            <option value="ALL">Tất cả hệ máy</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div id="store-active-downloads" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <div style="font-size: 12px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; display:flex; justify-content:space-between;">
-                        <span>TIẾN TRÌNH TẢI GAME ONLINE</span>
-                        <span id="store-dl-speed" style="color:#10b981;">0 KB/s</span>
+                    <div id="batch-inline-bar" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
+                                <span id="batch-inline-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Đang tự động cào ảnh...</span>
+                                <span id="batch-inline-pct" style="color:#10b981; font-weight:700;">0%</span>
+                            </div>
+                            <div class="progress-bar-bg" style="height: 8px;">
+                                <div id="batch-inline-fill" class="progress-bar-fill" style="width:0%;"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="stopDirectBatchScrape()">Dừng cào</button>
                     </div>
-                    <div id="store-dl-list"></div>
-                </div>
 
-                <div id="store-games-container" class="games-grid"></div>
-                <div id="store-loading" style="display:none; text-align:center; padding: 40px; color: var(--primary);">
-                    <div style="font-size: 14px; font-weight: 700;">Đang tra cứu cơ sở dữ liệu...</div>
-                </div>
-                <div id="store-pagination" style="display:flex; justify-content:center; gap:8px; margin-top:24px; padding-bottom:16px;"></div>
-            </main>
+                    <div id="games-container" class="games-grid"></div>
+                    <div id="empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
+                        <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">(Trống)</div>
+                        <p>Không có game nào trong hệ máy này hoặc chưa tìm thấy tệp phù hợp.</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- SUB-VIEW 2: TẢI GAME ONLINE -->
+        <div id="subview-games-online" class="games-subview">
+            <div class="app-container" style="width:100%; height:100%;">
+                <aside id="store-sidebar">
+                    <div class="sidebar-header">Danh mục tuyển chọn</div>
+                    <div id="store-categories-list"></div>
+                </aside>
+
+                <main>
+                    <div class="toolbar">
+                        <div class="search-box">
+                            <span class="search-icon"></span>
+                            <input type="text" id="store-search-input" placeholder="Tìm kiếm trong 40,000+ game (bao gồm Google Drive)..." oninput="debounceStoreSearch()">
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button id="btn-toggle-gdrive-source" class="btn btn-sm btn-secondary" onclick="toggleGDriveSourceFilter()" style="border-radius: var(--radius-full); font-weight: 700;">
+                                <span>☁️</span> Nguồn Google Drive
+                            </button>
+                            <select id="store-source-filter" style="background: var(--bg-input); color: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: var(--radius); font-size: 13px; outline: none;" onchange="changeStoreSourceFilter()">
+                                <option value="ALL">Tất cả nguồn tải</option>
+                                <option value="GDRIVE">☁️ Nguồn Google Drive</option>
+                                <option value="RETROSTIC">🕹️ Nguồn Retrostic</option>
+                                <option value="ARCHIVE">🏛️ Nguồn Archive.org</option>
+                            </select>
+                            <select id="store-system-filter" style="background: var(--bg-input); color: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: var(--radius); font-size: 13px; outline: none;" onchange="changeStoreSystemFilter()">
+                                <option value="ALL">Tất cả hệ máy</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="store-active-downloads" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                        <div style="font-size: 12px; font-weight: 700; color: #38bdf8; margin-bottom: 8px; display:flex; justify-content:space-between;">
+                            <span>TIẾN TRÌNH TẢI GAME ONLINE</span>
+                            <span id="store-dl-speed" style="color:#10b981;">0 KB/s</span>
+                        </div>
+                        <div id="store-dl-list"></div>
+                    </div>
+
+                    <div id="store-games-container" class="games-grid"></div>
+                    <div id="store-loading" style="display:none; text-align:center; padding: 40px; color: var(--primary);">
+                        <div style="font-size: 14px; font-weight: 700;">Đang tra cứu cơ sở dữ liệu...</div>
+                    </div>
+                    <div id="store-pagination" style="display:flex; justify-content:center; gap:8px; margin-top:24px; padding-bottom:16px;"></div>
+                </main>
+            </div>
+        </div>
+
+        <!-- SUB-VIEW 3: CÀO BOXART -->
+        <div id="subview-games-boxart" class="games-subview">
+            <div class="app-container" style="width:100%; height:100%;">
+                <aside id="boxart-sidebar">
+                    <div class="sidebar-header">Hệ máy cần cào ảnh</div>
+                    <div id="boxart-systems-list"></div>
+                </aside>
+
+                <main>
+                    <div class="toolbar" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <div style="font-size:13px; color:var(--text-sub);">
+                                Đang chọn hệ: <strong id="boxart-cur-sys-name" style="color:#38bdf8;">--</strong>
+                            </div>
+                            <div style="font-size:12.5px; background:rgba(255,255,255,0.05); padding:4px 10px; border-radius:6px; border:1px solid var(--border);">
+                                Đã có ảnh: <strong id="boxart-stat-has" style="color:#22c55e;">0</strong> / <span id="boxart-stat-total">0</span> ROMs (<span id="boxart-stat-pct" style="color:#38bdf8;">0%</span>)
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button id="btn-boxart-batch-start" class="btn btn-primary" onclick="startBoxartSubTabScrape()">
+                                <span>🚀</span> Cào toàn bộ ảnh thiếu
+                            </button>
+                            <button class="btn btn-secondary" onclick="cleanupRomImagesWeb()">
+                                <span>🧹</span> Dọn ảnh trùng
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="boxart-batch-bar" style="display:none; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:6px;">
+                                <span id="boxart-batch-status" style="color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Đang tự động cào ảnh bìa...</span>
+                                <span id="boxart-batch-pct" style="color:#10b981; font-weight:700;">0%</span>
+                            </div>
+                            <div class="progress-bar-bg" style="height: 8px;">
+                                <div id="boxart-batch-fill" class="progress-bar-fill" style="width:0%;"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="stopBoxartSubTabScrape()">Dừng cào</button>
+                    </div>
+
+                    <div id="boxart-games-container" class="games-grid"></div>
+                    <div id="boxart-empty-state" style="display:none; text-align:center; padding: 60px 20px; color: var(--text-sub);">
+                        <div style="font-size: 16px; margin-bottom: 12px; font-weight: 600;">(Trống)</div>
+                        <p>Vui lòng chọn một hệ máy bên trái để xem và cào ảnh bìa.</p>
+                    </div>
+                </main>
+            </div>
         </div>
     </div>
 
@@ -379,6 +449,86 @@
     </div>
 
     <!-- ================================================================= -->
+    <!-- TAB: THƯ VIỆN GAME GOOGLE DRIVE -->
+    <!-- ================================================================= -->
+    <div id="tab-view-gdrive" class="tab-view">
+        <div style="max-width: 1100px; margin: 0 auto; padding: 20px 16px;">
+            <!-- Hộp thêm Game từ Drive -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div>
+                        <h2 style="font-size: 18px; font-weight: 700; color: #38bdf8; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+                            <span>☁️</span> Thêm Game từ Google Drive Công Khai
+                        </h2>
+                        <p style="font-size: 13px; color: var(--text-sub); margin: 0;">
+                            Hỗ trợ link file Google Drive công khai, tự động vượt trang cảnh báo quét virus cho file lớn (&gt;100MB).
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+                    <input type="text" id="gdrive-url-input" placeholder="Dán link Google Drive (https://drive.google.com/file/d/...)" style="flex: 1; min-width: 280px; background: var(--bg-input); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; color: #fff; font-size: 13.5px; outline: none;">
+                    <button class="btn btn-primary" id="btn-gdrive-resolve" onclick="resolveDriveUrl()" style="padding: 10px 18px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <span>🔍</span> Lấy thông tin
+                    </button>
+                </div>
+
+                <!-- Thẻ hiển thị kết quả kiểm tra link -->
+                <div id="gdrive-preview-card" style="display: none; margin-top: 16px; background: #0b1329; border: 1px solid #1e3a8a; border-radius: 10px; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 240px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <span class="badge" id="gdrive-preview-sys" style="background: #2563eb; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">GBA</span>
+                                <strong id="gdrive-preview-title" style="font-size: 15px; color: #f8fafc; word-break: break-word;">Tên Game</strong>
+                            </div>
+                            <div style="font-size: 12.5px; color: #94a3b8; display: flex; gap: 16px; flex-wrap: wrap;">
+                                <span>Tệp: <strong id="gdrive-preview-filename" style="color: #cbd5e1;">game.zip</strong></span>
+                                <span>Dung lượng: <strong id="gdrive-preview-size" style="color: #38bdf8;">--</strong></span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-green" onclick="saveCurrentDriveToLibrary()">
+                                <span>💾</span> Lưu vào thư viện
+                            </button>
+                            <button class="btn btn-secondary" onclick="cancelDrivePreview()">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tiến trình tải xuống đang chạy -->
+            <div id="gdrive-downloads-bar" style="display: none; background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;">
+                <div style="font-size: 13px; font-weight: 700; color: #38bdf8; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <span>⚡ Tiến trình tải về thẻ nhớ</span>
+                    <span id="gdrive-dl-count">0 đang tải</span>
+                </div>
+                <div id="gdrive-downloads-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+
+            <!-- Danh sách Thư viện Game Drive đã lưu -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700; color: #fff;">
+                            📚 Kho Game Google Drive Của Bạn
+                        </h3>
+                        <span id="gdrive-lib-count" style="font-size: 12.5px; color: var(--text-sub);">0 game đã lưu</span>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="loadDriveLibrary()">🔄 Làm mới</button>
+                </div>
+
+                <div id="gdrive-empty-state" style="display: none; text-align: center; padding: 40px 20px; color: var(--text-sub);">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📭</div>
+                    <p style="margin: 0; font-size: 14px;">Chưa có game nào trong thư viện Drive riêng.</p>
+                    <p style="margin: 4px 0 0 0; font-size: 12.5px; color: #64748b;">Hãy dán link Google Drive công khai ở trên để thêm game vào thư viện!</p>
+                </div>
+
+                <div id="gdrive-library-table" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
     <!-- MODALS -->
     <!-- ================================================================= -->
     <div class="modal-backdrop" id="modal-rename">
@@ -496,6 +646,81 @@
                     <button class="btn btn-primary" style="flex:1;" onclick="sendLogsToTelegramWeb()">✈️ Gửi báo cáo lỗi qua Telegram</button>
                     <a href="/api/logs/download" class="btn btn-secondary" download>Tải file log</a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-download-gdrive">
+        <div class="modal-box" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>⚡ Tải Game Về Máy TrimUI</h3>
+                <button class="modal-close" onclick="closeModal('modal-download-gdrive')">&times;</button>
+            </div>
+            <div style="margin-bottom: 14px; background: #0b1329; border: 1px solid var(--border); border-radius: 8px; padding: 12px;">
+                <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;" id="mdl-gdrive-title">Tên Game</div>
+                <div style="font-size: 12px; color: var(--text-sub); display: flex; gap: 12px; flex-wrap: wrap;">
+                    <span>Tệp: <strong id="mdl-gdrive-filename" style="color:#cbd5e1;">game.zip</strong></span>
+                    <span>Dung lượng: <strong id="mdl-gdrive-size" style="color:#38bdf8;">--</strong></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Chọn hệ máy để xả game (Lưu vào /mnt/SDCARD/Roms/&lt;Hệ&gt;)</label>
+                <select id="mdl-gdrive-sys-select" style="width: 100%; background: var(--bg-input); color: #fff; border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; font-size: 13.5px; outline: none;">
+                </select>
+            </div>
+            <div class="form-group" id="mdl-gdrive-extract-group" style="margin-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #cbd5e1;">
+                    <input type="checkbox" id="mdl-gdrive-extract-cb" style="width: 16px; height: 16px;">
+                    <span>Tự động giải nén (xả file ROM) nếu là tệp nén .zip / .7z / .rar</span>
+                </label>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-download-gdrive')">Hủy</button>
+    <div class="modal-backdrop" id="modal-download-by-url">
+        <div class="modal-box" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3>🔗 Tải ROM từ Link (Google Drive / Direct URL)</h3>
+                <button class="modal-close" onclick="closeModal('modal-download-by-url')">&times;</button>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-sub); margin-bottom: 14px;">
+                Nhập link Google Drive công khai hoặc link tải trực tiếp (HTTP/HTTPS file .zip, .7z, .iso, .nes, .gba...).
+            </p>
+            <div class="form-group">
+                <label>Đường dẫn tệp ROM</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="url-download-input" placeholder="https://drive.google.com/file/d/... hoặc link direct" style="flex: 1; background: var(--bg-input); border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; color: #fff; font-size: 13px; outline: none;">
+                    <button class="btn btn-primary" id="btn-resolve-url-dl" onclick="resolveUrlForDownload()">Kiểm tra link</button>
+                </div>
+            </div>
+
+            <!-- Khung xem trước thông tin link -->
+            <div id="url-download-preview-box" style="display: none; margin-top: 14px; background: #0b1329; border: 1px solid #1e3a8a; border-radius: 8px; padding: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <span class="badge" id="url-dl-type-badge" style="background: #2563eb; color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 700;">GDRIVE</span>
+                    <strong id="url-dl-title-disp" style="font-size: 13.5px; color: #f8fafc; word-break: break-word;">Tên Game</strong>
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; display: flex; gap: 14px; flex-wrap: wrap;">
+                    <span>Tệp: <strong id="url-dl-filename-disp" style="color: #cbd5e1;">game.zip</strong></span>
+                    <span>Dung lượng: <strong id="url-dl-size-disp" style="color: #38bdf8;">--</strong></span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 14px;">
+                <label>Chọn hệ máy lưu trữ (/mnt/SDCARD/Roms/&lt;Hệ máy&gt;)</label>
+                <select id="url-dl-sys-select" style="width: 100%; background: var(--bg-input); color: #fff; border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; font-size: 13px; outline: none;">
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #cbd5e1;">
+                    <input type="checkbox" id="url-dl-extract-cb" checked style="width: 16px; height: 16px;">
+                    <span>Tự động giải nén (xả ROM) nếu là file nén .zip / .7z / .rar</span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
+                <button class="btn btn-secondary" onclick="closeModal('modal-download-by-url')">Hủy</button>
+                <button class="btn btn-green" id="btn-submit-url-dl" onclick="submitUrlDownloadDirect()">🚀 Tải ngay về máy</button>
             </div>
         </div>
     </div>

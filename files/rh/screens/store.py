@@ -66,9 +66,12 @@ class StoreScreen(BaseScreen):
             return tr("store_menu_title")
         if self.view_level == "systems":
             src_names = {
-                "VIET": tr("store_src_viet"),
-                "HACK": "GAME HACK / MOD",
                 "HITS": tr("store_src_hits"),
+                "JAVA": "GAME JAVA J2ME",
+                "HACK": "GAME HACK / MOD",
+                "RETROSTIC": tr("store_src_retrostic"),
+                "GDRIVE": tr("store_src_gdrive"),
+                "ARCHIVE": tr("store_src_archive"),
                 "ALL": tr("store_src_all")
             }
             name = src_names.get(self.current_source, self.current_source)
@@ -101,11 +104,12 @@ class StoreScreen(BaseScreen):
         self.scroll_top = 0
         self.items = [
             {"id": "nav_search", "title": tr("menu_search_title"), "sub_title": tr("menu_search_sub"), "label": tr("search")},
-            {"id": "cat_viet", "source": "VIET", "title": tr("menu_viet_title"), "sub_title": tr("menu_viet_sub"), "label": tr("view")},
-            {"id": "cat_hack", "source": "HACK", "title": tr("menu_hack_title"), "sub_title": tr("menu_hack_sub"), "label": tr("view")},
             {"id": "cat_hits", "source": "HITS", "title": tr("menu_hits_title"), "sub_title": tr("menu_hits_sub"), "label": tr("view")},
             {"id": "cat_java", "source": "JAVA", "title": tr("menu_java_title"), "sub_title": tr("menu_java_sub"), "label": tr("view")},
-            {"id": "cat_all", "source": "ALL", "title": tr("menu_all_title"), "sub_title": tr("menu_all_sub"), "label": tr("view")},
+            {"id": "cat_hack", "source": "HACK", "title": tr("menu_hack_title"), "sub_title": tr("menu_hack_sub"), "label": tr("view")},
+            {"id": "cat_retrostic", "source": "RETROSTIC", "title": tr("menu_retrostic_title"), "sub_title": tr("menu_retrostic_sub"), "label": tr("view")},
+            {"id": "cat_gdrive", "source": "GDRIVE", "title": tr("menu_gdrive_title"), "sub_title": tr("menu_gdrive_sub"), "label": tr("view")},
+            {"id": "cat_archive", "source": "ARCHIVE", "title": tr("menu_archive_title"), "sub_title": tr("menu_archive_sub"), "label": tr("view")},
             {"id": "back", "title": tr("back_home"), "sub_title": ""}
         ]
         for idx, it in enumerate(self.items):

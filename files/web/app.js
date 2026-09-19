@@ -33,8 +33,40 @@ let currentTab = 'games';
 
         let allThemes = [];
         let currentThemeFilter = 'all';
+        let currentGamesSubTab = 'library';
+
+        function switchGamesSubTab(subTab) {
+            currentGamesSubTab = subTab;
+            document.querySelectorAll('.games-subnav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.games-subview').forEach(v => v.classList.remove('active'));
+
+            const btn = document.getElementById(`subtab-btn-${subTab}`);
+            const view = document.getElementById(`subview-games-${subTab}`);
+            if (btn) btn.classList.add('active');
+            if (view) view.classList.add('active');
+
+            if (subTab === 'library') {
+                if (!allSystems.length) loadSystems();
+            } else if (subTab === 'online') {
+                if (!storeCategories.length) loadStoreInit();
+            } else if (subTab === 'boxart') {
+                loadBoxartSystems();
+            }
+        }
 
         function switchMainTab(tab) {
+            if (tab === 'store') {
+                switchMainTab('games');
+                switchGamesSubTab('online');
+                return;
+            }
+            if (tab === 'gdrive') {
+                switchMainTab('games');
+                switchGamesSubTab('online');
+                setTimeout(() => { selectStoreCategory('GDRIVE'); }, 200);
+                return;
+            }
+
             currentTab = tab;
             // Cập nhật URL hash
             history.replaceState(null, null, '#' + tab);
@@ -47,9 +79,13 @@ let currentTab = 'games';
             if (view) view.classList.add('active');
 
             if (tab === 'games') {
-                if (!allSystems.length) loadSystems();
-            } else if (tab === 'store') {
-                if (!storeCategories.length) loadStoreInit();
+                if (currentGamesSubTab === 'library') {
+                    if (!allSystems.length) loadSystems();
+                } else if (currentGamesSubTab === 'online') {
+                    if (!storeCategories.length) loadStoreInit();
+                } else if (currentGamesSubTab === 'boxart') {
+                    loadBoxartSystems();
+                }
             } else if (tab === 'themes') {
                 if (!allThemes.length) loadThemes();
             } else if (tab === 'emus') {
@@ -63,8 +99,11 @@ let currentTab = 'games';
 
         function reloadCurrentView() {
             loadStorageStatus();
-            if (currentTab === 'games') loadSystems(true);
-            else if (currentTab === 'store') loadStoreGames();
+            if (currentTab === 'games') {
+                if (currentGamesSubTab === 'library') loadSystems(true);
+                else if (currentGamesSubTab === 'online') loadStoreGames();
+                else if (currentGamesSubTab === 'boxart') selectBoxartSystem(boxartCurrentSys);
+            }
             else if (currentTab === 'themes') loadThemes(true);
             else if (currentTab === 'emus') loadEmus(true);
             else if (currentTab === 'youtube') loadYouTubeVideos(currentYtTab);
@@ -478,7 +517,13 @@ let currentTab = 'games';
                 const res = await fetch('/api/status');
                 const data = await res.json();
                 if (data.ok && data.storage) {
-                    document.getElementById('storage-stat').innerHTML = `Bộ nhớ: <strong>Trống ${data.storage.free_gb}</strong> / ${data.storage.total_gb}`;
+                    const elTxt = document.getElementById('storage-text');
+                    if (elTxt) {
+                        elTxt.innerHTML = `Trống <strong>${data.storage.free_gb}</strong> / ${data.storage.total_gb}`;
+                    } else {
+                        const elStat = document.getElementById('storage-stat');
+                        if (elStat) elStat.innerHTML = `<span>💾</span> Trống <strong>${data.storage.free_gb}</strong> / ${data.storage.total_gb}`;
+                    }
                 }
             } catch (e) {}
         }
@@ -576,6 +621,346 @@ let currentTab = 'games';
             renderGamesGrid(filtered);
         }
 
+        // ==================== TẢI ROM QUA LINK (DRIVE / DIRECT) ====================
+        let currentResolvedUrlData = null;
+
+        function openDownloadByUrlModal() {
+            const sysSel = document.getElementById('url-dl-sys-select');
+            if (sysSel && allSystems.length) {
+                let opts = '';
+                allSystems.forEach(s => {
+                    const sel = (currentSystem === s.dir) ? 'selected' : '';
+                    opts += `<option value="${s.dir}" ${sel}>${s.name || s.dir} (${s.dir})</option>`;
+                });
+                sysSel.innerHTML = opts;
+            }
+            const previewBox = document.getElementById('url-download-preview-box');
+            if (previewBox) previewBox.style.display = 'none';
+            currentResolvedUrlData = null;
+            openModal('modal-download-by-url');
+        }
+
+        async function resolveUrlForDownload() {
+            const input = document.getElementById('url-download-input');
+            const url = input ? input.value.trim() : '';
+            if (!url) {
+                showToast('Vui lòng nhập đường dẫn Google Drive hoặc link direct!');
+                return;
+            }
+            const btn = document.getElementById('btn-resolve-url-dl');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Đang kiểm tra...';
+            }
+            try {
+                const res = await fetch('/api/gdrive/resolve', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    currentResolvedUrlData = data;
+                    const previewBox = document.getElementById('url-download-preview-box');
+                    const badge = document.getElementById('url-dl-type-badge');
+                    const titleDisp = document.getElementById('url-dl-title-disp');
+                    const fnDisp = document.getElementById('url-dl-filename-disp');
+                    const szDisp = document.getElementById('url-dl-size-disp');
+                    const sysSel = document.getElementById('url-dl-sys-select');
+
+                    if (previewBox) previewBox.style.display = 'block';
+                    if (badge) {
+                        badge.innerText = data.type === 'static' ? 'DIRECT URL' : 'GOOGLE DRIVE';
+                        badge.style.background = data.type === 'static' ? '#059669' : '#2563eb';
+                    }
+                    if (titleDisp) titleDisp.innerText = data.title || data.filename || 'Tệp Game';
+                    if (fnDisp) fnDisp.innerText = data.filename || '--';
+                    if (szDisp) szDisp.innerText = data.file_size_str || '--';
+
+                    if (data.suggested_system && sysSel) {
+                        for (let opt of sysSel.options) {
+                            if (opt.value.toUpperCase() === data.suggested_system.toUpperCase()) {
+                                opt.selected = true;
+                                break;
+                            }
+                        }
+                    }
+                    showToast('Đã nhận diện tệp ROM thành công!');
+                } else {
+                    showToast('Lỗi: ' + (data.error || 'Không kiểm tra được liên kết'));
+                }
+            } catch (e) {
+                showToast('Lỗi mạng: ' + (e.message || e));
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Kiểm tra link';
+                }
+            }
+        }
+
+        async function submitUrlDownloadDirect() {
+            const input = document.getElementById('url-download-input');
+            const url = input ? input.value.trim() : '';
+            if (!url) {
+                showToast('Vui lòng nhập đường dẫn!');
+                return;
+            }
+            const sysSel = document.getElementById('url-dl-sys-select');
+            const sysCode = sysSel ? sysSel.value : '';
+            if (!sysCode) {
+                showToast('Vui lòng chọn hệ máy để xả game!');
+                return;
+            }
+            const extractCb = document.getElementById('url-dl-extract-cb');
+            const doExtract = extractCb ? extractCb.checked : true;
+
+            const btn = document.getElementById('btn-submit-url-dl');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Đang gửi lệnh...';
+            }
+
+            const payload = {
+                url: url,
+                sys_code: sysCode,
+                direct_link: currentResolvedUrlData ? (currentResolvedUrlData.direct_link || '') : '',
+                filename: currentResolvedUrlData ? (currentResolvedUrlData.filename || '') : '',
+                title: currentResolvedUrlData ? (currentResolvedUrlData.title || '') : '',
+                extract: doExtract
+            };
+
+            try {
+                const res = await fetch('/api/gdrive/download', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Bắt đầu tải ROM về thẻ nhớ!');
+                    closeModal('modal-download-by-url');
+                    checkStoreDownloadsStatus();
+                } else {
+                    showToast('Lỗi: ' + (data.error || 'Không thể bắt đầu tải'));
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + (e.message || e));
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '🚀 Tải ngay về máy';
+                }
+            }
+        }
+
+        // ==================== CÀO BOXART (SUB-TAB) ====================
+        let boxartCurrentSys = null;
+        let boxartGamesList = [];
+        let isBoxartBatchRunning = false;
+        let stopBoxartBatchRequested = false;
+
+        async function loadBoxartSystems() {
+            if (!allSystems.length) {
+                try {
+                    const res = await fetch('/api/systems');
+                    const data = await res.json();
+                    if (data.ok) allSystems = data.systems || [];
+                } catch (e) {}
+            }
+            renderBoxartSidebar();
+            if (allSystems.length > 0 && !boxartCurrentSys) {
+                selectBoxartSystem(currentSystem || allSystems[0].dir);
+            }
+        }
+
+        function renderBoxartSidebar() {
+            const listEl = document.getElementById('boxart-systems-list');
+            if (!listEl) return;
+            let html = '';
+            allSystems.forEach(s => {
+                const active = (boxartCurrentSys === s.dir) ? 'active' : '';
+                html += `<div class="sys-item ${active}" onclick="selectBoxartSystem('${s.dir}')">
+                    <span>🎮 ${s.name || s.dir}</span>
+                    <span class="badge">${s.count || 0}</span>
+                </div>`;
+            });
+            listEl.innerHTML = html;
+        }
+
+        async function selectBoxartSystem(sysDir) {
+            boxartCurrentSys = sysDir;
+            renderBoxartSidebar();
+            const curName = document.getElementById('boxart-cur-sys-name');
+            if (curName) curName.innerText = sysDir;
+
+            const container = document.getElementById('boxart-games-container');
+            const empty = document.getElementById('boxart-empty-state');
+            if (container) container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:#38bdf8;">Đang nạp danh sách game...</div>';
+            if (empty) empty.style.display = 'none';
+
+            try {
+                const res = await fetch(`/api/games?system=${encodeURIComponent(sysDir)}`);
+                const data = await res.json();
+                if (data.ok) {
+                    boxartGamesList = data.games || [];
+                    updateBoxartStats();
+                    renderBoxartGamesGrid();
+                }
+            } catch (e) {
+                if (container) container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#ef4444;">Lỗi: ${e.message}</div>`;
+            }
+        }
+
+        function updateBoxartStats() {
+            const total = boxartGamesList.length;
+            const hasArt = boxartGamesList.filter(g => g.has_art).length;
+            const pct = total > 0 ? Math.round((hasArt / total) * 100) : 0;
+
+            const tEl = document.getElementById('boxart-stat-total');
+            const hEl = document.getElementById('boxart-stat-has');
+            const pEl = document.getElementById('boxart-stat-pct');
+            if (tEl) tEl.innerText = total;
+            if (hEl) hEl.innerText = hasArt;
+            if (pEl) pEl.innerText = `${pct}%`;
+        }
+
+        function renderBoxartGamesGrid() {
+            const container = document.getElementById('boxart-games-container');
+            const empty = document.getElementById('boxart-empty-state');
+            if (!container) return;
+
+            if (!boxartGamesList.length) {
+                container.innerHTML = '';
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            let html = '';
+            boxartGamesList.forEach(g => {
+                const imgTag = g.has_art 
+                    ? `<img src="${g.art_url}" id="boxart-img-${boxartCurrentSys}-${g.filename}" loading="lazy" style="width:100%; height:100%; object-fit:contain;">`
+                    : `<div id="boxart-img-${boxartCurrentSys}-${g.filename}" style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; color:var(--text-sub); font-size:11px;"><span>🖼️</span><span>Chưa có ảnh</span></div>`;
+
+                html += `<div class="game-card" style="padding:10px;">
+                    <div class="art-box" style="height:140px;">${imgTag}</div>
+                    <div class="game-info" style="margin-top:8px;">
+                        <div class="game-title" title="${g.title || g.filename}">${g.title || g.filename}</div>
+                        <div style="font-size:11px; color:var(--text-sub); margin-top:2px;">${g.filename}</div>
+                        <div style="display:flex; gap:6px; margin-top:8px;">
+                            <button class="btn btn-sm btn-primary" style="flex:1;" onclick="scrapeSingleBoxartSubTab('${boxartCurrentSys}', '${encodeURIComponent(g.filename)}')">⚡ Cào ảnh</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openScrapeModal('${boxartCurrentSys}', '${encodeURIComponent(g.filename)}')">🔍 Tìm</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function scrapeSingleBoxartSubTab(system, encodedFilename) {
+            const fname = decodeURIComponent(encodedFilename);
+            showToast(`Đang cào ảnh cho ${fname}...`);
+            try {
+                const res = await fetch('/api/scrape/auto', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({system: system, filename: fname, fast: true})
+                });
+                const data = await res.json();
+                if (data.ok && data.art_url) {
+                    showToast(`Cào thành công ảnh cho ${fname}!`);
+                    const imgBox = document.getElementById(`boxart-img-${system}-${fname}`);
+                    if (imgBox) {
+                        imgBox.outerHTML = `<img src="${data.art_url}" id="boxart-img-${system}-${fname}" style="width:100%; height:100%; object-fit:contain;">`;
+                    }
+                    const target = boxartGamesList.find(g => g.filename === fname);
+                    if (target) target.has_art = true;
+                    updateBoxartStats();
+                } else {
+                    showToast(`Không tìm thấy ảnh: ${data.error || ''}`);
+                }
+            } catch (e) {
+                showToast(`Lỗi cào ảnh: ${e.message}`);
+            }
+        }
+
+        async function startBoxartSubTabScrape() {
+            if (isBoxartBatchRunning) return;
+            const missingGames = boxartGamesList.filter(g => !g.has_art);
+            if (!missingGames.length) {
+                showToast('Hệ máy này đã có đầy đủ ảnh bìa!');
+                return;
+            }
+
+            isBoxartBatchRunning = true;
+            stopBoxartBatchRequested = false;
+
+            const bar = document.getElementById('boxart-batch-bar');
+            const statusText = document.getElementById('boxart-batch-status');
+            const pctText = document.getElementById('boxart-batch-pct');
+            const fillBar = document.getElementById('boxart-batch-fill');
+
+            if (bar) bar.style.display = 'flex';
+
+            let completed = 0;
+            const total = missingGames.length;
+
+            for (let g of missingGames) {
+                if (stopBoxartBatchRequested) break;
+                if (statusText) statusText.innerText = `Đang cào (${completed + 1}/${total}): ${g.filename}`;
+                try {
+                    const res = await fetch('/api/scrape/auto', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({system: boxartCurrentSys, filename: g.filename, fast: true})
+                    });
+                    const data = await res.json();
+                    if (data.ok && data.art_url) {
+                        g.has_art = true;
+                        const imgBox = document.getElementById(`boxart-img-${boxartCurrentSys}-${g.filename}`);
+                        if (imgBox) {
+                            imgBox.outerHTML = `<img src="${data.art_url}" id="boxart-img-${boxartCurrentSys}-${g.filename}" style="width:100%; height:100%; object-fit:contain;">`;
+                        }
+                    }
+                } catch (e) {}
+
+                completed++;
+                const pct = Math.round((completed / total) * 100);
+                if (pctText) pctText.innerText = `${pct}%`;
+                if (fillBar) fillBar.style.width = `${pct}%`;
+                updateBoxartStats();
+            }
+
+            isBoxartBatchRunning = false;
+            if (bar) {
+                setTimeout(() => { bar.style.display = 'none'; }, 2000);
+            }
+            showToast(stopBoxartBatchRequested ? 'Đã dừng cào ảnh!' : 'Hoàn thành cào toàn bộ ảnh thiếu!');
+        }
+
+        function stopBoxartSubTabScrape() {
+            stopBoxartBatchRequested = true;
+            showToast('Đang dừng cào ảnh...');
+        }
+
+        async function cleanupRomImagesWeb() {
+            if (!confirm('Bạn có chắc muốn dọn dẹp các tệp/thư mục ảnh trùng trong ROMs?')) return;
+            showToast('Đang quét và dọn dẹp ảnh thừa...');
+            try {
+                const res = await fetch('/api/cleanup_rom_images', {method: 'POST'});
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || `Đã dọn dẹp ${data.cleaned_count} ảnh thừa!`);
+                    if (boxartCurrentSys) selectBoxartSystem(boxartCurrentSys);
+                } else {
+                    showToast('Lỗi: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e);
+            }
+        }
+
         // ==================== TẢI GAME ONLINE (ROMS STORE) ====================
         let storeSearchTimer = null;
 
@@ -622,12 +1007,70 @@ let currentTab = 'games';
         let storeHasMore = true;
         let isStoreLoading = false;
 
+        let currentStoreSource = 'ALL';
+
         function selectStoreCategory(catId) {
             currentStoreCategory = catId;
+            if (catId === 'GDRIVE') {
+                currentStoreSource = 'GDRIVE';
+                const selectEl = document.getElementById('store-source-filter');
+                if (selectEl) selectEl.value = 'GDRIVE';
+            } else if (catId === 'RETROSTIC') {
+                currentStoreSource = 'RETROSTIC';
+                const selectEl = document.getElementById('store-source-filter');
+                if (selectEl) selectEl.value = 'RETROSTIC';
+            } else if (catId === 'ARCHIVE') {
+                currentStoreSource = 'ARCHIVE';
+                const selectEl = document.getElementById('store-source-filter');
+                if (selectEl) selectEl.value = 'ARCHIVE';
+            } else {
+                currentStoreSource = 'ALL';
+                const selectEl = document.getElementById('store-source-filter');
+                if (selectEl) selectEl.value = 'ALL';
+            }
+            updateGDriveButtonState();
             const searchInput = document.getElementById('store-search-input');
             if (searchInput) searchInput.value = '';
             renderStoreSidebar();
             resetAndLoadStore();
+        }
+
+        function changeStoreSourceFilter() {
+            const selectEl = document.getElementById('store-source-filter');
+            currentStoreSource = selectEl ? selectEl.value : 'ALL';
+            if (currentStoreSource !== 'ALL') {
+                currentStoreCategory = currentStoreSource;
+                renderStoreSidebar();
+            }
+            updateGDriveButtonState();
+            resetAndLoadStore();
+        }
+
+        function toggleGDriveSourceFilter() {
+            if (currentStoreSource === 'GDRIVE') {
+                currentStoreSource = 'ALL';
+                currentStoreCategory = 'HITS';
+            } else {
+                currentStoreSource = 'GDRIVE';
+                currentStoreCategory = 'GDRIVE';
+            }
+            const selectEl = document.getElementById('store-source-filter');
+            if (selectEl) selectEl.value = currentStoreSource;
+            renderStoreSidebar();
+            updateGDriveButtonState();
+            resetAndLoadStore();
+        }
+
+        function updateGDriveButtonState() {
+            const btn = document.getElementById('btn-toggle-gdrive-source');
+            if (!btn) return;
+            if (currentStoreSource === 'GDRIVE' || currentStoreCategory === 'GDRIVE') {
+                btn.className = 'btn btn-sm btn-primary';
+                btn.style.boxShadow = '0 0 10px rgba(37, 99, 235, 0.4)';
+            } else {
+                btn.className = 'btn btn-sm btn-secondary';
+                btn.style.boxShadow = 'none';
+            }
         }
 
         function changeStoreSystemFilter() {
@@ -676,7 +1119,8 @@ let currentTab = 'games';
             const sys = sysFilter ? sysFilter.value : currentStoreSystem;
             const limit = 40;
 
-            let url = `/api/store/games?source_type=${encodeURIComponent(currentStoreCategory)}&system=${encodeURIComponent(sys)}&sort=${sort}&page=${currentStorePage}&limit=${limit}`;
+            let effSource = (currentStoreSource !== 'ALL') ? currentStoreSource : currentStoreCategory;
+            let url = `/api/store/games?source_type=${encodeURIComponent(effSource)}&system=${encodeURIComponent(sys)}&sort=${sort}&page=${currentStorePage}&limit=${limit}`;
             if (q) url += `&query=${encodeURIComponent(q)}`;
 
             try {
@@ -729,7 +1173,7 @@ let currentTab = 'games';
         function goToStorePage(page) {
             currentStorePage = page;
             loadStoreGames(false);
-            const mainEl = document.querySelector('#tab-view-store main');
+            const mainEl = document.querySelector('#subview-games-online main') || document.querySelector('#tab-view-store main');
             if (mainEl) mainEl.scrollTop = 0;
         }
 
@@ -742,6 +1186,7 @@ let currentTab = 'games';
                 const isViet = g.is_viet ? `<span class="badge-tag badge-viet">VIỆT HÓA</span>` : '';
                 const isHack = g.is_hack ? `<span class="badge-tag badge-hack">HACK</span>` : '';
                 const isHit = g.is_hit ? `<span class="badge-tag badge-top">TOP</span>` : '';
+                const isGDrive = (g.source_name === 'GDRIVE' || (g.rom_url && g.rom_url.includes('drive.google.com'))) ? `<span class="badge-tag" style="background:#2563eb; color:#fff; font-weight:700;">GDRIVE</span>` : '';
 
                 const actionBtn = g.is_installed 
                     ? `<span class="badge-tag badge-installed">✓ Đã có trên thẻ</span>`
@@ -750,7 +1195,7 @@ let currentTab = 'games';
                 html += `<div class="game-card">
                     <div class="art-box">${imgUrl}</div>
                     <div class="game-info">
-                        <div style="display:flex; gap:4px; margin-bottom:4px; flex-wrap:wrap;">${isViet}${isHack}${isHit}</div>
+                        <div style="display:flex; gap:4px; margin-bottom:4px; flex-wrap:wrap;">${isViet}${isHack}${isHit}${isGDrive}</div>
                         <div class="game-title" title="${g.title}">${g.title}</div>
                         <div class="game-meta">
                             <span>${g.sys_code}</span>
@@ -2032,6 +2477,338 @@ ${sysPrompt}
         
         // Auto-check stream status initially
         setTimeout(checkStreamStatus, 1000);
+
+        // ==================== GOOGLE DRIVE GAME LIBRARY ====================
+        let gdriveLibrary = [];
+        let currentResolvedDrive = null;
+        let driveAvailableSystems = [];
+        let driveDownloadPolling = null;
+
+        function escapeDriveHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        async function loadDriveSystems() {
+            try {
+                const res = await fetch('/api/gdrive/systems');
+                const data = await res.json();
+                if (data.ok && data.systems) {
+                    driveAvailableSystems = data.systems;
+                }
+            } catch (e) {
+                console.error('Error loading systems for gdrive:', e);
+            }
+        }
+
+        async function resolveDriveUrl() {
+            const input = document.getElementById('gdrive-url-input');
+            const btn = document.getElementById('btn-gdrive-resolve');
+            const url = (input ? input.value : '').trim();
+            if (!url) {
+                showToast('Vui lòng dán liên kết hoặc File ID Google Drive');
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳</span> Đang kiểm tra...';
+            }
+
+            try {
+                const res = await fetch('/api/gdrive/resolve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await res.json();
+                if (!data.ok) {
+                    throw new Error(data.error || 'Không thể lấy thông tin tệp từ Drive');
+                }
+
+                currentResolvedDrive = data;
+                renderDrivePreview(data);
+                showToast('Đã lấy thông tin tệp Google Drive thành công!');
+            } catch (e) {
+                showToast('Lỗi: ' + e.message);
+                cancelDrivePreview();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>🔍</span> Lấy thông tin';
+                }
+            }
+        }
+
+        function renderDrivePreview(data) {
+            const card = document.getElementById('gdrive-preview-card');
+            if (!card) return;
+            document.getElementById('gdrive-preview-title').textContent = data.title || data.filename || 'Game Drive';
+            document.getElementById('gdrive-preview-filename').textContent = data.filename || '--';
+            document.getElementById('gdrive-preview-size').textContent = data.file_size || '--';
+            const sysBadge = document.getElementById('gdrive-preview-sys');
+            if (sysBadge) {
+                sysBadge.textContent = data.suggested_sys || 'ROM';
+            }
+            card.style.display = 'block';
+        }
+
+        function cancelDrivePreview() {
+            currentResolvedDrive = null;
+            const card = document.getElementById('gdrive-preview-card');
+            if (card) card.style.display = 'none';
+        }
+
+        async function saveCurrentDriveToLibrary() {
+            if (!currentResolvedDrive) {
+                showToast('Chưa có thông tin tệp để lưu');
+                return;
+            }
+            try {
+                const res = await fetch('/api/gdrive/library/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentResolvedDrive)
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã lưu game vào thư viện Drive riêng!');
+                    cancelDrivePreview();
+                    const input = document.getElementById('gdrive-url-input');
+                    if (input) input.value = '';
+                    loadDriveLibrary();
+                } else {
+                    showToast('Lỗi khi lưu: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e.message);
+            }
+        }
+
+        async function loadDriveLibrary(forceToast = false) {
+            const table = document.getElementById('gdrive-library-table');
+            const empty = document.getElementById('gdrive-empty-state');
+            const countDisp = document.getElementById('gdrive-lib-count');
+
+            try {
+                const res = await fetch('/api/gdrive/library');
+                const data = await res.json();
+                if (data.ok) {
+                    gdriveLibrary = data.items || [];
+                    if (countDisp) countDisp.textContent = `${gdriveLibrary.length} game đã lưu`;
+                    if (gdriveLibrary.length === 0) {
+                        if (empty) empty.style.display = 'block';
+                        if (table) table.innerHTML = '';
+                    } else {
+                        if (empty) empty.style.display = 'none';
+                        renderDriveLibraryTable(gdriveLibrary);
+                    }
+                    if (forceToast) showToast('Đã nạp lại thư viện Google Drive!');
+                }
+            } catch (e) {
+                console.error('Error loading gdrive library:', e);
+            }
+        }
+
+        function renderDriveLibraryTable(items) {
+            const container = document.getElementById('gdrive-library-table');
+            if (!container) return;
+
+            container.innerHTML = items.map(item => {
+                const isDownloaded = item.status === 'downloaded';
+                const sysTag = item.downloaded_sys || item.suggested_sys || 'ROM';
+                const addedDate = item.added_at ? new Date(item.added_at * 1000).toLocaleDateString('vi-VN') : '';
+
+                return `
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #0b1329; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; gap: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px;">
+                        <span class="badge" style="background: ${isDownloaded ? '#059669' : '#2563eb'}; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; min-width: 45px; text-align: center;">
+                            ${sysTag}
+                        </span>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 14px; font-weight: 600; color: #f8fafc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 420px;">
+                                ${escapeDriveHtml(item.title || item.filename || 'Game')}
+                            </div>
+                            <div style="font-size: 12px; color: #94a3b8; display: flex; gap: 14px; margin-top: 2px; flex-wrap: wrap;">
+                                <span>Tệp: <span style="color:#cbd5e1;">${escapeDriveHtml(item.filename || '--')}</span></span>
+                                <span>Dung lượng: <span style="color:#38bdf8;">${item.file_size || '--'}</span></span>
+                                ${addedDate ? `<span>Ngày thêm: ${addedDate}</span>` : ''}
+                                ${isDownloaded ? `<span style="color:#10b981; font-weight:600;">✓ Đã tải về ${item.downloaded_sys || ''}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn btn-sm ${isDownloaded ? 'btn-secondary' : 'btn-green'}" onclick="openDownloadDriveModal('${item.id}')" style="display: flex; align-items: center; gap: 4px;">
+                            <span>${isDownloaded ? '🔄' : '⚡'}</span> ${isDownloaded ? 'Tải lại' : 'Tải về máy'}
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDriveItem('${item.id}')" title="Xóa khỏi thư viện Drive">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        let selectedDriveDownloadItem = null;
+
+        async function openDownloadDriveModal(itemId) {
+            const item = gdriveLibrary.find(it => it.id === itemId);
+            if (!item) return;
+            selectedDriveDownloadItem = item;
+
+            if (!driveAvailableSystems.length) {
+                await loadDriveSystems();
+            }
+
+            document.getElementById('mdl-gdrive-title').textContent = item.title || item.filename;
+            document.getElementById('mdl-gdrive-filename').textContent = item.filename || '--';
+            document.getElementById('mdl-gdrive-size').textContent = item.file_size || '--';
+
+            const select = document.getElementById('mdl-gdrive-sys-select');
+            const defaultSys = item.downloaded_sys || item.suggested_sys || 'GBA';
+
+            const fallbackSystems = [
+                { tag: 'GBA', name: 'Game Boy Advance (GBA)' },
+                { tag: 'SFC', name: 'Super Nintendo (SNES / SFC)' },
+                { tag: 'FC', name: 'NES / Famicom (FC)' },
+                { tag: 'MD', name: 'Sega Mega Drive / Genesis (MD)' },
+                { tag: 'PS', name: 'Sony PlayStation (PS1)' },
+                { tag: 'PSP', name: 'PlayStation Portable (PSP)' },
+                { tag: 'NDS', name: 'Nintendo DS (NDS)' },
+                { tag: 'JAVA', name: 'Java J2ME Mobile (JAVA)' },
+                { tag: 'ARCADE', name: 'Arcade / CPS / FBNeo' },
+                { tag: 'GB', name: 'Game Boy (GB)' },
+                { tag: 'GBC', name: 'Game Boy Color (GBC)' },
+                { tag: 'PICO8', name: 'PICO-8' },
+                { tag: 'DC', name: 'Sega Dreamcast (DC)' },
+                { tag: 'N64', name: 'Nintendo 64 (N64)' },
+                { tag: 'PCE', name: 'PC Engine (PCE)' },
+                { tag: 'NEOGEO', name: 'SNK Neo Geo' },
+                { tag: 'WSC', name: 'WonderSwan Color (WSC)' },
+            ];
+
+            const sysList = driveAvailableSystems.length ? driveAvailableSystems : fallbackSystems;
+            select.innerHTML = sysList.map(s => {
+                const tag = s.tag || s.dir || s.code;
+                const name = s.name || tag;
+                const sel = (tag === defaultSys) ? 'selected' : '';
+                return `<option value="${tag}" ${sel}>${name} (${tag})</option>`;
+            }).join('');
+
+            const isArchive = (item.filename || '').toLowerCase().match(/\.(zip|7z|rar)$/);
+            const extractCb = document.getElementById('mdl-gdrive-extract-cb');
+            if (extractCb) {
+                extractCb.checked = Boolean(isArchive && ['PS', 'PSP', 'JAVA'].includes(defaultSys));
+            }
+
+            openModal('modal-download-gdrive');
+        }
+
+        async function confirmStartDriveDownload() {
+            if (!selectedDriveDownloadItem) return;
+            const item = selectedDriveDownloadItem;
+            const select = document.getElementById('mdl-gdrive-sys-select');
+            const extractCb = document.getElementById('mdl-gdrive-extract-cb');
+            const sysCode = select ? select.value : (item.suggested_sys || 'GBA');
+            const extract = extractCb ? extractCb.checked : false;
+
+            closeModal('modal-download-gdrive');
+            showToast(`Bắt đầu tải ${item.title || item.filename} về hệ máy ${sysCode}...`);
+
+            try {
+                const res = await fetch('/api/gdrive/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: item.id,
+                        sys_code: sysCode,
+                        title: item.title,
+                        filename: item.filename,
+                        direct_link: item.direct_link,
+                        url: item.url,
+                        extract: extract
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || 'Đã khởi tạo tiến trình tải!');
+                    checkDriveDownloadsStatus();
+                } else {
+                    showToast('Lỗi tải game: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối tải: ' + e.message);
+            }
+        }
+
+        async function deleteDriveItem(itemId) {
+            if (!confirm('Bạn có chắc muốn xóa game này khỏi thư viện Drive riêng?')) return;
+            try {
+                const res = await fetch('/api/gdrive/library/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: itemId })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Đã xóa game khỏi thư viện Drive!');
+                    loadDriveLibrary();
+                } else {
+                    showToast('Lỗi khi xóa!');
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối: ' + e.message);
+            }
+        }
+
+        async function checkDriveDownloadsStatus() {
+            const bar = document.getElementById('gdrive-downloads-bar');
+            const list = document.getElementById('gdrive-downloads-list');
+            const countDisp = document.getElementById('gdrive-dl-count');
+
+            try {
+                const res = await fetch('/api/gdrive/download/status');
+                const data = await res.json();
+                if (data.ok && data.downloads) {
+                    const downloads = data.downloads;
+                    const activeDownloads = downloads.filter(d => d.status === 'downloading');
+
+                    if (activeDownloads.length > 0) {
+                        if (bar) bar.style.display = 'block';
+                        if (countDisp) countDisp.textContent = `${activeDownloads.length} đang tải`;
+                        if (list) {
+                            list.innerHTML = activeDownloads.map(d => `
+                                <div style="background: #0b1329; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                                        <strong style="color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px;">
+                                            ${escapeDriveHtml(d.title || d.filename)} (${d.sys_code})
+                                        </strong>
+                                        <span style="color: #38bdf8; font-weight: 700;">${d.progress_pct}% - ${d.speed_str}</span>
+                                    </div>
+                                    <div class="progress-bar-bg" style="height: 6px;">
+                                        <div class="progress-bar-fill" style="width: ${d.progress_pct}%;"></div>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+
+                        if (!driveDownloadPolling) {
+                            driveDownloadPolling = setInterval(checkDriveDownloadsStatus, 1000);
+                        }
+                    } else {
+                        if (bar) bar.style.display = 'none';
+                        if (driveDownloadPolling) {
+                            clearInterval(driveDownloadPolling);
+                            driveDownloadPolling = null;
+                            loadDriveLibrary();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error polling drive downloads:', e);
+            }
+        }
 
         // Khởi động trang web
         loadStorageStatus();

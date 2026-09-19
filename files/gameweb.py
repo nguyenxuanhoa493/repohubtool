@@ -94,9 +94,33 @@ try:
         install_emu,
         uninstall_emu,
     )
+    from rh.gdrive import (
+        resolve_gdrive_info,
+        load_gdrive_library,
+        save_gdrive_library,
+        add_to_gdrive_library,
+        delete_from_gdrive_library,
+        guess_system_from_filename,
+    )
     import db
 except ImportError:
     # Standalone mock fallbacks
+    try:
+        from rh.gdrive import (
+            resolve_gdrive_info,
+            load_gdrive_library,
+            save_gdrive_library,
+            add_to_gdrive_library,
+            delete_from_gdrive_library,
+            guess_system_from_filename,
+        )
+    except Exception:
+        def resolve_gdrive_info(u): return {"ok": False, "error": "Not supported"}
+        def load_gdrive_library(): return []
+        def save_gdrive_library(items): return False
+        def add_to_gdrive_library(item): return item
+        def delete_from_gdrive_library(item_id): return False
+        def guess_system_from_filename(f): return "ALL"
     try:
         from rh.theme_manager import (
             load_themes_catalog,
@@ -145,7 +169,10 @@ except ImportError:
     def get_yt_cache_dir():
         return os.path.join(SDCARD_PATH, ".retrohub", "cache", "yt_thumbs")
 
-    import db
+    try:
+        import db
+    except Exception:
+        db = None
 
 # The block above falls back to mocks on ANY ImportError, which would leave the
 # names below undefined. Bind the logger helpers regardless so the log
@@ -503,6 +530,168 @@ def background_download_store_game(
 
   except Exception as e:
     print(f"Store download ROM error: {e}")
+    if os.path.exists(temp_rom_path):
+      try:
+        os.remove(temp_rom_path)
+      except Exception:
+        pass
+    with STORE_DOWNLOADS_LOCK:
+      STORE_DOWNLOADS[dl_id]["status"] = "error"
+      STORE_DOWNLOADS[dl_id]["error_msg"] = str(e)
+
+
+def background_download_gdrive_game(
+    dl_id, sys_code, game_title, direct_link, filename, extract_archive=False, gdrive_item_id=None
+):
+  with STORE_DOWNLOADS_LOCK:
+    STORE_DOWNLOADS[dl_id] = {
+        "id": dl_id,
+        "title": game_title,
+        "sys_code": sys_code,
+        "filename": filename,
+        "source": "gdrive",
+        "status": "downloading",
+        "progress_pct": 0,
+        "speed_str": "0 KB/s",
+        "downloaded_bytes": 0,
+        "total_bytes": 0,
+        "error_msg": "",
+    }
+
+  try:
+    target_rom_dir = resolve_rom_dir(sys_code)
+  except Exception:
+    target_rom_dir = os.path.join(ROMS_DIR, sys_code)
+  os.makedirs(target_rom_dir, exist_ok=True)
+  target_rom_path = os.path.join(target_rom_dir, filename)
+
+  temp_rom_path = target_rom_path + ".tmp_dl"
+  if os.path.exists(temp_rom_path):
+    try:
+      os.remove(temp_rom_path)
+    except Exception:
+      pass
+
+  try:
+    total_sz = 0
+    try:
+      head_cmd = [
+          "curl", "-s", "-I", "-k", "-L", "--max-time", "8",
+          "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "-e", direct_link,
+          direct_link
+      ]
+      head_res = subprocess.run(head_cmd, capture_output=True, text=True)
+      for line in head_res.stdout.splitlines():
+        if line.lower().startswith("content-length:"):
+          total_sz = int(line.split(":", 1)[1].strip())
+    except Exception:
+      total_sz = 0
+
+    with STORE_DOWNLOADS_LOCK:
+      STORE_DOWNLOADS[dl_id]["total_bytes"] = total_sz
+
+    dl_cmd = [
+        "curl", "-s", "-k", "-L",
+        "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "-e", direct_link,
+        "-o", temp_rom_path,
+        direct_link
+    ]
+    proc = subprocess.Popen(dl_cmd)
+
+    t_last = time.time()
+    b_last = 0
+
+    while proc.poll() is None:
+      time.sleep(0.3)
+      if os.path.exists(temp_rom_path):
+        cur_sz = os.path.getsize(temp_rom_path)
+        now = time.time()
+        elapsed = max(0.001, now - t_last)
+        if elapsed >= 0.4:
+          speed = (cur_sz - b_last) / elapsed
+          speed_str = (
+              f"{speed / (1024*1024):.1f} MB/s"
+              if speed > 1024 * 1024
+              else f"{int(speed / 1024)} KB/s"
+          )
+          pct = int((cur_sz / total_sz) * 100) if total_sz > 0 else min(95, int(cur_sz / (1024*1024) * 8))
+          with STORE_DOWNLOADS_LOCK:
+            STORE_DOWNLOADS[dl_id]["progress_pct"] = max(1, min(99, pct))
+            STORE_DOWNLOADS[dl_id]["downloaded_bytes"] = cur_sz
+            STORE_DOWNLOADS[dl_id]["speed_str"] = speed_str
+          t_last = now
+          b_last = cur_sz
+
+    ret_code = proc.wait()
+    if ret_code != 0:
+      raise RuntimeError(f"Lỗi tải file từ Google Drive (Curl exit code: {ret_code})")
+
+    final_sz = os.path.getsize(temp_rom_path) if os.path.exists(temp_rom_path) else 0
+    if final_sz < 64:
+      raise RuntimeError("File tải về rỗng hoặc liên kết Google Drive đã hết hạn/bị chặn")
+
+    try:
+      with open(temp_rom_path, "rb") as check_f:
+        first_bytes = check_f.read(1024)
+        if b"<html" in first_bytes.lower() or b"<!doctype html" in first_bytes.lower():
+          raise RuntimeError("Liên kết Google Drive trả về trang Web thay vì file nhị phân (có thể link tải hết hạn hoặc vượt hạn mức)")
+    except Exception as read_err:
+      if "Liên kết Google Drive" in str(read_err):
+        raise read_err
+
+    is_archive = filename.lower().endswith((".zip", ".7z", ".rar"))
+    if extract_archive and is_archive:
+      with STORE_DOWNLOADS_LOCK:
+        STORE_DOWNLOADS[dl_id]["speed_str"] = "Đang giải nén..."
+      extracted_ok = False
+      if filename.lower().endswith(".zip"):
+        try:
+          import zipfile
+          with zipfile.ZipFile(temp_rom_path, "r") as zf:
+            zf.extractall(target_rom_dir)
+          extracted_ok = True
+        except Exception as ze:
+          print(f"Zip extraction failed: {ze}")
+      if not extracted_ok:
+        try:
+          seven_bin = "/usr/bin/7z" if os.path.exists("/usr/bin/7z") else os.path.join(APP_DIR, "bin", "7zzs")
+          if os.path.exists(seven_bin):
+            subprocess.run([seven_bin, "x", "-y", f"-o{target_rom_dir}", temp_rom_path], capture_output=True)
+            extracted_ok = True
+        except Exception:
+          pass
+      if extracted_ok:
+        try:
+          os.remove(temp_rom_path)
+        except OSError:
+          pass
+      else:
+        os.replace(temp_rom_path, target_rom_path)
+    else:
+      os.replace(temp_rom_path, target_rom_path)
+
+    if gdrive_item_id:
+      try:
+        items = load_gdrive_library()
+        for it in items:
+          if it.get("id") == gdrive_item_id:
+            it["status"] = "downloaded"
+            it["downloaded_sys"] = sys_code
+            break
+        save_gdrive_library(items)
+      except Exception as e:
+        print(f"Error updating gdrive_library status: {e}")
+
+    with STORE_DOWNLOADS_LOCK:
+      STORE_DOWNLOADS[dl_id]["status"] = "completed"
+      STORE_DOWNLOADS[dl_id]["progress_pct"] = 100
+      STORE_DOWNLOADS[dl_id]["downloaded_bytes"] = final_sz
+      STORE_DOWNLOADS[dl_id]["speed_str"] = "Xong"
+
+  except Exception as e:
+    print(f"GDrive download error: {e}")
     if os.path.exists(temp_rom_path):
       try:
         os.remove(temp_rom_path)
@@ -1153,10 +1342,10 @@ class GameWebHandler(BaseHTTPRequestHandler):
                   "desc": "Tuyển tập 100 game kinh điển nhiều lượt chơi nhất",
               },
               {
-                  "id": "VIET",
-                  "name": "Game Việt hóa",
-                  "icon": "🇻🇳",
-                  "desc": "Các bản dịch Tiếng Việt chất lượng cao",
+                  "id": "JAVA",
+                  "name": "Game Java (J2ME)",
+                  "icon": "📱",
+                  "desc": "2,800+ Game điện thoại di động Nokia cổ",
               },
               {
                   "id": "HACK",
@@ -1165,16 +1354,16 @@ class GameWebHandler(BaseHTTPRequestHandler):
                   "desc": "Pokemon Custom, Mario Hacks, Romhacks",
               },
               {
-                  "id": "JAVA",
-                  "name": "Game Java (J2ME)",
-                  "icon": "📱",
-                  "desc": "2,800+ Game điện thoại di động Nokia cổ",
-              },
-              {
                   "id": "RETROSTIC",
                   "name": "Kho game RETROSTIC",
                   "icon": "🕹️",
                   "desc": "Kho tổng hợp đa hệ máy phong phú",
+              },
+              {
+                  "id": "GDRIVE",
+                  "name": "Kho game Google Drive",
+                  "icon": "☁️",
+                  "desc": "Tuyển chọn 1.400+ ROMs từ Google Drive tốc độ cao",
               },
               {
                   "id": "ARCHIVE",
@@ -1249,6 +1438,23 @@ class GameWebHandler(BaseHTTPRequestHandler):
     if path == "/api/store/download/status":
       with STORE_DOWNLOADS_LOCK:
         active_list = list(STORE_DOWNLOADS.values())
+      self.send_json({"ok": True, "downloads": active_list})
+      return
+
+    # ==================== GDRIVE API ====================
+    if path == "/api/gdrive/library":
+      items = load_gdrive_library()
+      self.send_json({"ok": True, "items": items, "count": len(items)})
+      return
+
+    if path == "/api/gdrive/systems":
+      systems = list_all_systems()
+      self.send_json({"ok": True, "systems": systems})
+      return
+
+    if path == "/api/gdrive/download/status":
+      with STORE_DOWNLOADS_LOCK:
+        active_list = [d for d in STORE_DOWNLOADS.values() if d.get("source") == "gdrive"]
       self.send_json({"ok": True, "downloads": active_list})
       return
 
@@ -1962,6 +2168,141 @@ class GameWebHandler(BaseHTTPRequestHandler):
             "ok": True,
             "download_id": dl_id,
             "message": f"Đang bắt đầu tải game {title} về máy...",
+        })
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path in ("/api/gdrive/resolve", "/api/roms/resolve_url"):
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        url = payload.get("url", "").strip()
+        if not url:
+          self.send_json({"ok": False, "error": "Vui lòng nhập đường dẫn Google Drive hoặc link tải ROM trực tiếp"}, 400)
+          return
+
+        if "drive.google.com" in url or "drive.usercontent.google.com" in url:
+          info = resolve_gdrive_info(url)
+          self.send_json(info)
+          return
+
+        if url.startswith("http://") or url.startswith("https://"):
+          parsed_u = urllib.parse.urlparse(url)
+          raw_name = os.path.basename(parsed_u.path)
+          filename = urllib.parse.unquote(raw_name) if raw_name else "downloaded_rom.zip"
+          file_sz = 0
+          try:
+            head_cmd = [
+                "curl", "-s", "-I", "-k", "-L", "--max-time", "6",
+                "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                url
+            ]
+            head_res = subprocess.run(head_cmd, capture_output=True, text=True)
+            for line in head_res.stdout.splitlines():
+              low = line.lower()
+              if low.startswith("content-length:"):
+                try:
+                  file_sz = int(line.split(":", 1)[1].strip())
+                except Exception:
+                  pass
+              elif "filename=" in low:
+                try:
+                  parts = line.split("filename=", 1)[1].strip().strip('"').strip("'").split(";")[0]
+                  if parts:
+                    filename = urllib.parse.unquote(parts)
+                except Exception:
+                  pass
+          except Exception:
+            pass
+
+          guessed_sys = guess_system_from_name(filename)
+          clean_title = os.path.splitext(filename)[0]
+          self.send_json({
+              "ok": True,
+              "type": "static",
+              "file_id": "",
+              "filename": filename,
+              "title": clean_title,
+              "file_size": file_sz,
+              "file_size_str": format_size(file_sz) if file_sz > 0 else "--",
+              "direct_link": url,
+              "suggested_system": guessed_sys,
+          })
+          return
+
+        self.send_json({"ok": False, "error": "Đường dẫn không hợp lệ (phải bắt đầu bằng http:// hoặc https://)"}, 400)
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/gdrive/library/add":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        item = add_to_gdrive_library(payload)
+        self.send_json({"ok": True, "item": item})
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path == "/api/gdrive/library/delete":
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        item_id = payload.get("id", "")
+        success = delete_from_gdrive_library(item_id)
+        self.send_json({"ok": success})
+      except Exception as e:
+        self.send_json({"ok": False, "error": str(e)}, 500)
+      return
+
+    if path in ("/api/gdrive/download", "/api/roms/download_url"):
+      try:
+        payload = json.loads(self.rfile.read(content_len).decode("utf-8"))
+        item_id = payload.get("id", "")
+        sys_code = payload.get("sys_code", "").strip()
+        direct_link = payload.get("direct_link", "").strip()
+        filename = payload.get("filename", "").strip()
+        title = payload.get("title", "").strip() or filename
+        extract_archive = bool(payload.get("extract", False))
+        gdrive_url = payload.get("url", "").strip()
+
+        if not sys_code:
+          self.send_json({"ok": False, "error": "Vui lòng chọn hệ máy để xả game"}, 400)
+          return
+
+        if not direct_link and gdrive_url:
+          if "drive.google.com" in gdrive_url or "drive.usercontent.google.com" in gdrive_url:
+            try:
+              res_info = resolve_gdrive_info(gdrive_url)
+              direct_link = res_info.get("direct_link", "")
+              if not filename:
+                filename = res_info.get("filename", "")
+            except Exception as re_err:
+              self.send_json({"ok": False, "error": f"Không thể lấy link tải từ Drive: {re_err}"}, 500)
+              return
+          elif gdrive_url.startswith("http://") or gdrive_url.startswith("https://"):
+            direct_link = gdrive_url
+            if not filename:
+              raw_n = os.path.basename(urllib.parse.urlparse(gdrive_url).path)
+              filename = urllib.parse.unquote(raw_n) if raw_n else f"{title}.zip"
+
+        if not direct_link:
+          self.send_json({"ok": False, "error": "Thiếu liên kết tải trực tiếp"}, 400)
+          return
+
+        if not filename:
+          filename = f"{title}.zip"
+
+        dl_id = f"dl_gdrive_{int(time.time() * 1000)}_{sys_code}"
+        threading.Thread(
+            target=background_download_gdrive_game,
+            args=(dl_id, sys_code, title, direct_link, filename, extract_archive, item_id),
+            daemon=True,
+        ).start()
+
+        self.send_json({
+            "ok": True,
+            "download_id": dl_id,
+            "message": f"Bắt đầu tải {title} về hệ máy {sys_code}...",
         })
       except Exception as e:
         self.send_json({"ok": False, "error": str(e)}, 500)
