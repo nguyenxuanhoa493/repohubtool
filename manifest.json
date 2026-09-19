@@ -2,13 +2,12 @@
   "version": "2.44",
   "full_release_version": "2.44",
   "python": "any",
-  "built": "2026-09-20T00:49:00+07:00",
+  "built": "2026-09-20T00:49:57+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Bảo mật toàn diện: Loại bỏ key Telegram & AI trong codebase, chuyển sang Cloudflare Worker Proxy",
     "en": "Comprehensive Security: Decoupled Telegram & AI keys via Cloudflare Worker Proxy"
   },
-
   "remove": [
     "app.pyc",
     "assets/icons_preview/Burst - Stock OS v1.1.0.png",
@@ -1674,8 +1673,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 84773,
-      "sha256": "d6ae8bf38a1ba159d9d76465191e61a6e23536a186dc5b4de7c0a002ae324c40"
+      "size": 85257,
+      "sha256": "de8d8dfb749651a26bb7204ed79b5bb62f56f46cbfa7433fee4dfb846ca372f6"
     },
     {
       "path": "icon.png",
@@ -1839,13 +1838,13 @@
     },
     {
       "path": "rh/lobby.py",
-      "size": 5029,
-      "sha256": "8da5b89a150b1d2c520d7abc28c294c9244842833287351fdbb65704814e8696"
+      "size": 7427,
+      "sha256": "1f98fa1ed2035d4e7758939bef42a429a8ac9cd938fd89f107613819fad2010d"
     },
     {
       "path": "rh/logger.py",
-      "size": 35817,
-      "sha256": "ef4a409fd8fb09707c85dc6214d59a8334938a7e7373c01add9095f1e33a4731"
+      "size": 36669,
+      "sha256": "dc2680643eefda4b35aefdd284bd7dba1d60a4fd2fca4440978eb8175dd0d698"
     },
     {
       "path": "rh/media.py",
@@ -1909,8 +1908,8 @@
     },
     {
       "path": "rh/netplay.py",
-      "size": 13489,
-      "sha256": "8617ce2695b18ba2c68c9bea667cfdb8220fec082a51ca7567e777ddfedf8e86"
+      "size": 14136,
+      "sha256": "cddb4dcd420ad6e95d3f519bbde70f0186a1b88166ee6ba0b6e3ac80e0d4f8e5"
     },
     {
       "path": "rh/paths.py",
@@ -2028,9 +2027,14 @@
       "sha256": "68fcc7e8811f7b867b963dcdabc9bc609f2e97a78aa3e9401f8750d27ccb69e7"
     },
     {
+      "path": "rh/secrets.example.json",
+      "size": 249,
+      "sha256": "7547c2674c7fa68ada99205b232aad79467e5a79855f1bfabcdfd2d5e441943a"
+    },
+    {
       "path": "rh/secrets.py",
-      "size": 629,
-      "sha256": "f29fade219ff89dfcfc2e3915fb0e543ea2a745acdb5347648393d79a186b154"
+      "size": 2943,
+      "sha256": "b6beeaa7d24c71440a85ca3b3d9c756547588e25f4fb2fae936ae88bc4a67ff9"
     },
     {
       "path": "rh/security.py",
@@ -2039,8 +2043,8 @@
     },
     {
       "path": "rh/services.py",
-      "size": 25477,
-      "sha256": "1b5e08439c14754cbfc548257331b025f4568e64ee98505405910a4f169d5d91"
+      "size": 26240,
+      "sha256": "a606f5860c651f486d816f262bb86d57466790440615108108da86d5469c0b12"
     },
     {
       "path": "rh/splash.py",
@@ -2094,8 +2098,8 @@
     },
     {
       "path": "rh/version.py",
-      "size": 1971,
-      "sha256": "c9dda46aeeefbf7c30e98c814a97c0b57b5adaa7bb47afcf79a5168a8ac3e3af"
+      "size": 2089,
+      "sha256": "82392720ce1ab5281cdccc6adaff717b1e16bdf6ab56b332047a5494ebbb1e33"
     },
     {
       "path": "rh/yt.py",
@@ -2508,6 +2512,6 @@
       "sha256": "23db841331c6e35d5eb21dcac3c4d69e948e3f4e42c844161f6ea72393ba25d6"
     }
   ],
-  "notes": "• Menu Retro Store mới dạng lưới 3x2: Gom gọn các kho Game, Theme, Icon, Emu, Tải qua link và Cào Boxart ngay trên màn hình chính.\n• Kho game Google Drive: Tích hợp hơn 1.400 ROMs tốc độ cao, hỗ trợ tự động vượt trang xác nhận file lớn khi tải.\n• Nâng cấp Webgame: Tách các sub-menu quản lý game chuyên biệt, thêm nút chuyển nhanh và bộ lọc nguồn Google Drive trực quan.\n• Chuyển tính năng Quản lý Save vào menu Tiện ích, tối ưu hiển thị và bộ nhớ.",
-  "notes_en": "• New Retro Store 3x2 grid menu: Unified Game, Theme, Icon, Emu stores, Link Downloader and Boxart Scraper on Home screen.\n• Google Drive ROMs: Integrated over 1,400 high-speed ROMs, auto-bypassing Google Drive large file warning pages.\n• Webgame upgrade: Separated dedicated game management sub-menus, added quick toggle and filter for Google Drive source.\n• Moved Save Manager into Utilities menu, optimized layout and memory usage."
+  "notes": "• Loại bỏ 100% token Telegram bot và API key AI Chatbot hardcode trong codebase, loại trừ triệt để nguy cơ rò rỉ key.\n• Kiến trúc Cloudflare Worker Proxy: Chuyển tiếp an toàn mọi yêu cầu gửi SSH, file log lỗi, kèo Netplay và AI Chatbot mà không cần lưu token trên thiết bị.\n• Nâng cấp bảo mật CI/CD GitHub Actions: Tự động nhận Telegram Token qua GitHub Repository Secrets khi phát hành OTA.\n• Cơ chế quản lý Secret phân tầng: Hỗ trợ cấu hình bí mật cục bộ trên thẻ nhớ qua secrets.json và biến môi trường.",
+  "notes_en": "• Completely removed hardcoded Telegram Bot and AI Chatbot tokens from codebase, eliminating secret leak vulnerabilities.\n• Cloudflare Worker Proxy: Securely forward SSH info, diagnostic logs, Netplay rooms, and AI Chatbot requests without exposing tokens on handhelds.\n• GitHub Actions CI/CD Security: Automated OTA release notifications now securely authenticate via GitHub Repository Secrets.\n• Multi-tier Secret Management: Safe local secrets configuration support via SDCARD secrets.json and system environment variables."
 }
