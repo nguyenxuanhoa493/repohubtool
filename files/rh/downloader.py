@@ -14,7 +14,8 @@ from .paths import SDCARD_PATH, TEMP_DOWNLOAD_DIR, resolve_rom_dir
 from . import state
 from . import neterrors
 from . import archive as archive_tool
-from .storage import unlock
+from .storage import unlock, free_space as _free_space, human_bytes as _human
+from .romfiles import safe_preferred_name
 from .i18n import tr
 from .boxart import is_real_boxart_url
 from .media import pick_primary_rom, save_boxart_png
@@ -158,6 +159,163 @@ def cancel_active_download():
     dl_state["cancel_requested"] = True
     dl_state["status"] = "cancelled"
     dl_state["msg"] = tr("dl_cancelled_toast")
+
+class NotEnoughSpace(Exception):
+    """Khong du cho tren the cho mot lan giai nen."""
+
+class DownloadCancelled(Exception):
+    """Nguoi dung bam huy giua luc dang giai nen."""
+
+# Chua lai mot khoang khi giai nen: bung sat rip the thi lan ghi ke tiep cua may
+# cung chet, khong chi rieng lan tai nay.
+SPACE_MARGIN = 64 * 1024 * 1024
+
+def ensure_space(need_bytes, path, free_space=None):
+    """Nem NotEnoughSpace khi *path* khong du con cho *need_bytes* + margin.
+
+    Do luong that bai (thieu statvfs tren may desktop) thi di tiep: thieu so lieu
+    khong phai ly do chan nguoi dung, va buoc ghi van bao loi that neu het cho."""
+    free_space = free_space or _free_space
+    margin = SPACE_MARGIN
+    try:
+        have = free_space(path)
+    except Exception as e:
+        print("free_space(%s) failed: %s" % (path, e))
+        return
+    if need_bytes + margin > have:
+        raise NotEnoughSpace("can %s, con %s" % (_human(need_bytes), _human(have)))
+
+def release_result_slot():
+    """Tra slot ket qua ve idle va chay tiep hang cho.
+
+    Thieu buoc nay thi sau lan tai foreground dau tien, is_showing_result() giu
+    True mai: moi luot tai sau chi nam trong hang cho cho toi khi khoi dong lai
+    app (khong con ai dong modal ket qua nua)."""
+    if dl_state.get("status") in ("success", "error", "cancelled"):
+        dl_state["active"] = False
+        dl_state["status"] = "idle"
+    if queued_count():
+        start_next_queued(background=True)
+
+def active_matches(game_info):
+    """Phien dang tai hien tai co dung la *game_info* nay khong.
+
+    So theo game_key chu khong theo title: cung mot tu game co the nam o hai he
+    may khac nhau, va so title se bao "dang tai" cho ca hai."""
+    key = game_key(game_info)
+    return bool(key) and is_download_running() and game_key(dl_state.get("game_info")) == key
+
+def cancel_download(game_info):
+    """Huy phien dang chay, hoac bo game ra khoi hang cho. True khi co dong toi.
+
+    Truoc day nut huy chi dat co cho phien dang chay, nen mot game con nam
+    trong hang cho van duoc tai sau do trong khi nguoi dung da thay "Da huy"."""
+    key = game_key(game_info)
+    if key is None:
+        return False
+    if game_key(dl_state.get("game_info")) == key and is_download_running():
+        cancel_active_download()
+        return True
+    with dl_queue_lock:
+        for i, (_, g) in enumerate(dl_queue):
+            if game_key(g) == key:
+                del dl_queue[i]
+                return True
+    return False
+
+def range_start(header):
+    """Offset bat dau trong header Content-Range, None khi khong doc duoc."""
+    try:
+        return int(str(header).split(" ")[1].split("-")[0])
+    except (IndexError, ValueError):
+        return None
+
+def range_start_ok(header, expected):
+    """Server co tra dung doan duoc yeu cau khong.
+
+    Mot mirror tra 206 nhung sai offset thi cac luong ghi de len nhau va file
+    cuoi van du so byte, chi co noi dung la sai - khong con dau hieu nao."""
+    return range_start(header) == expected
+
+def _safe_member_path(name):
+    """Duong dan tuong doi an toan cua mot muc trong zip, None khi ten doc hai.
+
+    Giu nguyen cau truc thu muc: ban .cue tro ten .bin theo duong dan tuong doi,
+    don het ve mot cho se lam cue tro sai cho va hai dia cung ten track se ghi
+    de nhau. Sau khi bo qua cac thanh phan nguy hiem thi gop lai thanh mot cap
+    (Disc 1/sub/track.bin -> Disc 1/track.bin) de thu muc Roms khong sau them."""
+    raw = str(name or "").replace("\\", "/")
+    parts = [c for c in raw.split("/") if c not in ("", ".", "..")]
+    if not parts:
+        return None
+    if len(parts) > 2:
+        parts = [parts[0], parts[-1]]
+    return os.path.join(*parts)
+
+def unpack_zip(zip_path, rom_dir, sys_code, filename, free_space=None, cancel=None):
+    """Bung *zip_path* vao *rom_dir*, giu cau truc thu muc.
+
+    Tra (duong dan ROM chinh, [moi duong dan da dat]). Bung vao staging truoc
+    va chi chuyen sang Roms/ khi da bung xong het: mot lan tai hong giua chung
+    khong duoc de lai nua bo ROM trong thu muc game."""
+    staging = os.path.join(TEMP_DOWNLOAD_DIR, "staging-" + os.path.basename(filename))
+    shutil.rmtree(staging, ignore_errors=True)
+    staged = []
+    try:
+        os.makedirs(staging, exist_ok=True)
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            members = [m for m in zf.infolist()
+                       if not m.is_dir() and not m.filename.endswith((".url", ".txt"))]
+            ensure_space(sum(max(0, m.file_size) for m in members), rom_dir,
+                         free_space=free_space)
+            for m in members:
+                if cancel and cancel():
+                    raise DownloadCancelled()
+                rel = _safe_member_path(m.filename)
+                if rel is None:
+                    print("Bo qua muc co ten khong an toan: %r" % m.filename)
+                    continue
+                dest = os.path.join(staging, rel)
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                with zf.open(m) as source, open(dest, "wb") as target:
+                    shutil.copyfileobj(source, target, 1024 * 1024)
+                staged.append((dest, rel))
+
+        if not staged:
+            return None, []
+        primary_staged = pick_primary_rom([p for p, _ in staged], sys_code)
+        primary_rel = os.path.relpath(primary_staged, staging)
+        companions = [p for p, _ in staged if p != primary_staged]
+        new_base = safe_preferred_name(primary_staged, companions,
+                                       os.path.splitext(os.path.basename(str(filename)))[0])
+        if new_base:
+            # Giu nguyen thu muc cua ROM chinh: .cue tro ten .bin cung thu muc,
+            # doi ten keo no sang cho khac la cue tro sai duong.
+            primary_rel = os.path.join(os.path.dirname(primary_rel),
+                                       new_base + os.path.splitext(primary_staged)[1].lower())
+        rel_by_src = {src: rel for src, rel in staged}
+        placed = []
+        try:
+            for src, rel in staged:
+                if src == primary_staged:
+                    rel = primary_rel
+                final = os.path.join(rom_dir, rel)
+                os.makedirs(os.path.dirname(final), exist_ok=True)
+                unlock(final)
+                os.replace(src, final)
+                placed.append(final)
+        except OSError:
+            # Nua bo ROM trong Roms/ te hon la khong co gi: lan sau nguoi dung
+            # thay game "da cai" trong khi thieu .bin.
+            for f in placed:
+                try:
+                    os.remove(f)
+                except OSError:
+                    pass
+            raise
+        return os.path.join(rom_dir, primary_rel), placed
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
 def start_download_thread(sys_code, game_info, background=False):
     target_sys = game_info.get("sys_code", sys_code)
@@ -439,6 +597,10 @@ def start_download_thread(sys_code, game_info, background=False):
                                             # garbage at four different offsets.
                                             if w_resp.getcode() != 206:
                                                 raise ValueError("expected 206, got %s" % w_resp.getcode())
+                                            if not range_start_ok(w_resp.headers.get("Content-Range", ""), r_start):
+                                                raise ValueError(
+                                                    "server tra sai doan: %s, can %d"
+                                                    % (w_resp.headers.get("Content-Range"), r_start))
                                             with open(tmp_zip_path, "r+b") as w_file:
                                                 w_file.seek(r_start)
                                                 while not dl_state["cancel_requested"] and thread_error[0] is None:
@@ -639,18 +801,22 @@ def start_download_thread(sys_code, game_info, background=False):
             extracted_rom_path = None
             if target_sys not in NO_EXTRACT_SYSTEMS and zipfile.is_zipfile(tmp_zip_path):
                 try:
-                    extracted_files = []
-                    with zipfile.ZipFile(tmp_zip_path, 'r') as zf:
-                        for member in zf.infolist():
-                            if not member.is_dir() and not member.filename.endswith('.url') and not member.filename.endswith('.txt'):
-                                fname = os.path.basename(member.filename)
-                                if fname:
-                                    target_path = os.path.join(rom_dir, fname)
-                                    unlock(target_path)
-                                    with zf.open(member) as source, open(target_path, "wb") as dest:
-                                        shutil.copyfileobj(source, dest, length=1024*1024)
-                                    extracted_files.append(target_path)
-                    extracted_rom_path = pick_primary_rom(extracted_files, target_sys)
+                    extracted_rom_path, _placed = unpack_zip(
+                        tmp_zip_path, rom_dir, target_sys, filename,
+                        cancel=lambda: dl_state["cancel_requested"])
+                except DownloadCancelled:
+                    dl_state["status"] = "cancelled"
+                    dl_state["active"] = False
+                    dl_state["msg"] = tr("dl_cancelled_toast")
+                    return
+                except NotEnoughSpace as ne:
+                    try:
+                        os.remove(tmp_zip_path)
+                    except OSError:
+                        pass
+                    dl_state["msg"] = "%s\n(%s)" % (tr("dl_err_extract_space"), ne)
+                    dl_state["status"] = "error"
+                    return
                 except Exception as ze:
                     print(f"Zip extraction exception: {ze}")
 
@@ -774,6 +940,16 @@ def start_download_thread(sys_code, game_info, background=False):
                         raw_img = img_resp.read()
                         if raw_img and save_boxart_png(raw_img, target_img):
                             boxart_saved = True
+                            # Man chi tiet tim anh theo ten catalogue (thuong la
+                            # .zip), trong khi anh duoc luu theo ten ROM da bung.
+                            # Ghi them mot ban sao cho ten do de lan sau tim thay.
+                            cat_base = os.path.splitext(
+                                os.path.basename(str(game_info.get("filename", ""))))[0]
+                            if cat_base and cat_base != rom_base:
+                                try:
+                                    save_boxart_png(raw_img, os.path.join(img_dir, cat_base + ".png"))
+                                except Exception as copy_err:
+                                    print(f"Boxart alias failed: {copy_err}")
                 except Exception as ie:
                     print(f"Boxart download exception: {ie}")
 

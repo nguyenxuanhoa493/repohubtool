@@ -15,7 +15,7 @@ import subprocess
 
 from .paths import APP_DIR
 from .romfiles import (GENERIC_ROM_EXTS, ROM_EXT_PRIORITY, SIDECAR_EXTS,
-                       pick_primary_rom)
+                       pick_primary_rom, safe_preferred_name)
 from .storage import free_space as _free_space, human_bytes as _human
 
 # Ly do that bai, la key cua rh.i18n de nguoi goi tu dich.
@@ -126,20 +126,17 @@ def _run(args, timeout=None):
     return p.returncode, p.stdout.decode("utf-8", "replace")
 
 
-def list_entries(archive_path, exe):
-    """(tong byte bung ra, [ten file]) doc tu 7zz, da bo thu muc.
+def parse_list_output(out):
+    """(tong byte, [ten file], parse duoc?) tu output cua `7zz l -slt`.
 
-    Doc header chu khong bung, nen goi truoc moi tang deu gan nhu mien phi."""
-    rc, out = _run([exe, "l", "-slt", archive_path], timeout=120)
-    if rc != 0:
-        tail = out.strip().splitlines()
-        raise ArchiveError(FAILED, tail[-1][:60] if tail else "")
-
+    Tach rieng khoi viec chay 7zz de kiem tra duoc tren may build, va de phan
+    biet "archive rong" voi "khong hieu output" - truoc day ca hai deu tra
+    (0, []) nen buoc kiem dung luong bi bo qua trong im lang."""
     # Khoi dau tien sau dau "--" la mo ta chinh cai archive (cung co dong
     # "Path = "), danh sach file that chi bat dau sau dong "----------".
     body = out.split("\n----------\n", 1)
     if len(body) < 2:
-        return 0, []
+        return 0, [], False
 
     total = 0
     names = []
@@ -161,6 +158,23 @@ def list_entries(archive_path, exe):
                 names.append(path)
                 total += size
             path = None
+    return total, names, True
+
+def list_entries(archive_path, exe):
+    """(tong byte bung ra, [ten file]); tong la None khi khong doc duoc.
+
+    Doc header chu khong bung, nen goi truoc moi tang deu gan nhu mien phi.
+    None khac han 0: nguoi goi phai bo qua buoc kiem dung luong chu khong duoc
+    coi nhu archive rong."""
+    rc, out = _run([exe, "l", "-slt", archive_path], timeout=120)
+    if rc != 0:
+        tail = out.strip().splitlines()
+        raise ArchiveError(FAILED, tail[-1][:60] if tail else "")
+    total, names, parsed = parse_list_output(out)
+    if not parsed:
+        print("7zz l -slt: khong doc duoc danh sach muc cua %s"
+              % os.path.basename(archive_path))
+        return None, []
     return total, names
 
 
@@ -264,9 +278,10 @@ def unpack_to_rom(archive_path, rom_dir, sys_code, exe=None, work_dir=None,
     try:
         for depth in range(MAX_DEPTH):
             need, _ = list_entries(current, exe)
-            have = free_space(os.path.dirname(rom_dir) or ".")
-            if need + SPACE_MARGIN > have:
-                raise ArchiveError(NO_SPACE, "can %s, con %s" % (_human(need), _human(have)))
+            if need is not None:
+                have = free_space(os.path.dirname(rom_dir) or ".")
+                if need + SPACE_MARGIN > have:
+                    raise ArchiveError(NO_SPACE, "can %s, con %s" % (_human(need), _human(have)))
 
             stage = os.path.join(work_dir, "tang%d" % depth)
             files = extract_to(current, stage, exe, progress=progress)
@@ -284,15 +299,36 @@ def unpack_to_rom(archive_path, rom_dir, sys_code, exe=None, work_dir=None,
                 # xoa ngay sau day.
                 companions = [f for f in files
                               if f != rom and not f.lower().endswith(SIDECAR_EXTS)]
+                # Doi ten ROM chinh theo ten kho, nhung chi khi .cue/.m3u ben
+                # canh khong tro toi no.
+                new_base = safe_preferred_name(rom, companions, prefer_name)
                 dest = None
-                for src in [rom] + companions:
-                    name = os.path.basename(src)
-                    if src == rom and prefer_name and not companions:
-                        name = prefer_name + os.path.splitext(src)[1].lower()
-                    target = os.path.join(rom_dir, name)
-                    os.replace(src, target)
-                    if src == rom:
-                        dest = target
+                placed = []
+                try:
+                    # Companion truoc, ROM chinh sau: mot ROM tro thi trong khi
+                    # .bin con nam lai staging la thu khong the phat hien tu ben
+                    # ngoai, con .bin thua thi chi ton cho.
+                    for src in companions + [rom]:
+                        # Giu duong dan tuong doi trong archive: .cue tro ten
+                        # .bin cung thu muc, don het ve mot cho se lam cue tro
+                        # sai cho va hai dia cung ten track ghi de nhau.
+                        rel = os.path.relpath(src, stage)
+                        if src == rom and new_base:
+                            rel = os.path.join(os.path.dirname(rel),
+                                               new_base + os.path.splitext(src)[1].lower())
+                        target = os.path.join(rom_dir, rel)
+                        os.makedirs(os.path.dirname(target), exist_ok=True)
+                        os.replace(src, target)
+                        placed.append(target)
+                        if src == rom:
+                            dest = target
+                except OSError:
+                    for f in placed:
+                        try:
+                            os.remove(f)
+                        except OSError:
+                            pass
+                    raise
                 return dest
 
             nxt = next_volume(files)

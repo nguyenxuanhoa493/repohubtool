@@ -36,7 +36,7 @@ class UtilitiesScreen(BaseScreen):
         cheat_badge = f"{cheat_runner.progress_pct}%" if cheat_runner.is_running() else tr("view")
 
         is_j2me_installed = is_j2me_runtime_ready()
-        j2me_label = "ĐÃ CÓ" if is_j2me_installed else "TỰ CÀI"
+        j2me_label = tr("util_j2me_ready") if is_j2me_installed else tr("util_j2me_auto")
         if state.current_lang != "VI":
             j2me_label = "READY" if is_j2me_installed else "AUTO"
         if is_j2me_installed and runtime_is_stale():

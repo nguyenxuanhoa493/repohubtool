@@ -58,7 +58,10 @@ def resolve_game_img_path(sys_code, filename):
     p2 = os.path.join(img_dir, f"{base_name}.jpg")
     if os.path.exists(p2):
         return p2
-    return None
+    # Ten goi tai ve (.zip) va ten ROM da bung (.gba) khac nhau, con anh bia thi
+    # duoc luu theo ten ban cai that. Hoi thang ban cai truoc khi bo cuoc.
+    from ..installed import image_path
+    return image_path(sys_code, fn)
 
 
 def draw_proportional_boxart(renderer, texture_fn, path, box_x, box_y, box_w, box_h):

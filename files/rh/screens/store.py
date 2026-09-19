@@ -10,15 +10,34 @@ from ..catalog import (get_source_systems_list, get_games_for_view, get_java_cat
                       get_java_category_list, get_system_display_name,
                       scan_all_downloaded_games, alpha_index, clean_game_title,
                       search_catalog_games)
-from ..storage import human_bytes
 from ..ui.boxart import resolve_game_img_path
 from ..emulators import resolve as resolve_emulator
 from ..downloader import (dl_state, download_state_for)
+from ..installed import (find as find_installed, companions as installed_companions,
+                         invalidate as invalidate_installed)
 from ..modals.alphabet import AlphabetModal
 from ..modals.game_action import GameActionModal
 from ..modals.common import ResolutionModal
 from .base import BaseScreen
 
+
+def _installed_indexes():
+    """{(he, ten file): entry} va {(he, base): entry} tu mot lan quet thu muc."""
+    by_name, by_base = {}, {}
+    for g in scan_all_downloaded_games():
+        sc_up = g.get("sys_code", "").upper()
+        name = g.get("filename", "")
+        by_name[(sc_up, name.lower())] = g
+        by_base.setdefault((sc_up, os.path.splitext(name)[0].lower()), g)
+    return by_name, by_base
+
+def _installed_entry(by_name, by_base, sys_code, filename):
+    """Ban cai tren the khop voi mot dong catalogue, hoac None."""
+    if not filename:
+        return None
+    sc_up = str(sys_code or "").upper()
+    return (by_name.get((sc_up, filename.lower()))
+            or by_base.get((sc_up, os.path.splitext(filename)[0].lower())))
 
 class StoreScreen(BaseScreen):
     """Store Screen: Browse curated games, system catalogs, online search, and download queue."""
@@ -42,16 +61,17 @@ class StoreScreen(BaseScreen):
             return tr("store_menu_title")
         if self.view_level == "systems":
             src_names = {
-                "VIET": "GAME VIỆT HÓA",
+                "VIET": tr("store_src_viet"),
                 "HACK": "GAME HACK / MOD",
-                "HITS": "TOP LƯỢT TẢI",
-                "ALL": "KHO TỔNG HỢP"
+                "HITS": tr("store_src_hits"),
+                "ALL": tr("store_src_all")
             }
-            return f"{src_names.get(self.current_source, self.current_source)} - CHỌN HỆ MÁY"
+            name = src_names.get(self.current_source, self.current_source)
+            return f"{name} - {tr('store_choose_system')}"
         if self.view_level == "java_cats":
-            return "GAME JAVA - CHỦ ĐỀ TUYỂN CHỌN"
+            return tr("store_java_topics")
         if self.view_level == "search_results":
-            return f"TÌM KIẾM: '{self.search_query}'"
+            return tr("store_search_results").format(q=self.search_query)
         
         sys_name = get_system_display_name(self.current_sys_code)
         if self.current_java_cat != "ALL":
@@ -62,7 +82,7 @@ class StoreScreen(BaseScreen):
     def get_footer_actions(self):
         actions = [("▲▼", tr("nav_select"), (70, 95, 140), (220, 225, 235), False)]
         if self.view_level in ("games", "search_results"):
-            actions.append(("A", "Chi tiết / Tải", (0, 230, 150), (220, 225, 235), True))
+            actions.append(("A", tr("store_footer_detail"), (0, 230, 150), (220, 225, 235), True))
             actions.append(("X", tr("nav_jump_alpha"), (0, 210, 255), (220, 225, 235), True))
         else:
             actions.append(("A", tr("nav_open"), (0, 230, 150), (220, 225, 235), True))
@@ -116,24 +136,20 @@ class StoreScreen(BaseScreen):
         self.selected_idx = 0
         self.scroll_top = 0
 
-        installed_games = scan_all_downloaded_games()
-        installed_set = {(g.get("sys_code", "").upper(), g.get("filename", "").lower()) for g in installed_games}
-        installed_bases = {(g.get("sys_code", "").upper(), os.path.splitext(g.get("filename", ""))[0].lower()) for g in installed_games}
-
+        by_name, by_base = _installed_indexes()
         games = get_games_for_view(source_type, sys_code, java_cat=java_cat)
         self.items = []
         for g in games:
             fn = g.get("filename", "")
             sc = g.get("sys_code", sys_code)
-            sc_up = sc.upper()
-            fn_base = os.path.splitext(fn)[0].lower()
-            is_dl = (sc_up, fn.lower()) in installed_set or (sc_up, fn_base) in installed_bases
+            entry = _installed_entry(by_name, by_base, sc, fn)
             self.items.append({
                 "id": f"game_{g.get('id', fn)}",
                 "game_info": g,
                 "sys_code": sc,
                 "title": clean_game_title(g.get("title", "Unknown")),
-                "downloaded": is_dl
+                "downloaded": entry is not None,
+                "installed": entry
             })
         self.items.append({"id": "back", "title": tr("back_home")})
         for idx, it in enumerate(self.items):
@@ -171,17 +187,12 @@ class StoreScreen(BaseScreen):
 
             results = search_catalog_games(query.strip(), limit=200)
 
-            installed_games = scan_all_downloaded_games()
-            installed_set = {(g.get("sys_code", "").upper(), g.get("filename", "").lower()) for g in installed_games}
-            installed_bases = {(g.get("sys_code", "").upper(), os.path.splitext(g.get("filename", ""))[0].lower()) for g in installed_games}
-
+            by_name, by_base = _installed_indexes()
             self.items = []
             for g in results:
                 sc = g.get("sys_code", "")
                 fn = g.get("filename", "")
-                sc_up = sc.upper()
-                fn_base = os.path.splitext(fn)[0].lower()
-                is_dl = (sc_up, fn.lower()) in installed_set or (sc_up, fn_base) in installed_bases
+                entry = _installed_entry(by_name, by_base, sc, fn)
                 clean_title = clean_game_title(g.get("title", "Unknown"))
                 display_title = f"[{sc}] {clean_title}" if sc else clean_title
                 self.items.append({
@@ -189,7 +200,8 @@ class StoreScreen(BaseScreen):
                     "game_info": g,
                     "sys_code": sc,
                     "title": display_title,
-                    "downloaded": is_dl
+                    "downloaded": entry is not None,
+                    "installed": entry
                 })
             self.items.append({"id": "back", "title": tr("back_home")})
             for idx, it in enumerate(self.items):
@@ -205,15 +217,19 @@ class StoreScreen(BaseScreen):
         g = item.get("game_info", {})
         sc = item.get("sys_code", self.current_sys_code)
         fn = g.get("filename", "")
+        entry = item.get("installed")
+        if entry is None:
+            entry = find_installed(sc, fn)
         r_dir = resolve_rom_dir(sc)
         rp = ""
         if r_dir and fn:
             cand = os.path.join(r_dir, fn)
             if os.path.exists(cand):
                 rp = cand
-        if not rp:
-            rp = os.path.join(SDCARD_PATH, "Roms", sc, fn)
-        ip = resolve_game_img_path(sc, fn)
+        if not rp and entry:
+            # Ten goi tai ve khac ten ROM da bung: duong dan that nam trong entry.
+            rp = entry.get("path", "")
+        ip = resolve_game_img_path(sc, entry.get("filename") if entry else fn)
 
         def _on_launch(s_code, g_info, with_cheat=False, netplay_param=None):
             self.launch_game(s_code, g_info, with_cheat=with_cheat, netplay_param=netplay_param)
@@ -221,6 +237,7 @@ class StoreScreen(BaseScreen):
         def _on_delete(s_code, g_info):
             self.delete_game(s_code, g_info)
             item["downloaded"] = False
+            item["installed"] = None
 
         def _on_netplay(s_code, g_info):
             from ..modals.netplay import NetplayModal
@@ -239,6 +256,8 @@ class StoreScreen(BaseScreen):
             })
 
         def _on_download_success(s_code, g_info):
+            invalidate_installed()
+            item["installed"] = find_installed(s_code, g_info.get("filename", ""))
             item["downloaded"] = True
 
         self.engine.open_modal(GameActionModal(self.engine), {
@@ -268,16 +287,16 @@ class StoreScreen(BaseScreen):
                     break
 
         if not rom_p or not os.path.exists(rom_p):
-            self.engine.toast("Không tìm thấy file ROM trên thẻ nhớ!")
+            self.engine.toast(tr("store_err_no_rom"))
             return
 
         emu_dir, script_path = resolve_emulator(sys_code)
         if not script_path or not os.path.exists(script_path):
-            self.engine.toast(f"Không tìm thấy giả lập cho hệ {sys_code}!")
+            self.engine.toast(tr("store_err_no_emulator").format(sys=sys_code))
             return
 
         title_display = clean_game_title(game_info.get("title", "Game"))
-        self.engine.toast(f"Đang khởi động {title_display}...")
+        self.engine.toast(tr("store_launching").format(title=title_display))
 
         handoff_script = f"""#!/bin/sh
 cd "{emu_dir or os.path.dirname(script_path)}"
@@ -291,38 +310,42 @@ cd "{emu_dir or os.path.dirname(script_path)}"
                 f.write("store")
             self.engine.running = False
         except Exception as e:
-            self.engine.toast(f"Lỗi khởi động: {e}")
+            self.engine.toast(tr("store_err_launch").format(err=e))
 
     def delete_game(self, sys_code, game_info):
-        """Delete local ROM file and associated assets."""
+        """Delete the installed ROM, its companion files and the boxart.
+
+        Kho ghi ten goi tai ve (.zip) con thu muc Roms giu ten ROM da bung, nen
+        xoa theo ten catalogue truoc day khong xoa duoc gi ma van bao "Da xoa"."""
         rom_p = game_info.get("path") or game_info.get("rom_path") or ""
         fn = game_info.get("filename", "")
         if not rom_p or not os.path.exists(rom_p):
-            candidates = [
-                os.path.join(SDCARD_PATH, "Roms", sys_code, fn),
-                os.path.join(SDCARD_PATH, "Roms", f"({sys_code})", fn),
-            ]
-            for c in candidates:
-                if fn and os.path.exists(c):
-                    rom_p = c
-                    break
+            entry = find_installed(sys_code, fn)
+            rom_p = entry["path"] if entry else ""
 
+        removed = 0
         if rom_p and os.path.exists(rom_p):
-            try:
-                os.remove(rom_p)
-            except Exception as e:
-                self.engine.toast(f"Lỗi xóa ROM: {e}")
-                return
+            # Cue/bin di theo cap: xoa ROM chinh ma de lai .bin la bo rac tren the.
+            for p in [rom_p] + installed_companions(rom_p):
+                try:
+                    os.remove(p)
+                    removed += 1
+                except OSError as e:
+                    self.engine.toast(tr("store_err_delete").format(err=e))
+                    return
 
-        # Delete image if exists
         img_p = resolve_game_img_path(sys_code, fn)
         if img_p and os.path.exists(img_p):
             try:
                 os.remove(img_p)
-            except Exception:
+            except OSError:
                 pass
 
-        self.engine.toast(f"Đã xóa {game_info.get('title', 'Game')}")
+        invalidate_installed()
+        if removed:
+            self.engine.toast(tr("store_deleted").format(title=game_info.get("title", "Game")))
+        else:
+            self.engine.toast(tr("dl_nothing_to_delete"))
 
     def handle_input(self, inputs):
         btn_up = inputs.get("btn_up")
@@ -491,7 +514,7 @@ cd "{emu_dir or os.path.dirname(script_path)}"
                     badge_border = (255, 200, 0)
                     badge_fg = (255, 215, 0)
                 elif item.get("downloaded"):
-                    badge_text = "ĐÃ TẢI"
+                    badge_text = tr("store_badge_downloaded")
                     badge_bg = (16, 48, 36)
                     badge_border = (0, 230, 140)
                     badge_fg = (0, 255, 160)

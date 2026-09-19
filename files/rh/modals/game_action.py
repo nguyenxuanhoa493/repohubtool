@@ -2,7 +2,6 @@
 """Unified Full-screen Game Details, Download Progress & Action Dashboard Modal."""
 
 import os
-import time
 import threading
 from .. import state
 from ..paths import SDCARD_PATH, resolve_rom_dir
@@ -13,10 +12,10 @@ from ..cheat_manager import has_cheat_file, check_or_download_single_cheat
 from ..boxart_scraper import scrape_boxart_for_single_rom
 from ..j2me import (resolution_of_path, pretty_resolution,
                    DEFAULT_PHONE_MODE, load_default_phone_mode)
-from ..emulators import resolve as resolve_emulator
 from ..ui.boxart import resolve_game_img_path
-from ..downloader import (enqueue_download, start_next_queued, dl_state,
-                         download_state_for, is_download_running, cancel_active_download)
+from ..downloader import (enqueue_download, dl_state, game_key, download_state_for,
+                         cancel_download, release_result_slot)
+from ..installed import find as find_installed
 from .base import BaseModal
 
 
@@ -71,23 +70,41 @@ class GameActionModal(BaseModal):
         if not self.img_path and fname and self.sys_code:
             self.img_path = resolve_game_img_path(self.sys_code, fname)
 
+    def close(self):
+        """Dong modal ket qua: tra slot tai ve idle cho hang cho chay tiep.
+
+        Khong co buoc nay thi is_showing_result() giu hang cho mai mai sau lan
+        tai foreground dau tien, va moi luot tai sau chi nam trong hang cho."""
+        was_result = (game_key(dl_state.get("game_info")) == game_key(self.game_info)
+                      and dl_state.get("status") in ("success", "error", "cancelled"))
+        super().close()
+        if was_result:
+            release_result_slot()
+
     def is_downloaded(self):
         if self.rom_path and os.path.exists(self.rom_path):
             return True
         fname = self.game_info.get("filename", "")
-        if fname and self.sys_code:
-            r_dir = resolve_rom_dir(self.sys_code)
-            if r_dir and os.path.exists(os.path.join(r_dir, fname)):
-                self.rom_path = os.path.join(r_dir, fname)
-                return True
+        if not fname or not self.sys_code:
+            return False
+        r_dir = resolve_rom_dir(self.sys_code)
+        if r_dir and os.path.exists(os.path.join(r_dir, fname)):
+            self.rom_path = os.path.join(r_dir, fname)
+            return True
+        # Kho ghi ten goi tai ve (.zip) con thu muc Roms giu ten ROM da bung
+        # (.gba): cung mot game, khac ten file.
+        entry = find_installed(self.sys_code, fname)
+        if entry:
+            self.rom_path = entry["path"]
+            return True
         return False
 
     def is_downloading(self):
+        # download_state_for so theo game_key (id/filename), khong theo title:
+        # hai he may co the co game trung ten.
         if not self.game_info:
             return False
-        return download_state_for(self.game_info) in ("downloading", "queued") or (
-            is_download_running() and dl_state.get("active") and dl_state.get("title") == self.game_info.get("title")
-        )
+        return download_state_for(self.game_info) in ("downloading", "queued")
 
     def _check_download_transition(self):
         """Detect when background/active download finishes and transition smoothly."""
@@ -104,7 +121,8 @@ class GameActionModal(BaseModal):
             if r_dir and fname and os.path.exists(os.path.join(r_dir, fname)):
                 downloaded = True
                 self.rom_path = os.path.join(r_dir, fname)
-            elif dl_state.get("status") == "success":
+            elif (dl_state.get("status") == "success"
+                  and game_key(dl_state.get("game_info")) == game_key(self.game_info)):
                 downloaded = True
                 if dl_state.get("extracted_rom_path") and os.path.exists(dl_state.get("extracted_rom_path")):
                     self.rom_path = dl_state.get("extracted_rom_path")
@@ -116,9 +134,10 @@ class GameActionModal(BaseModal):
                 if self.on_download_success_cb:
                     self.on_download_success_cb(self.sys_code, self.game_info)
                 if self.engine:
-                    self.engine.toast("Tải game thành công!", text_color=(0, 255, 160))
-            elif dl_state.get("status") == "error":
-                err_msg = dl_state.get("msg") or ("Tải game thất bại!" if state.current_lang == "VI" else "Download failed!")
+                    self.engine.toast(tr("dl_toast_success"), text_color=(0, 255, 160))
+            elif (dl_state.get("status") == "error"
+                  and game_key(dl_state.get("game_info")) == game_key(self.game_info)):
+                err_msg = dl_state.get("msg") or tr("dl_toast_failed")
                 if self.engine:
                     self.engine.toast(err_msg, text_color=(255, 100, 100))
 
@@ -145,10 +164,12 @@ class GameActionModal(BaseModal):
                 self.close()
                 return True
             if btn_x:
-                cancel_active_download()
-                self.was_downloading = False
-                if self.engine:
-                    self.engine.toast("Đã hủy tải game!")
+                was_running = dl_state.get("status") == "downloading"
+                if cancel_download(self.game_info):
+                    self.was_downloading = False
+                    if self.engine:
+                        self.engine.toast(tr("dl_cancelled_toast") if was_running
+                                          else tr("dl_cancel_queued"))
                 return True
             return True
 
@@ -171,16 +192,16 @@ class GameActionModal(BaseModal):
                 fname = self.game_info.get("filename", "")
                 g_title = self.game_info.get("title", "")
                 if self.engine:
-                    self.engine.toast("Đang tải ảnh bìa...")
+                    self.engine.toast(tr("dl_toast_boxart_loading"))
                 def _bg_boxart_predl():
                     ok, res_path, msg = scrape_boxart_for_single_rom(self.sys_code, fname, g_title, self.rom_path)
                     if ok and res_path:
                         self.img_path = res_path
                         if self.engine:
-                            self.engine.toast("Đã tải xong ảnh bìa!" if state.current_lang == "VI" else "Boxart downloaded!")
+                            self.engine.toast(tr("dl_toast_boxart_done"))
                     else:
                         if self.engine:
-                            self.engine.toast(msg or ("Không tìm thấy ảnh bìa" if state.current_lang == "VI" else "No boxart found"))
+                            self.engine.toast(msg or tr("dl_toast_boxart_none"))
                 threading.Thread(target=_bg_boxart_predl, daemon=True).start()
                 return True
             return True
@@ -243,7 +264,7 @@ class GameActionModal(BaseModal):
                 fname = self.game_info.get("filename", "")
                 g_title = self.game_info.get("title", "")
                 if self.engine:
-                    self.engine.toast("Đang tải Cheat Code..." if state.current_lang == "VI" else "Downloading Cheats...")
+                    self.engine.toast(tr("dl_toast_cheat_loading"))
                 def _bg_cheat():
                     ok, msg = check_or_download_single_cheat(self.sys_code, fname, g_title)
                     if self.engine:
@@ -254,16 +275,16 @@ class GameActionModal(BaseModal):
                 fname = self.game_info.get("filename", "")
                 g_title = self.game_info.get("title", "")
                 if self.engine:
-                    self.engine.toast("Đang tải ảnh bìa..." if state.current_lang == "VI" else "Scraping Boxart...")
+                    self.engine.toast(tr("dl_toast_boxart_loading"))
                 def _bg_boxart():
                     ok, res_path, msg = scrape_boxart_for_single_rom(self.sys_code, fname, g_title, self.rom_path)
                     if ok and res_path:
                         self.img_path = res_path
                         if self.engine:
-                            self.engine.toast("Đã tải xong ảnh bìa!" if state.current_lang == "VI" else "Boxart downloaded!")
+                            self.engine.toast(tr("dl_toast_boxart_done"))
                     else:
                         if self.engine:
-                            self.engine.toast(msg or ("Không tìm thấy ảnh bìa" if state.current_lang == "VI" else "No boxart found"))
+                            self.engine.toast(msg or tr("dl_toast_boxart_none"))
                 threading.Thread(target=_bg_boxart, daemon=True).start()
                 return True
             elif act_id == "NETPLAY":
@@ -282,11 +303,10 @@ class GameActionModal(BaseModal):
                 return True
             elif act_id == "REGET":
                 # Re-download trigger
-                d_url = self.game_info.get("download_url") or self.game_info.get("url")
                 msg = enqueue_download(self.sys_code, self.game_info)
                 self.was_downloading = True
                 if self.engine:
-                    self.engine.toast(msg or ("Bắt đầu tải lại game..." if state.current_lang == "VI" else "Re-downloading game..."))
+                    self.engine.toast(msg or tr("dl_toast_redownload"))
                 return True
 
         return True
@@ -311,9 +331,9 @@ class GameActionModal(BaseModal):
         engine.fill_rect(0, head_h - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
 
         if is_dling:
-            header_str = "TIẾN ĐỘ TẢI GAME"
+            header_str = tr("dl_header_progress")
         elif not is_dl:
-            header_str = "CHI TIẾT & TẢI GAME"
+            header_str = tr("dl_header_detail")
         else:
             header_str = tr("act_modal_title")
 
@@ -335,18 +355,18 @@ class GameActionModal(BaseModal):
         engine.fill_rect(0, fy, state.SCREEN_W, 1, 40, 55, 85, 255)
 
         if is_dling:
-            engine.draw_footer_btn(32, fy, foot_h, "B", "Chạy ngầm", (70, 95, 140), is_dark_btn=False)
-            engine.draw_footer_btn(state.SCREEN_W - 175, fy, foot_h, "X", "Hủy tải", (255, 75, 75), is_dark_btn=True)
+            engine.draw_footer_btn(32, fy, foot_h, "B", tr("dl_footer_bg"), (70, 95, 140), is_dark_btn=False)
+            engine.draw_footer_btn(state.SCREEN_W - 175, fy, foot_h, "X", tr("dl_footer_cancel"), (255, 75, 75), is_dark_btn=True)
         elif not is_dl:
             fx = 32
-            fx = engine.draw_footer_btn(fx, fy, foot_h, "A", "Tải game ngay", (0, 230, 150), is_dark_btn=True)
-            fx = engine.draw_footer_btn(fx, fy, foot_h, "X", "Tải ảnh bìa", (0, 210, 255), is_dark_btn=False)
-            engine.draw_footer_btn(state.SCREEN_W - 165, fy, foot_h, "B", "Đóng", (255, 75, 75), is_dark_btn=False)
+            fx = engine.draw_footer_btn(fx, fy, foot_h, "A", tr("dl_footer_download"), (0, 230, 150), is_dark_btn=True)
+            fx = engine.draw_footer_btn(fx, fy, foot_h, "X", tr("dl_footer_boxart"), (0, 210, 255), is_dark_btn=False)
+            engine.draw_footer_btn(state.SCREEN_W - 165, fy, foot_h, "B", tr("dl_footer_close"), (255, 75, 75), is_dark_btn=False)
         else:
             fx = 32
-            fx = engine.draw_footer_btn(fx, fy, foot_h, "◄►▲▼", "Chọn hành động" if state.current_lang == "VI" else "Navigate", (70, 95, 140), is_dark_btn=False)
-            fx = engine.draw_footer_btn(fx, fy, foot_h, "A", "Thực hiện" if state.current_lang == "VI" else "Confirm", (0, 230, 150))
-            engine.draw_footer_btn(state.SCREEN_W - 165, fy, foot_h, "B", "Quay lại" if state.current_lang == "VI" else "Back", (255, 70, 70), is_dark_btn=False)
+            fx = engine.draw_footer_btn(fx, fy, foot_h, "◄►▲▼", tr("dl_footer_nav"), (70, 95, 140), is_dark_btn=False)
+            fx = engine.draw_footer_btn(fx, fy, foot_h, "A", tr("dl_footer_confirm"), (0, 230, 150))
+            engine.draw_footer_btn(state.SCREEN_W - 165, fy, foot_h, "B", tr("dl_footer_back"), (255, 70, 70), is_dark_btn=False)
 
         # ----------------------------------------------------------------------
         # Body Geometry
@@ -396,16 +416,31 @@ class GameActionModal(BaseModal):
             else:
                 f_size_str = "--"
 
-        info_h = 100
+        # Mot le trai, mot buoc dong cho ca bon dong: lech nhau giua cac dong la
+        # thu lam card trong nhu bi le chu khong phai thieu cho.
+        info_pad_x = 18
+        info_pad_y = 14
+        row_h = 30
+        sys_disp = get_system_display_name(self.sys_code)
+        info_rows = (
+            (f'{tr("dl_info_title")} {g_title[:40]}', (255, 255, 255)),
+            (f'{tr("dl_info_system")} {self.sys_code} ({sys_disp})', (0, 230, 255)),
+            (f'{tr("dl_info_file")} {fname[:40]}', (200, 215, 235)),
+            (f'{tr("dl_info_size")} {f_size_str}', (255, 215, 0)),
+        )
+
+        # Chua tai thi khong con card "tai game" ben duoi nua, nen card thong tin
+        # dung ca chieu cao con lai cua panel phai.
+        if is_dling or is_dl:
+            info_h = info_pad_y * 2 + row_h * len(info_rows)
+        else:
+            info_h = body_h
         engine.fill_rect(right_x, body_y, right_w, info_h, 18, 25, 42, 255)
         engine.draw_rect(right_x, body_y, right_w, info_h, 45, 60, 95, 255, thickness=1)
 
-        sys_disp = get_system_display_name(self.sys_code)
-        engine.draw_text(f"• Tên game: {g_title[:38]}", engine.font_sub, right_x + 18, body_y + 16, 255, 255, 255)
-        engine.draw_text(f"• Hệ máy: {self.sys_code} ({sys_disp})", engine.font_sub, right_x + 18, body_y + 44, 0, 230, 255)
-        engine.draw_text(f"• Tệp tin: {fname[:38]}", engine.font_sub, right_x + 18, body_y + 72, 200, 215, 235)
-
-        engine.draw_text(f"Dung lượng: {f_size_str}", engine.font_sub, right_x + right_w - 22, body_y + 44, 255, 215, 0, right_align=True)
+        for i, (text, col) in enumerate(info_rows):
+            engine.draw_text(text, engine.font_sub, right_x + info_pad_x,
+                             body_y + info_pad_y + row_h * i, col[0], col[1], col[2])
 
         bottom_y = body_y + info_h + 14
         bottom_h = body_h - info_h - 14
@@ -420,19 +455,23 @@ class GameActionModal(BaseModal):
             engine.draw_rect(right_x, bottom_y, right_w, bottom_h, 0, 246, 246, 255, thickness=2)
 
             # Sub-Header
-            engine.fill_rect(right_x + 2, bottom_y + 2, right_w - 4, 46, 24, 36, 62, 255)
-            engine.draw_text("TIẾN TRÌNH TẢI & GIẢI NÉN ROM", engine.font_sub, right_x + 20, bottom_y + 25, 0, 246, 246, center_y=True)
+            engine.fill_rect(right_x + 2, bottom_y + 2, right_w - 4, 44, 24, 36, 62, 255)
+            engine.draw_text(tr("dl_progress_title"), engine.font_sub, right_x + 18, bottom_y + 24, 0, 246, 246, center_y=True)
 
-            bar_margin = 32
+            bar_margin = 18
             bar_w = right_w - bar_margin * 2
             bar_h = 24
             bar_x = right_x + bar_margin
-            bar_y = bottom_y + 130
+            bar_y = bottom_y + 96
 
             pct = max(0, min(100, dl_state.get("progress_pct", 0)))
             speed_str = dl_state.get("speed_str", "0 KB/s")
-            status_msg = dl_state.get("msg", "Đang tải dữ liệu...")
-            down_str = dl_state.get("downloaded_str", "")
+            # Ten mirror dang phuc vu: khi mot nguon loi, day la thong tin duy
+            # nhat giup nguoi dung biet dang cho doi cai gi.
+            source_name = dl_state.get("source_name", "")
+            status_msg = dl_state.get("msg", tr("dl_default_msg"))
+            if source_name:
+                status_msg = "%s | %s" % (status_msg, source_name)
 
             # Progress Bar Track
             engine.fill_rect(bar_x, bar_y, bar_w, bar_h, 12, 18, 32, 255)
@@ -444,59 +483,24 @@ class GameActionModal(BaseModal):
                 engine.fill_rect(bar_x + 2, bar_y + 2, fill_w, bar_h - 4, 0, 230, 150, 255)
 
             # Text Above Bar
-            engine.draw_text("Tiến độ:", engine.font_sub, bar_x, bar_y - 18, 180, 205, 235, center_y=True)
+            engine.draw_text(tr("dl_progress_label"), engine.font_sub, bar_x, bar_y - 18, 180, 205, 235, center_y=True)
             engine.draw_text(f"{pct}% ({speed_str})", engine.font_badge, bar_x + bar_w, bar_y - 18, 0, 255, 160, center_y=True, right_align=True)
 
             # Text Below Bar
             engine.draw_text(status_msg[:54], engine.font_sub, bar_x, bar_y + 36, 200, 220, 245)
-            if down_str:
-                engine.draw_text(f"Đã tải: {down_str}", engine.font_badge, bar_x + bar_w, bar_y + 36, 255, 215, 0, right_align=True)
 
-            # Quick Helper Note
-            note_y = bottom_y + bottom_h - 70
-            engine.fill_rect(bar_x, note_y, bar_w, 48, 22, 32, 54, 255)
-            engine.draw_rect(bar_x, note_y, bar_w, 48, 45, 65, 105, 255, thickness=1)
-            engine.draw_text("💡 Nhấn (B) để Chạy ngầm hoặc (X) để Hủy tải bất kỳ lúc nào.", engine.font_footer, bar_x + bar_w // 2, note_y + 24, 170, 195, 225, center_x=True, center_y=True)
 
-        # CASE B: PRE-DOWNLOAD (NOT DOWNLOADED)
-        elif not is_dl:
-            engine.fill_rect(right_x, bottom_y, right_w, bottom_h, 18, 25, 42, 255)
-            engine.draw_rect(right_x, bottom_y, right_w, bottom_h, 45, 60, 95, 255, thickness=1)
-
-            # Hero Card: TẢI GAME NGAY
-            hero_pad = 24
-            hero_w = right_w - hero_pad * 2
-            hero_x = right_x + hero_pad
-            hero_y = bottom_y + 28
-            hero_h = 160
-
-            # Glowing Hero Container
-            engine.fill_rect(hero_x, hero_y, hero_w, hero_h, 24, 40, 68, 255)
-            engine.draw_rect(hero_x, hero_y, hero_w, hero_h, 0, 246, 246, 255, thickness=3)
-            engine.fill_rect(hero_x + 4, hero_y + 4, hero_w - 8, 4, 0, 246, 246, 255)
-
-            # Hero Icon & Text
-            engine.draw_text("TẢI GAME VÀO MÁY NGAY", engine.font_title, hero_x + 32, hero_y + 44, 0, 255, 180, center_y=True)
-            engine.draw_text("• Tự động tải ROM từ kho dữ liệu tốc độ cao", engine.font_sub, hero_x + 32, hero_y + 82, 220, 235, 255)
-            engine.draw_text("• Tự động giải nén, thiết lập giả lập và cào ảnh bìa", engine.font_sub, hero_x + 32, hero_y + 114, 180, 205, 235)
-
-            # Button Badge in Hero Card
-            engine.draw_footer_btn(hero_x + hero_w - 180, hero_y + hero_h // 2 - 24, 48, "A", "Tải về ngay", (0, 230, 150), is_dark_btn=True)
-
-            # Secondary Action: Tải ảnh bìa
-            sec_y = hero_y + hero_h + 24
-            sec_h = 80
-            engine.fill_rect(hero_x, sec_y, hero_w, sec_h, 20, 28, 48, 255)
-            engine.draw_rect(hero_x, sec_y, hero_w, sec_h, 40, 58, 92, 255, thickness=1)
-
-            engine.draw_text("Tìm và tải lại ảnh bìa độ nét cao (Boxart Scraping)", engine.font_sub, hero_x + 24, sec_y + sec_h // 2, 200, 215, 235, center_y=True)
-            engine.draw_footer_btn(hero_x + hero_w - 165, sec_y + (sec_h - 44) // 2, 44, "X", "Tải ảnh bìa", (0, 210, 255), is_dark_btn=False)
+        # CASE B: PRE-DOWNLOAD - card thong tin o tren da chiem ca panel phai,
+        # thao tac nam o footer (A tai game / X anh bia / B dong).
 
         # CASE C: DOWNLOADED (ACTION GRID)
-        else:
+        # Phai chan bang is_dl: khi game chua tai, card thong tin da chiem het
+        # panel nen bottom_h am, va luoi hanh dong se bi bop lai roi don xuong
+        # day man hinh.
+        elif is_dl and bottom_h > 40:
             has_cheat = has_cheat_file(self.sys_code, fname)
             cheat_col = (0, 230, 120) if has_cheat else (255, 215, 0)
-            cheat_lbl = ("Đã có Cheat" if state.current_lang == "VI" else "Cheat Ready") if has_cheat else tr("act_get_cheat_title")
+            cheat_lbl = tr("dl_cheat_ready") if has_cheat else tr("act_get_cheat_title")
 
             rom_p = self.rom_path or os.path.join(SDCARD_PATH, "Roms", self.sys_code, fname)
 
