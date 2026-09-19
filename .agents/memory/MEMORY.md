@@ -7,6 +7,7 @@
 - [user] Handheld device: TrimUI Smart Pro / Brick (192.168.100.115) - do not reboot/kill without permission → user-preferences.md
 
 ## Project Conventions
+- [project] RetroHub development workflow: Branching (<user>/<fix|feat>-...), PR to main, review/approval, pull local, tag & push release → development-workflow.md
 - [project] RetroHub release workflow: 2 distinct tiers (Tier 1: OTA Update vs Tier 2: Full Installer Release) → release-workflow.md
 - [project] SDL library search order: $APP/libs:/usr/trimui/lib:/usr/lib64:/usr/lib → project-conventions.md
 - [project] Manifest integrity: always recalculate sha256 & size for modified files in files/ → project-conventions.md

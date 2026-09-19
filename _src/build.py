@@ -62,7 +62,7 @@ def _zip_size(filename):
     try:
         mb = os.path.getsize(os.path.join(ROOT, "dist", filename)) / 1024 / 1024
     except OSError:
-        return "Latest"
+        return "17.4 MB"
     return "%.1f MB" % mb
 
 
@@ -148,7 +148,7 @@ T = {
   "sd_warn": "💡 <b>Tip:</b> The Stock Full ROMs package is tailored for <b>TrimUI Brick Pro</b>. For <b>TrimUI Smart Pro</b> or NextUI, download standalone RetroHub above.",
   "sd_url": SD_FULL_URL,
   "h_feat": "Highlights", "h_install": "7-Step Setup Guide for TrimUI Brick Pro", "h_dl": "Download",
-  "h_support": "Support me", "h_road": "Roadmap", "h_contact": "Contact",
+  "h_support": "Support me", "h_road": "Roadmap", "h_team": "Project Team", "h_contact": "Contact",
   "steps": [
     "<b>Download Stock Full ROMs:</b> Download the full emulator base from <a href=\"https://github.com/DTH-RetroHandheld/assets_brickpro/releases\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--accent);text-decoration:underline\">DTH-RetroHandheld Releases</a>.",
     "<b>Format SD card as exFAT:</b> Insert your MicroSD card into PC and format to <code>exFAT</code>.",
@@ -208,7 +208,7 @@ T = {
   "sd_warn": "💡 <b>Lưu ý:</b> Gói ROMs Stock Full trên dành riêng cho <b>TrimUI Brick Pro</b>. Người dùng <b>TrimUI Smart Pro</b> hoặc NextUI chỉ cần tải bản RetroHub ở trên.",
   "sd_url": SD_FULL_URL,
   "h_feat": "Tính năng nổi bật", "h_install": "7 Bước cài đặt trọn gói cho TrimUI Brick Pro", "h_dl": "Tải về",
-  "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_contact": "Liên hệ",
+  "h_support": "Ủng hộ tôi", "h_road": "Lộ trình phát triển", "h_team": "Thành viên dự án", "h_contact": "Liên hệ",
   "steps": [
     "<b>Tải ROMs Stock Full:</b> Tải trọn bộ giả lập và ROM gốc tại <a href=\"https://github.com/DTH-RetroHandheld/assets_brickpro/releases\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--accent);text-decoration:underline\">DTH-RetroHandheld Releases</a>.",
     "<b>Format thẻ về exFAT:</b> Cắm thẻ nhớ MicroSD vào máy tính và định dạng chuẩn <code>exFAT</code>.",
@@ -265,6 +265,7 @@ SVG_MAIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0
 SVG_TEL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .5 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.5-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/></svg>'
 SVG_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v8.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1v1h14v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z"/></svg>'
 SVG_CUP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13v3h2.5A2.5 2.5 0 0 1 22 9.5v1A3.5 3.5 0 0 1 18.5 14H17v1a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V4zm13 5v3h1.5A1.5 1.5 0 0 0 20 10.5v-1A.5.5 0 0 0 19.5 9H17zM3 21h15v2H3v-2z"/></svg>'
+SVG_GH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>'
 
 
 CSS = """
@@ -439,6 +440,21 @@ CSS = """
     text-overflow:ellipsis;white-space:nowrap}
   .chips i{display:block;font-style:normal;color:var(--muted);font-size:.78rem}
 
+  .team-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .team-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:16px 20px;display:flex;gap:16px;align-items:center;
+    transition:border-color .18s,transform .18s,background .18s}
+  .team-card:hover{border-color:var(--accent-dim);background:#182642;transform:translateY(-2px)}
+  .team-ava{width:56px;height:56px;border-radius:50%;background:#0a1120;
+    border:2px solid var(--line);flex:none;object-fit:cover;transition:border-color .18s}
+  .team-card:hover .team-ava{border-color:var(--accent)}
+  .team-info{min-width:0;flex:1}
+  .team-info b{display:block;font-size:1.08rem;letter-spacing:-.2px;color:var(--text);margin-bottom:4px}
+  .team-gh{display:inline-flex;align-items:center;gap:6px;color:var(--muted);
+    font-size:.88rem;text-decoration:none;transition:color .15s}
+  .team-gh:hover{color:var(--accent)}
+  .team-gh svg{width:16px;height:16px;fill:currentColor;flex:none}
+
   .disc{border-left:3px solid var(--accent-dim);background:#111b2e;
     border-radius:0 12px 12px 0;padding:20px 24px}
   .disc p{color:var(--muted);font-size:.92rem;margin:0 0 10px;line-height:1.6}
@@ -464,7 +480,7 @@ CSS = """
     .logo{animation:none}
     .rise{opacity:1;transform:none;transition:none}
     .stage img{transition:none;transform:none}
-    .btn:hover,.card:hover,.tab:hover,.chips a:hover{transform:none}
+    .btn:hover,.card:hover,.tab:hover,.chips a:hover,.team-card:hover{transform:none}
   }
 """
 
@@ -692,6 +708,30 @@ PAGE = """<!doctype html>
     <ul class="road">{roadrows}</ul>
   </section>
 
+  <section id="thanh-vien" class="rise">
+    <h2>{h_team}</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <img class="team-ava" src="https://github.com/nguyenxuanhoa493.png" alt="Nguyễn Xuân Hòa" loading="lazy" onerror="this.src='/logo.png'">
+        <div class="team-info">
+          <b>Nguyễn Xuân Hòa</b>
+          <a class="team-gh" href="https://github.com/nguyenxuanhoa493" target="_blank" rel="noopener">
+            {SVG_GH} <span>@nguyenxuanhoa493</span>
+          </a>
+        </div>
+      </div>
+      <div class="team-card">
+        <img class="team-ava" src="https://github.com/swptsreal.png" alt="Thanh Sơn" loading="lazy" onerror="this.src='/logo.png'">
+        <div class="team-info">
+          <b>Thanh Sơn</b>
+          <a class="team-gh" href="https://github.com/swptsreal" target="_blank" rel="noopener">
+            {SVG_GH} <span>@swptsreal</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="lien-he" class="rise">
     <h2>{h_contact}</h2>
     <div class="who">
@@ -788,7 +828,7 @@ def render(lang):
         "tagline": t["tagline"], "REL": REL, "VERSION": VERSION, "VER_FULL": VER_FULL, "VER_NEXTUI": VER_NEXTUI,
         "steps": steps, "osrows": osrows, "roadrows": roadrows, "disc": disc,
         "SVG_TG": SVG_TG, "SVG_MAIL": SVG_MAIL, "SVG_TEL": SVG_TEL, "SVG_CUP": SVG_CUP,
-        "SVG_DL": SVG_DL,
+        "SVG_DL": SVG_DL, "SVG_GH": SVG_GH,
         "js": js,
     }.items():
         out = out.replace("{%s}" % k, str(v))
