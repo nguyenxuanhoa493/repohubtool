@@ -6,16 +6,27 @@ khong o led_daemon.py de test import duoc nhu moi module khac.
 
 Doc lai file cau hinh moi 1/10 giay. Do la toan bo co che live preview - man
 hinh chon theme ghi led.json khi con tro di chuyen, va den doi trong khoang
-mot phan muoi giay. Khong can IPC rieng."""
+mot phan muoi giay. Khong can IPC rieng.
+
+Man hinh tat thi den cung tat: nguoi dung tat man hinh la de tiet kiem pin toi
+da, den sang luc do chi lam nong may vo ich. Trong luc do daemon khong ghi
+sysfs mot dong nao, chi con mot nhip thuc moi DARK_POLL giay de biet luc nao
+man hinh bat lai."""
 
 import os
 import signal
 import time
 
-from . import led, ledconf, ledfx
+from . import backlight, led, ledconf, ledfx
 
 FPS = 30
 _CONFIG_POLL = 0.1
+
+# Bao lau hoi lai trang thai man hinh mot lan. Khong the hoi moi khung hinh
+# (them mot lan doc sysfs 30 lan moi giay chi de biet man hinh van dang sang),
+# va cung khong the hoi thua: do tre nay la thoi gian den con sang sau khi
+# nguoi dung tat man hinh.
+DARK_POLL = 0.4
 
 # Do tren Brick Pro that (buoc 0): effect_rgb_hex_<zone> mot minh KHONG lam gi.
 # Phai ghi effect_<zone>=4 ngay sau de kich hoat - dung nhu dong
@@ -31,6 +42,16 @@ def frame(zones, t, p):
                                  p["speed"], p["brightness"]))
                 for z in zones)
 
+
+def _wake(zones, root):
+    """Mo lai cong tran do sang va chot effect cho tung vung.
+
+    Goi khi man hinh bat lai sau khi da tat den: all_off() da ha cac cong tran
+    do sang xuong 0, khong keo len lai thi den khong sang du mau da ghi (tren
+    phan cung that, mau mot minh khong co tac dung - xem led.all_off)."""
+    for z in zones:
+        led.set_effect(z, led.EFFECT_STATIC, root=root)
+    led.set_max_scale(255, root=root)
 
 class Watcher:
     """Giu config hien tai, nap lai khi noi dung doi.
@@ -57,13 +78,19 @@ class Watcher:
         return True
 
 
-def run(config_path=ledconf.CONFIG_PATH, root=led.SYSFS, stop=None):
+def run(config_path=ledconf.CONFIG_PATH, root=led.SYSFS, stop=None, screen_off=None):
     """Vong lap chinh. `stop` la callable tra ve True de ket thuc.
+
+    `screen_off` la callable tra ve True khi man hinh dang tat; mac dinh la
+    backlight.screen_is_off, truyen vao de test duoc tren cay sysfs gia
+    (_src/selftest_led.py).
 
     Tra quyen dung lai cho nguoi goi de test chay duoc mot so khung hinh huu
     han; ban that truyen vao mot co do trinh xu ly SIGTERM dat."""
     if stop is None:
         stop = lambda: False
+    if screen_off is None:
+        screen_off = backlight.screen_is_off
 
     w = Watcher(config_path)
 
@@ -89,11 +116,32 @@ def run(config_path=ledconf.CONFIG_PATH, root=led.SYSFS, stop=None):
 
     t0 = time.monotonic()
     last_poll = 0.0
+    last_screen = 0.0
+    screen_dark = False          # luc khoi dong da mo het den (xem phia tren)
     period = 1.0 / FPS
 
     try:
         while not stop():
             now = time.monotonic()
+
+            # Man hinh tat => tat den va khong ghi sysfs nua.
+            if now - last_screen >= DARK_POLL:
+                last_screen = now
+                dark = bool(screen_off())
+                if dark != screen_dark:
+                    if dark:
+                        led.all_off(root=root)
+                    else:
+                        _wake(zones, root)
+                    screen_dark = dark
+            if screen_dark:
+                # Chi con mot viec: nguoi dung tat tinh nang trong app thi phai
+                # thoat, chu khong ngu mai o day.
+                if w.changed() and not w.cfg.get("enabled"):
+                    break
+                time.sleep(DARK_POLL)
+                continue
+
             if now - last_poll >= _CONFIG_POLL:
                 last_poll = now
                 if w.changed() and not w.cfg.get("enabled"):

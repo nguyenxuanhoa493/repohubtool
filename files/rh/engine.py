@@ -7,12 +7,14 @@ import time
 import math
 import ctypes
 import threading
+from itertools import islice
 import sdl2
 import sdl2.ext
 import sdl2.sdlttf as sdlttf
 import sdl2.sdlimage as sdlimage
 
 from . import state
+from . import backlight
 from .paths import SDCARD_PATH, SPLASH_TEMP_PREVIEW
 from .fonts import VIET_PROBE, font_candidates, pick_font
 from .i18n import tr
@@ -50,17 +52,60 @@ def desktop_window_size(display_w, display_h):
     return (min(max(800, int(display_w * 0.7)), display_w),
             min(max(600, int(display_h * 0.7)), display_h))
 
+# Ket qua kiem tra man hinh tat duoc nho 0.5s: ham nay nam trong vong lap chinh
+# (25-28 khung/giay khi ranh) ma no phai glob + doc vai node sysfs; doc lai moi
+# khung hinh la khong can thiet cho mot trang thai doi vai lan moi phut.
+# Tran cache anh thieu: man hinh nao cung hoi anh bia tung o, nen tap duong
+# dan khong ton tai lon dan theo so game da xem. Chi de khong phinh vo han.
+MAX_MISSING_IMG = 512
+
+_BLANK_POLL_S = 0.5
+_blank_state = [0.0, False]
+
 def is_screen_blanked():
-    """Returns True if physical display is blanked/off by OS (standby/sleep)."""
+    """True khi firmware da tat man hinh (standby/sleep).
+
+    Viec doc node nam o backlight.screen_is_off(): tuy firmware, TrimUI tat den
+    bang fb0/blank, fb1/blank hoac /sys/class/backlight/*/(bl_power|brightness),
+    nen chi hoi mot node la doan sai (xem _src/selftest_perf.py T2)."""
+    now = time.time()
+    if now - _blank_state[0] < _BLANK_POLL_S:
+        return _blank_state[1]
+    _blank_state[0] = now
     try:
-        if os.path.exists("/sys/class/graphics/fb0/blank"):
-            with open("/sys/class/graphics/fb0/blank", "r") as f:
-                val = f.read().strip()
-                if val and val != "0":
-                    return True
+        _blank_state[1] = bool(backlight.screen_is_off())
     except Exception:
-        pass
-    return False
+        _blank_state[1] = False
+    return _blank_state[1]
+
+# Nhip ve khi ranh va nhung man hinh tu ve lai theo thoi gian. Man hinh tinh
+# khong can 25-28 khung hinh/giay: ve lai dung anh cu la phan nang nhat ma vong
+# lap dang lam (do 0.53 s CPU/20 s o man Library tren desktop - xem
+# plans/bao-cao-hieu-nang.md P3). Khi ranh van ve lai dinh ky IDLE_REFRESH_S mot
+# lan, de thay doi do luong nen (vi du danh sach YouTube tai xong, hay cua so
+# desktop bi lo ra) khong bi treo tren man hinh.
+ACTIVE_WINDOW_S = 1.0
+IDLE_REFRESH_S = 0.25
+ALWAYS_ANIMATED_SCREENS = frozenset(("keyboard", "emu_store"))
+
+def needs_redraw(has_input, since_activity, modal_active, toast_active,
+                 download_active, screen_name, since_redraw):
+    """True khi phai ve lai khung hinh.
+
+    Ve khi: co input (hoac vua co trong ACTIVE_WINDOW_S giay, de trang thai chon
+    kip hien), co modal/toast/dang tai (tien trinh doi tung khung hinh), man hinh
+    co hoat anh theo thoi gian (keyboard nhay con tro, emu_store nhay thanh tien
+    trinh), hoac da qua IDLE_REFRESH_S ke tu lan ve truoc."""
+    return bool(
+        has_input
+        or since_activity < ACTIVE_WINDOW_S
+        or modal_active
+        or toast_active
+        or download_active
+        or screen_name in ALWAYS_ANIMATED_SCREENS
+        or since_redraw >= IDLE_REFRESH_S
+    )
+
 
 class RetroHubEngine:
     """Main application engine managing SDL2, fonts, textures, screens, and the event loop."""
@@ -91,9 +136,15 @@ class RetroHubEngine:
         # Caches
         self.text_texture_cache = {}
         self.img_texture_cache = {}
-        self.missing_img_cache = set()
+        # dict chu khong phai set: can thu tu them vao de bot phan cu nhat khi
+        # cham tran (xem _remember_missing).
+        self.missing_img_cache = {}
         self.MAX_TEXT_CACHE = 280
-        self.MAX_IMG_CACHE = 80
+        # 24 chu khong phai 80: anh bia 512x726 la ~1.4 MB texture, nen 80 anh la
+        # tran ~70 MB - qua lon voi may 1 GB. 24 anh du cho 3 khung luoi 6 o
+        # cong khung xem truoc, va anh bo di chi ton 5 ms doc lai tu the (do o
+        # plans/bao-cao-hieu-nang.md). Xem _src/selftest_perf.py T8.
+        self.MAX_IMG_CACHE = 24
 
         # Screen management
         self.screens = {}
@@ -107,6 +158,7 @@ class RetroHubEngine:
 
         # Activity tracking
         self.last_user_activity_time = time.time()
+        self._last_redraw = 0.0
 
     def init_sdl(self):
         """Initialize SDL2 subsystems, window, renderer, and controllers."""
@@ -197,6 +249,17 @@ class RetroHubEngine:
     # --------------------------------------------------------------------------
     # Texture Management
     # --------------------------------------------------------------------------
+    def _remember_missing(self, path):
+        """Ghi nho mot duong dan anh khong ton tai, co tran.
+
+        Duong dan anh bia sai/khong co la binh thuong (game chua tai anh), nen
+        neu khong nho thi moi khung hinh lai stat lai dung cho do."""
+        cache = self.missing_img_cache
+        if len(cache) >= MAX_MISSING_IMG:
+            for old_path in list(islice(cache, max(1, MAX_MISSING_IMG // 4))):
+                cache.pop(old_path, None)
+        cache[path] = True
+
     def get_texture_and_size(self, path, force_reload=False):
         """Retrieve texture with LRU cache."""
         if not path:
@@ -204,7 +267,7 @@ class RetroHubEngine:
         if not force_reload and path in self.missing_img_cache:
             return None, 0, 0
         if force_reload:
-            self.missing_img_cache.discard(path)
+            self.missing_img_cache.pop(path, None)
 
         now_ts = time.time()
         if force_reload or path == SPLASH_TEMP_PREVIEW:
@@ -217,12 +280,12 @@ class RetroHubEngine:
             return item[0], item[1], item[2]
 
         if not os.path.exists(path):
-            self.missing_img_cache.add(path)
+            self._remember_missing(path)
             return None, 0, 0
 
         surf = sdlimage.IMG_Load(path.encode("utf-8"))
         if not surf:
-            self.missing_img_cache.add(path)
+            self._remember_missing(path)
             return None, 0, 0
         w = surf.contents.w
         h = surf.contents.h
@@ -230,7 +293,9 @@ class RetroHubEngine:
         sdl2.SDL_FreeSurface(surf)
         if tex:
             if len(self.img_texture_cache) >= self.MAX_IMG_CACHE:
-                old_paths = sorted(self.img_texture_cache.keys(), key=lambda k: self.img_texture_cache[k][3])[:15]
+                oldest = max(1, self.MAX_IMG_CACHE // 4)
+                old_paths = sorted(self.img_texture_cache.keys(),
+                                   key=lambda k: self.img_texture_cache[k][3])[:oldest]
                 for op in old_paths:
                     it = self.img_texture_cache.pop(op, None)
                     if it and it[0]:
@@ -393,9 +458,16 @@ class RetroHubEngine:
         header_h = 64
         foot_h = 56
         frame_cnt = 0
+        last_frame_at = time.time()
 
         while self.running:
             now = time.time()
+            # dt that giua hai vong lap chu khong phai 0.016 co dinh: che do ranh
+            # ngu 0.035s (va luc man hinh tat ngu 0.2s), nen moi thu tich luy
+            # theo dt - hoat anh, dong ho - se chay sai nhip neu hard-code.
+            # Kep tran 0.2s cho nhip thuc day sau khi man hinh sang lai.
+            dt = max(0.001, min(0.2, now - last_frame_at))
+            last_frame_at = now
             state.time_elapsed = now
             frame_cnt += 1
             if frame_cnt <= 5 or frame_cnt % 300 == 0:
@@ -445,65 +517,77 @@ class RetroHubEngine:
 
             # Update
             if self.active_modal and self.active_modal.is_active():
-                self.active_modal.update(0.016)
+                self.active_modal.update(dt)
             elif self.current_screen:
-                self.current_screen.update(0.016)
+                self.current_screen.update(dt)
 
-            # ------------------------------------------------------------------
-            # Render Pass
-            # ------------------------------------------------------------------
-            sdl2.SDL_SetRenderDrawColor(self.renderer, 13, 17, 28, 255)
-            sdl2.SDL_RenderClear(self.renderer)
-            self.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 13, 17, 28, 255)
+            modal_active = bool(self.active_modal and self.active_modal.is_active())
+            toast_active = self.toast_mgr.is_active()
+            download_active = bool(dl_state.get("active", False))
+            if needs_redraw(has_input=any_input,
+                            since_activity=now - self.last_user_activity_time,
+                            modal_active=modal_active,
+                            toast_active=toast_active,
+                            download_active=download_active,
+                            screen_name=self.current_screen_name,
+                            since_redraw=now - self._last_redraw):
+                # ------------------------------------------------------------------
+                # Render Pass
+                # ------------------------------------------------------------------
+                sdl2.SDL_SetRenderDrawColor(self.renderer, 13, 17, 28, 255)
+                sdl2.SDL_RenderClear(self.renderer)
+                self.fill_rect(0, 0, state.SCREEN_W, state.SCREEN_H, 13, 17, 28, 255)
 
-            # 1. Screen Body
-            if self.current_screen:
-                self.current_screen.render(self)
+                # 1. Screen Body
+                if self.current_screen:
+                    self.current_screen.render(self)
 
-            # 2. Header Bar
-            if self.current_screen_name != "splash_preview":
-                self.fill_rect(0, 0, state.SCREEN_W, header_h, 20, 28, 46, 255)
-                self.fill_rect(0, header_h - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
-                head_title = self.current_screen.get_header_title() if self.current_screen else "RetroHub"
-                self.draw_text(head_title, self.font_title, 40, header_h // 2, 255, 255, 255, center_y=True)
-                if self.current_screen_name == "home":
-                    tw = self.measure_text(head_title, self.font_title)
-                    self.draw_text("v" + APP_VERSION, self.font_sub, 40 + tw + 14, header_h // 2 + 4, 120, 145, 180, center_y=True)
+                # 2. Header Bar
+                if self.current_screen_name != "splash_preview":
+                    self.fill_rect(0, 0, state.SCREEN_W, header_h, 20, 28, 46, 255)
+                    self.fill_rect(0, header_h - 2, state.SCREEN_W, 2, 0, 246, 246, 255)
+                    head_title = self.current_screen.get_header_title() if self.current_screen else "RetroHub"
+                    self.draw_text(head_title, self.font_title, 40, header_h // 2, 255, 255, 255, center_y=True)
+                    if self.current_screen_name == "home":
+                        tw = self.measure_text(head_title, self.font_title)
+                        self.draw_text("v" + APP_VERSION, self.font_sub, 40 + tw + 14, header_h // 2 + 4, 120, 145, 180, center_y=True)
 
-            # 3. Footer Bar
-            if self.current_screen_name != "splash_preview":
-                foot_y = state.SCREEN_H - foot_h
-                self.fill_rect(0, foot_y, state.SCREEN_W, foot_h, 10, 14, 24, 255)
-                self.fill_rect(0, foot_y, state.SCREEN_W, 2, 35, 45, 75, 255)
-                # Modal dang mo thi no lam chu thanh duoi: hint cua man hinh phia
-                # sau (A Chon / B Thoat) sai hoan toan trong luc cap nhat, va
-                # nguoi dung khong biet minh con bam duoc gi.
-                actions = []
-                if (self.active_modal and self.active_modal.is_active()
-                        and hasattr(self.active_modal, "get_footer_actions")):
-                    actions = self.active_modal.get_footer_actions() or []
-                elif self.current_screen:
-                    actions = self.current_screen.get_footer_actions()
-                fx = 30
-                for act in actions:
-                    # act: (key_char, label_str, btn_col, text_col, is_dark)
-                    btn_char, label_str = act[0], act[1]
-                    b_col = act[2] if len(act) > 2 else (0, 230, 150)
-                    t_col = act[3] if len(act) > 3 else (220, 225, 235)
-                    is_dark = act[4] if len(act) > 4 else True
-                    fx = self.draw_footer_btn(fx, foot_y, foot_h, btn_char, label_str, b_col, t_col, is_dark)
+                # 3. Footer Bar
+                if self.current_screen_name != "splash_preview":
+                    foot_y = state.SCREEN_H - foot_h
+                    self.fill_rect(0, foot_y, state.SCREEN_W, foot_h, 10, 14, 24, 255)
+                    self.fill_rect(0, foot_y, state.SCREEN_W, 2, 35, 45, 75, 255)
+                    # Modal dang mo thi no lam chu thanh duoi: hint cua man hinh phia
+                    # sau (A Chon / B Thoat) sai hoan toan trong luc cap nhat, va
+                    # nguoi dung khong biet minh con bam duoc gi.
+                    actions = []
+                    if (self.active_modal and self.active_modal.is_active()
+                            and hasattr(self.active_modal, "get_footer_actions")):
+                        actions = self.active_modal.get_footer_actions() or []
+                    elif self.current_screen:
+                        actions = self.current_screen.get_footer_actions()
+                    fx = 30
+                    for act in actions:
+                        # act: (key_char, label_str, btn_col, text_col, is_dark)
+                        btn_char, label_str = act[0], act[1]
+                        b_col = act[2] if len(act) > 2 else (0, 230, 150)
+                        t_col = act[3] if len(act) > 3 else (220, 225, 235)
+                        is_dark = act[4] if len(act) > 4 else True
+                        fx = self.draw_footer_btn(fx, foot_y, foot_h, btn_char, label_str, b_col, t_col, is_dark)
 
-            # 4. Modals (Overlays)
-            if self.active_modal and self.active_modal.is_active():
-                self.active_modal.render(self)
+                # 4. Modals (Overlays)
+                if self.active_modal and self.active_modal.is_active():
+                    self.active_modal.render(self)
 
-            # 5. Topmost Toast Notifications
-            self.toast_mgr.render(self.renderer, self.font_toast, self.text_texture_cache)
+                # 5. Topmost Toast Notifications
+                self.toast_mgr.render(self.renderer, self.font_toast, self.text_texture_cache)
 
-            sdl2.SDL_RenderPresent(self.renderer)
+                sdl2.SDL_RenderPresent(self.renderer)
+                self._last_redraw = now
 
             # Adaptive 60 FPS vs 28 FPS idle sleep
-            is_active = (now - self.last_user_activity_time < 1.0) or dl_state.get("active", False) or self.toast_mgr.is_active()
+            is_active = ((now - self.last_user_activity_time < ACTIVE_WINDOW_S)
+                         or download_active or toast_active)
             if is_active:
                 time.sleep(0.016)
             else:

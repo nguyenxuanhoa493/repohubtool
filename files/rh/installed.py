@@ -26,10 +26,13 @@ KNOWN_ROMS = frozenset(GENERIC_ROM_EXTS) | frozenset(
      ".pce", ".wsc", ".ws", ".a26", ".a78", ".lnx", ".fig", ".smd"))
 
 _cache = {}
+# Cache rieng cho danh sach thu muc: xem _scan_dirs().
+_dir_cache = {}
 
 def invalidate():
     """Quen moi thu da quet. Goi sau khi tai xong hoac xoa game."""
     _cache.clear()
+    _dir_cache.clear()
 
 def base_key(sys_code, filename):
     """Khoa so sanh cua mot ten file: bo duong dan, bo duoi, bo duoi .p8."""
@@ -44,7 +47,19 @@ def _img_dir(sys_code):
     return state.catalogs.get(sys_code, {}).get("img_dir", os.path.join(IMGS_DIR, sys_code))
 
 def _scan_dirs(sys_code):
-    """Thu muc he may, va mot tang con (J2ME chia theo do phan giai man hinh)."""
+    """Thu muc he may, va mot tang con (J2ME chia theo do phan giai man hinh).
+
+    Ket qua duoc cache ngan (CACHE_TTL) vi ham nay nam tren duong render: man
+    Library goi image_path() cho tung o anh bia moi khung hinh, va mot lan
+    image_path() la mot lan listdir + isdir toan bo file trong Roms/<he> -
+    do tren may that la 5.3 ms/lan voi thu muc 300 file (xem
+    _src/selftest_perf.py). invalidate() xoa ca cache nay, nen sau khi tai/xoa
+    game thi danh sach thu muc duoc quet lai ngay."""
+    now = time.time()
+    hit = _dir_cache.get(sys_code)
+    if hit and now - hit[0] < CACHE_TTL:
+        return hit[1]
+
     rom_dir = resolve_rom_dir(sys_code)
     dirs = [rom_dir]
     try:
@@ -54,6 +69,7 @@ def _scan_dirs(sys_code):
                 dirs.append(p)
     except OSError:
         pass
+    _dir_cache[sys_code] = (now, (rom_dir, dirs))
     return rom_dir, dirs
 
 def entries(sys_code):

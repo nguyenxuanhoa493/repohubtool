@@ -28,6 +28,8 @@ class YoutubeScreen(BaseScreen):
         self.fav_ids = set()
         self.has_more = False
         self.loading_more = False
+        # The he cua lan nap danh sach: xem load_current_tab().
+        self._load_gen = 0
 
     def build_tabs(self, select_tab: str = None):
         """Build tab list dynamically: puts '★ Yêu thích' first if favorites exist."""
@@ -54,6 +56,10 @@ class YoutubeScreen(BaseScreen):
         self.load_current_tab()
         self._surface_last_error()
 
+    def on_exit(self):
+        # Roi man hinh thi moi viec mang dang chay tro nen vo nghia.
+        self._load_gen += 1
+
     def _surface_last_error(self):
         """Show the previous playback failure (if any) and clear the marker."""
         try:
@@ -78,22 +84,31 @@ class YoutubeScreen(BaseScreen):
         self.selected_idx = 0
         self.scroll_row = 0
 
+        # Moi lan doi tab la mot the he moi: thread cu (dang cho mang) phai bi bo
+        # khi xong, khong duoc ghi de ket qua cua tab vua chon. Bam L1/R1 lien tuc
+        # truoc day de lai nhieu thread cung ghi vao self.videos, va cai xong sau
+        # cung thang - nguoi dung thay dung danh sach cua mot tab khac.
+        self._load_gen += 1
+        gen = self._load_gen
+
         def _bg_fetch():
+            videos = []
             try:
                 if cur_q in ("★ Yêu thích", "Yêu thích"):
-                    self.videos = yt.load_favorites() or []
+                    videos = yt.load_favorites() or []
                 elif cur_q == "Trending":
-                    self.videos = yt.get_trending() or []
+                    videos = yt.get_trending() or []
                 elif cur_q == "Lịch sử":
-                    self.videos = playback.load_watched() or []
+                    videos = playback.load_watched() or []
                 else:
                     cached, _ = yt.load_feed_cache(cur_q)
-                    if cached:
-                        self.videos = cached
-                    else:
-                        self.videos = yt.search_youtube(cur_q) or []
+                    videos = cached if cached else (yt.search_youtube(cur_q) or [])
             except Exception as e:
-                self.engine.toast(f"Lỗi tải YouTube: {e}")
+                if gen == self._load_gen:
+                    self.engine.toast(f"Lỗi tải YouTube: {e}")
+            if gen != self._load_gen:
+                return
+            self.videos = videos
             self.loading = False
             if cur_q not in ("★ Yêu thích", "Yêu thích", "Trending", "Lịch sử"):
                 self.has_more = bool(yt.get_continuation_token(cur_q))
@@ -101,6 +116,8 @@ class YoutubeScreen(BaseScreen):
             # Background download thumbnails
             def _bg_thumbs():
                 for v in self.videos[:18]:
+                    if gen != self._load_gen:
+                        break            # da doi tab: dung tai anh cua tab cu
                     v_id = v.get("id")
                     if v_id:
                         yt.fetch_thumbnail(v.get("thumb", ""), YT_CACHE_DIR, v_id)
@@ -116,19 +133,26 @@ class YoutubeScreen(BaseScreen):
         if cur_q in ("★ Yêu thích", "Yêu thích", "Trending", "Lịch sử"):
             return
         self.loading_more = True
+        gen = self._load_gen
 
         def _bg():
             try:
                 more, token = yt.fetch_more_youtube(cur_q)
+                if gen != self._load_gen:
+                    return                # da doi tab: bo ket qua trang cu
                 existing = {v.get("id") for v in self.videos}
                 added = [v for v in more if v.get("id") and v.get("id") not in existing]
                 self.videos.extend(added)
                 self.has_more = bool(token)
                 for v in added[:18]:
+                    if gen != self._load_gen:
+                        break
                     yt.fetch_thumbnail(v.get("thumb", ""), YT_CACHE_DIR, v["id"])
             except Exception:
-                self.has_more = False
-            self.loading_more = False
+                if gen == self._load_gen:
+                    self.has_more = False
+            if gen == self._load_gen:
+                self.loading_more = False
 
         threading.Thread(target=_bg, daemon=True).start()
 
