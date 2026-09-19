@@ -1,8 +1,8 @@
 {
   "version": "2.41",
-  "full_release_version": "2.40",
+  "full_release_version": "2.41",
   "python": "any",
-  "built": "2026-09-19T16:30:34+07:00",
+  "built": "2026-09-19T16:32:02+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa vòng lặp cập nhật OTA, lỗi treo ở 95% và thêm nút Huỷ khi đang tải",
@@ -269,8 +269,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 4984,
-        "sha256": "86101990b6cb6cb8020109f0df2a8e9609929ef3dac1cbcfe8d08d3cd2a601df"
+        "size": 5301,
+        "sha256": "4f91e44db23cb56dbf9427d6e991d0ef3764c01cbc6db72d80638284a6ebe84e"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -1582,8 +1582,8 @@
     },
     {
       "path": "emus/JAVA/launch.sh",
-      "size": 4984,
-      "sha256": "86101990b6cb6cb8020109f0df2a8e9609929ef3dac1cbcfe8d08d3cd2a601df"
+      "size": 5301,
+      "sha256": "4f91e44db23cb56dbf9427d6e991d0ef3764c01cbc6db72d80638284a6ebe84e"
     },
     {
       "path": "emus/JAVA/zulu17/bin/default_phone.cfg",
@@ -1752,13 +1752,13 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 22017,
-      "sha256": "f0524f94abde53742fe8b0ff51f6404ca4eb4eb762be07ee1979f5852d629723"
+      "size": 23524,
+      "sha256": "1159d4e4556bb13238378b4ecb94ecdee177273e03d09c941ef860e94e3d9156"
     },
     {
       "path": "rh/env.py",
-      "size": 5708,
-      "sha256": "efc20841dd3cf21340a2e577753f919236392b7255c4acb4927e78edd85e5a4a"
+      "size": 6600,
+      "sha256": "b29290f377a484252a662d358e08b99631279687c212ee964567bbdaa46e0157"
     },
     {
       "path": "rh/fonts.py",
@@ -1767,8 +1767,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 71221,
-      "sha256": "c18062512792015d4d8b733898c3607d57117cf0c3335b808402b7d6279df6bd"
+      "size": 72190,
+      "sha256": "d4089c8cb32a7f3f0af656a06cf9814c44918ad9dc5d3b251f57c038759c2baf"
     },
     {
       "path": "rh/icon_manager.py",
@@ -1877,8 +1877,8 @@
     },
     {
       "path": "rh/modals/update.py",
-      "size": 19525,
-      "sha256": "59808e367247bb212943a8b1fce4fcf59071449230e365aa13925779424658f1"
+      "size": 24686,
+      "sha256": "26e87dc8f0c55a06346a784863f7359a7b727f883fc3767a579aa52d76380b59"
     },
     {
       "path": "rh/modals/yt_loading.py",
@@ -2027,8 +2027,8 @@
     },
     {
       "path": "rh/state.py",
-      "size": 4984,
-      "sha256": "71db1ed96ec459fb2e3a9d0b0da413b14e842e18b08303ab9e0185f90545feaf"
+      "size": 5495,
+      "sha256": "cc8ad0040bbff5711766f9038fa5f7d04426db85e397cbd6c1e39822ecc7347d"
     },
     {
       "path": "rh/storage.py",
@@ -2067,13 +2067,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 28510,
-      "sha256": "08dd1f651ce8227f72a18491d71e6155c4c8d339f8ec6c242f6634576966bd1e"
+      "size": 33696,
+      "sha256": "d2c2617f331260795963b9f47ec3cd91f6fe7a025badd7fbe0828001e927e929"
     },
     {
       "path": "rh/version.py",
-      "size": 1313,
-      "sha256": "2ae71afcf94605f6b15aa24eab894d2c7f9d460b2d36923a321b97a786d75af2"
+      "size": 1609,
+      "sha256": "d3ef3dcdbe4fab31a8c96717f9ecc462ce7c86b8f67bd74c7fbc57aef65301a4"
     },
     {
       "path": "rh/yt.py",
