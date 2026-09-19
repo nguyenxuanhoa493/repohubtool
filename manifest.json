@@ -1,12 +1,12 @@
 {
-  "version": "2.45",
-  "full_release_version": "2.45",
+  "version": "2.46",
+  "full_release_version": "2.46",
   "python": "any",
-  "built": "2026-09-20T01:13:17+07:00",
+  "built": "2026-09-20T01:48:25+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa lỗi cài đặt giả lập Java J2ME: Khắc phục lỗi [Errno 5] Input/output error trên thẻ nhớ FAT32/exFAT, giải nén an toàn 3 tầng và tối ưu RAM",
-    "en": "Fix Java J2ME Installation: Resolved [Errno 5] Input/output error on FAT32/exFAT, 3-tier safe extraction and RAM optimization"
+    "vi": "Bảo mật & Nâng cấp: Proxy quét Google Drive qua Cloudflare Worker, công cụ hỗ trợ dry-run và tối ưu nạp secrets",
+    "en": "Security & Upgrades: Proxy Google Drive scanning via Cloudflare Worker, dry-run scanner tool and secrets loader optimization"
   },
   "remove": [
     "app.pyc",
@@ -2033,8 +2033,8 @@
     },
     {
       "path": "rh/secrets.py",
-      "size": 2943,
-      "sha256": "b6beeaa7d24c71440a85ca3b3d9c756547588e25f4fb2fae936ae88bc4a67ff9"
+      "size": 2992,
+      "sha256": "63b51b18cec9dfcbaacdadc506ed8d4240bdc949da29ddfc92f7bb32f5485d18"
     },
     {
       "path": "rh/security.py",
@@ -2098,8 +2098,8 @@
     },
     {
       "path": "rh/version.py",
-      "size": 2228,
-      "sha256": "57cdef94be2fb4c75ece996c0080de46b2c905d6a5421ebbec403ebf7a8c6aab"
+      "size": 2345,
+      "sha256": "fb560e43b5da7231ecc13bec313eb4e321d00bedf148eafcf95702fe86a5d14d"
     },
     {
       "path": "rh/yt.py",
@@ -2512,6 +2512,6 @@
       "sha256": "23db841331c6e35d5eb21dcac3c4d69e948e3f4e42c844161f6ea72393ba25d6"
     }
   ],
-  "notes": "• Khắc phục lỗi [Errno 5] Input/output error: Áp dụng cơ chế giải nén an toàn 3 tầng (BusyBox tar native, 7-Zip 7zzs, và Python tarfile với set_attrs=False), loại bỏ hoàn toàn các lỗi xung đột quyền POSIX khi giải nén đè lên thẻ nhớ FAT32/exFAT.\n• Tối ưu dung lượng RAM khi tải gói cài: Chuyển vị trí tải file nén 62.8 MB sang bộ nhớ đệm trên thẻ SD (paths.TEMP_DOWNLOAD_DIR) thay vì ghi vào /tmp (tmpfs trong RAM), loại trừ nguy cơ cạn kiệt RAM và lỗi I/O trên máy handheld.\n• Mở khóa file tự động và đồng bộ cấu hình Java: Tự động gỡ cờ DOS Read-Only trước khi ghi đè, tự động kích hoạt tạo JAVA.pak cho NextUI, thiết lập cấu hình phím/render và bảo toàn dữ liệu save game (RMS).",
-  "notes_en": "• Resolved [Errno 5] Input/output error: Implemented a 3-tier safe extraction mechanism (native BusyBox tar, 7-Zip 7zzs, and Python tarfile with set_attrs=False), eliminating POSIX attribute conflicts on FAT32/exFAT SD cards.\n• RAM optimization during package download: Relocated temporary downloads for the 62.8 MB archive to SD card cache (paths.TEMP_DOWNLOAD_DIR) instead of /tmp (tmpfs in RAM), preventing memory exhaustion and I/O failures on handhelds.\n• Automated file unlock and Java configuration: Auto-unlocked DOS Read-Only flags before overwrite, and automatically wired NextUI JAVA.pak generation, keypad/renderer profiles, and RMS save persistence."
+  "notes": "• Loại bỏ hoàn toàn Google API Key khỏi codebase, chuyển toàn bộ việc quét thư mục Google Drive qua Cloudflare Worker Proxy được bảo vệ bởi Worker Secrets.\n• Bổ sung cờ --dry-run và --folder-id vào công cụ quét ROM Google Drive (tools/import_gdrive_folder_to_db.py), cho phép chạy thử kiểm tra hoặc quét từng thư mục mà không ghi đè Database.\n• Tối ưu hóa bộ nạp rh.secrets: Đồng bộ nạp đường dẫn thẻ nhớ qua biến môi trường SDCARD_PATH, nâng cao tính độc lập khi kiểm thử và phát triển.",
+  "notes_en": "• Completely removed Google API Key from codebase, delegating all Google Drive folder listings to Cloudflare Worker Proxy secured by Worker Secrets.\n• Added --dry-run and --folder-id options to the Google Drive ROM scanner tool (tools/import_gdrive_folder_to_db.py), allowing safe testing or targeting a single folder without touching the database.\n• Optimized rh.secrets loader: Synchronized storage paths via SDCARD_PATH environment variable, improving test isolation and reliability."
 }
