@@ -2,7 +2,7 @@
   "version": "2.43",
   "full_release_version": "2.43",
   "python": "any",
-  "built": "2026-09-19T23:16:00+07:00",
+  "built": "2026-09-19T23:17:25+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Menu Retro Store dạng lưới, tích hợp 1.400+ ROMs Google Drive và nâng cấp Webgame",
@@ -253,10 +253,10 @@
   "catalog": {
     "path": "catalog/roms_store.sqlite3",
     "url": "catalog/roms_store.sqlite3.gz",
-    "sha256": "ea986d7a4b5b2f938dfefd894e0480bf98199a6604651af4f68497cf4ab908db",
-    "sha256_plain": "70de070f3bef0b6bdb91fd8fa2de1f3ee7eae32fb04d727418a7718572acee7d",
-    "size": 8298184,
-    "size_plain": 31342592
+    "sha256": "dd67e386c2fb3b6eeb52fc24d92df98be6a46e3e5a557ecfb4031acdb2fef0a0",
+    "sha256_plain": "b0b0f822e1b477bfc23272fab7e05e09b0077794a2f66c3e5c29b73513f72eee",
+    "size": 9896087,
+    "size_plain": 35942400
   },
   "runtime": {
     "files": [
@@ -323,8 +323,8 @@
     },
     {
       "path": "app.py",
-      "size": 4270,
-      "sha256": "1bafe3f0bd798fe0be69088e945e820ace9d94e73ac47285c5d54036adab699d"
+      "size": 4390,
+      "sha256": "6f80d139e5421f18be45f48075a7b939c19700aa775c861b64a8a03688508d21"
     },
     {
       "path": "assets/emus_preview/bg-arcade.png",
@@ -885,6 +885,11 @@
       "path": "assets/flag_vi.png",
       "size": 1273,
       "sha256": "95cc00c7cdcc250ef7bf5b4af058e662a21cc4976ecf88da6eec5ba73b50b32f"
+    },
+    {
+      "path": "assets/ic-boxart.png",
+      "size": 5648,
+      "sha256": "dd3b347d8d3c86a4fc20f454c411666bfe40520e3ce797669a3c1f4497675444"
     },
     {
       "path": "assets/icons_preview/burst.png",
@@ -1568,8 +1573,8 @@
     },
     {
       "path": "db.py",
-      "size": 21465,
-      "sha256": "1ac126bdb62225e9992d3fba6675463bddf11d3e603abb64446729ac2ca65e8c"
+      "size": 22497,
+      "sha256": "22101603d1051cb126232b1c073031d71cd2f897db18b92e4347d9c962f70091"
     },
     {
       "path": "emus/JAVA/NOTICE.txt",
@@ -1668,8 +1673,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 72170,
-      "sha256": "ba91e0ceaee48c84225ea2c271c4785c0c1968741d2f5be7b85d0c9b60b89890"
+      "size": 84773,
+      "sha256": "d6ae8bf38a1ba159d9d76465191e61a6e23536a186dc5b4de7c0a002ae324c40"
     },
     {
       "path": "icon.png",
@@ -1723,8 +1728,8 @@
     },
     {
       "path": "rh/catalog.py",
-      "size": 14762,
-      "sha256": "e6fe0fb654247457e48eef1e3e4298806a2bd417f29b26e76b23359791ff02c0"
+      "size": 14851,
+      "sha256": "283cb19b612aab3951be6c23e824517af49ea747c96c63cff042919c2cbbca74"
     },
     {
       "path": "rh/cheat_manager.py",
@@ -1743,8 +1748,8 @@
     },
     {
       "path": "rh/downloader.py",
-      "size": 57187,
-      "sha256": "89598d6caa25f3f04822e2bbaa9785723a922cb60d20debc1e16f7bb68c43db5"
+      "size": 59039,
+      "sha256": "f18a414e0299b313d4a932e79eced6bbc5b5d20d86e5f0beac6e294bd89a3390"
     },
     {
       "path": "rh/emulator_store.py",
@@ -1772,9 +1777,14 @@
       "sha256": "423bacf4e8d95afc0239b6134e0ea0793090c37e165888c633fae72795f5d67d"
     },
     {
+      "path": "rh/gdrive.py",
+      "size": 11624,
+      "sha256": "c1b456b7c6ccb63e4b7a7935a65c0f48d3c6dd1aed9a62134fcea757b3730c98"
+    },
+    {
       "path": "rh/i18n.py",
-      "size": 72190,
-      "sha256": "d4089c8cb32a7f3f0af656a06cf9814c44918ad9dc5d3b251f57c038759c2baf"
+      "size": 75020,
+      "sha256": "023e66e395707dd51da676396e7e5e3c710d8c6021eb2b4ede5f7efdef218531"
     },
     {
       "path": "rh/icon_manager.py",
@@ -1943,8 +1953,8 @@
     },
     {
       "path": "rh/screens/home.py",
-      "size": 6079,
-      "sha256": "36e26f5b5564b42fd838e20820e7943f0112227d8ae6b116437a2e44d189ac7b"
+      "size": 6090,
+      "sha256": "7d57c6abb9c35cff784ac36ef187053a6f21489e9cf8e405347b707049a34de4"
     },
     {
       "path": "rh/screens/icon_store.py",
@@ -1977,6 +1987,11 @@
       "sha256": "a273ab894bc73c6487e97ca91a851a335b0d0c5805061603c54d079e1da393bb"
     },
     {
+      "path": "rh/screens/retro_store.py",
+      "size": 9294,
+      "sha256": "a14102ba1971e6191000450f580905c4c4de2f651e586409fa8a828e140a7b1d"
+    },
+    {
       "path": "rh/screens/settings.py",
       "size": 7568,
       "sha256": "4cd72a390537290d3ffd5b4d5a5422dacfe4a95286f9bd4d026cd076149a7994"
@@ -1988,8 +2003,8 @@
     },
     {
       "path": "rh/screens/store.py",
-      "size": 25057,
-      "sha256": "9d65148205727a7f02169c12f8b95eaece4b02f5e93d83fb4097a394fe15a16e"
+      "size": 25392,
+      "sha256": "1c8070484a512e1c5693cf07ed55471e22b4c23c1bedbecb3ca527a45e483caa"
     },
     {
       "path": "rh/screens/theme_store.py",
@@ -1998,8 +2013,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 8458,
-      "sha256": "104f07a6428c09885ec854385a322d1c0288093e864484b52966452f5d7e06f9"
+      "size": 7471,
+      "sha256": "cb63c57df08bda8c11e9808a0319eb322cbec4d1ebcfbf7564d3411ede52598d"
     },
     {
       "path": "rh/screens/watch.py",
@@ -2073,13 +2088,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 33696,
-      "sha256": "d2c2617f331260795963b9f47ec3cd91f6fe7a025badd7fbe0828001e927e929"
+      "size": 34415,
+      "sha256": "2a08452dd1227c435b4be77d1923d8b39df23885d5419c47fd0780d58fd1bcc8"
     },
     {
       "path": "rh/version.py",
-      "size": 1963,
-      "sha256": "dabdc556845cdbaf42dbf78c3f4045f18f3e9578b45a3ea0a117d72f6aff462a"
+      "size": 1971,
+      "sha256": "c9dda46aeeefbf7c30e98c814a97c0b57b5adaa7bb47afcf79a5168a8ac3e3af"
     },
     {
       "path": "rh/yt.py",
@@ -2478,20 +2493,20 @@
     },
     {
       "path": "web/app.js",
-      "size": 103682,
-      "sha256": "363f02bf2f260edfdf1f8a17a2cf6c3a0293679b5d5bf6f536da5228837ee304"
+      "size": 141172,
+      "sha256": "8aee0ca91b1f27d90fae3ee16ffaed55d3a0e82e52f325b81fcb13b292f8d285"
     },
     {
       "path": "web/index.html",
-      "size": 34795,
-      "sha256": "f32e2d285a89d76ec55ee17a5e3b67299d2761efc2b32620f75e65ef421e44e1"
+      "size": 52080,
+      "sha256": "2f7260fda06b4c052aad114b630279511e46543eb3cdacad530e33bc99e2e2d4"
     },
     {
       "path": "web/style.css",
-      "size": 25547,
-      "sha256": "c0fbfcd994e06885280bb7912be6eab6d4c617621d0dfcfb9a4e2e0175011d4f"
+      "size": 27050,
+      "sha256": "23db841331c6e35d5eb21dcac3c4d69e948e3f4e42c844161f6ea72393ba25d6"
     }
   ],
-  "notes": "• Chỉ render khi có thay đổi\n• Tắt màn hình là app ngủ theo\n• Màn hình tắt thì LED tắt hẳn\n• Thư viện mượt hơn và bớt đọc thẻ\n• Bớt tốn RAM và bớt việc thừa",
-  "notes_en": "• Redraws only when something changes.\n• The app sleeps when the screen goes off.\n• LEDs turn fully off with the screen.\n• Smoother library, less card access\n• Lower RAM and less wasted work"
+  "notes": "• Menu Retro Store mới dạng lưới 3x2: Gom gọn các kho Game, Theme, Icon, Emu, Tải qua link và Cào Boxart ngay trên màn hình chính.\n• Kho game Google Drive: Tích hợp hơn 1.400 ROMs tốc độ cao, hỗ trợ tự động vượt trang xác nhận file lớn khi tải.\n• Nâng cấp Webgame: Tách các sub-menu quản lý game chuyên biệt, thêm nút chuyển nhanh và bộ lọc nguồn Google Drive trực quan.\n• Chuyển tính năng Quản lý Save vào menu Tiện ích, tối ưu hiển thị và bộ nhớ.",
+  "notes_en": "• New Retro Store 3x2 grid menu: Unified Game, Theme, Icon, Emu stores, Link Downloader and Boxart Scraper on Home screen.\n• Google Drive ROMs: Integrated over 1,400 high-speed ROMs, auto-bypassing Google Drive large file warning pages.\n• Webgame upgrade: Separated dedicated game management sub-menus, added quick toggle and filter for Google Drive source.\n• Moved Save Manager into Utilities menu, optimized layout and memory usage."
 }

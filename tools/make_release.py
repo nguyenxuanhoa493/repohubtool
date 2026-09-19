@@ -24,6 +24,7 @@ from datetime import datetime, timezone, timedelta
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILES_DIR = os.path.join(ROOT, "files")
 MANIFEST_PATH = os.path.join(ROOT, "manifest.json")
+CATALOG_GZ = os.path.join(ROOT, "catalog", "roms_store.sqlite3.gz")
 
 # Set from the command line. BRANCH is the branch the OTA updater reads from.
 # It stays "main": installed clients hardcode it and the catalog payload is
@@ -320,6 +321,17 @@ def step_3_update_manifest():
             sys.exit(1)
         rf["sha256"] = hashlib.sha256(served).hexdigest()
         rf["size"] = len(served)
+
+    # Cap nhat ma bam va dung luong catalogue neu co
+    if "catalog" in manifest and os.path.isfile(CATALOG_GZ):
+        with open(CATALOG_GZ, "rb") as fh:
+            gz_data = fh.read()
+        manifest["catalog"]["sha256"] = hashlib.sha256(gz_data).hexdigest()
+        manifest["catalog"]["size"] = len(gz_data)
+        with gzip.open(CATALOG_GZ, "rb") as fh:
+            plain_data = fh.read()
+        manifest["catalog"]["sha256_plain"] = hashlib.sha256(plain_data).hexdigest()
+        manifest["catalog"]["size_plain"] = len(plain_data)
 
     with open(MANIFEST_PATH, "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
