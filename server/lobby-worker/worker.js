@@ -56,7 +56,7 @@ export default {
       return jsonResponse({
         ok: true,
         service: "RetroHub Netplay Lobby, Telegram, AI & Google Drive Proxy",
-        version: "1.3.0",
+        version: "1.3.2",
         docs: {
           list_rooms: "GET /api/rooms",
           create_room: "POST /api/rooms",
@@ -66,6 +66,7 @@ export default {
           telegram_send_log: "POST /api/telegram/send-log",
           ai_chat: "POST /api/ai/chat",
           gdrive_list: "GET /api/gdrive/list?folder_id=:id",
+          gdrive_debug: "GET /api/gdrive/debug",
         },
       });
     }
@@ -217,8 +218,19 @@ export default {
 
     // --- GOOGLE DRIVE FOLDER PROXY ENDPOINT (Không yêu cầu KV) ---
 
+    if (path === "/api/gdrive/debug" && request.method === "GET") {
+      const k = (env.GDRIVE_API_KEY || "").trim();
+      return jsonResponse({
+        ok: true,
+        configured: !!k,
+        length: k.length,
+        prefix: k ? k.substring(0, 6) : "",
+        suffix: k ? k.substring(k.length - 4) : "",
+      });
+    }
+
     if (path === "/api/gdrive/list" && (request.method === "GET" || request.method === "POST")) {
-      const gdriveKey = env.GDRIVE_API_KEY || "";
+      const gdriveKey = (env.GDRIVE_API_KEY || "").trim();
       if (!gdriveKey) {
         return errorResponse("GDRIVE_API_KEY chưa được cấu hình trên Worker.", 500);
       }
