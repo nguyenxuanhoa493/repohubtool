@@ -2,7 +2,7 @@
   "version": "2.37",
   "full_release_version": "2.37",
   "python": "any",
-  "built": "2026-09-19T09:47:17.145908+07:00",
+  "built": "2026-09-19T10:04:14+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa lỗi cài đặt giả lập Java từ xa, tinh gọn giao diện cài đặt Java và tối ưu chống đè chữ UI",
