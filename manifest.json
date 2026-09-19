@@ -2,7 +2,7 @@
   "version": "2.46",
   "full_release_version": "2.46",
   "python": "any",
-  "built": "2026-09-20T01:48:25+07:00",
+  "built": "2026-09-20T01:48:58+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Bảo mật & Nâng cấp: Proxy quét Google Drive qua Cloudflare Worker, công cụ hỗ trợ dry-run và tối ưu nạp secrets",
