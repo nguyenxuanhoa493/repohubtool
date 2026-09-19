@@ -100,7 +100,9 @@ export default {
 
         const port = String(body.port || body.id || "").trim();
         const gameTitle = String(body.game_title || "").trim();
-        const sysCode = String(body.sys_code || "").trim().toUpperCase();
+        const sysCode = String(body.sys_code || "")
+          .trim()
+          .toUpperCase();
         const host = String(body.host || "a.pinggy.io").trim();
         const core = String(body.core || "").trim();
         const playerNick = String(body.player_nick || "Player1").trim();

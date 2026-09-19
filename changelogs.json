@@ -2,6 +2,36 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.42",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Máy mát hơn, pin lâu hơn: giảm render thừa, LED theo màn hình",
+        "en": "Cooler and lighter on battery: less redundant rendering, LED follows screen"
+      },
+      "bullets": [
+        {
+          "vi": "Chỉ render khi có thay đổi: khi standby chỉ render 4 khung/giây thay vì 25-28 (CPU lúc rảnh giảm khoảng 7 lần).",
+          "en": "Redraws only when something changes: 4 fps while idle instead of 25-28 (about 7x less idle CPU)."
+        },
+        {
+          "vi": "Tắt màn hình là app ngủ theo: nhận diện đúng trên TrimUI Brick (Allwinner) - đo trên máy thật 20% -> 10% CPU.",
+          "en": "The app sleeps when the screen goes off: correct detection on the TrimUI Brick (Allwinner) - measured on a real device, 20% -> 10% CPU."
+        },
+        {
+          "vi": "Màn hình tắt thì LED tắt hẳn, không còn ghi sysfs 30 lần mỗi giây; màn sáng lại thì hiệu ứng chạy tiếp.",
+          "en": "LEDs turn fully off with the screen (no more 30 sysfs writes a second); the effect resumes when it wakes."
+        },
+        {
+          "vi": "Thư viện mượt hơn và bớt đọc thẻ: ảnh bìa không còn quét thư mục mỗi khung hình (5,25 ms -> 0,06 ms mỗi lần).",
+          "en": "Smoother library, less card access: boxart no longer scans the folder every frame (5.25 ms -> 0.06 ms per lookup)."
+        },
+        {
+          "vi": "Bớt tốn RAM và bớt việc thừa: trần cache ảnh bìa 70 MB -> 21 MB; đổi tab YouTube hay mở video liên tục không còn hiện danh sách cũ; gỡ 6 tệp thừa khỏi bộ cài.",
+          "en": "Lower RAM and less wasted work: boxart cache cap 70 MB -> 21 MB; rapid YouTube tab or video switching no longer shows a stale list; 6 unused files removed from the payload."
+        }
+      ]
+    },
+    {
       "version": "2.41",
       "date": "2026-09-19",
       "headline": {

@@ -1,12 +1,12 @@
 {
-  "version": "2.41",
+  "version": "2.42",
   "full_release_version": "2.41",
   "python": "any",
   "built": "2026-09-19T16:32:02+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa vòng lặp cập nhật OTA, lỗi treo ở 95% và thêm nút Huỷ khi đang tải",
-    "en": "Fix the OTA update loop and the 95% freeze, and add Cancel while downloading"
+    "vi": "Máy mát hơn, pin lâu hơn: giảm render thừa, LED theo màn hình",
+    "en": "Cooler and lighter on battery: less redundant rendering, LED follows screen"
   },
   "remove": [
     "app.pyc",
