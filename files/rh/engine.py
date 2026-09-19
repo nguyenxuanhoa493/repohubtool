@@ -6,6 +6,7 @@ import sys
 import time
 import math
 import ctypes
+import threading
 import sdl2
 import sdl2.ext
 import sdl2.sdlttf as sdlttf
@@ -24,6 +25,7 @@ from .ui.boxart import (SYS_BADGE, resolve_game_img_path,
 from .ui.toast import ToastManager
 from .inputs import InputManager
 from .downloader import dl_state, pop_notification
+from .env import pop_startup_notice
 from .updater import check_for_update
 from .modals.update import UpdateModal
 
@@ -99,6 +101,9 @@ class RetroHubEngine:
         self.active_modal = None
         self.modal_stack = []
         self.update_modal = UpdateModal(self)
+        # Modal do thread nen xin mo (kiem tra cap nhat) duoc day vao day va mo
+        # tu vong lap chinh, de khong chen ngang modal dang mo.
+        self._modal_queue = []
 
         # Activity tracking
         self.last_user_activity_time = time.time()
@@ -283,6 +288,11 @@ class RetroHubEngine:
         # (e.g. the auto-update check) could otherwise pop one up after exit.
         if not self.running:
             return
+        # Chi vong lap chinh duoc doi active_modal: thread nen (kiem tra cap nhat
+        # luc khoi dong, nap kho game) chi xep hang.
+        if threading.current_thread() is not threading.main_thread():
+            self._modal_queue.append((modal, data))
+            return
         modal.engine = self
         modal.open(data)
         self.active_modal = modal
@@ -412,6 +422,16 @@ class RetroHubEngine:
             if dl_notice:
                 self.toast(dl_notice)
 
+            # Modal do thread nen xin mo: cho modal dang mo xong da.
+            if self._modal_queue and not (self.active_modal and self.active_modal.is_active()):
+                queued_modal, queued_data = self._modal_queue.pop(0)
+                self.open_modal(queued_modal, queued_data)
+
+            # Thong bao mot lan: loi cap nhat cua lan chay truoc, ket qua sua runtime.
+            startup_msg = pop_startup_notice()
+            if startup_msg:
+                self.toast(startup_msg, duration=5.0)
+
             # Route input
             if self.active_modal and self.active_modal.is_active():
                 self.active_modal.handle_input(inputs)
@@ -455,7 +475,15 @@ class RetroHubEngine:
                 foot_y = state.SCREEN_H - foot_h
                 self.fill_rect(0, foot_y, state.SCREEN_W, foot_h, 10, 14, 24, 255)
                 self.fill_rect(0, foot_y, state.SCREEN_W, 2, 35, 45, 75, 255)
-                actions = self.current_screen.get_footer_actions() if self.current_screen else []
+                # Modal dang mo thi no lam chu thanh duoi: hint cua man hinh phia
+                # sau (A Chon / B Thoat) sai hoan toan trong luc cap nhat, va
+                # nguoi dung khong biet minh con bam duoc gi.
+                actions = []
+                if (self.active_modal and self.active_modal.is_active()
+                        and hasattr(self.active_modal, "get_footer_actions")):
+                    actions = self.active_modal.get_footer_actions() or []
+                elif self.current_screen:
+                    actions = self.current_screen.get_footer_actions()
                 fx = 30
                 for act in actions:
                     # act: (key_char, label_str, btn_col, text_col, is_dark)

@@ -10,10 +10,9 @@ from ..version import APP_VERSION, is_newer
 from ..updater import (apply_catalog, apply_runtime, apply_update,
                       CATALOG_FAILED, catalog_entry, catalog_pending, CatalogError,
                       check_for_update, download_catalog, download_runtime, download_update,
-                      release_note, request_restart, RUNTIME_FAILED, runtime_pending,
-                      RuntimeUpdateError, skip_version)
+                      pending_files, phase_pct, release_note, request_restart, RUNTIME_FAILED,
+                      runtime_pending, RuntimeUpdateError, skip_version, UpdateCancelled)
 from ..storage import human_bytes
-from ..j2me import ensure_latest_j2me_installed
 from .base import BaseModal
 
 
@@ -36,24 +35,39 @@ class UpdateModal(BaseModal):
         self.progress_total = 0
         self.progress_file = ""
         self.phase_title = ""
+        # Nguoi dung bam B trong luc tai: worker doc co nay giua cac buoc.
+        self.cancel_requested = False
+        self.cancelled = False
+        # Trang thai lech cua kho game / bo gia lap, tinh mot lan luc mo modal.
+        self.cat_pending = False
+        self.rt_pending = False
+        self.rt_list = []
+        self.apply_done = False
+        # True trong vai giay dang doi tung file tren dia (apply_*): luc do khong
+        # huy duoc, va thanh duoi noi ro de nguoi dung khong tuong app treo.
+        self.applying = False
 
     def open(self, data=None):
         data = data or {}
         self.manifest = data.get("manifest")
         self.files = data.get("files") or []
         self.cat_only = data.get("cat_only", False)
-        self.rt_only = False
+        # Tinh mot lan o day: hai ham nay doc the/hash file, khong duoc goi lai
+        # trong render() (moi frame).
+        self.cat_pending = bool(catalog_pending(self.manifest)) if self.manifest else False
+        self.rt_list = runtime_pending(self.manifest) if self.manifest else []
+        self.rt_pending = bool(self.rt_list)
         if self.manifest and not self.cat_only:
             is_new = is_newer(self.manifest.get("version", ""), APP_VERSION)
             if not is_new:
-                if catalog_pending(self.manifest) and not self.files and not runtime_pending(self.manifest):
+                if self.cat_pending and not self.files and not self.rt_pending:
                     self.cat_only = True
-                elif runtime_pending(self.manifest) and not self.files:
-                    self.rt_only = True
         self.selected_opt = 0
         self.busy = False
         self.failed = False
         self.restart = False
+        self.cancel_requested = False
+        self.cancelled = False
         self.status = ""
         self.scroll_top = 0
         self.progress_pct = 0.0
@@ -66,32 +80,95 @@ class UpdateModal(BaseModal):
     def get_labels(self):
         return [tr("upd_install"), tr("upd_later"), tr("upd_skip")]
 
+    def _pct(self, value):
+        """Tien do chi duoc tang. Mot pha quay lui lam nguoi dung doc ra "ket o 95%"."""
+        if value > self.progress_pct:
+            self.progress_pct = value
+
+    def _cancelled(self):
+        """Bam B la dung ngay: worker hoi co nay o ranh gioi tung buoc TAI.
+
+        Khong huy giua `apply_*` (dang doi tung file tren dia, nua chung thi ban
+        cai do dang); cac buoc do chi vai giay va khong co tien do de cho."""
+        return self.cancel_requested and not self.applying
+
+    def get_footer_actions(self):
+        """Hint o thanh duoi cung cua man hinh.
+
+        Modal che kin man hinh phia sau, nen hint cua no (A Chon / B Thoat) sai
+        hoan toan trong luc cap nhat - nguoi dung khong co cach nao biet bam B thi
+        huy duoc. O day noi dung dung theo tung trang thai."""
+        if self.restart:
+            return []
+        if self.busy:
+            if self.applying:
+                # Dang ghi file xuong the: vai giay, khong huy duoc.
+                return [("B", tr("upd_footer_applying"), (90, 110, 140), (205, 215, 230), True)]
+            if self.cancel_requested:
+                return [("B", tr("upd_cancelling"), (150, 120, 40), (255, 235, 190), True)]
+            return [("B", tr("upd_footer_cancel"), (255, 75, 75), (255, 235, 235), False)]
+        if self.failed:
+            return [("A", tr("upd_footer_close"), (0, 230, 150), (220, 225, 235), True)]
+        return [("A", tr("footer_select"), (0, 230, 150), (220, 225, 235), True),
+                ("B", tr("upd_later"), (255, 75, 75), (220, 225, 235), False)]
+
     def run_update_thread(self):
+        """Chay ca luong cap nhat trong thread nen.
+
+        Boc ngoai cung de mot loi bat ngo khong the de modal o trang thai busy
+        mai mai: ban 2.40 bi dung mot UnboundLocalError ngay truoc buoc kho game,
+        thread chet, busy khong bao gio duoc tra ve False, va nguoi dung chi con
+        thay thanh tien do dung o 95% voi moi phim deu khong an.
+        """
+        try:
+            self._run_update_thread()
+        except Exception as e:
+            print(f"Update error: {e}")
+            self.failed = True
+            if not self.status:
+                self.status = tr("upd_failed")
+        finally:
+            self.busy = False
+
+    def _run_update_thread(self):
         m = self.manifest
         files = self.files
-        total_steps = len(files)
-        self.progress_total = total_steps
+        self.progress_total = len(files)
         self.progress_done = 0
         self.progress_pct = 0.0
-        self.phase_title = "Đang tải tệp cập nhật..."
+        self.cancel_requested = False
+        self.cancelled = False
+        self.apply_done = False
+        self.phase_title = tr("upd_downloading")
+
+        def apply_step(fn, *args):
+            """Goi apply_* va bao cho UI biet dang ghi file (B tam thoi khong huy)."""
+            self.applying = True
+            try:
+                return fn(*args)
+            finally:
+                self.applying = False
 
         def prog(done, total, path):
             self.progress_done = done
             self.progress_total = total
             self.progress_file = os.path.basename(path) if path else ""
             if total > 0:
-                self.progress_pct = min(0.92, done / total)
-            self.status = f"Tải {done}/{total}: {self.progress_file}"
+                self._pct(phase_pct("files", done / total))
+            self.status = "%s %d/%d: %s" % (tr("upd_downloading"), done, total, self.progress_file)
 
         ok = False
         try:
             if not files:
                 ok = True
-            elif download_update(m, files, progress=prog):
-                self.phase_title = "Đang cài đặt & thay thế tệp..."
+            elif download_update(m, files, progress=prog, cancel=self._cancelled):
+                self.phase_title = tr("upd_installing")
                 self.status = tr("upd_installing")
-                self.progress_pct = 0.95
-                ok = apply_update(m, files)
+                self._pct(phase_pct("install"))
+                ok = apply_step(apply_update, m, files)
+                self.apply_done = bool(ok)
+        except UpdateCancelled:
+            self.cancelled = True
         except Exception as e:
             print(f"Update error: {e}")
 
@@ -103,16 +180,20 @@ class UpdateModal(BaseModal):
                 rt_pending = []
             if rt_pending:
                 def rt_prog(done, total, path):
-                    self.phase_title = "Đang tải môi trường Runtime..."
+                    self.phase_title = tr("upd_rt_downloading")
                     self.progress_file = os.path.basename(path) if path else ""
                     self.status = f"{tr('upd_rt_downloading')} {done}/{total}"
                     if total > 0:
-                        self.progress_pct = 0.95 + min(0.03, (done / total) * 0.03)
+                        self._pct(phase_pct("runtime", done / total))
                 try:
-                    download_runtime(rt_pending, progress=rt_prog)
+                    download_runtime(rt_pending, progress=rt_prog, cancel=self._cancelled)
                     self.status = tr("upd_rt_installing")
-                    if not apply_runtime(rt_pending):
+                    if not apply_step(apply_runtime, rt_pending):
                         raise RuntimeUpdateError(RUNTIME_FAILED, "cai dat that bai")
+                    self._pct(phase_pct("runtime"))
+                except UpdateCancelled:
+                    self.cancelled = True
+                    ok = False
                 except RuntimeUpdateError as re_:
                     print(f"Runtime update failed: {re_}")
                     state.pending_catalog_notice = tr(re_.key)
@@ -124,18 +205,13 @@ class UpdateModal(BaseModal):
                     self.status = f"{tr('upd_failed')}: Runtime"
                     ok = False
 
-            try:
-                ensure_latest_j2me_installed()
-            except Exception as e:
-                print(f"Error ensuring latest J2ME runtime after update: {e}")
-
         if ok and catalog_pending(m):
             is_cat_only = getattr(self, "cat_only", False) or not files
 
             def enter_unpack():
-                self.phase_title = "Đang giải nén Cơ sở dữ liệu Kho game..."
+                self.phase_title = tr("upd_cat_unpacking")
                 self.status = tr("upd_cat_unpacking")
-                self.progress_pct = 0.50 if is_cat_only else 0.96
+                self._pct(phase_pct("unpack", 0.0, is_cat_only))
 
             def cat_prog(done, total, path):
                 if total > 0:
@@ -143,20 +219,24 @@ class UpdateModal(BaseModal):
                     d_str = human_bytes(done)
                     t_str = human_bytes(total)
                     if path.endswith(".gz"):
-                        self.phase_title = "Đang tải Cơ sở dữ liệu..."
+                        self.phase_title = tr("upd_cat_downloading")
                         self.progress_file = "roms_store.sqlite3.gz"
-                        self.status = f"Tải {d_str} / {t_str}"
-                        self.progress_pct = fraction * 0.50 if is_cat_only else 0.92 + fraction * 0.04
+                        self.status = f"{tr('upd_cat_downloading')} {d_str} / {t_str}"
+                        self._pct(phase_pct("catalog", fraction, is_cat_only))
                     else:
-                        self.phase_title = "Đang giải nén Cơ sở dữ liệu..."
+                        self.phase_title = tr("upd_cat_unpacking")
                         self.progress_file = "roms_store.sqlite3"
-                        self.status = f"Bung nén {d_str} / {t_str}"
-                        self.progress_pct = 0.50 + fraction * 0.48 if is_cat_only else 0.96 + fraction * 0.03
+                        self.status = f"{tr('upd_cat_unpacking')} {d_str} / {t_str}"
+                        self._pct(phase_pct("unpack", fraction, is_cat_only))
 
             try:
-                staged_cat = download_catalog(m, progress=cat_prog, on_phase=enter_unpack)
-                if not staged_cat or not apply_catalog(m, staged_cat):
+                staged_cat = download_catalog(m, progress=cat_prog, on_phase=enter_unpack,
+                                              cancel=self._cancelled)
+                if not staged_cat or not apply_step(apply_catalog, m, staged_cat):
                     raise CatalogError(CATALOG_FAILED, "doi ten that bai")
+            except UpdateCancelled:
+                self.cancelled = True
+                ok = False
             except CatalogError as ce:
                 print(f"Catalog update failed: {ce}")
                 state.pending_catalog_notice = tr(ce.key)
@@ -173,7 +253,6 @@ class UpdateModal(BaseModal):
             # hien duoc vong lap "mo app lai thay cap nhat" (settings.json, file
             # runtime do nguoi dung sua, catalogue chua ve).
             try:
-                from ..updater import pending_files, runtime_pending, catalog_pending
                 left_files = pending_files(m)
                 left_rt = runtime_pending(m)
                 left_cat = bool(catalog_pending(m))
@@ -197,9 +276,21 @@ class UpdateModal(BaseModal):
             time.sleep(1.2)
             if self.engine:
                 self.engine.running = False
+        elif self.cancelled and self.apply_done:
+            # Phan .py da nam tren may roi (apply_update chay xong): phan con lai
+            # (bo gia lap / kho game) de lan sau, nhung van phai khoi dong lai de
+            # chay code vua cai - neu khong thi ban dang chay la ban cu.
+            self.phase_title = tr("upd_cancelled_partial")
+            self.status = tr("upd_done")
+            request_restart()
+            self.restart = True
+            import time
+            time.sleep(1.2)
+            if self.engine:
+                self.engine.running = False
         else:
             self.failed = True
-            self.phase_title = "Cập nhật thất bại"
+            self.phase_title = tr("upd_cancelled") if self.cancelled else "Cập nhật thất bại"
             if not self.status:
                 self.status = tr("upd_failed")
         self.busy = False
@@ -223,6 +314,11 @@ class UpdateModal(BaseModal):
             return True
 
         if self.busy:
+            # B = xin huy. Chi dat co, khong huy ngay: worker doc co giua cac
+            # buoc tai, con luc dang ghi file thi phai chay cho xong.
+            if btn_b and not self.cancel_requested:
+                self.cancel_requested = True
+                self.phase_title = tr("upd_cancelling")
             return True
 
         if self.failed:
@@ -259,9 +355,8 @@ class UpdateModal(BaseModal):
             elif self.selected_opt == 1:
                 self.close()
             elif self.selected_opt == 2:
-                v = (self.manifest or {}).get("version")
-                if v:
-                    skip_version(v)
+                if self.manifest:
+                    skip_version(self.manifest)
                 self.close()
             return True
 
@@ -292,10 +387,14 @@ class UpdateModal(BaseModal):
         new_v = um.get("version", "?")
         if is_newer(new_v, APP_VERSION):
             ver_badge = f"v{APP_VERSION}  ->  v{new_v}"
+        elif getattr(self, "cat_pending", False) and getattr(self, "rt_pending", False):
+            ver_badge = tr("upd_cat_rt_title")
+        elif getattr(self, "cat_pending", False):
+            ver_badge = tr("upd_cat_new")
         else:
             # Khong phai ban moi ma chi kho game / bo gia lap lech: ve "v2.37 ->
             # v2.37" thi nguoi dung doc thanh app doi cap nhat lai mai.
-            ver_badge = tr("upd_cat_rt_title")
+            ver_badge = tr("upd_rt_title")
         engine.draw_text(ver_badge, engine.font_modal_val, mx + mw - 24, my + hdr_h // 2,
                          255, 215, 0, right_align=True, center_y=True)
 
@@ -322,11 +421,12 @@ class UpdateModal(BaseModal):
             c_sz = human_bytes(cat.get("size", 0)) if cat else ""
             left_items[0] = (tr("upd_cat_new"), "Database", (0, 255, 200))
             left_items[2] = (tr("game_size"), c_sz, (255, 215, 80))
-        elif getattr(self, "rt_only", False):
-            rt_p = runtime_pending(um)
-            rt_sz = human_bytes(sum(f.get("size", 0) for f in rt_p)) if rt_p else ""
+        elif self.rt_pending:
+            # Dung danh sach da tinh luc mo modal: runtime_pending() bam sha 8 file
+            # tren the, goi lai trong render() (moi frame) la chet the nho.
+            rt_sz = human_bytes(sum(f.get("size", 0) for f in self.rt_list)) if self.rt_list else ""
             left_items[0] = (tr("upd_new"), "Runtime", (0, 255, 200))
-            left_items[2] = (tr("upd_files"), f"{len(rt_p)} tệp" + (f" ({rt_sz})" if rt_sz else ""), (255, 215, 80))
+            left_items[2] = (tr("upd_files"), f"{len(self.rt_list)} tệp" + (f" ({rt_sz})" if rt_sz else ""), (255, 215, 80))
 
         engine.draw_text("THÔNG TIN PHIÊN BẢN", engine.font_modal_lbl, lx, body_y + 4, 0, 246, 246)
         item_y = body_y + 36
@@ -420,8 +520,14 @@ class UpdateModal(BaseModal):
             # Row 3: Current file & step details (cleanly spaced below the bar)
             if self.failed or self.restart:
                 engine.draw_text("[A/B] OK", engine.font_footer, mx + mw - 24, bot_y + 64, 220, 235, 255, right_align=True)
-            elif self.status:
-                engine.draw_text(self.status, engine.font_footer, mx + 24, bot_y + 64, 140, 170, 205)
+            else:
+                # max_w de dong trang thai va nhan huy khong bao gio de len nhau.
+                if self.status:
+                    engine.draw_text(self.status, engine.font_footer, mx + 24, bot_y + 64,
+                                     140, 170, 205, max_w=mw - 240)
+                if not self.cancel_requested and not self.applying:
+                    engine.draw_text(tr("upd_cancel_hint"), engine.font_footer, mx + mw - 24, bot_y + 64,
+                                     120, 150, 190, right_align=True)
         else:
             labels = self.get_labels()
             bw = (mw - 48 - (len(labels) - 1) * 14) // len(labels)

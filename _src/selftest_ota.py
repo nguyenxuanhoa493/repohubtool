@@ -34,7 +34,12 @@ except Exception:
     pass
 
 from rh import updater, j2me  # noqa: E402
+from rh import state as _state  # noqa: E402
 from rh.version import APP_VERSION  # noqa: E402
+
+# updater.catalog_pending() nay ghi lai sha cua kho game dang co tren may vao
+# settings.json (mot lan/doi may). Test thi khong duoc ghi vao file cua repo.
+_state.SETTINGS_FILE = os.path.join(SD, "settings.json")
 
 FAILED = []
 
@@ -95,9 +100,14 @@ print("T12. Bo qua mot phien ban khong duoc chan cap nhat kho game")
 import types
 from rh import updater as _up
 from rh import state as _st
+# Kho game tren may nho hon ban phat hanh nghia la kho do la ban cu -> phai hoi.
+# (catalog_pending so size thay vi bam lai file, vi chinh app ghi vao DB do.)
+_db = os.path.join(FILES, "catalog", "roms_store.sqlite3")
+_db_size = os.path.getsize(_db) if os.path.exists(_db) else 0
 man = {"version": APP_VERSION, "files": [],
        "catalog": {"path": "catalog/roms_store.sqlite3", "url": "catalog/roms_store.sqlite3.gz",
-                   "sha256": "a" * 64, "sha256_plain": "b" * 64, "size": 1, "size_plain": 1}}
+                   "sha256": "a" * 64, "sha256_plain": "b" * 64,
+                   "size": 1, "size_plain": _db_size + 1}}
 _orig_fetch = _up.fetch_manifest
 _orig_sha = _st.catalog_sha
 _orig_skip = list(_st.skipped_versions)

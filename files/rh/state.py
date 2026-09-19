@@ -31,6 +31,11 @@ pending_update = ""
 # sha256 cua catalogue dang nam tren may. So chuoi nay voi manifest re hon doc
 # lai 33 MB tu the moi lan kiem tra cap nhat.
 catalog_sha = ""
+# Kho game / bo gia lap nguoi dung da bam "Bo qua". Nho sha chu khong nho phien
+# ban app: kho doi lan sau (sha khac) thi van hoi lai, con dung ban da bo qua thi
+# khong hoi lai mai.
+skipped_catalog_sha = ""
+skipped_runtime_sig = ""
 # Thong bao loi catalogue tu lan cap nhat truoc, cho toi khi restart xong moi
 # co man hinh de hien. Cung mot ly do voi pending_update: ghi truoc luc
 # restart, doc va xoa o lan khoi dong ke tiep - khong the hien ngay vi
@@ -58,6 +63,8 @@ if os.path.exists(SETTINGS_FILE):
             update_url = cfg.get("update_url", "") or ""
             pending_update = cfg.get("pending_update", "") or ""
             catalog_sha = cfg.get("catalog_sha", "") or ""
+            skipped_catalog_sha = cfg.get("skipped_catalog_sha", "") or ""
+            skipped_runtime_sig = cfg.get("skipped_runtime_sig", "") or ""
             pending_catalog_notice = cfg.get("pending_catalog_notice", "") or ""
     except (OSError, json.JSONDecodeError, ValueError):
         current_lang = "EN"
@@ -93,6 +100,8 @@ def save_settings():
                     "update_url": update_url,
                     "pending_update": pending_update,
                     "catalog_sha": catalog_sha,
+                    "skipped_catalog_sha": skipped_catalog_sha,
+                    "skipped_runtime_sig": skipped_runtime_sig,
                     "pending_catalog_notice": pending_catalog_notice
                 }, f, ensure_ascii=False, indent=2)
                 f.flush()

@@ -1,12 +1,12 @@
 {
-  "version": "2.40",
+  "version": "2.41",
   "full_release_version": "2.40",
   "python": "any",
-  "built": "2026-09-19T14:48:48+07:00",
+  "built": "2026-09-19T16:30:34+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Tự động tải ảnh bìa và dung lượng khi xem game; sửa lỗi chơi ngay sau khi tải; sửa font điều hướng",
-    "en": "Auto-fetch boxart and file size in game modal; fix launch after download; fix navigation font"
+    "vi": "Sửa vòng lặp cập nhật OTA, lỗi treo ở 95% và thêm nút Huỷ khi đang tải",
+    "en": "Fix the OTA update loop and the 95% freeze, and add Cancel while downloading"
   },
   "remove": [
     "app.pyc",
@@ -2516,6 +2516,6 @@
       "sha256": "eb157ac7874bb6e87525c52e4c4c22ae214cfd933dc153dd511f8cb4db8cff16"
     }
   ],
-  "notes": "• Tự động tải ảnh bìa: Khi mở chi tiết tải game, ảnh bìa tự động được tải ở chế độ nền; loại bỏ hoàn toàn nút bấm thủ công.\n• Hiển thị trước dung lượng: Tự động thăm dò kích thước file qua HTTP Range và lưu đệm, biết trước dung lượng mà không cần bấm tải.\n• Sửa lỗi Chơi ngay: Tự động nhận diện file ROM thực tế đã giải nén thay vì tìm file .zip, khắc phục triệt để lỗi không tìm thấy ROM sau khi tải.\n• Sửa font chữ hướng dẫn: Thay thế các ký tự mũi tên Unicode bằng nhãn phím DPAD ở thanh điều hướng sau tải, tránh lỗi ô vuông font.",
-  "notes_en": "• Auto-fetch boxart: Opening the game detail modal downloads cover art in the background; manual button removed.\n• Pre-fetch file size: Probes game file size via HTTP Range requests and caches it, displaying size before starting download.\n• Fix Play Now after download: Correctly maps to the extracted ROM file on SD card instead of looking for the .zip package.\n• Navigation font fix: Replaced Unicode arrow glyphs with DPAD label in footer navigation after download to prevent missing font glyphs."
+  "notes": "• Cập nhật OTA chạy hết: sửa lỗi khiến bước cài bộ giả lập Java bị bỏ qua và màn hình đứng im giữa lúc cập nhật.\n• Huỷ giữa lúc tải: bấm B dừng ngay và luôn có nhắc ở thanh dưới cùng; app không còn đứng im.\n• Kho game không còn mời cập nhật sai trên máy cài từ file zip, và nút Bỏ qua giờ có tác dụng thật.\n• Giả lập J2ME đọc đúng chế độ bàn phím đã chọn trong app; chỉ tải lại tệp khi thật sự đổi (bớt tải thừa từ CDN).",
+  "notes_en": "• OTA now runs to the end: fixed the bug that silently skipped the Java emulator step and froze the screen mid-update.\n• Cancel while downloading: pressing B stops right away and the footer always says so; the app no longer freezes.\n• No more bogus game-library prompts on devices installed from the zip, and Skip now really skips.\n• The J2ME emulator honours the keypad mode chosen in the app, and files are re-downloaded only when they really changed (less wasted traffic from the CDN)."
 }

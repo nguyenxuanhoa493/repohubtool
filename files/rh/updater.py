@@ -54,9 +54,11 @@ MAX_FILE_BYTES = 32 * 1024 * 1024
 # truyen thang vao _get - MAX_FILE_BYTES chi la mac dinh cua duong "files",
 # khong phai gioi han cung cua ham.
 MAX_CATALOG_BYTES = 64 * 1024 * 1024
-# Bung sat rip the thi lan ghi ke tiep cua may cung chet. Chua lai mot khoang,
-# cung con so voi rh/archive.py.
-CATALOG_SPACE_MARGIN = 64 * 1024 * 1024
+# Dinh that su khi cap nhat kho game: .gz va .sqlite3 cung nam trong staging mot
+# luc (39,6 MB voi ban hom nay). Truong 64 MB cu doi 101,8 MB trong, nen the con
+# ~90 MB bao thieu cho du chi can them ~40 MB - va popup cu the ma hoi mai.
+# 16 MB du de bu cho FAT/exFAT va cho mot ROM dang tai do dang.
+CATALOG_SPACE_MARGIN = 16 * 1024 * 1024
 CATALOG_CHUNK = 256 * 1024
 
 # Ly do that bai, la key cua rh.i18n de nguoi goi tu dich.
@@ -82,6 +84,33 @@ RUNTIME_BAD_HASH = "upd_rt_err_hash"
 RUNTIME_FAILED = "upd_rt_err_failed"
 RUNTIME_KEYS = frozenset([RUNTIME_NO_SPACE, RUNTIME_BAD_HASH, RUNTIME_FAILED])
 
+# Dai tien do cua modal cap nhat, mot cho duy nhat. Cac dai phai noi tiep nhau
+# va di len: tai file -> cai -> bo gia lap -> chuan bi gia lap -> kho game. Ban
+# cu chia moc o ba cho khac nhau (0.95 / 0.92 / 0.96) nen thanh tien do nhay
+# nguoc va nguoi dung doc ra "ket o 95%" trong khi van dang tai 8 MB + bung 31 MB.
+PROGRESS_WINDOWS = {
+    "files": (0.00, 0.85),
+    "install": (0.86, 0.86),
+    "runtime": (0.86, 0.90),
+    "catalog": (0.90, 0.96),
+    "unpack": (0.96, 1.00),
+    "catalog_only": (0.00, 0.45),
+    "catalog_only_unpack": (0.45, 0.95),
+}
+
+
+def phase_pct(name, fraction=0.0, cat_only=False):
+    """Phan tram hien thi (0.0-1.0) cua mot pha trong modal cap nhat.
+
+    cat_only: may chi thieu kho game, nen kho game duoc dung ca dai tien do."""
+    windows = PROGRESS_WINDOWS
+    if cat_only and name == "catalog":
+        name = "catalog_only"
+    elif cat_only and name == "unpack":
+        name = "catalog_only_unpack"
+    lo, hi = windows.get(name, (0.0, 0.0))
+    return lo + (hi - lo) * min(1.0, max(0.0, fraction or 0.0))
+
 
 class CatalogError(Exception):
     """That bai khi lay kho game, kem mot key dich duoc va so lieu di kem."""
@@ -90,6 +119,14 @@ class CatalogError(Exception):
         super().__init__(f"{key}: {detail}" if detail else key)
         self.key = key
         self.detail = detail
+
+
+class UpdateCancelled(Exception):
+    """Nguoi dung bam B giua luc tai. Khong phai loi, khong duoc bao that bai.
+
+    Chi nem ra tu cac ham TAI (download_*) - khong bao gio tu apply_*, vi nua
+    chung thi ban cai dang do: apply_update doi tung file mot.
+    """
 
 
 def base_url():
@@ -166,6 +203,11 @@ def _fetch_blob(rel_path, max_bytes, expected_sha=None, progress=None):
 
     Kiem tra ma bam sha256 neu duoc cung cap. Tu dong them anti-cache query
     de tranh bi Fastly / CDN cache giu trang 404 hoac file cu.
+
+    Hash lech thi doi mirror ngay, khong thu lai chinh URL do: lech hash nghia
+    la CDN dang giu ban cu (jsDelivr cache theo nhanh @main, query _t khong
+    xuyen qua duoc cache), thu lai chi ton them mot lan tai nguyen file - voi
+    kho game la 8,3 MB moi lan vo ich.
     """
     last_err = None
     quoted_rel_path = urllib.parse.quote(rel_path, safe="/:")
@@ -177,15 +219,16 @@ def _fetch_blob(rel_path, max_bytes, expected_sha=None, progress=None):
                 sep = "&" if "?" in url else "?"
                 fetch_url = "%s%s_t=%d" % (url, sep, int(time.time()))
                 data = _get(fetch_url, max_bytes, progress=progress)
-                if expected_sha:
-                    if hashlib.sha256(data).hexdigest() == expected_sha:
-                        return data
-                    last_err = ValueError("hash mismatch for %s" % rel_path)
-                else:
-                    return data
             except Exception as e:
+                # Loi mang (timeout, 404, proxy chan...) moi dang thu lai.
                 last_err = e
-            time.sleep(0.3)
+                time.sleep(0.3)
+                continue
+            if not expected_sha or hashlib.sha256(data).hexdigest() == expected_sha:
+                return data
+            # Mirror tra sai bytes (CDN con giu ban cu): doi mirror ngay.
+            last_err = ValueError("hash mismatch for %s" % rel_path)
+            break
     raise last_err or RuntimeError("fetch failed for %s" % rel_path)
 
 
@@ -285,13 +328,38 @@ def catalog_entry(manifest):
     return c
 
 
-def catalog_pending(manifest):
+def catalog_pending(manifest, force=False):
     """True khi manifest mang catalogue khac thu dang nam tren may.
 
     So chuoi voi chuoi chu khong doc file: bam lai 33 MB tu the o duong kiem
-    tra cap nhat se bien mot thao tac gan nhu tuc thi thanh vai giay."""
+    tra cap nhat se bien mot thao tac gan nhu tuc thi thanh vai giay.
+
+    Cung khong the bam lai file de so hash: chinh app ghi vao DB nay
+    (db.py UPDATE game_sources.is_alive / file_size_str), nen file tren may
+    khong bao gio con khop sha cua ban phat hanh nua - do la ly do that su cua
+    popup "cap nhat kho game" lap mai.
+
+    Ngoai le duy nhat: may cai tu file zip co san kho game nhung settings.json
+    khong duoc phat hanh nen khong co dau vet nao. Lan dau gap, neu file DB da
+    lon hon hoac bang ban phat hanh thi coi kho dang co la ban dang dung va ghi
+    lai dau (sqlite chi lon dan khi bi ghi them, khong tu nho lai). Kiem tra cap
+    nhat bang tay (force) bo qua buoc nay, de nguoi dung van ep tai lai kho duoc."""
     c = catalog_entry(manifest)
-    return bool(c) and c["sha256_plain"] != state.catalog_sha
+    if not c:
+        return False
+    known = state.catalog_sha
+    if not known and not force:
+        try:
+            local_size = os.path.getsize(os.path.join(APP_DIR, c["path"]))
+        except OSError:
+            local_size = -1
+        if local_size >= c["size_plain"]:
+            known = c["sha256_plain"]
+            state.catalog_sha = known
+            state.save_settings()
+    if c["sha256_plain"] == known:
+        return False
+    return c["sha256_plain"] != state.skipped_catalog_sha
 
 
 class RuntimeUpdateError(Exception):
@@ -339,6 +407,9 @@ def runtime_pending(manifest):
     r = runtime_entry(manifest)
     if not r:
         return []
+    sig = runtime_sig(r)
+    if sig and sig == state.skipped_runtime_sig:
+        return []
     # Chua co gia lap thi khong tu dung tao ra mot cai nua tep.
     if not os.path.exists(os.path.join(RUNTIME_ROOT, "zulu17", "bin", "java")):
         return []
@@ -350,7 +421,20 @@ def runtime_pending(manifest):
     return out
 
 
-def download_runtime(pending, progress=None):
+def runtime_sig(runtime):
+    """Dau van tay cua danh sach bo gia lap: sha256 cua "path=sha256" tung dong.
+
+    Chi doc manifest chu khong doc file tren the, nen dung duoc o duong kiem tra
+    cap nhat (xem runtime_pending)."""
+    if not isinstance(runtime, dict) or not isinstance(runtime.get("files"), list):
+        return ""
+    h = hashlib.sha256()
+    for f in sorted(runtime["files"], key=lambda x: str(x.get("path", ""))):
+        h.update(("%s=%s\n" % (f.get("path", ""), f.get("sha256", ""))).encode("utf-8"))
+    return h.hexdigest()
+
+
+def download_runtime(pending, progress=None, cancel=None):
     """Tai va kiem tung tep vao staging. Tra duong dan thu muc staging.
 
     Nem RuntimeUpdateError o moi loi, va don sach staging - mot ban tai do
@@ -369,6 +453,8 @@ def download_runtime(pending, progress=None):
     try:
         os.makedirs(RUNTIME_STAGING_DIR, exist_ok=True)
         for i, f in enumerate(pending, 1):
+            if cancel and cancel():
+                raise UpdateCancelled()
             if progress:
                 progress(i, len(pending), f["path"])
             try:
@@ -382,6 +468,9 @@ def download_runtime(pending, progress=None):
             with open(dst, "wb") as out:
                 out.write(blob)
     except RuntimeUpdateError:
+        shutil.rmtree(RUNTIME_STAGING_DIR, ignore_errors=True)
+        raise
+    except UpdateCancelled:
         shutil.rmtree(RUNTIME_STAGING_DIR, ignore_errors=True)
         raise
     except Exception as e:
@@ -432,7 +521,7 @@ def pending_files(manifest):
     return out
 
 
-def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
+def download_catalog(manifest, free_space=None, on_phase=None, progress=None, cancel=None):
     """Tai, kiem va giai nen catalogue vao staging. Tra duong dan file da bung.
 
     Nem CatalogError o moi loi, kem key dich duoc. Hong o bat ky buoc nao thi
@@ -479,6 +568,8 @@ def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
         out_path = os.path.join(CATALOG_STAGING_DIR, "catalog.sqlite3")
 
         def dl_prog(cur, tot):
+            if cancel and cancel():
+                raise UpdateCancelled()
             if progress:
                 progress(cur, tot, "catalog.gz")
 
@@ -486,6 +577,8 @@ def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
             blob = _fetch_blob(c["url"], MAX_CATALOG_BYTES, expected_sha=c["sha256"], progress=dl_prog)
         except ValueError:
             raise CatalogError(CATALOG_BAD_HASH, "ban nen")
+        except UpdateCancelled:
+            raise
         except Exception as e:
             raise CatalogError(CATALOG_FAILED, str(e)[:40])
         with open(gz_path, "wb") as f:
@@ -499,6 +592,8 @@ def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
         unpacked_bytes = 0
         with gzip.open(gz_path, "rb") as src, open(out_path, "wb") as dst:
             while True:
+                if cancel and cancel():
+                    raise UpdateCancelled()
                 chunk = src.read(CATALOG_CHUNK)
                 if not chunk:
                     break
@@ -519,6 +614,8 @@ def download_catalog(manifest, free_space=None, on_phase=None, progress=None):
         ok = True
         return out_path
     except CatalogError:
+        raise
+    except UpdateCancelled:
         raise
     except Exception as e:
         # Bat het: mot deflate body hong nem zlib.error, khong phai OSError
@@ -572,7 +669,7 @@ def check_for_update(force=False):
     # dong lai thi phien ban da bang nhau, ma kho game thi chua ve. Chi xet
     # phien ban thoi se bo quen no mai mai.
     version_newer = is_newer(m["version"], APP_VERSION)
-    if not version_newer and not catalog_pending(m) and not runtime_pending(m):
+    if not version_newer and not catalog_pending(m, force=force) and not runtime_pending(m):
         return None
     # skipped_versions nham vao BAN CAP NHAT PHIEN BAN. Kho game va bo chay van
     # phai ve du nguoi dung da bo qua ban do: bo qua 2.38 khong co nghia la mai
@@ -583,18 +680,23 @@ def check_for_update(force=False):
     return m, pending_files(m)
 
 
-def download_update(manifest, files, progress=None):
+def download_update(manifest, files, progress=None, cancel=None):
     """Fetch every pending file into staging and verify it. True on success.
 
     A failed attempt takes its half-written staging tree with it, so nothing
-    partial is left sitting inside the app directory."""
-    ok = _stage_files(manifest, files, progress)
+    partial is left sitting inside the app directory. Bam B giua luc tai thi
+    nem UpdateCancelled, staging cung duoc don."""
+    try:
+        ok = _stage_files(manifest, files, progress, cancel)
+    except UpdateCancelled:
+        shutil.rmtree(STAGING_DIR, ignore_errors=True)
+        raise
     if not ok:
         shutil.rmtree(STAGING_DIR, ignore_errors=True)
     return ok
 
 
-def _stage_files(manifest, files, progress=None):
+def _stage_files(manifest, files, progress=None, cancel=None):
     shutil.rmtree(STAGING_DIR, ignore_errors=True)
     try:
         os.makedirs(STAGING_DIR, exist_ok=True)
@@ -604,6 +706,8 @@ def _stage_files(manifest, files, progress=None):
 
     total = len(files)
     for i, f in enumerate(files):
+        if cancel and cancel():
+            raise UpdateCancelled()
         if progress:
             progress(i, total, f["path"])
         rel_path = "files/%s" % f["path"]
@@ -705,10 +809,26 @@ def _purge_pycache():
                 dirs.remove(d)
 
 
-def skip_version(version):
-    if version not in state.skipped_versions:
+def skip_version(manifest):
+    """Nguoi dung chon "Bo qua": dung hoi lai ve dung thu dang co.
+
+    Bo qua mot phien ban app khong co nghia la bo qua luon kho game: lan sau kho
+    doi (sha khac) thi van phai hoi, vi may cai tu file zip chi co duong nay de
+    lay catalogue. Vi vay nho ca sha cua kho va dau van tay cua bo gia lap dang
+    bi tu choi, chu khong chi nho so phien ban - neu khong, may dang o ban moi
+    nhat bam Bo qua xong popup van quay lai mai.
+    """
+    version = manifest.get("version") if isinstance(manifest, dict) else manifest
+    if version and version not in state.skipped_versions:
         state.skipped_versions.append(version)
-        state.save_settings()
+    if isinstance(manifest, dict):
+        c = catalog_entry(manifest)
+        if c:
+            state.skipped_catalog_sha = c["sha256_plain"]
+        sig = runtime_sig(manifest.get("runtime"))
+        if sig:
+            state.skipped_runtime_sig = sig
+    state.save_settings()
 
 
 def request_restart():

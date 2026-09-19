@@ -11,7 +11,11 @@ constant must stay in sync with the git tag."""
 # core, Storage trang, tran panel phai o man chi tiet game, va tinh nang YouTube.
 # 2.40: tu dong tai boxart & load truoc dung luong game; sua loi tim duong dan
 # ROM sau khi bung; sua font dieu huong DPAD tranh loi glyph.
-APP_VERSION = "2.40"
+# 2.41: sua vong lap cap nhat OTA (buoc bo gia lap bi bo qua vi loi ten cuc bo
+# trong modal, man hinh dung o 95%), them nut Huy khi dang tai, nut Bo qua co tac
+# dung that, kho game khong con moi cap nhat sai tren may cai tu file zip, va
+# gia lap J2ME doc dung che do ban phim nguoi dung chon.
+APP_VERSION = "2.41"
 
 
 def version_tuple(v=None):

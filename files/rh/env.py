@@ -5,11 +5,35 @@ import os
 import shutil
 from .paths import SDCARD_PATH
 from . import state
+from .i18n import tr
 from .j2me import (ensure_latest_j2me_installed, repair_unsafe_jar_names,
                    repair_encrypted_jars)
 from .services import is_wifi_awake, apply_wifi_awake
 
 startup_notice = {"msg": None}
+
+
+def pop_startup_notice():
+    """Thong bao mot lan cho nguoi dung, roi xoa.
+
+    Gom ba nguon: ket qua sua runtime luc khoi dong (startup_notice), loi cap
+    nhat cua lan chay truoc (state.pending_catalog_notice) va ban vua cai xong
+    (state.pending_update). Loi cap nhat duoc uu tien vi do la thu nguoi dung
+    dang thac mac, va ca ba chi hien duoc o day - app da khoi dong lai sau khi
+    cap nhat nen khong con man hinh nao khac de hien."""
+    msg = startup_notice.get("msg")
+    startup_notice["msg"] = None
+    notice = state.pending_catalog_notice
+    if notice:
+        state.pending_catalog_notice = ""
+    updated = state.pending_update
+    if updated:
+        state.pending_update = ""
+        if not notice:
+            notice = tr("upd_updated_to") + " v" + str(updated)
+    if notice or updated:
+        state.save_settings()
+    return notice or msg
 
 
 def ensure_segacd_installed():

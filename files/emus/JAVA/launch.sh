@@ -53,12 +53,18 @@ TIMIDITY_CFG="/mnt/SDCARD/Emus/JAVA/timidity/timidity.cfg"
 export TIMIDITY_CFG
 
 # Read default phone keypad profile (N=Nokia default, P=Plain, E=SE, S=Siemens, M=Motorola)
+# user.cfg la lua chon nguoi dung dat trong app. default_phone.cfg chi la ban mac
+# dinh di kem (nam trong manifest.runtime, app khong bao gio ghi vao no: ghi vao
+# do thi hash lech va OTA lai doi cap nhat bo gia lap mai mai). Truoc day file
+# nay duoc doc truoc user.cfg nen game chay mac dinh N trong khi man hinh J2ME
+# hien lua chon cua nguoi dung.
 DEF_PHONE="n"
-if [ -f /mnt/SDCARD/Emus/JAVA/default_phone.cfg ]; then
-    DEF_PHONE=$(head -n 1 /mnt/SDCARD/Emus/JAVA/default_phone.cfg | tr -d '\r\n ' | tr '[:upper:]' '[:lower:]')
-elif [ -f ./default_phone.cfg ]; then
-    DEF_PHONE=$(head -n 1 ./default_phone.cfg | tr -d '\r\n ' | tr '[:upper:]' '[:lower:]')
-fi
+for cfg in /mnt/SDCARD/Emus/JAVA/user.cfg /mnt/SDCARD/Emus/JAVA/default_phone.cfg ./default_phone.cfg; do
+    if [ -f "$cfg" ]; then
+        DEF_PHONE=$(head -n 1 "$cfg" | tr -d '\r\n ' | tr '[:upper:]' '[:lower:]')
+        [ -n "$DEF_PHONE" ] && break
+    fi
+done
 [ -z "$DEF_PHONE" ] && DEF_PHONE="n"
 echo "Default phone key profile: $DEF_PHONE"
 

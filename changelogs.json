@@ -2,6 +2,32 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.41",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Sửa vòng lặp cập nhật OTA, lỗi treo ở 95% và thêm nút Huỷ khi đang tải",
+        "en": "Fix the OTA update loop and the 95% freeze, and add Cancel while downloading"
+      },
+      "bullets": [
+        {
+          "vi": "Cập nhật OTA chạy hết: sửa lỗi khiến bước cài bộ giả lập Java bị bỏ qua và màn hình đứng im giữa lúc cập nhật.",
+          "en": "OTA now runs to the end: fixed the bug that silently skipped the Java emulator step and froze the screen mid-update."
+        },
+        {
+          "vi": "Huỷ giữa lúc tải: bấm B dừng ngay và luôn có nhắc ở thanh dưới cùng; app không còn đứng im.",
+          "en": "Cancel while downloading: pressing B stops right away and the footer always says so; the app no longer freezes."
+        },
+        {
+          "vi": "Kho game không còn mời cập nhật sai trên máy cài từ file zip, và nút Bỏ qua giờ có tác dụng thật.",
+          "en": "No more bogus game-library prompts on devices installed from the zip, and Skip now really skips."
+        },
+        {
+          "vi": "Giả lập J2ME đọc đúng chế độ bàn phím đã chọn trong app; chỉ tải lại tệp khi thật sự đổi (bớt tải thừa từ CDN).",
+          "en": "The J2ME emulator honours the keypad mode chosen in the app, and files are re-downloaded only when they really changed (less wasted traffic from the CDN)."
+        }
+      ]
+    },
+    {
       "version": "2.40",
       "date": "2026-09-19",
       "headline": {
