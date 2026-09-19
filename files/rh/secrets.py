@@ -27,8 +27,9 @@ def _load_local_secrets() -> dict:
     _CACHED_SECRETS = {}
     try:
         from .paths import SDCARD_PATH, APP_DIR
+        sd = os.environ.get("SDCARD_PATH") or SDCARD_PATH
         candidate_paths = [
-            os.path.join(SDCARD_PATH, "RetroHub", "secrets.json"),
+            os.path.join(sd, "RetroHub", "secrets.json"),
             os.path.join(APP_DIR, "data", "secrets.json"),
             os.path.join(os.path.dirname(__file__), "secrets.local.json"),
         ]

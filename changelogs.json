@@ -2,6 +2,28 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.46",
+      "date": "2026-09-20",
+      "headline": {
+        "vi": "Bảo mật & Nâng cấp: Proxy quét Google Drive qua Cloudflare Worker, công cụ hỗ trợ dry-run và tối ưu nạp secrets",
+        "en": "Security & Upgrades: Proxy Google Drive scanning via Cloudflare Worker, dry-run scanner tool and secrets loader optimization"
+      },
+      "bullets": [
+        {
+          "vi": "Loại bỏ hoàn toàn Google API Key khỏi codebase, chuyển toàn bộ việc quét thư mục Google Drive qua Cloudflare Worker Proxy được bảo vệ bởi Worker Secrets.",
+          "en": "Completely removed Google API Key from codebase, delegating all Google Drive folder listings to Cloudflare Worker Proxy secured by Worker Secrets."
+        },
+        {
+          "vi": "Bổ sung cờ --dry-run và --folder-id vào công cụ quét ROM Google Drive (tools/import_gdrive_folder_to_db.py), cho phép chạy thử kiểm tra hoặc quét từng thư mục mà không ghi đè Database.",
+          "en": "Added --dry-run and --folder-id options to the Google Drive ROM scanner tool (tools/import_gdrive_folder_to_db.py), allowing safe testing or targeting a single folder without touching the database."
+        },
+        {
+          "vi": "Tối ưu hóa bộ nạp rh.secrets: Đồng bộ nạp đường dẫn thẻ nhớ qua biến môi trường SDCARD_PATH, nâng cao tính độc lập khi kiểm thử và phát triển.",
+          "en": "Optimized rh.secrets loader: Synchronized storage paths via SDCARD_PATH environment variable, improving test isolation and reliability."
+        }
+      ]
+    },
+    {
       "version": "2.45",
       "date": "2026-09-20",
       "headline": {
