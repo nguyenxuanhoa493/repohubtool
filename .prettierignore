@@ -1,0 +1,22 @@
+# Prettier khong dung toi: markdown va YAML de nguoi viet tu kiem soat
+# (bang bieu trong .md, comment va thu tu khoa trong workflow .yml).
+*.md
+*.yml
+*.yaml
+
+# Trang web sinh ra boi _src/build*.py: sua tay roi build lai se lech nhau.
+index.html
+changelog/
+vi/
+guide/
+java/
+
+# Khong phai ma nguon / khong nam trong git
+dist/
+node_modules/
+files/vendor/
+files/catalog/
+catalog/
+.venv-desktop/
+.sdcard-desktop/
+plans/
