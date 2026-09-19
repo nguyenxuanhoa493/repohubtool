@@ -146,7 +146,7 @@ def install_emu(sys_id):
             try:
                 print(f"[EmulatorStore] Downloading {url}...")
                 req = urllib.request.Request(url, headers={"User-Agent": "RetroHub-EmulatorStore/1.0"})
-                with urllib.request.urlopen(req, timeout=15) as resp, open(temp_download, "wb") as out:
+                with urllib.request.urlopen(req, timeout=60) as resp, open(temp_download, "wb") as out:
                     shutil.copyfileobj(resp, out)
                 if os.path.isfile(temp_download) and os.path.getsize(temp_download) > 0:
                     target_archive = temp_download

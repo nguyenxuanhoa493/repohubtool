@@ -1,12 +1,12 @@
 {
-  "version": "2.35",
-  "full_release_version": "2.35",
+  "version": "2.37",
+  "full_release_version": "2.37",
   "python": "any",
-  "built": "2026-09-18T17:21:25+07:00",
+  "built": "2026-09-19T10:04:14+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Kho Theme/Icon/Giả lập: tải gói trực tiếp từ GitHub Releases, đồng bộ lại catalog và sửa lỗi cài đặt",
-    "en": "Theme/Icon/Emulator Store: packages download from GitHub Releases, catalogs resynced and install fixes"
+    "vi": "Sửa lỗi cài đặt giả lập Java từ xa, tinh gọn giao diện cài đặt Java và tối ưu chống đè chữ UI",
+    "en": "Fix Java emulator remote installation, compact Java settings UI, and anti-overlap UI text rules"
   },
   "remove": [
     "app.pyc",
@@ -269,8 +269,8 @@
       {
         "path": "launch.sh",
         "url": "files/emus/JAVA/launch.sh",
-        "size": 5120,
-        "sha256": "1fdc40dce4614f4e744453df059427a0b4e1d958e9eaa702cc40ce5e0e037ad1"
+        "size": 4984,
+        "sha256": "86101990b6cb6cb8020109f0df2a8e9609929ef3dac1cbcfe8d08d3cd2a601df"
       },
       {
         "path": "zulu17/bin/font.ttf",
@@ -317,8 +317,8 @@
     },
     {
       "path": "app.py",
-      "size": 4175,
-      "sha256": "1c84a31840ef7d484844e680169129a435a8d647e31f4980deca3b449ab89f1f"
+      "size": 4074,
+      "sha256": "cb4a5f11087a424b4a4a9242b2fc4e34d0e9417e60d089f48917b3a6fcdf2dc8"
     },
     {
       "path": "assets/emus_preview/bg-arcade.png",
@@ -1527,8 +1527,8 @@
     },
     {
       "path": "bin/7zz-License.txt",
-      "size": 6029,
-      "sha256": "99df5a516035baca9f2e8095977599d4a4340f58ba900f870238943996014f53"
+      "size": 5885,
+      "sha256": "bfcb66ce77b67efd57465ecce23425841e1defba4307fcb012080cccfc11a870"
     },
     {
       "path": "bin/7zzs",
@@ -1542,8 +1542,8 @@
     },
     {
       "path": "catalog/emus_catalog.json",
-      "size": 28403,
-      "sha256": "a85acbeffa5b2ae7b213565bd6b53b8f4c92fd0b6c2d98fb04c282228de561fc"
+      "size": 27528,
+      "sha256": "faee730851dc55f66d2fcf180349d96b4f6c99e5a93a1e75a62b15eba0b0f5b7"
     },
     {
       "path": "catalog/icons_catalog.json",
@@ -1582,8 +1582,8 @@
     },
     {
       "path": "emus/JAVA/launch.sh",
-      "size": 5120,
-      "sha256": "1fdc40dce4614f4e744453df059427a0b4e1d958e9eaa702cc40ce5e0e037ad1"
+      "size": 4984,
+      "sha256": "86101990b6cb6cb8020109f0df2a8e9609929ef3dac1cbcfe8d08d3cd2a601df"
     },
     {
       "path": "emus/JAVA/zulu17/bin/default_phone.cfg",
@@ -1622,28 +1622,28 @@
     },
     {
       "path": "emus/SEGACD/cpufreq.sh",
-      "size": 155,
-      "sha256": "be01dd61d1d1164f381be0610ceecf648f4f29d92ab7f4a95f8ff59bde3e97ec"
+      "size": 152,
+      "sha256": "231eef08baad1c1e7e8ddbe7427e2fba01501753c7f290c20b79f6e1b760c358"
     },
     {
       "path": "emus/SEGACD/cpuswitch.sh",
-      "size": 197,
-      "sha256": "640875ef41ebc0671829155065de7588fde82108ea5091da24f667e05fb775f5"
+      "size": 191,
+      "sha256": "0733d555c8a541b49550847ec2abcc9c5554c731922f2640c3dd960aa677bed3"
     },
     {
       "path": "emus/SEGACD/launch.sh",
-      "size": 562,
-      "sha256": "5f90d7224bd786acb411b37ec80bb6f75caf2befeadfef4c96ccd367631128ba"
+      "size": 548,
+      "sha256": "e48903a184999dfa1fbec09a9c63a7ab106d576dc016b4b33c644da9eed172e4"
     },
     {
       "path": "emus/SEGACD/launch_genplus.sh",
-      "size": 372,
-      "sha256": "71ec8f1419525d5bbc0d9a3d21fde0bb8465313026748076417c5fa97ca7a5da"
+      "size": 359,
+      "sha256": "67bb09b0bfe0eae85c8c1251b47fd8d452ce3a4e7f017fe1ba465acfb334ef92"
     },
     {
       "path": "emus/SEGACD/launch_genplus_wide.sh",
-      "size": 377,
-      "sha256": "f66a0d4aea09b3a47055d27e84a9776aa736fdf41ead959a489ade6610290504"
+      "size": 364,
+      "sha256": "67846237d461d95c2c3a47997754176dae8ba2a72a0a98779754b38a9ec4845d"
     },
     {
       "path": "emus/_theme/bg-segacd.png",
@@ -1662,8 +1662,8 @@
     },
     {
       "path": "gameweb.py",
-      "size": 73976,
-      "sha256": "43607636fc4db2da23379b46012c31b9f8584fe7e1574c46c6011c8df65c4ed9"
+      "size": 71739,
+      "sha256": "e818f2f6847137ab99665b5bee2c538bad405a082ced29b62f39687e3936d22d"
     },
     {
       "path": "icon.png",
@@ -1672,8 +1672,8 @@
     },
     {
       "path": "launch.sh",
-      "size": 9993,
-      "sha256": "643df228799cc4f69893408527e0c6f634924002456b66756be563ddcfc46ebb"
+      "size": 9751,
+      "sha256": "4f5331b3496234003bca0d43bfa72b773cca041c838750522ec03d1d40ccb6b2"
     },
     {
       "path": "led_daemon.py",
@@ -1738,7 +1738,7 @@
     {
       "path": "rh/emulator_store.py",
       "size": 8573,
-      "sha256": "5cbe576eb69c8821c0a6507617221b0d2092ef349953945f0f41ce08ed8b3bbe"
+      "sha256": "a181b7ba1ba4f4288f196a877f35d6fff30f0883e50b6039c09d95daa8068c00"
     },
     {
       "path": "rh/emulators.py",
@@ -1747,8 +1747,8 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 19370,
-      "sha256": "abc5d03374432c107fc2164d0243a2924757f4c409d27c2fa81b41ea20b4dcf3"
+      "size": 19853,
+      "sha256": "2937d3069c616d998c5c4137905c55246455654871ecc83b3e47b5686949ded5"
     },
     {
       "path": "rh/env.py",
@@ -1762,8 +1762,8 @@
     },
     {
       "path": "rh/i18n.py",
-      "size": 61220,
-      "sha256": "639eb4fbd4d9164f791df1bd17665a17bb1646d8aa957e20cabedc17f791f23f"
+      "size": 60057,
+      "sha256": "ef1ef2522badbf1e769616dcb110434d97f2237f5983f0fca0f6cc3b0b89931c"
     },
     {
       "path": "rh/icon_manager.py",
@@ -1777,8 +1777,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 39571,
-      "sha256": "02e5a7813db14fd099763bc4fe6f3ab55b7cfd582cd3f0e1839b2d6407e35407"
+      "size": 40241,
+      "sha256": "0441f8d2f3df63e9168b5ed996e3301d7944ff8fe51498a2e44c8b3f3f8b3849"
     },
     {
       "path": "rh/led.py",
@@ -1852,8 +1852,8 @@
     },
     {
       "path": "rh/modals/j2me.py",
-      "size": 4588,
-      "sha256": "4cfddb62effd0d1c7c0087a1e07dcde3fc245542af56d09874aae95be8472162"
+      "size": 13699,
+      "sha256": "13d3a0ae2447dcd931378a1b9a93bbd9722d2c6cacbfbb04153fb5b228713c7a"
     },
     {
       "path": "rh/modals/netplay.py",
@@ -1877,8 +1877,8 @@
     },
     {
       "path": "rh/paths.py",
-      "size": 8174,
-      "sha256": "43448f9230f72c7ff60f1b730b416cfef6d2046efce7f98925f9074b1f5a440c"
+      "size": 7967,
+      "sha256": "539ce45e9d0a61b836e5258e0b98c3a79e2ceee8cf9f338762979a7ad2c3953f"
     },
     {
       "path": "rh/romfiles.py",
@@ -1902,8 +1902,8 @@
     },
     {
       "path": "rh/screens/emu_store.py",
-      "size": 17722,
-      "sha256": "71a59132058e82e753950954a403c8a8871c63159ae845c948b611dd38a4bbff"
+      "size": 20508,
+      "sha256": "f9a5a67dd27bf0c83e0efa6003fd46d93112b2735db8c722d8a3bb9994759569"
     },
     {
       "path": "rh/screens/home.py",
@@ -1957,8 +1957,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 9345,
-      "sha256": "e803fba079b2c03225842828859cf7176612a646479b6100a97cc8e38d221a29"
+      "size": 8166,
+      "sha256": "ea439f486c7190d686d6654b8064adb487eb7ea90b3d2275e029cf832efb578e"
     },
     {
       "path": "rh/screens/youtube.py",
@@ -1987,8 +1987,8 @@
     },
     {
       "path": "rh/state.py",
-      "size": 4940,
-      "sha256": "80c7c9ff2da24cec2cee8802c3f2cf6859abecfe8b7fbd4328b01f97dcc0f716"
+      "size": 4984,
+      "sha256": "71db1ed96ec459fb2e3a9d0b0da413b14e842e18b08303ab9e0185f90545feaf"
     },
     {
       "path": "rh/storage.py",
@@ -2017,8 +2017,8 @@
     },
     {
       "path": "rh/ui/primitives.py",
-      "size": 10820,
-      "sha256": "ecd5c3f11ac1b574bb46c43da128bae60bf4358d65ad5b2b3502eee8ad0528b4"
+      "size": 11898,
+      "sha256": "1de757034087803b33e277e0e728c93b45d308de09606e5778c2f3b948cf91ed"
     },
     {
       "path": "rh/ui/toast.py",
@@ -2032,8 +2032,8 @@
     },
     {
       "path": "rh/version.py",
-      "size": 879,
-      "sha256": "4339323b98a0113445e84136bc11366f54fe1dcc591abb061907bcb30034db11"
+      "size": 1012,
+      "sha256": "a8b1003a1e028db8b718196e3da2d941befbda0cadd312ef75a7bbb75311d4e7"
     },
     {
       "path": "rh/yt.py",
@@ -2462,23 +2462,23 @@
     },
     {
       "path": "web/app.js",
-      "size": 105726,
-      "sha256": "5e0d955c6bca919a8dbe53d844ccc8c636f0e177caf11799eb1ef9d2e1d0d47a"
+      "size": 103682,
+      "sha256": "363f02bf2f260edfdf1f8a17a2cf6c3a0293679b5d5bf6f536da5228837ee304"
     },
     {
       "path": "web/index.html",
-      "size": 35316,
-      "sha256": "b0c4ce7c209967fd1b6edbaecf215596f3811144bbe872eaf4f6d72c8ce37763"
+      "size": 34795,
+      "sha256": "f32e2d285a89d76ec55ee17a5e3b67299d2761efc2b32620f75e65ef421e44e1"
     },
     {
       "path": "web/style.css",
-      "size": 26753,
-      "sha256": "5de8ccfa441f412c3c2dc860a7b9e6de0ad4c41656e5949dfd82faf10bfd8fa7"
+      "size": 25547,
+      "sha256": "c0fbfcd994e06885280bb7912be6eab6d4c617621d0dfcfb9a4e2e0175011d4f"
     },
     {
       "path": "yt.py",
-      "size": 38743,
-      "sha256": "e75d1efb93a87df447a045595093378d03003684da13ac7ccd7551774b80d349"
+      "size": 37688,
+      "sha256": "eb157ac7874bb6e87525c52e4c4c22ae214cfd933dc153dd511f8cb4db8cff16"
     }
   ],
   "notes": "Chuyển nguồn tải gói Theme/Icon/Giả lập sang asset của GitHub Release thay vì git, đồng bộ lại catalog của cửa hàng, và đánh lại số 2.36 để máy đang ở 2.35 thực sự thấy bản mới hơn.",

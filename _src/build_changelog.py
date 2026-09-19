@@ -26,6 +26,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Headlines are verbatim from each release's own note. Details are only filled
 # in where the change is worth more than a line; an empty list is honest.
 RELEASES = [
+    ("2.37", "2026-09-19",
+     ("Fix Java emulator remote installation, compact Java settings UI, and anti-overlap UI text rules",
+      "Sửa lỗi cài đặt giả lập Java từ xa, tinh gọn giao diện cài đặt Java và tối ưu chống đè chữ UI"),
+     [("Java Emulator Remote Installation Fix: Added online download fallback for missing local payload, resolved time_elapsed crash in Emulator Store, and increased archive download timeout to 60s.",
+       "Sửa lỗi Cài đặt Giả lập Java từ xa: Bổ sung cơ chế tự động tải gói cài online khi thiếu payload nén nội bộ, khắc phục lỗi crash time_elapsed trong Kho giả lập và tăng timeout tải lên 60s."),
+      ("Streamlined Java Settings & Utilities Menu: Removed redundant Java entries from Utilities, added dedicated 'Java Settings' button in Emulator Store detail panel, and removed emoji icons to prevent font glyph glitches.",
+       "Tinh gọn Menu Tiện ích & Cài đặt Java: Dọn dẹp các mục Java thừa trong Tiện ích, bổ sung nút Cài đặt Java riêng biệt trong bảng chi tiết Kho giả lập và loại bỏ biểu tượng emoji tránh lỗi font."),
+      ("Compact Option Text & Anti-Overlap UI Engine: Shortened display mode and keypad options, introduced contextual hint box, and enhanced draw_text engine with max_w width budgeting and draw_text_fit to prevent text collisions.",
+       "Tinh gọn Tùy chọn & Động cơ Chống đè chữ UI: Rút gọn các tùy chọn hiển thị và bàn phím, thêm khung chú thích ngữ cảnh động, nâng cấp hàm vẽ chữ draw_text giới hạn chiều rộng max_w triệt tiêu 100% nguy cơ đè chữ.")]),
+
     ("2.36", "2026-09-18",
      ("Theme/Icon/Emulator Store: packages served from GitHub Releases, catalogs resynced and install fixes",
       "Kho Theme/Icon/Giả lập: tải gói trực tiếp từ GitHub Releases, đồng bộ catalog và sửa lỗi cài đặt"),

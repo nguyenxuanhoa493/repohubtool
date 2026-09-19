@@ -3,6 +3,7 @@
 
 import os
 import math
+import time
 import threading
 from .. import state
 from ..paths import EMUS_DIR, SDCARD_PATH, APP_DIR
@@ -12,6 +13,7 @@ from ..emulator_store import (
     install_emu,
     uninstall_emu,
 )
+from ..modals.j2me import J2meModal
 from .base import BaseScreen
 
 
@@ -27,12 +29,14 @@ class EmuStoreScreen(BaseScreen):
         self.selected_idx = 0
         self.scroll_top = 0
         self.filter_mode = "all"  # "all", "installed", "missing", "8_16bit", "handheld", "3d", "arcade", "engines"
+        self.focus_right = False
         self.installing_emu = False
         self.install_emu_info = {}
         self.install_msg = ""
         self.cached_preview_path = None
 
     def on_enter(self, params=None):
+        self.focus_right = False
         self.refresh_catalog()
 
     def refresh_catalog(self, force_reload=False):
@@ -109,7 +113,17 @@ class EmuStoreScreen(BaseScreen):
             return [("B", tr("footer_back"), (255, 75, 75), (220, 225, 235), False)]
 
         item = self.filtered_items[self.selected_idx]
+        is_java = (item.get("id") == "JAVA" and item.get("installed"))
+
+        if self.focus_right:
+            return [
+                ("A", "Mở cài đặt" if state.current_lang == "VI" else "Open Settings", (0, 246, 246), (220, 225, 235), True),
+                ("B", "Trở lại" if state.current_lang == "VI" else "Back to List", (255, 75, 75), (220, 225, 235), False),
+            ]
+
         actions = []
+        if is_java:
+            actions.append(("START", "Cài đặt" if state.current_lang == "VI" else "Settings", (0, 246, 246), (220, 225, 235), True))
 
         if item.get("installed"):
             actions.append(("A", tr("emu_btn_reinstall"), (0, 210, 255), (220, 225, 235), True))
@@ -128,6 +142,9 @@ class EmuStoreScreen(BaseScreen):
 
         btn_up = inputs.get("btn_up")
         btn_down = inputs.get("btn_down")
+        btn_left = inputs.get("btn_left")
+        btn_right = inputs.get("btn_right")
+        btn_start = inputs.get("btn_start")
         btn_a = inputs.get("btn_a")
         btn_b = inputs.get("btn_b")
         btn_x = inputs.get("btn_x")
@@ -135,18 +152,48 @@ class EmuStoreScreen(BaseScreen):
         btn_l1 = inputs.get("btn_l1")
         btn_r1 = inputs.get("btn_r1")
 
-        if btn_b:
-            self.engine.pop_screen()
-            return True
-
         total_items = len(self.filtered_items)
         if total_items == 0:
+            if btn_b:
+                self.engine.pop_screen()
+                return True
             if btn_y:
                 self._cycle_filter()
                 return True
             return False
 
+        item = self.filtered_items[self.selected_idx] if 0 <= self.selected_idx < total_items else {}
+        is_java_installed = (item.get("id") == "JAVA" and item.get("installed"))
+
+        # Direct START hotkey to open Java Settings whenever Java is selected
+        if is_java_installed and btn_start:
+            self.engine.open_modal(J2meModal(self.engine))
+            return True
+
+        # When right details panel button is focused
+        if self.focus_right:
+            if btn_b or btn_left:
+                self.focus_right = False
+                return True
+            if btn_a:
+                self.engine.open_modal(J2meModal(self.engine))
+                return True
+            if btn_up or btn_down:
+                self.focus_right = False
+                # Fall through to list navigation below
+            else:
+                return True
+
+        if btn_b:
+            self.engine.pop_screen()
+            return True
+
+        if btn_right and is_java_installed:
+            self.focus_right = True
+            return True
+
         if btn_up:
+            self.focus_right = False
             if self.selected_idx > 0:
                 self.selected_idx -= 1
             else:
@@ -154,6 +201,7 @@ class EmuStoreScreen(BaseScreen):
             return True
 
         elif btn_down:
+            self.focus_right = False
             if self.selected_idx < total_items - 1:
                 self.selected_idx += 1
             else:
@@ -161,24 +209,25 @@ class EmuStoreScreen(BaseScreen):
             return True
 
         elif btn_l1:
+            self.focus_right = False
             self.selected_idx = max(0, self.selected_idx - self.ITEMS_PER_PAGE)
             return True
 
         elif btn_r1:
+            self.focus_right = False
             self.selected_idx = min(total_items - 1, self.selected_idx + self.ITEMS_PER_PAGE)
             return True
 
         elif btn_y:
+            self.focus_right = False
             self._cycle_filter()
             return True
 
         elif btn_a and 0 <= self.selected_idx < total_items:
-            item = self.filtered_items[self.selected_idx]
             self._start_install_emu(item)
             return True
 
         elif btn_x and 0 <= self.selected_idx < total_items:
-            item = self.filtered_items[self.selected_idx]
             if item.get("installed"):
                 self._start_uninstall_emu(item)
                 return True
@@ -186,6 +235,7 @@ class EmuStoreScreen(BaseScreen):
         return False
 
     def _cycle_filter(self):
+        self.focus_right = False
         filters = ["all", "installed", "missing", "8_16bit", "handheld", "3d", "arcade", "engines"]
         try:
             curr_i = filters.index(self.filter_mode)
@@ -392,6 +442,27 @@ class EmuStoreScreen(BaseScreen):
                 for li, l_str in enumerate(lines):
                     engine.draw_text(l_str, engine.font_badge, text_x, desc_y + li * 22, 165, 180, 200)
 
+            # If JAVA is installed, show Settings button on the right details panel
+            if sel_item.get("id") == "JAVA" and sel_item.get("installed"):
+                btn_w = img_box_w
+                btn_h = 44
+                btn_x = img_box_x
+                btn_y = right_y + right_h - btn_h - 14
+
+                vi = (state.current_lang == "VI")
+                cfg_btn_txt = "CÀI ĐẶT JAVA (START)" if vi else "JAVA SETTINGS (START)"
+
+                if self.focus_right:
+                    engine.fill_rect(btn_x, btn_y, btn_w, btn_h, 30, 60, 105, 255)
+                    engine.draw_rect(btn_x, btn_y, btn_w, btn_h, 0, 246, 246, 255, thickness=2)
+                    engine.draw_text(cfg_btn_txt, engine.font_sub, btn_x + btn_w // 2, btn_y + btn_h // 2,
+                                     255, 255, 255, center_x=True, center_y=True)
+                else:
+                    engine.fill_rect(btn_x, btn_y, btn_w, btn_h, 22, 32, 54, 255)
+                    engine.draw_rect(btn_x, btn_y, btn_w, btn_h, 0, 210, 240, 180, thickness=1)
+                    engine.draw_text(cfg_btn_txt, engine.font_sub, btn_x + btn_w // 2, btn_y + btn_h // 2,
+                                     0, 230, 255, center_x=True, center_y=True)
+
         # 3. Draw Installation Progress Overlay if active
         if self.installing_emu:
             overlay_w = 420
@@ -411,5 +482,5 @@ class EmuStoreScreen(BaseScreen):
             bx = ox + 30
             by = oy + 95
             engine.fill_rect(bx, by, bar_w, bar_h, 10, 15, 26, 255)
-            pulse_w = int((math.sin(state.time_elapsed * 4) * 0.5 + 0.5) * (bar_w - 40)) + 40
+            pulse_w = int((math.sin(time.time() * 4) * 0.5 + 0.5) * (bar_w - 40)) + 40
             engine.fill_rect(bx, by, pulse_w, bar_h, 0, 230, 255, 255)

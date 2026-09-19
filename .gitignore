@@ -18,7 +18,7 @@ tools/_archive/
 # Large asset stores moved to GitHub Releases (see _src/publish_assets.py).
 # The app downloads them over HTTP; they are not source.
 # ---------------------------------------------------------------------------
-/Themes/zips/
+/Themes/
 /EmuIcons/zips/
 
 # The plain database is a local build product; the .gz is the OTA payload and

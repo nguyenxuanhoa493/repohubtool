@@ -16,8 +16,8 @@ from .paths import SDCARD_PATH, SPLASH_TEMP_PREVIEW
 from .fonts import VIET_PROBE, font_candidates, pick_font
 from .i18n import tr
 from .version import APP_VERSION
-from .ui.primitives import (fill_rect, draw_rect, draw_line, draw_text,
-                           measure_text, wrap_text_to_width,
+from .ui.primitives import (fill_rect, draw_rect, draw_line, draw_text, draw_text_fit,
+                           measure_text, truncate_text, wrap_text_to_width,
                            draw_action_vector_icon, draw_toggle, draw_footer_btn)
 from .ui.boxart import (SYS_BADGE, resolve_game_img_path,
                        draw_proportional_boxart, draw_default_boxart_avatar)
@@ -307,8 +307,14 @@ class RetroHubEngine:
     def draw_line(self, x1, y1, x2, y2, r, g, b, a=255, thickness=1):
         draw_line(self.renderer, x1, y1, x2, y2, r, g, b, a, thickness)
 
-    def draw_text(self, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False, right_align=False):
-        return draw_text(self.renderer, text, font, x, y, r, g, b, a, center_x, center_y, self.text_texture_cache, self.MAX_TEXT_CACHE, right_align=right_align)
+    def draw_text(self, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False, right_align=False, max_w=None):
+        return draw_text(self.renderer, text, font, x, y, r, g, b, a, center_x, center_y, self.text_texture_cache, self.MAX_TEXT_CACHE, right_align=right_align, max_w=max_w)
+
+    def draw_text_fit(self, text, font, x, y, max_w, r, g, b, a=255, center_x=False, center_y=False, right_align=False):
+        return draw_text_fit(self.renderer, text, font, x, y, max_w, r, g, b, a, center_x, center_y, self.text_texture_cache, self.MAX_TEXT_CACHE, right_align=right_align)
+
+    def truncate_text(self, text, font, max_w):
+        return truncate_text(text, font, max_w)
 
     def measure_text(self, text, font):
         return measure_text(text, font)
@@ -380,6 +386,7 @@ class RetroHubEngine:
 
         while self.running:
             now = time.time()
+            state.time_elapsed = now
             frame_cnt += 1
             if frame_cnt <= 5 or frame_cnt % 300 == 0:
                 print(f"[DEBUG ENGINE] Loop frame {frame_cnt}, screen={self.current_screen_name}, modal={self.active_modal}")

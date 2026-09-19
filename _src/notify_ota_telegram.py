@@ -31,12 +31,15 @@ def send_ota_notification(version=None, note_vi=None):
     msg_lines = [
         f"🚀 <b>[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)</b>",
         "",
-        "✨ <b>Điểm mới & Tính năng nổi bật:</b>",
-        "• 🎨 <b>Thư viện Theme Store (Lưới 3x2 trực quan):</b> Kho giao diện toàn hệ thống hiển thị STT (#1..#N), ảnh xem trước sắc nét, nhãn trạng thái [ĐÃ CÀI] và tải trực tiếp từ CDN mạng vào máy.",
-        "• 🎮 <b>Thư viện Icon Store (Kho Icon Giả Lập):</b> Bổ sung gói <b>Stock Default (TrimUI Official)</b> trọn bộ 108 icon/bg gốc và gói hiện đại <b>Burst v1.1.0</b>, tải online 1 chạm.",
-        "• 💾 <b>Sao lưu & Khôi phục Icon Gốc An Toàn:</b> Tự động backup bộ icon gốc khi cài lần đầu, cơ chế khôi phục 2 lớp thông minh (Local Backup & Emergency Stock ZIP).",
-        "• ⚡ <b>Nâng cấp Bộ máy Tải OTA & Fix Lỗi:</b> Tối ưu mã hóa URL chuẩn, nạp SSL bypass an toàn cho hệ điều hành nhúng TrimUI, kiểm chuẩn mã băm SHA-256 100%.",
-        "• 🌐 <b>Trang chủ & Bản phát hành:</b> Cập nhật đầy đủ gói cài đặt <code>RetroHub-2.34-full.zip</code> và bản Pak NextUI trên GitHub Releases.",
+        f"✨ <b>Điểm mới & Nội dung cập nhật:</b>",
+        f"• {escaped_note}",
+        "",
+        "🛠️ <b>Chi tiết kỹ thuật:</b>",
+        "• Khắc phục hoàn toàn lỗi thiếu gói cài đặt Giả lập Java (J2ME) bằng cơ chế tự động tải online từ xa.",
+        "• Sửa lỗi crash <code>time_elapsed</code> khi bấm cài đặt trong Kho giả lập.",
+        "• Chuyển nút Cài đặt Java trực tiếp sang bảng chi tiết Kho giả lập, loại bỏ biểu tượng emoji tránh lỗi font.",
+        "• Tinh gọn nhãn tùy chọn hiển thị và bàn phím, bổ sung khung chú thích ngữ cảnh động.",
+        "• Động cơ vẽ chữ tích hợp giới hạn chiều rộng <code>max_w</code> triệt tiêu nguy cơ đè chữ.",
         "",
         "📲 <b>Cách cập nhật qua OTA:</b>",
         "1. Bật <b>Wi-Fi</b> trên máy chơi game.",
@@ -72,8 +75,23 @@ def send_ota_notification(version=None, note_vi=None):
                 print(f"❌ Lỗi Telegram: {res_data.get('description')}")
                 return False
     except Exception as e:
-        print(f"❌ Lỗi kết nối khi gửi thông báo Telegram: {e}")
-        return False
+        import subprocess
+        try:
+            res = subprocess.run([
+                "curl", "-s", "-X", "POST", url,
+                "-H", "Content-Type: application/json",
+                "-d", json.dumps(payload)
+            ], capture_output=True, text=True, timeout=10)
+            res_data = json.loads(res.stdout)
+            if res_data.get("ok"):
+                print(f"✅ Đã gửi thông báo cập nhật v{version} vào nhóm chung Telegram thành công (qua curl)!")
+                return True
+            else:
+                print(f"❌ Lỗi Telegram: {res_data.get('description')}")
+                return False
+        except Exception as ce:
+            print(f"❌ Lỗi kết nối khi gửi thông báo Telegram: {e} / {ce}")
+            return False
 
 if __name__ == "__main__":
     send_ota_notification()
