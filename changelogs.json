@@ -2,6 +2,32 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.43",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Menu Retro Store dạng lưới, tích hợp 1.400+ ROMs Google Drive và nâng cấp Webgame",
+        "en": "New Retro Store Grid menu, 1,400+ Google Drive ROMs integration, and Webgame upgrade"
+      },
+      "bullets": [
+        {
+          "vi": "Menu Retro Store mới dạng lưới 3x2: Gom gọn các kho Game, Theme, Icon, Emu, Tải qua link và Cào Boxart ngay trên màn hình chính.",
+          "en": "New Retro Store 3x2 grid menu: Unified Game, Theme, Icon, Emu stores, Link Downloader and Boxart Scraper on Home screen."
+        },
+        {
+          "vi": "Kho game Google Drive: Tích hợp hơn 1.400 ROMs tốc độ cao, hỗ trợ tự động vượt trang xác nhận file lớn khi tải.",
+          "en": "Google Drive ROMs: Integrated over 1,400 high-speed ROMs, auto-bypassing Google Drive large file warning pages."
+        },
+        {
+          "vi": "Nâng cấp Webgame: Tách các sub-menu quản lý game chuyên biệt, thêm nút chuyển nhanh và bộ lọc nguồn Google Drive trực quan.",
+          "en": "Webgame upgrade: Separated dedicated game management sub-menus, added quick toggle and filter for Google Drive source."
+        },
+        {
+          "vi": "Chuyển tính năng Quản lý Save vào menu Tiện ích, tối ưu hiển thị và bộ nhớ.",
+          "en": "Moved Save Manager into Utilities menu, optimized layout and memory usage."
+        }
+      ]
+    },
+    {
       "version": "2.42",
       "date": "2026-09-19",
       "headline": {

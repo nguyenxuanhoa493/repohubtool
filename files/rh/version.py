@@ -18,8 +18,8 @@ constant must stay in sync with the git tag."""
 # 2.42: giam nhiet/pin - chi ve khi co thay doi (4 khung/giay khi ranh), nhan dien dung
 # man hinh tat tren TrimUI Brick (Allwinner disp), man hinh tat thi LED tat han, cache
 # duong dan anh bia + tran cache (RAM anh bia 70MB -> 21MB), huy ket qua cu khi doi tab/video.
-# 2.41 da phat hanh (tag v2.41) voi ban sua vong lap OTA, nen dot nay phai la 2.42.
-APP_VERSION = "2.42"
+# 2.43: menu Retro Store (Grid 3x2), tich hop 1.400+ ROMs Google Drive va nang cap Webgame.
+APP_VERSION = "2.43"
 
 
 def version_tuple(v=None):
