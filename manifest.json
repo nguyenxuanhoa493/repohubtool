@@ -1,12 +1,12 @@
 {
-  "version": "2.37",
-  "full_release_version": "2.37",
+  "version": "2.38",
+  "full_release_version": "2.38",
   "python": "any",
-  "built": "2026-09-19T10:04:14+07:00",
+  "built": "2026-09-19T10:58:00+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Sửa lỗi cài đặt giả lập Java từ xa, tinh gọn giao diện cài đặt Java và tối ưu chống đè chữ UI",
-    "en": "Fix Java emulator remote installation, compact Java settings UI, and anti-overlap UI text rules"
+    "vi": "Khắc phục triệt để lỗi chứng chỉ SSL và bổ sung cURL fallback khi tải giả lập online",
+    "en": "Fix SSL certificate verification and add cURL fallback for online emulator downloads"
   },
   "remove": [
     "app.pyc",
@@ -2033,7 +2033,7 @@
     {
       "path": "rh/version.py",
       "size": 1012,
-      "sha256": "a8b1003a1e028db8b718196e3da2d941befbda0cadd312ef75a7bbb75311d4e7"
+      "sha256": "beb6e168f4be274ef87998291cb115e91bec27b6492b7a6dc2c616f2bca03b9a"
     },
     {
       "path": "rh/yt.py",
