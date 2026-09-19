@@ -2,7 +2,7 @@
   "version": "2.39",
   "full_release_version": "2.39",
   "python": "any",
-  "built": "2026-09-19T12:57:29+07:00",
+  "built": "2026-09-19T13:02:43+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa hàng chờ tải, vòng lặp cập nhật OTA, Switch emulator core; thêm trang xem & queue YouTube; màn chi tiết game; Kho game trống",
