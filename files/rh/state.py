@@ -40,6 +40,8 @@ pending_catalog_notice = ""
 enable_logging = False
 # Random Device ID duy nhat cho tung may (vi du: RH-8D3F)
 device_id = ""
+# Animation time tracker
+time_elapsed = 0.0
 
 _needs_save_id = False
 if os.path.exists(SETTINGS_FILE):

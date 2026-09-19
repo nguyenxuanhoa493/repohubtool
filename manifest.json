@@ -1,12 +1,12 @@
 {
-  "version": "2.36",
-  "full_release_version": "2.36",
+  "version": "2.37",
+  "full_release_version": "2.37",
   "python": "any",
-  "built": "2026-09-18T22:59:39+07:00",
+  "built": "2026-09-19T09:47:17.145908+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Kho Theme/Icon/Giả lập: tải gói trực tiếp từ GitHub Releases, đồng bộ lại catalog và sửa lỗi cài đặt",
-    "en": "Theme/Icon/Emulator Store: packages download from GitHub Releases, catalogs resynced and install fixes"
+    "vi": "Sửa lỗi cài đặt giả lập Java từ xa, tinh gọn giao diện cài đặt Java và tối ưu chống đè chữ UI",
+    "en": "Fix Java emulator remote installation, compact Java settings UI, and anti-overlap UI text rules"
   },
   "remove": [
     "app.pyc",
@@ -1738,7 +1738,7 @@
     {
       "path": "rh/emulator_store.py",
       "size": 8573,
-      "sha256": "5cbe576eb69c8821c0a6507617221b0d2092ef349953945f0f41ce08ed8b3bbe"
+      "sha256": "a181b7ba1ba4f4288f196a877f35d6fff30f0883e50b6039c09d95daa8068c00"
     },
     {
       "path": "rh/emulators.py",
@@ -1747,8 +1747,8 @@
     },
     {
       "path": "rh/engine.py",
-      "size": 19370,
-      "sha256": "abc5d03374432c107fc2164d0243a2924757f4c409d27c2fa81b41ea20b4dcf3"
+      "size": 19853,
+      "sha256": "2937d3069c616d998c5c4137905c55246455654871ecc83b3e47b5686949ded5"
     },
     {
       "path": "rh/env.py",
@@ -1777,8 +1777,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 39571,
-      "sha256": "02e5a7813db14fd099763bc4fe6f3ab55b7cfd582cd3f0e1839b2d6407e35407"
+      "size": 40241,
+      "sha256": "0441f8d2f3df63e9168b5ed996e3301d7944ff8fe51498a2e44c8b3f3f8b3849"
     },
     {
       "path": "rh/led.py",
@@ -1852,8 +1852,8 @@
     },
     {
       "path": "rh/modals/j2me.py",
-      "size": 4588,
-      "sha256": "4cfddb62effd0d1c7c0087a1e07dcde3fc245542af56d09874aae95be8472162"
+      "size": 13699,
+      "sha256": "13d3a0ae2447dcd931378a1b9a93bbd9722d2c6cacbfbb04153fb5b228713c7a"
     },
     {
       "path": "rh/modals/netplay.py",
@@ -1902,8 +1902,8 @@
     },
     {
       "path": "rh/screens/emu_store.py",
-      "size": 17307,
-      "sha256": "f935b126000ccd78e38b0a6cc3a395ce234d92d450d983fc5d6eb7eaa3e60570"
+      "size": 20508,
+      "sha256": "f9a5a67dd27bf0c83e0efa6003fd46d93112b2735db8c722d8a3bb9994759569"
     },
     {
       "path": "rh/screens/home.py",
@@ -1957,8 +1957,8 @@
     },
     {
       "path": "rh/screens/utilities.py",
-      "size": 9132,
-      "sha256": "772ae1e04d65d3892f81f369acdb962f42c04dfec5a4ddffeef7c1a0db1f8941"
+      "size": 8166,
+      "sha256": "ea439f486c7190d686d6654b8064adb487eb7ea90b3d2275e029cf832efb578e"
     },
     {
       "path": "rh/screens/youtube.py",
@@ -1987,8 +1987,8 @@
     },
     {
       "path": "rh/state.py",
-      "size": 4940,
-      "sha256": "80c7c9ff2da24cec2cee8802c3f2cf6859abecfe8b7fbd4328b01f97dcc0f716"
+      "size": 4984,
+      "sha256": "71db1ed96ec459fb2e3a9d0b0da413b14e842e18b08303ab9e0185f90545feaf"
     },
     {
       "path": "rh/storage.py",
@@ -2017,8 +2017,8 @@
     },
     {
       "path": "rh/ui/primitives.py",
-      "size": 10820,
-      "sha256": "ecd5c3f11ac1b574bb46c43da128bae60bf4358d65ad5b2b3502eee8ad0528b4"
+      "size": 11898,
+      "sha256": "1de757034087803b33e277e0e728c93b45d308de09606e5778c2f3b948cf91ed"
     },
     {
       "path": "rh/ui/toast.py",
@@ -2033,7 +2033,7 @@
     {
       "path": "rh/version.py",
       "size": 1012,
-      "sha256": "aa0affe2350ee8508b17d5299e010a27227059ae3a9294d607449910a5439091"
+      "sha256": "a8b1003a1e028db8b718196e3da2d941befbda0cadd312ef75a7bbb75311d4e7"
     },
     {
       "path": "rh/yt.py",

@@ -10,3 +10,6 @@
 - [project] RetroHub release workflow: 2 distinct tiers (Tier 1: OTA Update vs Tier 2: Full Installer Release) → release-workflow.md
 - [project] SDL library search order: $APP/libs:/usr/trimui/lib:/usr/lib64:/usr/lib → project-conventions.md
 - [project] Manifest integrity: always recalculate sha256 & size for modified files in files/ → project-conventions.md
+- [project] UI button text: no icons/emojis in buttons or UI text to prevent font glyph glitches → project-conventions.md
+- [project] UI text anti-overlap rules: width budgeting, auto-ellipsis with max_w, concise control values, and no bilingual cramming → project-conventions.md
+

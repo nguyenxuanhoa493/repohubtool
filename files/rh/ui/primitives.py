@@ -10,6 +10,47 @@ from ..i18n import tr
 _text_w_cache = {}
 
 
+def measure_text(text, font, cache=_text_w_cache):
+    """Measure the pixel width of a single line of text."""
+    if text is None:
+        return 0
+    # Auto-detect if font and text were passed in reversed order
+    if not isinstance(text, str) and isinstance(font, str):
+        text, font = font, text
+    else:
+        text = str(text)
+    if not font:
+        return len(text) * 10
+    key = (text, id(font))
+    cached = cache.get(key) if cache is not None else None
+    if cached is not None:
+        return cached
+    w = ctypes.c_int(0)
+    h = ctypes.c_int(0)
+    sdlttf.TTF_SizeUTF8(font, text.encode("utf-8"), ctypes.byref(w), ctypes.byref(h))
+    if cache is not None:
+        if len(cache) > 600:
+            cache.clear()
+        cache[key] = w.value
+    return w.value
+
+
+def truncate_text(text, font, max_w, cache=_text_w_cache):
+    """Safely truncate text with ellipsis (...) if it exceeds max_w pixels."""
+    if not text:
+        return ""
+    if not isinstance(text, str):
+        text = str(text)
+    if max_w is None or max_w <= 0:
+        return text
+    if measure_text(text, font, cache) <= max_w:
+        return text
+    cur = text
+    while cur and measure_text(cur + "...", font, cache) > max_w:
+        cur = cur[:-1]
+    return cur.rstrip() + "..." if cur else "..."
+
+
 def fill_rect(renderer, x, y, w, h, r, g, b, a=255):
     rect = sdl2.SDL_Rect(int(x), int(y), int(w), int(h))
     sdl2.SDL_SetRenderDrawColor(renderer, r, g, b, a)
@@ -33,11 +74,13 @@ def draw_line(renderer, x1, y1, x2, y2, r, g, b, a=255, thickness=1):
             sdl2.SDL_RenderDrawLine(renderer, int(x1 + i), int(y1), int(x2 + i), int(y2))
 
 
-def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False, text_texture_cache=None, max_cache=280, right_align=False):
+def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center_y=False, text_texture_cache=None, max_cache=280, right_align=False, max_w=None):
     if text is None or text == "":
         return 0, 0
     if not isinstance(text, str):
         text = str(text)
+    if max_w is not None and max_w > 0:
+        text = truncate_text(text, font, max_w)
     if not font or not renderer:
         return 0, 0
 
@@ -83,29 +126,10 @@ def draw_text(renderer, text, font, x, y, r, g, b, a=255, center_x=False, center
     return w, h
 
 
-def measure_text(text, font, cache=_text_w_cache):
-    """Measure the pixel width of a single line of text."""
-    if text is None:
-        return 0
-    # Auto-detect if font and text were passed in reversed order
-    if not isinstance(text, str) and isinstance(font, str):
-        text, font = font, text
-    else:
-        text = str(text)
-    if not font:
-        return len(text) * 10
-    key = (text, id(font))
-    cached = cache.get(key) if cache is not None else None
-    if cached is not None:
-        return cached
-    w = ctypes.c_int(0)
-    h = ctypes.c_int(0)
-    sdlttf.TTF_SizeUTF8(font, text.encode("utf-8"), ctypes.byref(w), ctypes.byref(h))
-    if cache is not None:
-        if len(cache) > 600:
-            cache.clear()
-        cache[key] = w.value
-    return w.value
+def draw_text_fit(renderer, text, font, x, y, max_w, r, g, b, a=255, center_x=False, center_y=False, text_texture_cache=None, max_cache=280, right_align=False):
+    """Draw text strictly constrained within max_w width, auto-truncating with ellipsis if needed."""
+    return draw_text(renderer, text, font, x, y, r, g, b, a=a, center_x=center_x, center_y=center_y, text_texture_cache=text_texture_cache, max_cache=max_cache, right_align=right_align, max_w=max_w)
+
 
 
 def wrap_text_to_width(text, font, max_w, max_lines=2, cache=_text_w_cache):

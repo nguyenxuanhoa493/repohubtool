@@ -895,10 +895,22 @@ def install_j2me_emulator(force=False):
         # Unpack JRE payload only when java binary is missing
         if not os.path.exists(f"{RUNTIME_DIR}/bin/java"):
             if not has_payload():
-                return False, ("Thiếu gói cài trong app (payload/j2me_sdl.tar.gz)"
-                               if vi else "Installer payload missing from app folder")
-            with tarfile.open(PAYLOAD, "r:gz") as tf:
-                tf.extractall(f"{SDCARD_PATH}/Emus")
+                try:
+                    from .emulator_store import install_emu
+                    res = install_emu("JAVA")
+                    if not res.get("success") and not os.path.exists(f"{RUNTIME_DIR}/bin/java"):
+                        err_detail = res.get("error", "")
+                        msg = ("Thiếu gói cài trong app (payload/j2me_sdl.tar.gz)" if vi
+                               else "Installer payload missing from app folder")
+                        if err_detail:
+                            msg = f"{msg} • {err_detail}"
+                        return False, msg
+                except Exception as e:
+                    return False, ("Thiếu gói cài trong app (payload/j2me_sdl.tar.gz)"
+                                   if vi else "Installer payload missing from app folder")
+            else:
+                with tarfile.open(PAYLOAD, "r:gz") as tf:
+                    tf.extractall(f"{SDCARD_PATH}/Emus")
             upgraded = True
             _probe_cache.pop("runtime", None)
 
