@@ -17,7 +17,7 @@ Kiem nhung thu khong the kiem bang doc code:
   - header store sau khi search dung o ca VI va EN, va moi key tr() deu ton tai.
 """
 
-import os, sys, tempfile
+import os, sys, tempfile, time
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")   # console Windows hay la cp1252
@@ -150,9 +150,46 @@ for lang in ("VI", "EN"):
     exp_en = 'Search results for "pokemon"'
     ok = ok and (title == (exp_vi if lang == "VI" else exp_en))
 
+# --- ROMs Store tren may cai tu file zip: chua co catalogue thi phai tu di lay ---
+import types as _types
+from rh import catalog as _cat
+from rh.screens.store import StoreScreen as _Store
+
+had_db = getattr(_cat, "db", None)
+from rh import updater as _upd
+had_check = _upd.check_for_update
+try:
+    # Stub mang: bai test nay kiem nhanh "co tu di hoi server khong", khong hoi that.
+    _upd.check_for_update = lambda force=False: None
+    _cat.db = None
+    sc_empty = _Store(eng)
+    check_catalog = sc_empty._ensure_catalog()
+    time.sleep(0.4)   # de thread nen chay xong (stub, khong cham mang)
+    if check_catalog is not True:
+        print("  LOI: store rong ma khong tu di lay catalogue"); ok = False
+    else:
+        print("  OK   store rong -> tu kich hoat lay catalogue (1 lan moi phien)")
+    if sc_empty._ensure_catalog() is not False:
+        print("  LOI: hoi lai server nhieu lan trong cung phien"); ok = False
+
+    db_file = os.path.join(SD, "catalog", "roms_store.sqlite3")
+    os.makedirs(os.path.dirname(db_file), exist_ok=True)
+    with open(db_file, "wb") as f:
+        f.write(b"SQLite format 3\x00")
+    _cat.db = _types.SimpleNamespace(DB_PATH=db_file)
+    sc_have = _Store(eng)
+    if sc_have._ensure_catalog() is not False:
+        print("  LOI: da co catalogue ma van kich hoat tai lai"); ok = False
+    else:
+        print("  OK   da co catalogue -> khong hoi server")
+finally:
+    _cat.db = had_db
+    _upd.check_for_update = had_check
+
 from rh.i18n import TEXTS
 missing = [(lang, k) for lang in ("VI", "EN") for k in
-           ("dl_footer_download", "dl_footer_boxart", "dl_footer_close", "dl_progress_title",
+           ("store_catalog_fetching", "store_no_catalog",
+            "dl_footer_download", "dl_footer_boxart", "dl_footer_close", "dl_progress_title",
             "dl_info_size", "dl_info_title", "store_search_results",
             "store_footer_detail", "dl_toast_success", "dl_toast_boxart_done")
            if k not in TEXTS[lang]]

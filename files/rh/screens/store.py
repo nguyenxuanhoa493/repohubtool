@@ -2,8 +2,10 @@
 """Online ROM Store & Catalog Browser with Instant Search, Download Queue & Unified Game Action Details."""
 
 import os
+import threading
 import time
 from .. import state
+from .. import catalog as catalog_mod
 from ..paths import SDCARD_PATH, resolve_rom_dir
 from ..i18n import tr
 from ..catalog import (get_source_systems_list, get_games_for_view, get_java_category_display_name,
@@ -53,6 +55,9 @@ class StoreScreen(BaseScreen):
         self.items = []
         self.selected_idx = 0
         self.scroll_top = 0
+        # Chi hoi server mot lan moi phien khi may chua co kho game (xem
+        # _ensure_catalog): mo ra vao lai nhieu lan khong duoc spam modal.
+        self._catalog_checked = False
 
         self.show_menu()
 
@@ -107,7 +112,55 @@ class StoreScreen(BaseScreen):
             if it.get("id") != "back":
                 it["title"] = f"{idx + 1}. {it['title']}"
 
+    def _ensure_catalog(self):
+        """Lay kho game khi may chua co.
+
+        May cai tu file zip khong di qua OTA, va catalogue chi den duoc bang
+        duong cap nhat; khong co buoc nay thi ROMs Store mo ra la danh sach
+        rong va khong co gi bao nguoi dung phai lam gi. Mot lan moi phien."""
+        if self._catalog_checked:
+            return False
+        self._catalog_checked = True
+        try:
+            handle = getattr(catalog_mod, "db", None)
+            if handle and os.path.exists(handle.DB_PATH):
+                return False
+        except Exception:
+            pass
+        if not self.engine:
+            return False
+
+        def _bg():
+            try:
+                from ..updater import check_for_update
+                found = check_for_update(force=True)
+            except Exception as e:
+                print("Catalog bootstrap error: %s" % e)
+                found = None
+            engine = self.engine
+            if not engine or not getattr(engine, "running", True):
+                return
+            if found:
+                manifest, files = found
+                try:
+                    engine.open_modal(engine.update_modal, {"manifest": manifest, "files": files})
+                except Exception as e:
+                    print("Catalog modal error: %s" % e)
+            else:
+                try:
+                    engine.toast(tr("store_no_catalog"), text_color=(255, 180, 0))
+                except Exception:
+                    pass
+
+        try:
+            self.engine.toast(tr("store_catalog_fetching"))
+        except Exception:
+            pass
+        threading.Thread(target=_bg, daemon=True).start()
+        return True
+
     def show_systems(self, source_type):
+        self._ensure_catalog()
         self.view_level = "systems"
         self.current_source = source_type
         self.selected_idx = 0
@@ -129,6 +182,7 @@ class StoreScreen(BaseScreen):
             it["title"] = f"{idx + 1}. {it['title']}"
 
     def show_games(self, source_type, sys_code, java_cat="ALL"):
+        self._ensure_catalog()
         self.view_level = "games"
         self.current_source = source_type
         self.current_sys_code = sys_code

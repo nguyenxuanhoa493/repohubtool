@@ -34,6 +34,7 @@ except Exception:
     pass
 
 from rh import updater, j2me  # noqa: E402
+from rh.version import APP_VERSION  # noqa: E402
 
 FAILED = []
 
@@ -86,6 +87,51 @@ after = [f["path"] for f in updater.runtime_pending(manifest)]
 check("N1b. doi cau hinh J2ME khong duoc lam OTA keu mai", after == [], "bao: %s" % after)
 saved = j2me.load_default_phone_mode()
 check("N1c. doc lai dung lua chon vua luu", saved == "P", "doc duoc: %s" % saved)
+
+
+print("T12. Bo qua mot phien ban khong duoc chan cap nhat kho game")
+# Nguoi dung bam 'bo qua' ban 2.38: lan sau khong hoi lai ve 2.38 nua, nhung kho
+# game thi van phai ve - may cai tu file zip chi co duong nay de co catalogue.
+import types
+from rh import updater as _up
+from rh import state as _st
+man = {"version": APP_VERSION, "files": [],
+       "catalog": {"path": "catalog/roms_store.sqlite3", "url": "catalog/roms_store.sqlite3.gz",
+                   "sha256": "a" * 64, "sha256_plain": "b" * 64, "size": 1, "size_plain": 1}}
+_orig_fetch = _up.fetch_manifest
+_orig_sha = _st.catalog_sha
+_orig_skip = list(_st.skipped_versions)
+try:
+    _up.fetch_manifest = lambda: dict(man)
+    _st.catalog_sha = ""                      # may chua co catalogue
+    _st.skipped_versions = [APP_VERSION]      # da bo qua dung ban dang chay
+    found = _up.check_for_update(force=False)
+    check("T12a. van bao co cap nhat (chi vi catalogue)", found is not None, repr(found))
+    _st.catalog_sha = "b" * 64                # catalogue da co
+    found2 = _up.check_for_update(force=False)
+    check("T12b. khong hoi lai khi khong con gi cho", found2 is None, repr(found2))
+finally:
+    _up.fetch_manifest = _orig_fetch
+    _st.catalog_sha = _orig_sha
+    _st.skipped_versions = _orig_skip
+
+print("T13. Go zip phat hanh phai co san kho game")
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import make_release as _mr
+try:
+    _mr.ensure_catalog_for_zip()
+    db_plain = os.path.join(ROOT, "files", "catalog", "roms_store.sqlite3")
+    man_catalog = json.load(io.open(os.path.join(ROOT, "manifest.json"), encoding="utf-8")).get("catalog") or {}
+    ok_size = os.path.getsize(db_plain) == man_catalog.get("size_plain")
+    import hashlib as _h
+    h = _h.sha256()
+    with open(db_plain, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    check("T13a. catalogue bung ra khop size_plain", ok_size, os.path.getsize(db_plain))
+    check("T13b. catalogue bung ra khop sha256_plain", h.hexdigest() == man_catalog.get("sha256_plain"))
+except SystemExit as e:
+    check("T13. bung catalogue cho zip", False, "SystemExit %s" % e)
 
 print()
 if FAILED:

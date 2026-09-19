@@ -56,6 +56,10 @@
         {
           "vi": "Quy trình phát hành: changelog của mọi phiên bản nằm trong changelogs.json (thêm một object là xong), thông báo Telegram lấy đúng headline + bullet của bản đang phát hành thay vì nội dung hardcode của 2.37, và manifest.note lấy từ chính changelog nên popup OTA không thể lệch với trang changelog.",
           "en": "Release flow: every release's changelog now lives in changelogs.json (adding one object is the whole job), the Telegram notification uses that release's own headline and bullets instead of the hardcoded 2.37 text, and manifest.note is filled from the same entry so the OTA popup cannot drift from the changelog page."
+        },
+        {
+          "vi": "ROMs Store rỗng với máy cài trực tiếp từ file zip: gói phát hành không kèm kho game nên mở store chỉ thấy danh sách trống. Nay bước đóng gói bung catalogue đã tracked vào zip và kiểm sha256 với manifest; máy chưa có kho game thì mở ROMs Store sẽ tự hỏi server và mở đúng modal cập nhật (một lần mỗi phiên, có báo nếu chưa nối được mạng); và bỏ qua một phiên bản không còn chặn cập nhật kho game nữa.",
+          "en": "Empty ROMs Store for users who installed from the release zip: the package shipped without the game catalog, so the store listed nothing. Packaging now inflates the tracked catalog into the zip and verifies its sha256 against the manifest; a device without a catalog has the store ask the server and open the right update modal (once per session, with a notice when offline); and skipping a version no longer blocks catalog updates."
         }
       ]
     },

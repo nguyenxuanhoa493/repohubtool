@@ -11,6 +11,8 @@
 import os
 import sys
 import json
+import shutil
+import gzip
 import hashlib
 import py_compile
 import subprocess
@@ -383,8 +385,45 @@ def step_4_ota_simulation_suite():
     print(f"  -> Mo phong thanh cong 100% tren {len(legacy_tags)} phien ban lich su!")
 
 
+CATALOG_GZ = os.path.join(ROOT, "catalog", "roms_store.sqlite3.gz")
+CATALOG_PLAIN_NAME = "catalog/roms_store.sqlite3"
+
+def ensure_catalog_for_zip():
+    """Bung catalogue da tracked vao files/catalog/ truoc khi go zip.
+
+    May cai tu file zip khong di qua OTA, nen khong co buoc tai catalogue nao
+    khac: thieu file nay la vao ROMs Store thay rong (dung loi nguoi dung bao).
+    Ban .gz nam trong git (files/catalog/*.sqlite3 bi .gitignore) nen phai bung
+    ra tai cho, va kiem sha256_plain voi manifest de zip khong mang ban cu.
+    """
+    target = os.path.join(FILES_DIR, "catalog", "roms_store.sqlite3")
+    if not os.path.isfile(CATALOG_GZ):
+        print("FAILED: thieu %s - zip se khong co kho game." % os.path.relpath(CATALOG_GZ, ROOT))
+        sys.exit(1)
+    with gzip.open(CATALOG_GZ, "rb") as src, open(target, "wb") as dst:
+        shutil.copyfileobj(src, dst, 1024 * 1024)
+
+    with open(MANIFEST_PATH, encoding="utf-8") as f:
+        catalog = (json.load(f) or {}).get("catalog") or {}
+    expected = catalog.get("sha256_plain")
+    size_expected = catalog.get("size_plain")
+    got = hashlib.sha256(open(target, "rb").read()).hexdigest()
+    if expected and got != expected:
+        print("FAILED: catalogue bung ra khong khop sha256_plain trong manifest")
+        print("  manifest: %s" % expected)
+        print("  thuc te : %s" % got)
+        print("  Chay lai buoc tao catalogue (.gz) truoc khi phat hanh.")
+        sys.exit(1)
+    if size_expected and os.path.getsize(target) != size_expected:
+        print("FAILED: catalogue bung ra %d byte, manifest ghi %d byte"
+              % (os.path.getsize(target), size_expected))
+        sys.exit(1)
+    print("  -> Da bung kho game vao payload (%d byte) cho cac goi zip."
+          % os.path.getsize(target))
+
 def step_5_package_dist():
     print("[5/7] Dong goi cac tap tin phat hanh trong dist/...")
+    ensure_catalog_for_zip()
     dist_dir = os.path.join(ROOT, "dist")
     os.makedirs(dist_dir, exist_ok=True)
 
