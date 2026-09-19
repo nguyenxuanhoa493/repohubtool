@@ -36,6 +36,7 @@ class WatchScreen(BaseScreen):
         self.scroll = 0
         self.resume_pos = 0.0
         self.audio_only = False
+        self.saved = False            # da luu vao yeu thich (de to vang nut Save)
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -53,6 +54,7 @@ class WatchScreen(BaseScreen):
         self.focus = 0
         self.scroll = 0
         self.audio_only = bool(params.get("audio_only", False))
+        self.saved = yt.is_favorite(self.video_id) if self.video_id else False
         dur = playback.duration_seconds(self.video.get("duration", ""))
         self.resume_pos = playback.resume_position(self.video_id, dur)
         self.loading = bool(self.video_id)
@@ -73,6 +75,7 @@ class WatchScreen(BaseScreen):
     def get_footer_actions(self):
         return [
             ("A", tr("yt_watch_play"), (0, 230, 150), (220, 225, 235), True),
+            ("L/R", tr("yt_nav_buttons"), (70, 95, 140), (220, 225, 235), False),
             ("X", tr("yt_queue_title"), (0, 210, 255), (220, 225, 235), True),
             ("B", tr("footer_back"), (255, 75, 75), (220, 225, 235), False),
         ]
@@ -94,6 +97,7 @@ class WatchScreen(BaseScreen):
     def _toggle_favorite(self):
         favs = yt.load_favorites()
         _, added = yt.toggle_favorite(self.video, favs)
+        self.saved = bool(added)
         self.engine.toast(tr("yt_watch_saved") if added else tr("yt_watch_unsaved"))
 
     def _add_to_queue(self):
@@ -142,11 +146,19 @@ class WatchScreen(BaseScreen):
             self.engine.push_screen("queue")
             return True
 
+        # L/R di giua cac nut thao tac; len/xuong di trong danh sach video lien quan.
+        if inputs.get("btn_r1"):
+            self.focus = (self.focus + 1) % max(1, self.ACTIONS)
+            return True
+        if inputs.get("btn_l1"):
+            self.focus = (self.focus - 1) % max(1, self.ACTIONS)
+            return True
+
         total = self.ACTIONS + len(self.related)
         if inputs.get("btn_up"):
-            self.focus = (self.focus - 1) % total
+            self.focus = self._move_related(-1)
         elif inputs.get("btn_down"):
-            self.focus = (self.focus + 1) % total
+            self.focus = self._move_related(1)
         elif inputs.get("btn_a"):
             self._activate()
             return True
@@ -160,6 +172,16 @@ class WatchScreen(BaseScreen):
         elif rel >= self.scroll + visible:
             self.scroll = rel - visible + 1
         return False
+
+    def _move_related(self, step):
+        """Len/xuong trong danh sach video lien quan; tu nut thao tac thi vao dau danh sach."""
+        n = len(self.related)
+        if not n:
+            return self.focus
+        rel = self.focus - self.ACTIONS
+        if rel < 0:
+            return self.ACTIONS
+        return self.ACTIONS + max(0, min(n - 1, rel + step))
 
     def _visible_rows(self):
         return max(1, (state.SCREEN_H - 56 - 456) // 50)
@@ -229,7 +251,7 @@ class WatchScreen(BaseScreen):
         audio_state = tr("yt_on") if self.audio_only else tr("yt_off")
         btn_labels = [
             tr("yt_watch_play"),
-            tr("yt_watch_save"),
+            tr("yt_watch_saved_btn") if self.saved else tr("yt_watch_save"),
             tr("yt_watch_queue_add"),
             f"{tr('yt_audio_only')}: {audio_state}",
         ]
@@ -245,8 +267,9 @@ class WatchScreen(BaseScreen):
             else:
                 engine.fill_rect(bx, btn_y, btn_w, btn_h, 19, 26, 42, 255)
                 engine.draw_rect(bx, btn_y, btn_w, btn_h, 40, 54, 85, 255, thickness=1)
+            lbl_col = (255, 215, 0) if (i == 1 and self.saved) else (255, 255, 255)
             engine.draw_text(label, engine.font_badge, bx + btn_w // 2, btn_y + btn_h // 2,
-                             255, 255, 255, center_x=True, center_y=True)
+                             lbl_col[0], lbl_col[1], lbl_col[2], center_x=True, center_y=True)
             bx += btn_w + gap
 
         # Related list

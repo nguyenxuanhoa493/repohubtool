@@ -277,13 +277,44 @@ def _make_request(endpoint: str, payload: dict, timeout: int = 7) -> dict:
         return json.loads(resp.read().decode("utf-8", errors="ignore"))
 
 
+def _lockup_video(node):
+    """(videoId, title) tu lockupViewModel - kieu du lieu InnerTube moi.
+
+    YouTube tra ve `lockupViewModel` cho danh sach video lien quan thay cho
+    `compactVideoRenderer`; chi doc cac khoa cu thi trang chi tiet luon trong
+    phan 'Video lien quan'.
+    """
+    if not isinstance(node, dict):
+        return None, ""
+    lk = node.get("lockupViewModel")
+    if not isinstance(lk, dict):
+        return None, ""
+    vid = lk.get("contentId") or _deep_find(lk, "videoId") or ""
+    title = ""
+    meta = lk.get("metadata", {})
+    if isinstance(meta, dict):
+        lmv = meta.get("lockupMetadataViewModel", {})
+        if isinstance(lmv, dict):
+            t = lmv.get("title", {})
+            if isinstance(t, dict):
+                title = t.get("content") or ""
+                if not title and t.get("runs"):
+                    title = t["runs"][0].get("text", "")
+    return (vid or None), title
+
+
 def _extract_videos_from_json(node, found_list: list, limit: int = 30):
     """Recursively traverse JSON structure to find all videoRenderer objects."""
     if len(found_list) >= limit:
         return
 
     if isinstance(node, dict):
-        v = node.get("videoRenderer") or node.get("gridVideoRenderer") or node.get("compactVideoRenderer")
+        v = (node.get("videoRenderer") or node.get("gridVideoRenderer")
+             or node.get("compactVideoRenderer") or node.get("playlistVideoRenderer"))
+        if not v:
+            lv_id, lv_title = _lockup_video(node)
+            if lv_id:
+                v = {"videoId": lv_id, "title": {"simpleText": lv_title or "Video YouTube"}}
         if v:
             vid = v.get("videoId")
             if vid:
