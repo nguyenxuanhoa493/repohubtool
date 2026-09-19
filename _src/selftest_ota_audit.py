@@ -402,6 +402,28 @@ if made_db:
     os.remove(db_path)
 shutil.rmtree(SD, ignore_errors=True)
 shutil.rmtree(os.path.join(FILES, ".update_staging"), ignore_errors=True)
+print("G. File tren dia da dung ban moi, chi tien trinh dang chay la code cu")
+# Thu muc the gia da bi don o tren; tao lai de save_settings() ghi duoc
+os.makedirs(SD, exist_ok=True)
+_disk = {}
+for _rel in ("app.py", "rh/version.py", "rh/engine.py"):
+    with open(os.path.join(FILES, _rel.replace("/", os.sep)), "rb") as f:
+        _data = f.read()
+    _disk[_rel] = {"path": _rel, "size": len(_data), "sha256": sha256(_data)}
+up.fetch_manifest = lambda: {"version": "9.99", "files": list(_disk.values())}
+state.skipped_versions = []
+state.pending_update = ""
+_g1 = up.check_for_update(force=False)
+check("G1. khong mo popup 'So tep can tai: 0' khi moi tep da khop", _g1 is None, repr(_g1))
+check("G2. ghi nho de lan mo app sau bao da cap nhat", state.pending_update == "9.99",
+      "pending_update=%r" % state.pending_update)
+up.fetch_manifest = lambda: {"version": "9.99", "files": list(_disk.values()) + [
+    {"path": "rh/khong-ton-tai.py", "size": 1, "sha256": "0" * 64}]}
+state.pending_update = ""
+_g3 = up.check_for_update(force=False)
+check("G3. con tep lech that thi van phai hoi", _g3 is not None and len(_g3[1]) == 1, repr(_g3))
+up.fetch_manifest = orig_fetch
+
 print()
 if FAILED:
     print("FAILED %d check: %s" % (len(FAILED), ", ".join(FAILED)))

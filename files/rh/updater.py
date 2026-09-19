@@ -669,7 +669,9 @@ def check_for_update(force=False):
     # dong lai thi phien ban da bang nhau, ma kho game thi chua ve. Chi xet
     # phien ban thoi se bo quen no mai mai.
     version_newer = is_newer(m["version"], APP_VERSION)
-    if not version_newer and not catalog_pending(m, force=force) and not runtime_pending(m):
+    cat_pending = bool(catalog_pending(m, force=force))
+    rt_pending = bool(runtime_pending(m))
+    if not version_newer and not cat_pending and not rt_pending:
         return None
     # skipped_versions nham vao BAN CAP NHAT PHIEN BAN. Kho game va bo chay van
     # phai ve du nguoi dung da bo qua ban do: bo qua 2.38 khong co nghia la mai
@@ -677,7 +679,18 @@ def check_for_update(force=False):
     # bang duong nay.
     if not force and version_newer and m["version"] in (state.skipped_versions or []):
         return None
-    return m, pending_files(m)
+    files = pending_files(m)
+    if version_newer and not files and not cat_pending and not rt_pending:
+        # Tep tren dia da dung ban moi, chi con tien trinh dang chay la code cu:
+        # vua cap nhat xong ma chua khoi dong lai, hoac nguoi dung chep tay code
+        # moi len may. Truoc day truong hop nay van mo popup "So tep can tai: 0"
+        # - trong nhu loi, bam vao khong thay doi gi, va lan mo app sau lai hoi
+        # tiep. Ghi nho de lan khoi dong ke tiep bao "da cap nhat" roi thoi hoi
+        # (rh/env.py doc state.pending_update luc mo app).
+        state.pending_update = m["version"]
+        state.save_settings()
+        return None
+    return m, files
 
 
 def download_update(manifest, files, progress=None, cancel=None):
