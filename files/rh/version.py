@@ -9,7 +9,9 @@ constant must stay in sync with the git tag."""
 # nen may dang chay 2.35 khong thay co ban moi. 2.36 la ban dau tien lon hon no.
 # 2.39: ban gom cac fix sau 2.38 - hang cho tai, OTA lap lai, Switch emulator
 # core, Storage trang, tran panel phai o man chi tiet game, va tinh nang YouTube.
-APP_VERSION = "2.39"
+# 2.40: tu dong tai boxart & load truoc dung luong game; sua loi tim duong dan
+# ROM sau khi bung; sua font dieu huong DPAD tranh loi glyph.
+APP_VERSION = "2.40"
 
 
 def version_tuple(v=None):

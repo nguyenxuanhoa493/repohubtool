@@ -2,6 +2,32 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.40",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Tự động tải ảnh bìa và dung lượng khi xem game; sửa lỗi chơi ngay sau khi tải; sửa font điều hướng",
+        "en": "Auto-fetch boxart and file size in game modal; fix launch after download; fix navigation font"
+      },
+      "bullets": [
+        {
+          "vi": "Tự động tải ảnh bìa: Khi mở chi tiết tải game, ảnh bìa tự động được tải ở chế độ nền; loại bỏ hoàn toàn nút bấm thủ công.",
+          "en": "Auto-fetch boxart: Opening the game detail modal downloads cover art in the background; manual button removed."
+        },
+        {
+          "vi": "Hiển thị trước dung lượng: Tự động thăm dò kích thước file qua HTTP Range và lưu đệm, biết trước dung lượng mà không cần bấm tải.",
+          "en": "Pre-fetch file size: Probes game file size via HTTP Range requests and caches it, displaying size before starting download."
+        },
+        {
+          "vi": "Sửa lỗi Chơi ngay: Tự động nhận diện file ROM thực tế đã giải nén thay vì tìm file .zip, khắc phục triệt để lỗi không tìm thấy ROM sau khi tải.",
+          "en": "Fix Play Now after download: Correctly maps to the extracted ROM file on SD card instead of looking for the .zip package."
+        },
+        {
+          "vi": "Sửa font chữ hướng dẫn: Thay thế các ký tự mũi tên Unicode bằng nhãn phím DPAD ở thanh điều hướng sau tải, tránh lỗi ô vuông font.",
+          "en": "Navigation font fix: Replaced Unicode arrow glyphs with DPAD label in footer navigation after download to prevent missing font glyphs."
+        }
+      ]
+    },
+    {
       "version": "2.39",
       "date": "2026-09-19",
       "headline": {
