@@ -82,8 +82,13 @@ def send_ota_notification(version=None, note_vi=None):
         print(f"⚠️  changelogs.json chưa có mục cho v{version}; thông báo chỉ có tiêu đề.")
     text = build_message(version, entry)
 
-    token = get_telegram_token()
+    token = (os.environ.get("TELEGRAM_BOT_TOKEN") or get_telegram_token() or "").strip()
+    if not token:
+        print("⚠️ Chưa cấu hình TELEGRAM_BOT_TOKEN (trong GitHub Secrets hoặc rh.secrets), bỏ qua gửi thông báo Telegram.")
+        return False
+
     url = f"https://api.telegram.org/bot{token}/sendMessage"
+
     payload = {
         "chat_id": TELEGRAM_GROUP_CHAT_ID,
         "text": text,

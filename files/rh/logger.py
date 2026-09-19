@@ -880,7 +880,11 @@ def upload_log_to_telegram(note=""):
     body.extend(f"--{boundary}--\r\n".encode("utf-8"))
 
     token = get_telegram_token()
+    if not token:
+        log_warning("Bo qua gui bao cao len Telegram do chua cau hinh Bot Token.")
+        return False, "Chưa cấu hình Telegram Bot Token trong Secrets."
     url = f"https://api.telegram.org/bot{token}/sendDocument"
+
     req = urllib.request.Request(
         url,
         data=bytes(body),

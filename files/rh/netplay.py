@@ -32,7 +32,10 @@ def resolve_netplay_telegram_chat_id():
     try:
         import urllib.request, ssl
         token = get_telegram_token()
+        if not token:
+            return TELEGRAM_GROUP_CHAT_ID
         url = f"https://api.telegram.org/bot{token}/getUpdates?limit=50"
+
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
@@ -290,6 +293,9 @@ def send_netplay_info_to_telegram(game_title=None, sys_code=None, host=None, por
     sent_any = False
     last_err = "Lỗi gửi Telegram"
     token = get_telegram_token()
+    if not token:
+        return False, "Chưa cấu hình Telegram Bot Token trong Secrets."
+
 
     for cid, tid in dest_chats:
         url = f"https://api.telegram.org/bot{token}/sendMessage"

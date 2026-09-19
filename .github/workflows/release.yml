@@ -87,5 +87,7 @@ jobs:
         continue-on-error: true
         env:
           PYTHONIOENCODING: utf-8
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           python _src/notify_ota_telegram.py || echo "::warning::Telegram notify failed"
+
