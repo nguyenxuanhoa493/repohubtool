@@ -169,6 +169,22 @@ class UpdateModal(BaseModal):
                 ok = False
 
         if ok:
+            # Sau khi cai xong, do lai xem con gi lech: day la cho duy nhat phat
+            # hien duoc vong lap "mo app lai thay cap nhat" (settings.json, file
+            # runtime do nguoi dung sua, catalogue chua ve).
+            try:
+                from ..updater import pending_files, runtime_pending, catalog_pending
+                left_files = pending_files(m)
+                left_rt = runtime_pending(m)
+                left_cat = bool(catalog_pending(m))
+                print("[UPDATE] sau cap nhat: file lech=%d, runtime lech=%d, catalog lech=%s"
+                      % (len(left_files), len(left_rt), left_cat))
+                if left_files:
+                    print("[UPDATE] file con lech: " + ", ".join(f["path"] for f in left_files[:10]))
+                if left_rt:
+                    print("[UPDATE] runtime con lech: " + ", ".join(f["path"] for f in left_rt[:10]))
+            except Exception as diag_err:
+                print("[UPDATE] chan doan sau cap nhat loi: %s" % diag_err)
             self.progress_pct = 1.0
             self.phase_title = "Cập nhật thành công!"
             self.status = tr("upd_done")
@@ -274,7 +290,12 @@ class UpdateModal(BaseModal):
 
         um = self.manifest or {}
         new_v = um.get("version", "?")
-        ver_badge = f"v{APP_VERSION}  ->  v{new_v}"
+        if is_newer(new_v, APP_VERSION):
+            ver_badge = f"v{APP_VERSION}  ->  v{new_v}"
+        else:
+            # Khong phai ban moi ma chi kho game / bo gia lap lech: ve "v2.37 ->
+            # v2.37" thi nguoi dung doc thanh app doi cap nhat lai mai.
+            ver_badge = tr("upd_cat_rt_title")
         engine.draw_text(ver_badge, engine.font_modal_val, mx + mw - 24, my + hdr_h // 2,
                          255, 215, 0, right_align=True, center_y=True)
 
