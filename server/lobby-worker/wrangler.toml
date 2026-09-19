@@ -10,7 +10,12 @@ compatibility_date = "2024-09-01"
 binding = "LOBBY_KV"
 id = "YOUR_KV_NAMESPACE_ID_HERE"
 
-# Biến môi trường tuỳ chọn (nếu muốn tự động post lên Telegram Channel)
-# [vars]
-# TELEGRAM_BOT_TOKEN = "your_bot_token"
-# TELEGRAM_CHANNEL_ID = "@retrohub_netplay"
+# BẢO MẬT: KHÔNG LƯU TOKEN / API KEY TRONG FILE NÀY!
+# Hãy dùng lệnh Cloudflare Secret để mã hóa trên server:
+#   npx wrangler secret put TELEGRAM_BOT_TOKEN
+#   npx wrangler secret put TELEGRAM_GROUP_CHAT_ID   (mặc định: -1003890413445)
+#   npx wrangler secret put TELEGRAM_DEBUG_THREAD_ID  (mặc định: 1205)
+#   npx wrangler secret put TELEGRAM_CHAT_ID         (chat admin cá nhân nếu có)
+#   npx wrangler secret put AI_API_KEY               (key cho AI Chatbot nếu có)
+
+

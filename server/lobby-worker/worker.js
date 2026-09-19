@@ -43,21 +43,170 @@ export default {
     if (path === "" || path === "/api") {
       return jsonResponse({
         ok: true,
-        service: "RetroHub Netplay Public Lobby",
-        version: "1.0.0",
+        service: "RetroHub Netplay Lobby, Telegram & AI Proxy",
+        version: "1.2.0",
         docs: {
           list_rooms: "GET /api/rooms",
           create_room: "POST /api/rooms",
           delete_room: "DELETE /api/rooms/:id",
           heartbeat: "POST /api/rooms/:id/heartbeat",
+          telegram_send_msg: "POST /api/telegram/send-message",
+          telegram_send_log: "POST /api/telegram/send-log",
+          ai_chat: "POST /api/ai/chat",
         },
       });
     }
 
-    // Ensure KV is bound
+
+    // --- TELEGRAM PROXY ENDPOINTS (Không yêu cầu KV) ---
+    if (path === "/api/telegram/send-message" && request.method === "POST") {
+      if (!env.TELEGRAM_BOT_TOKEN) {
+        return errorResponse("TELEGRAM_BOT_TOKEN chưa được cấu hình trên Worker.", 500);
+      }
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return errorResponse("Invalid JSON body.");
+      }
+      const text = String(body.text || "").trim();
+      const parseMode = String(body.parse_mode || "HTML").trim();
+      const topic = String(body.topic || "general").toLowerCase();
+
+      if (!text) {
+        return errorResponse("Nội dung tin nhắn (text) không được để trống.");
+      }
+
+      const groupId = env.TELEGRAM_GROUP_CHAT_ID || env.TELEGRAM_CHANNEL_ID || "-1003890413445";
+      const debugThreadId = env.TELEGRAM_DEBUG_THREAD_ID || 1205;
+      const adminChatId = env.TELEGRAM_CHAT_ID || "663642384";
+
+      const payload = {
+        chat_id: groupId,
+        text: text,
+        parse_mode: parseMode,
+      };
+      if (topic === "ssh" || topic === "log" || topic === "debug") {
+        payload.message_thread_id = parseInt(debugThreadId, 10);
+      }
+
+      try {
+        const teleResp = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const teleData = await teleResp.json();
+
+        // Gửi thêm bản sao cho Admin riêng nếu là thông tin SSH
+        if (topic === "ssh" && adminChatId && String(adminChatId) !== String(groupId)) {
+          ctx.waitUntil(
+            fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: adminChatId,
+                text: text,
+                parse_mode: parseMode,
+              }),
+            }).catch(() => {})
+          );
+        }
+
+        if (!teleData.ok) {
+          return errorResponse(`Telegram API error: ${teleData.description || "Unknown"}`, 502);
+        }
+
+        return jsonResponse({ ok: true, message: "Đã gửi tin nhắn qua Telegram thành công." });
+      } catch (e) {
+        return errorResponse(`Lỗi kết nối tới Telegram: ${e.message}`, 502);
+      }
+    }
+
+    if (path === "/api/telegram/send-log" && request.method === "POST") {
+      if (!env.TELEGRAM_BOT_TOKEN) {
+        return errorResponse("TELEGRAM_BOT_TOKEN chưa được cấu hình trên Worker.", 500);
+      }
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return errorResponse("Invalid JSON body.");
+      }
+      const filename = String(body.filename || "retrohub_diagnostic.log").trim();
+      const content = String(body.content || "").trim();
+      const caption = String(body.caption || "").trim();
+
+      if (!content) {
+        return errorResponse("Nội dung file log không được để trống.");
+      }
+
+      const groupId = env.TELEGRAM_GROUP_CHAT_ID || env.TELEGRAM_CHANNEL_ID || "-1003890413445";
+      const debugThreadId = env.TELEGRAM_DEBUG_THREAD_ID || 1205;
+
+      try {
+        const formData = new FormData();
+        formData.append("chat_id", groupId);
+        formData.append("message_thread_id", String(debugThreadId));
+        if (caption) {
+          formData.append("caption", caption);
+        }
+        const logBlob = new Blob([content], { type: "text/plain; charset=utf-8" });
+        formData.append("document", logBlob, filename);
+
+        const teleResp = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendDocument`, {
+          method: "POST",
+          body: formData,
+        });
+        const teleData = await teleResp.json();
+
+        if (!teleData.ok) {
+          return errorResponse(`Telegram API error: ${teleData.description || "Unknown"}`, 502);
+        }
+
+        return jsonResponse({ ok: true, message: "Đã gửi file log qua Telegram thành công." });
+      } catch (e) {
+        return errorResponse(`Lỗi upload file log tới Telegram: ${e.message}`, 502);
+      }
+    }
+
+    // --- AI CHATBOT PROXY ENDPOINT (Không yêu cầu KV) ---
+    if (path === "/api/ai/chat" && request.method === "POST") {
+      const aiKey = env.AI_API_KEY || env.OPENAI_API_KEY || "";
+      if (!aiKey) {
+        return errorResponse("AI_API_KEY chưa được cấu hình trên Worker.", 500);
+      }
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return errorResponse("Invalid JSON body.");
+      }
+
+      const aiEndpoint = env.AI_API_ENDPOINT || "https://ai.xuanhoa493.com/v1/chat/completions";
+
+      try {
+        const aiResp = await fetch(aiEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${aiKey}`,
+          },
+          body: JSON.stringify(body),
+        });
+        const aiData = await aiResp.json();
+        return jsonResponse(aiData, aiResp.status);
+      } catch (e) {
+        return errorResponse(`Lỗi kết nối tới máy chủ AI: ${e.message}`, 502);
+      }
+    }
+
+    // Ensure KV is bound for room management
     if (!env.LOBBY_KV) {
       return errorResponse("KV binding 'LOBBY_KV' is not configured.", 500);
     }
+
+
 
     try {
       // 2. GET /api/rooms: List active rooms

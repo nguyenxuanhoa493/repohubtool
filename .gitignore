@@ -46,3 +46,10 @@ files/.update_staging/
 
 # plans files. For dev purposes only, not to be committed to the repo.
 plans/
+
+# Secret configurations (never commit secrets to repo)
+*secrets*.json
+!files/rh/secrets.example.json
+*secrets_local*
+.env
+.env.*

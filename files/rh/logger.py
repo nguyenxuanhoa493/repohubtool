@@ -851,9 +851,21 @@ def upload_log_to_telegram(note=""):
 
     caption = "\n".join(caption_lines)
 
-    # Gửi qua Telegram API bằng Multipart Form Data thuần stdlib
+    # 1. Ưu tiên gửi qua Cloudflare Worker Proxy (100% bảo mật, không cần token trên máy)
+    try:
+        from .lobby import send_log_via_worker
+        content_text = content_bytes.decode("utf-8", errors="replace")
+        worker_ok, worker_msg = send_log_via_worker(filename=filename, content=content_text, caption=caption)
+        if worker_ok:
+            log_info(f"Gui bao cao loi len Telegram thanh cong (qua Worker Proxy): {filename}")
+            return True, "Đã gửi báo cáo lỗi thành công tới tác giả qua Telegram!"
+    except Exception as e:
+        log_warning(f"Gui log qua Worker Proxy that bai, thu fallback: {e}")
+
+    # 2. Fallback: Gửi qua Telegram API trực tiếp nếu có token cục bộ
     boundary = uuid.uuid4().hex
     body = bytearray()
+
 
     # chat_id
     body.extend(f"--{boundary}\r\n".encode("utf-8"))
@@ -880,7 +892,11 @@ def upload_log_to_telegram(note=""):
     body.extend(f"--{boundary}--\r\n".encode("utf-8"))
 
     token = get_telegram_token()
+    if not token:
+        log_warning("Bo qua gui bao cao len Telegram do chua cau hinh Bot Token.")
+        return False, "Chưa cấu hình Telegram Bot Token trong Secrets."
     url = f"https://api.telegram.org/bot{token}/sendDocument"
+
     req = urllib.request.Request(
         url,
         data=bytes(body),

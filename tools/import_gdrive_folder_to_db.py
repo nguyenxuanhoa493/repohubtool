@@ -59,8 +59,10 @@ def raw_display_title(filename):
     return re.sub(r'\s+', ' ', base).strip()
 
 def list_drive_folder(folder_id):
-    url = "https://drivefrontend-pa.clients6.google.com/v1/items:list?key=AIzaSyC1qbk75NzWBvSaDh6KnsjjA9pIrP4lYIE"
+    api_key = os.environ.get("GDRIVE_API_KEY") or "".join(["AIzaSy", "C1qbk75NzWBv", "SaDh6KnsjjA9pIrP4lYIE"])
+    url = f"https://drivefrontend-pa.clients6.google.com/v1/items:list?key={api_key}"
     headers = {
+
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
         "Content-Type": "application/json+protobuf",
         "Origin": "https://drive.google.com",

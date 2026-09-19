@@ -32,7 +32,10 @@ def resolve_netplay_telegram_chat_id():
     try:
         import urllib.request, ssl
         token = get_telegram_token()
+        if not token:
+            return TELEGRAM_GROUP_CHAT_ID
         url = f"https://api.telegram.org/bot{token}/getUpdates?limit=50"
+
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
@@ -279,6 +282,16 @@ def send_netplay_info_to_telegram(game_title=None, sys_code=None, host=None, por
     ]
     text = "\n".join(msg_lines)
 
+    # 1. Ưu tiên gửi qua Cloudflare Worker Proxy (100% bảo mật, không cần token trên máy)
+    try:
+        from .lobby import send_telegram_via_worker
+        worker_ok, worker_msg = send_telegram_via_worker(text, parse_mode="Markdown", topic="netplay")
+        if worker_ok:
+            return True, "Đã gửi kèo Netplay vào Telegram thành công (qua Worker Proxy)!"
+    except Exception:
+        pass
+
+    # 2. Fallback: Nếu có token cục bộ tự cấu hình
     target_chat_id = resolve_netplay_telegram_chat_id()
     dest_chats = []
     if target_chat_id:
@@ -290,6 +303,10 @@ def send_netplay_info_to_telegram(game_title=None, sys_code=None, host=None, por
     sent_any = False
     last_err = "Lỗi gửi Telegram"
     token = get_telegram_token()
+    if not token:
+        return False, "Chưa cấu hình Telegram Bot Token trong Secrets."
+
+
 
     for cid, tid in dest_chats:
         url = f"https://api.telegram.org/bot{token}/sendMessage"

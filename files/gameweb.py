@@ -2345,19 +2345,32 @@ class GameWebHandler(BaseHTTPRequestHandler):
     if path == "/api/chat":
       try:
         post_data = self.rfile.read(content_len).decode("utf-8")
-        # Use curl to bypass Python's missing SSL module on TrimUI
-        cmd = [
-            "curl", "-s", "-k", "-X", "POST",
-            "https://ai.xuanhoa493.com/v1/chat/completions",
-            "-H", "Content-Type: application/json",
-            "-H", "Authorization: Bearer freellmapi-706315155bc56c3a9c765142ab7a08e20d35e2ce26dad3e2",
-            "-d", post_data
-        ]
+        from rh.secrets import get_ai_key
+        ai_key = get_ai_key()
+
         import subprocess
+        # 1. Nếu có key cá nhân tự cấu hình trong secrets.json hoặc env var -> gọi thẳng server AI
+        if ai_key:
+          cmd = [
+              "curl", "-s", "-k", "-X", "POST",
+              "https://ai.xuanhoa493.com/v1/chat/completions",
+              "-H", "Content-Type: application/json",
+              "-H", f"Authorization: Bearer {ai_key}",
+              "-d", post_data
+          ]
+        else:
+          # 2. Không có key trên máy -> Proxy qua Cloudflare Worker (100% bảo mật không cần key trên máy)
+          cmd = [
+              "curl", "-s", "-k", "-X", "POST",
+              "https://retrohub-lobby.nguyenxuanhoa040993.workers.dev/api/ai/chat",
+              "-H", "Content-Type: application/json",
+              "-d", post_data
+          ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
+
         
         # If curl failed or returned empty stdout, return the stderr as a JSON error
         if not result.stdout.strip():
