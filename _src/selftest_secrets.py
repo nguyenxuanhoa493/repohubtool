@@ -89,7 +89,50 @@ class TestSecrets(unittest.TestCase):
                     os.environ.pop("SDCARD_PATH", None)
                 secrets._CACHED_SECRETS = None
 
+    def test_worker_proxy_send_message_payload(self):
+        """Kiểm tra cấu trúc gọi Worker Proxy gửi tin nhắn Telegram."""
+        from rh import lobby
+        from unittest.mock import patch, MagicMock
+        import io
+
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({"ok": True, "message": "Gửi thành công"}).encode("utf-8")
+        mock_resp.__enter__.return_value = mock_resp
+
+        with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
+            ok, msg = lobby.send_telegram_via_worker(text="Hello Test", parse_mode="HTML", topic="ssh")
+            self.assertTrue(ok)
+            self.assertIn("thành công", msg)
+            self.assertEqual(mock_urlopen.call_count, 1)
+
+            req = mock_urlopen.call_args[0][0]
+            self.assertIn("/telegram/send-message", req.full_url)
+            sent_data = json.loads(req.data.decode("utf-8"))
+            self.assertEqual(sent_data["text"], "Hello Test")
+            self.assertEqual(sent_data["topic"], "ssh")
+
+    def test_worker_proxy_send_log_payload(self):
+        """Kiểm tra cấu trúc gọi Worker Proxy gửi file log Telegram."""
+        from rh import lobby
+        from unittest.mock import patch, MagicMock
+
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({"ok": True, "message": "Log đã gửi"}).encode("utf-8")
+        mock_resp.__enter__.return_value = mock_resp
+
+        with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
+            ok, msg = lobby.send_log_via_worker(filename="test.log", content="Log content 123", caption="Báo lỗi")
+            self.assertTrue(ok)
+            self.assertEqual(mock_urlopen.call_count, 1)
+
+            req = mock_urlopen.call_args[0][0]
+            self.assertIn("/telegram/send-log", req.full_url)
+            sent_data = json.loads(req.data.decode("utf-8"))
+            self.assertEqual(sent_data["filename"], "test.log")
+            self.assertEqual(sent_data["content"], "Log content 123")
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

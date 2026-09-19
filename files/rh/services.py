@@ -532,16 +532,30 @@ def send_ssh_info_to_telegram():
 
     text = "\n".join(msg_lines)
 
-    TELEGRAM_CHAT_ID = "663642384"
-    TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
+    # 1. Ưu tiên gửi qua Cloudflare Worker Proxy (100% bảo mật, không cần token trên máy)
+    try:
+        from .lobby import send_telegram_via_worker
+        worker_ok, worker_msg = send_telegram_via_worker(text, parse_mode="HTML", topic="ssh")
+        if worker_ok:
+            return ("Đã gửi thông tin SSH vào Telegram thành công (qua Worker Proxy)!" if vi
+                    else "SSH info sent to Telegram successfully (via Worker Proxy)!")
+    except Exception as e:
+        worker_msg = str(e)
+
+    # 2. Dự phòng: Nếu có token cục bộ tự cấu hình trong secrets.json
     token = get_telegram_token()
     if not token:
-        return ("Chưa cấu hình Telegram Bot Token trong Secrets." if vi
-                else "Telegram Bot Token not configured in Secrets.")
+        return (f"Không thể gửi qua Worker: {worker_msg}" if vi
+                else f"Failed via Worker Proxy: {worker_msg}")
+
+    TELEGRAM_CHAT_ID = "663642384"
+    TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
+    TELEGRAM_DEBUG_THREAD_ID = 1205
 
     dest_chats = [
         (TELEGRAM_GROUP_CHAT_ID, TELEGRAM_DEBUG_THREAD_ID)
     ]
+
 
     if TELEGRAM_CHAT_ID and str(TELEGRAM_CHAT_ID) != str(TELEGRAM_GROUP_CHAT_ID):
         dest_chats.append((TELEGRAM_CHAT_ID, None))

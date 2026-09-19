@@ -161,3 +161,74 @@ def heartbeat_room(port, timeout=5):
             return data.get("ok", False), data.get("message", "")
     except Exception as e:
         return False, str(e)
+
+
+def send_telegram_via_worker(text, parse_mode="HTML", topic="ssh", timeout=8):
+    """Gửi tin nhắn Telegram thông qua Cloudflare Worker Proxy (100% không lộ token trên client)."""
+    if not text:
+        return False, "Nội dung tin nhắn trống"
+    url = f"{LOBBY_API_URL}/telegram/send-message"
+    payload = {
+        "text": text,
+        "parse_mode": parse_mode,
+        "topic": topic
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "User-Agent": "RetroHub-Handheld",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+    ctx = _make_ssl_context()
+    kw = {"timeout": timeout}
+    if ctx:
+        kw["context"] = ctx
+
+    try:
+        with urllib.request.urlopen(req, **kw) as resp:
+            res_data = json.loads(resp.read().decode("utf-8"))
+            if res_data.get("ok"):
+                return True, res_data.get("message", "Thành công")
+            return False, res_data.get("error", "Lỗi gửi Telegram từ Worker")
+    except Exception as e:
+        return False, f"Lỗi kết nối tới Worker Proxy: {e}"
+
+
+def send_log_via_worker(filename, content, caption="", timeout=20):
+    """Gửi file log Telegram thông qua Cloudflare Worker Proxy (100% không lộ token trên client)."""
+    if not content:
+        return False, "Nội dung file log trống"
+    url = f"{LOBBY_API_URL}/telegram/send-log"
+    payload = {
+        "filename": filename or "retrohub_diagnostic.log",
+        "content": content,
+        "caption": caption
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "User-Agent": "RetroHub-Handheld",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+    ctx = _make_ssl_context()
+    kw = {"timeout": timeout}
+    if ctx:
+        kw["context"] = ctx
+
+    try:
+        with urllib.request.urlopen(req, **kw) as resp:
+            res_data = json.loads(resp.read().decode("utf-8"))
+            if res_data.get("ok"):
+                return True, res_data.get("message", "Thành công")
+            return False, res_data.get("error", "Lỗi gửi file log từ Worker")
+    except Exception as e:
+        return False, f"Lỗi kết nối tới Worker Proxy: {e}"
+
