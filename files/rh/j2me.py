@@ -78,12 +78,23 @@ USER_DATA_FILES = ()
 
 
 def default_phone_cfg_path():
-    return f"{EMU_DIR}/default_phone.cfg"
+    """File luu lua chon ban phim cua nguoi dung (tach khoi file phat hanh).
+
+    default_phone.cfg nam trong manifest.runtime, ma app ghi vao chinh no thi
+    hash lech mai -> OTA moi cap nhat lai o moi lan mo app. Lua chon cua nguoi
+    dung vi vay ghi ra user.cfg, con default_phone.cfg chi con la ban mac dinh
+    di kem ban phat hanh."""
+    return f"{EMU_DIR}/user.cfg"
+
+
+def legacy_phone_cfg_paths():
+    """Duong dan cu, chi doc de di tru lua chon da luu truoc day."""
+    return (f"{EMU_DIR}/default_phone.cfg", f"{RUNTIME_DIR}/bin/default_phone.cfg")
 
 
 def load_default_phone_mode():
     """Returns current default phone keypad profile ('N', 'P', 'E', 'S', 'M')."""
-    for p in (default_phone_cfg_path(), f"{RUNTIME_DIR}/bin/default_phone.cfg"):
+    for p in (default_phone_cfg_path(),) + legacy_phone_cfg_paths():
         try:
             if os.path.isfile(p):
                 with open(p, "r", encoding="utf-8") as f:
@@ -99,17 +110,15 @@ def save_default_phone_mode(mode):
     """Saves default phone keypad profile. Returns True on success."""
     if mode not in PHONE_MODES:
         return False
-    val = mode.strip().lower()
-    success = False
-    for p in (default_phone_cfg_path(), f"{RUNTIME_DIR}/bin/default_phone.cfg"):
-        try:
-            os.makedirs(os.path.dirname(p), exist_ok=True)
-            with open(p, "w", encoding="utf-8") as f:
-                f.write(val + "\n")
-            success = True
-        except Exception as e:
-            print(f"Error writing {p}: {e}")
-    return success
+    p = default_phone_cfg_path()
+    try:
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(mode.strip().lower() + "\n")
+        return True
+    except Exception as e:
+        print(f"Error writing {p}: {e}")
+        return False
 
 
 def j2me_runtime_paths():

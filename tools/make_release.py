@@ -28,6 +28,11 @@ MANIFEST_PATH = os.path.join(ROOT, "manifest.json")
 # resolved against it, so renaming the branch would strand every device.
 REPO = "nguyenxuanhoa493/repohubtool"
 BRANCH = "main"
+# settings.json la state cua may chu (device_id, catalog_sha, skipped_versions);
+# phat hanh no se ghi de cau hinh nguoi dung va khien pending_files() khong bao
+# gio hoi tu (apply_update bo qua no). Khong bao gio ship, khong them vao remove.
+NEVER_SHIPPED = frozenset(["settings.json"])
+
 FULL = False
 TZ = timezone(timedelta(hours=7))
 
@@ -200,6 +205,8 @@ def step_3_update_manifest():
         for fn in sorted(files):
             if fn.startswith(".") or fn.endswith(".pyc") or fn == "desktop.ini":
                 continue
+            if fn in NEVER_SHIPPED:
+                continue
             fp = os.path.join(root, fn)
             rel = os.path.relpath(fp, FILES_DIR).replace(os.sep, "/")
             with open(fp, "rb") as fh:
@@ -248,6 +255,8 @@ def step_3_update_manifest():
     # Tự động thêm các tệp đã xóa hoặc đổi tên vào danh sách remove
     deleted_paths = old_paths - scanned_paths
     for dp in deleted_paths:
+        if dp in NEVER_SHIPPED:
+            continue   # khong bao gio ship thi khong duoc xoa file cua nguoi dung
         remove_list.add(dp)
 
     manifest["files"] = sorted(current_files, key=lambda x: x["path"])
