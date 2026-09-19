@@ -106,4 +106,45 @@ missing = [(lang, k) for lang in ("VI", "EN") for k in
            if k not in TEXTS[lang]]
 print("header dung ca 2 ngon ngu:", ok)
 print("key i18n thieu:", missing if missing else "khong")
+
+# --- core picker + storage (chong hoi quy) ---
+from rh.screens.utilities import UtilitiesScreen
+from rh.modals.corepicker import CorePickerModal
+
+u = UtilitiesScreen(eng)
+u.on_enter()
+u.active = True   # screen vua tao chua duoc push, phai bat moi nhan input
+ids = [it.get("id") for it in u.items]
+if "nav_core_sys" not in ids:
+    print("  LOI: man Tien ich khong con muc nav_core_sys"); ok = False
+else:
+    u.selected_idx = ids.index("nav_core_sys")
+    u.handle_input({"btn_a": True})
+    modal = eng.active_modal
+    if not isinstance(modal, CorePickerModal):
+        print("  LOI: bam nav_core_sys khong mo CorePickerModal (mo: %s)" % type(modal).__name__); ok = False
+    else:
+        try:
+            modal.render(eng)
+            print("  OK   nav_core_sys -> CorePickerModal (rows=%d, render OK)" % len(modal.rows))
+        except Exception as e:
+            print("  LOI  CorePickerModal render: %s: %s" % (type(e).__name__, e)); ok = False
+        modal.close()
+
+from rh import sysinfo
+rows = sysinfo.get_storage_info_rows()
+if not rows:
+    print("  LOI: get_storage_info_rows() rong -> modal Storage se trang"); ok = False
+else:
+    print("  OK   get_storage_info_rows() tra ve %d dong" % len(rows))
+
+from rh.i18n import TEXTS
+missing2 = [(lang, k) for lang in ("VI", "EN") for k in
+            ("core_picker_title", "core_picker_empty", "core_set_ok", "core_set_fail",
+             "core_picker_hint", "core_picker_footer") if k not in TEXTS[lang]]
+if missing2:
+    print("  LOI: thieu key i18n %s" % missing2); ok = False
+else:
+    print("  OK   key core_* co du VI+EN")
+
 print("TAT CA UI SMOKE TEST OK" if ok and not missing else "CO LOI")

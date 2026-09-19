@@ -190,8 +190,17 @@ def get_storage_info_rows():
                 "sub": f"Used {sd_used_str} / {sd_total_str} • Free {sd_free_str} ({free_pct}%)",
                 "pct": used_pct
             })
-    except Exception:
-        pass
+    except Exception as e:
+        # Nuot loi o day tung lam modal "Storage & SD Card" trang tron ma khong
+        # co dau vet nao trong log; them mot dong thay the de khong bao gio trang.
+        print("[sysinfo] khong doc duoc dung luong %s: %s" % (sd_target, e))
+        rows.append({
+            "title": ("1. Thẻ nhớ chính (SDCARD)" if state.current_lang == "VI"
+                      else "1. Main SD Card Storage"),
+            "sub": ("Không đọc được dung lượng" if state.current_lang == "VI"
+                    else "Could not read storage usage"),
+            "pct": 0,
+        })
 
     # 2. Roms folder statistics
     rom_dir = get_roms_root()

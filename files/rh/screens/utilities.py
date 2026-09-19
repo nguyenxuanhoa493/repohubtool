@@ -9,6 +9,7 @@ from ..cheat_manager import cheat_runner
 from ..save_manager import create_save_backup, restore_save_backup
 from ..sysinfo import get_device_info_rows, get_storage_info_rows
 from ..modals.common import TwoColInfoModal, BoxartScraperModal, CheatModal, SaveManagerModal
+from ..modals.corepicker import CorePickerModal
 from .base import BaseScreen
 
 
@@ -125,6 +126,10 @@ class UtilitiesScreen(BaseScreen):
                 self.engine.open_modal(SaveManagerModal(self.engine))
             elif it_id == "nav_led":
                 self.engine.push_screen("led")
+            elif it_id == "nav_core_sys":
+                # Truoc day muc nay chi duoc them vao danh sach ma khong co nhanh
+                # xu ly, bam A khong co gi xay ra.
+                self.engine.open_modal(CorePickerModal(self.engine))
             elif it_id == "device_info":
                 self.engine.open_modal(TwoColInfoModal(self.engine), {
                     "title": tr("device_info"),
