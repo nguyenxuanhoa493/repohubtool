@@ -2,7 +2,34 @@
   "schema": 1,
   "releases": [
     {
+      "version": "2.44",
+      "date": "2026-09-20",
+      "headline": {
+        "vi": "Bảo mật toàn diện: Loại bỏ key Telegram & AI trong codebase, chuyển sang Cloudflare Worker Proxy",
+        "en": "Comprehensive Security: Decoupled Telegram & AI keys via Cloudflare Worker Proxy"
+      },
+      "bullets": [
+        {
+          "vi": "Loại bỏ 100% token Telegram bot và API key AI Chatbot hardcode trong codebase, loại trừ triệt để nguy cơ rò rỉ key.",
+          "en": "Completely removed hardcoded Telegram Bot and AI Chatbot tokens from codebase, eliminating secret leak vulnerabilities."
+        },
+        {
+          "vi": "Kiến trúc Cloudflare Worker Proxy: Chuyển tiếp an toàn mọi yêu cầu gửi SSH, file log lỗi, kèo Netplay và AI Chatbot mà không cần lưu token trên thiết bị.",
+          "en": "Cloudflare Worker Proxy: Securely forward SSH info, diagnostic logs, Netplay rooms, and AI Chatbot requests without exposing tokens on handhelds."
+        },
+        {
+          "vi": "Nâng cấp bảo mật CI/CD GitHub Actions: Tự động nhận Telegram Token qua GitHub Repository Secrets khi phát hành OTA.",
+          "en": "GitHub Actions CI/CD Security: Automated OTA release notifications now securely authenticate via GitHub Repository Secrets."
+        },
+        {
+          "vi": "Cơ chế quản lý Secret phân tầng: Hỗ trợ cấu hình bí mật cục bộ trên thẻ nhớ qua secrets.json và biến môi trường.",
+          "en": "Multi-tier Secret Management: Safe local secrets configuration support via SDCARD secrets.json and system environment variables."
+        }
+      ]
+    },
+    {
       "version": "2.43",
+
       "date": "2026-09-19",
       "headline": {
         "vi": "Menu Retro Store dạng lưới, tích hợp 1.400+ ROMs Google Drive và nâng cấp Webgame",

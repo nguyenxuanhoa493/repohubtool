@@ -19,7 +19,9 @@ constant must stay in sync with the git tag."""
 # man hinh tat tren TrimUI Brick (Allwinner disp), man hinh tat thi LED tat han, cache
 # duong dan anh bia + tran cache (RAM anh bia 70MB -> 21MB), huy ket qua cu khi doi tab/video.
 # 2.43: menu Retro Store (Grid 3x2), tich hop 1.400+ ROMs Google Drive va nang cap Webgame.
-APP_VERSION = "2.43"
+# 2.44: bao mat toan dien - loai bo token Telegram va API key AI khoi codebase, chuyen sang Cloudflare Worker Proxy.
+APP_VERSION = "2.44"
+
 
 
 def version_tuple(v=None):

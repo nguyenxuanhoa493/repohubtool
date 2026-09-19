@@ -1,13 +1,14 @@
 {
-  "version": "2.43",
-  "full_release_version": "2.43",
+  "version": "2.44",
+  "full_release_version": "2.44",
   "python": "any",
-  "built": "2026-09-19T23:18:26+07:00",
+  "built": "2026-09-20T00:49:00+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
-    "vi": "Menu Retro Store dạng lưới, tích hợp 1.400+ ROMs Google Drive và nâng cấp Webgame",
-    "en": "New Retro Store Grid menu, 1,400+ Google Drive ROMs integration, and Webgame upgrade"
+    "vi": "Bảo mật toàn diện: Loại bỏ key Telegram & AI trong codebase, chuyển sang Cloudflare Worker Proxy",
+    "en": "Comprehensive Security: Decoupled Telegram & AI keys via Cloudflare Worker Proxy"
   },
+
   "remove": [
     "app.pyc",
     "assets/icons_preview/Burst - Stock OS v1.1.0.png",
