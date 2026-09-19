@@ -1737,8 +1737,8 @@
     },
     {
       "path": "rh/emulator_store.py",
-      "size": 8573,
-      "sha256": "a181b7ba1ba4f4288f196a877f35d6fff30f0883e50b6039c09d95daa8068c00"
+      "size": 10763,
+      "sha256": "5c421d9ac9166491235b8f2a46dbf8dd7fc4067fab2552b3d28d19d8397ef281"
     },
     {
       "path": "rh/emulators.py",
@@ -1902,8 +1902,8 @@
     },
     {
       "path": "rh/screens/emu_store.py",
-      "size": 20508,
-      "sha256": "f9a5a67dd27bf0c83e0efa6003fd46d93112b2735db8c722d8a3bb9994759569"
+      "size": 20590,
+      "sha256": "6f4cc1159aea17878a41533bfd1d2697adc6acb98630bf35d7d6f186e40621bf"
     },
     {
       "path": "rh/screens/home.py",
