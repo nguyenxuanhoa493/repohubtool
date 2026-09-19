@@ -2,7 +2,7 @@
   "version": "2.47",
   "full_release_version": "2.46",
   "python": "any",
-  "built": "2026-09-20T02:25:00+07:00",
+  "built": "2026-09-20T02:25:58+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Hạ tầng CDN: Tích hợp Cloudflare R2 CDN tải siêu tốc cho giả lập, theme, icon và kho game",
@@ -1558,13 +1558,13 @@
     },
     {
       "path": "catalog/icons_catalog.json",
-      "size": 1991,
-      "sha256": "09c7f3ce766c256194fc280595c115ed1fc1e02233ce472520439745c865fa1e"
+      "size": 1852,
+      "sha256": "fd5431de7e0368ecd5f88b20f3f9a57b381b13609a5335dfd67bfdfeea8162d3"
     },
     {
       "path": "catalog/themes_catalog.json",
-      "size": 76202,
-      "sha256": "d60123ef638c05491fbbb877b594084d0c59a24e0f5fb6e135bd8cd778ab7e73"
+      "size": 70232,
+      "sha256": "4031772ac299f54b8e822dae624c85cdacf3ab8553cdef661611b892f4452dbf"
     },
     {
       "path": "config.json",
@@ -1753,8 +1753,8 @@
     },
     {
       "path": "rh/emulator_store.py",
-      "size": 15880,
-      "sha256": "81d1236a0d4b73e1aa9eabe0ef95142c8f677e18340465bc3089ef1241b28e33"
+      "size": 15823,
+      "sha256": "3499aa9490b4bbad862b1e1acfab541b59fe9ba2af33522401d048fd957239de"
     },
     {
       "path": "rh/emulators.py",
@@ -1788,8 +1788,8 @@
     },
     {
       "path": "rh/icon_manager.py",
-      "size": 21630,
-      "sha256": "e15334524462f15a8ab243e5e6f3dba99a15f90db60fae392c095a3d1a19ff1b"
+      "size": 21808,
+      "sha256": "101e02f9071aa9e68bef640d4f5f44eccf14019dec390c340ef487868f4b5c36"
     },
     {
       "path": "rh/inputs.py",
@@ -2068,8 +2068,8 @@
     },
     {
       "path": "rh/theme_manager.py",
-      "size": 10563,
-      "sha256": "cdf45beea19cca7fa12221d8d8fc72ede067af700f5dbf584573f9c2bb1acb13"
+      "size": 10824,
+      "sha256": "052b6d63297ebe13c8c2e4dade76831206fc849749604d38d239ff15f326af9b"
     },
     {
       "path": "rh/ui/__init__.py",
@@ -2093,13 +2093,13 @@
     },
     {
       "path": "rh/updater.py",
-      "size": 34415,
-      "sha256": "2a08452dd1227c435b4be77d1923d8b39df23885d5419c47fd0780d58fd1bcc8"
+      "size": 34771,
+      "sha256": "078b24159e6a5de6cb23b8e700cb0a9ba3bc288847dfbe44a342112185263670"
     },
     {
       "path": "rh/version.py",
-      "size": 2345,
-      "sha256": "fb560e43b5da7231ecc13bec313eb4e321d00bedf148eafcf95702fe86a5d14d"
+      "size": 2465,
+      "sha256": "ed30f379f5660448eda69bf3a2d01693b9e04ae32048a37a5d222a27fd51823e"
     },
     {
       "path": "rh/yt.py",
@@ -2512,6 +2512,6 @@
       "sha256": "23db841331c6e35d5eb21dcac3c4d69e948e3f4e42c844161f6ea72393ba25d6"
     }
   ],
-  "notes": "• Loại bỏ hoàn toàn Google API Key khỏi codebase, chuyển toàn bộ việc quét thư mục Google Drive qua Cloudflare Worker Proxy được bảo vệ bởi Worker Secrets.\n• Bổ sung cờ --dry-run và --folder-id vào công cụ quét ROM Google Drive (tools/import_gdrive_folder_to_db.py), cho phép chạy thử kiểm tra hoặc quét từng thư mục mà không ghi đè Database.\n• Tối ưu hóa bộ nạp rh.secrets: Đồng bộ nạp đường dẫn thẻ nhớ qua biến môi trường SDCARD_PATH, nâng cao tính độc lập khi kiểm thử và phát triển.",
-  "notes_en": "• Completely removed Google API Key from codebase, delegating all Google Drive folder listings to Cloudflare Worker Proxy secured by Worker Secrets.\n• Added --dry-run and --folder-id options to the Google Drive ROM scanner tool (tools/import_gdrive_folder_to_db.py), allowing safe testing or targeting a single folder without touching the database.\n• Optimized rh.secrets loader: Synchronized storage paths via SDCARD_PATH environment variable, improving test isolation and reliability."
+  "notes": "• Phân phối tài nguyên qua Cloudflare R2 CDN (cdn.xuanhoa493.com): Toàn bộ 170 gói tài nguyên (Theme, Icon pack, Emulator tarball và ROM store catalog) được ưu tiên tải qua mạng Edge APAC tốc độ cao, độ trễ thấp và miễn phí băng thông egress.\n• Cơ chế dự phòng đa tầng (High Availability Fallback): Tự động chuyển tiếp mượt mà sang GitHub Releases và các mirror dự phòng nếu kết nối CDN gặp sự cố.\n• Bổ sung công cụ đồng bộ R2 tự động (_src/sync_to_r2.py) hỗ trợ chuẩn AWS SigV4 độc lập, tự động nạp cấu hình .env an toàn.",
+  "notes_en": "• Resource distribution via Cloudflare R2 CDN (cdn.xuanhoa493.com): All 170 release assets (Themes, Icon packs, Emulator tarballs and ROM store catalog) are now prioritized via Cloudflare APAC high-speed edge with zero egress fees.\n• Multi-tier High Availability Fallback: Smoothly fails over to GitHub Releases and secondary mirrors if the CDN connection encounters issues.\n• Added automated R2 sync tool (_src/sync_to_r2.py) with standalone AWS SigV4 implementation and secure .env configuration support."
 }
