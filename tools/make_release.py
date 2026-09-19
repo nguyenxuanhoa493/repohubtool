@@ -60,6 +60,29 @@ def _git_blobs(specs):
         proc.wait()
     return blobs
 
+def _git_ignored(rels):
+    """Payload paths .gitignore covers - they can never be served by GitHub.
+
+    A desktop run installs the 31 MB store database into files/catalog/, which
+    is ignored; hashing it would put a file in the manifest that no client can
+    download."""
+    if not rels:
+        return set()
+    with tempfile.TemporaryFile() as spec_file:
+        for rel in rels:
+            spec_file.write(("files/%s\n" % rel).encode("utf-8"))
+        spec_file.seek(0)
+        proc = subprocess.Popen(["git", "-C", ROOT, "check-ignore", "--stdin", "--no-index"],
+                                stdin=spec_file, stdout=subprocess.PIPE)
+        out = proc.stdout.read().decode("utf-8", "replace")
+        proc.wait()
+    ignored = set()
+    for line in out.splitlines():
+        line = line.strip()
+        if line.startswith("files/"):
+            ignored.add(line[len("files/"):])
+    return ignored
+
 def payload_bytes(data, blob):
     """The bytes GitHub serves for a payload file, or None when they differ.
 
@@ -181,6 +204,12 @@ def step_3_update_manifest():
             rel = os.path.relpath(fp, FILES_DIR).replace(os.sep, "/")
             with open(fp, "rb") as fh:
                 payload.append((rel, fh.read()))
+
+    ignored = _git_ignored([rel for rel, _ in payload])
+    if ignored:
+        print("  -> Bo qua %d tep bi .gitignore (GitHub khong phuc vu): %s"
+              % (len(ignored), ", ".join(sorted(ignored)[:3])))
+        payload = [(rel, data) for rel, data in payload if rel not in ignored]
 
     blobs = _git_blobs([":files/%s" % rel for rel, _ in payload])
 

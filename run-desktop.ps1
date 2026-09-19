@@ -33,6 +33,12 @@
 .PARAMETER NoLaunch
     Chuan bi xong thi dung, khong mo app (dung de kiem tra moi truong).
 
+.PARAMETER WindowSize
+    Kich thuoc cua so, dang WxH (vi du 1280x720). Mac dinh 70% man hinh.
+
+.PARAMETER FullScreen
+    Chay toan man hinh nhu tren may cam tay, khong co thanh tieu de.
+
 .EXAMPLE
     .\run-desktop.ps1
 
@@ -47,7 +53,9 @@ param(
     [switch]$WithYouTube,
     [switch]$UpgradePackages,
     [switch]$RecreateVenv,
-    [switch]$NoLaunch
+    [switch]$NoLaunch,
+    [string]$WindowSize,
+    [switch]$FullScreen
 )
 
 $ErrorActionPreference = "Stop"
@@ -148,16 +156,34 @@ $env:PYSDL2_DLL_PATH = $dllPath
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
 
+# Mac dinh chay trong cua so de co thanh tieu de (minimize / maximize / close).
+# May cam tay khong co trinh quan ly cua so nen ben do khong bao gio dat bien
+# nay - xem rh/engine.py desktop_window_size().
+if ($FullScreen) {
+    Remove-Item Env:\RETROHUB_WINDOWED -ErrorAction SilentlyContinue
+    Remove-Item Env:\RETROHUB_WINDOW_SIZE -ErrorAction SilentlyContinue
+} else {
+    $env:RETROHUB_WINDOWED = "1"
+    if ($WindowSize) { $env:RETROHUB_WINDOW_SIZE = $WindowSize }
+}
+
 Write-Step "SDCARD_PATH      = $env:SDCARD_PATH"
 Write-Step "PYSDL2_DLL_PATH  = $env:PYSDL2_DLL_PATH"
 Write-Step "Python           = $VenvPython"
+if ($FullScreen) {
+    Write-Step "Che do           = toan man hinh (giong may cam tay)"
+} elseif ($WindowSize) {
+    Write-Step "Che do           = cua so $WindowSize"
+} else {
+    Write-Step "Che do           = cua so 70% man hinh"
+}
 
 if ($NoLaunch) {
     Write-Step "NoLaunch: moi truong san sang, khong mo app."
     exit 0
 }
 
-Write-Step "Mo RetroHub... (thoat bang ESC hoac phim K)"
+Write-Step "Mo RetroHub... (ESC hoac K: quay lai; nut X tren cua so: thoat)"
 Push-Location $AppDir
 try {
     & $VenvPython app.py
