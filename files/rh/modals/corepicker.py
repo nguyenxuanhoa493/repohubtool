@@ -116,7 +116,7 @@ class CorePickerModal(BaseModal):
             opts = row.get("options") or []
             if sel and opts:
                 cur = opts[self.opt_idx.get(row["code"], 0)]
-                engine.draw_text("◄ %s ►" % (cur.get("name") or cur.get("launch")),
+                engine.draw_text("< %s >" % (cur.get("name") or cur.get("launch")),
                                  engine.font_badge, x + w - 34, ry + 16, 255, 215, 0, right_align=True)
             else:
                 engine.draw_text(row.get("current", ""), engine.font_footer,
