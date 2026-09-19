@@ -155,6 +155,32 @@ check("T9a. parse duoc", parsed is True and total == 110 and names == ["a.iso", 
 total2, names2, parsed2 = archive.parse_list_output("7-Zip: unexpected output")
 check("T9b. bao khong parse duoc thay vi tra 0", parsed2 is False, "%r" % (parsed2,))
 
+# 7-Zip tren Windows tra ve CRLF, va so dau gach cua dong ngan cach doi theo ban
+# 7-Zip. Truoc day ca hai deu lam buoc doc danh sach that bai, va nguoi dung nhan
+# "FILE TAI VE HONG" cho mot archive lanh.
+total3, names3, parsed3 = archive.parse_list_output(out_ok.replace("\n", "\r\n"))
+check("T9c. doc duoc output CRLF (7-Zip tren Windows)",
+      parsed3 is True and total3 == 110 and names3 == ["a.iso", "b.nfo"], "%r %r %r" % (total3, names3, parsed3))
+out_long = "Listing archive\r\n" + "-" * 24 + "\r\nPath = x.bin\r\nSize = 7\r\nFolder = -\r\n\r\n"
+total4, names4, parsed4 = archive.parse_list_output(out_long)
+check("T9d. doc duoc dong ngan cach dai", parsed4 is True and names4 == ["x.bin"], "%r %r" % (total4, parsed4))
+
+print("T9e. Phan biet ly do: file hong / khong co ROM / ECM")
+check("T9e1. key rieng cho file hong", archive.BROKEN in archive.ARCHIVE_KEYS)
+check("T9e2. key rieng cho archive khong co ROM", archive.NO_ROM in archive.ARCHIVE_KEYS)
+check("T9e3. key rieng cho ROM nen ECM", archive.ECM in archive.ARCHIVE_KEYS)
+from rh.i18n import TEXTS
+missing_keys = [k for lang in ("VI", "EN") for k in (archive.BROKEN, archive.NO_ROM, archive.ECM) if k not in TEXTS[lang]]
+check("T9e4. ca 3 key deu co VI+EN", not missing_keys, "%r" % (missing_keys,))
+
+print("T9f. Nhan dien anh CD nen ECM (.bin.ecm cua ban scene)")
+ecm = write(sd_path("tmp", "game.bin.ecm"), b"ECM\x00" + b"\x00" * 32)
+plain = write(sd_path("tmp", "that.bin"), b"\x00" * 32)
+misnamed = write(sd_path("tmp", "ten-sai.ecm"), b"BIN\x00" + b"\x00" * 32)
+check("T9f1. .bin.ecm dung magic -> ECM", archive.ecm_packed(ecm) is True)
+check("T9f2. file .bin khong bi coi la ECM", archive.ecm_packed(plain) is False)
+check("T9f3. .ecm dat ten sai (khong magic) khong tinh la ECM", archive.ecm_packed(misnamed) is False)
+
 print("T10. Library/store: ton trong casing 'roms' cua the")
 reset_state()
 write(sd_path("roms", "NES", "Contra (USA).nes"), b"\x00" * 512)

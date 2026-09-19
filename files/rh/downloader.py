@@ -26,6 +26,44 @@ try:
 except Exception:
     db = None
 
+def _purge_stale_temp(keep_path, max_age_s=6 * 3600):
+    """Xoa file tam cu trong TEMP_DOWNLOAD_DIR, giu lai *keep_path*.
+
+    Lan tai bi ngat de lai file duoc cap phat san (toan so 0 o phan chua tai) va
+    khong ai don: vai lan nhu vay la mat ca GB the nho."""
+    now = time.time()
+    try:
+        for name in os.listdir(TEMP_DOWNLOAD_DIR):
+            fp = os.path.join(TEMP_DOWNLOAD_DIR, name)
+            if os.path.abspath(fp) == os.path.abspath(keep_path):
+                continue
+            try:
+                if os.path.isfile(fp) and now - os.path.getmtime(fp) > max_age_s:
+                    os.remove(fp)
+                    _trace("don file tam cu: %s" % name)
+            except OSError:
+                continue
+    except OSError:
+        pass
+
+def _trace(msg):
+    """Ghi mot dong chan doan cho loi tai/giai nen.
+
+    Log chi tiet bi tat theo tuy chon cua nguoi dung (enable_logging=False), nhung
+    khi tai that bai thi khong con gi khac de doc: stdout cua app bi nuot, con
+    file loi cua launch.sh chi co stderr. Giu it dong, tu xoay vong o 256 KB."""
+    try:
+        from .paths import SDCARD_PATH as _sd
+        d = os.path.join(_sd, "RetroHub", "logs")
+        os.makedirs(d, exist_ok=True)
+        f = os.path.join(d, "tai-loi.log")
+        if os.path.isfile(f) and os.path.getsize(f) > 256 * 1024:
+            os.replace(f, f + ".1")
+        with open(f, "a", encoding="utf-8") as fh:
+            fh.write("[%s] %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), msg))
+    except Exception:
+        pass
+
 MAX_CHUNK_STALLS = 3      # consecutive attempts gaining zero bytes before giving up
 MAX_CHUNK_ATTEMPTS = 20   # hard cap on range requests per part
 dl_state = {
@@ -393,6 +431,11 @@ def start_download_thread(sys_code, game_info, background=False):
         
         tmp_zip_path = os.path.join(tmp_dir, filename)
         img_url = game_info.get("img_url", "")
+
+        # File trong .tmp_download con lai tu lan tai bi ngat (tat app, mat dien,
+        # deep sleep) va chiem dung luong that: mot ban PS1 bo do la hang tram MB.
+        # Chi don file cu hon 6 gio de khong dung vao ban dang tai do.
+        _purge_stale_temp(tmp_zip_path)
 
         # Always clean previous leftover temporary file before starting
         if os.path.exists(tmp_zip_path):
@@ -772,8 +815,32 @@ def start_download_thread(sys_code, game_info, background=False):
                     dl_state["msg"] = f"Đang kết nối lại ({retry_count}/{max_retries})..." if state.current_lang == "VI" else f"Reconnecting ({retry_count}/{max_retries})..."
                     time.sleep(1.5)
 
+            # Tai xong theo so byte khong co nghia la file dung: server cat ngang
+            # giua duong ma van bao Content-Length khong ro, hoac mirror phat mot
+            # ban loi san. Thu mo header bang chinh 7-Zip (doc header, khong bung)
+            # de biet chac, roi moi di tiep. File hong thi thu nguon ke tiep.
+            if (download_success and not dl_state["cancel_requested"]
+                    and os.path.exists(tmp_zip_path)
+                    and archive_tool.looks_like_archive(tmp_zip_path)):
+                exe_probe = archive_tool.sevenzip()
+                if exe_probe and not archive_tool.readable(tmp_zip_path, exe_probe):
+                    print("Downloaded file is not a readable archive, trying next source")
+                    _trace("tai xong nhung 7-Zip khong mo duoc %s (%d byte, server bao %s byte) - thu nguon ke tiep"
+                           % (os.path.basename(tmp_zip_path), os.path.getsize(tmp_zip_path),
+                              total_bytes if total_bytes > 0 else "khong ro"))
+                    try:
+                        os.remove(tmp_zip_path)
+                    except OSError:
+                        pass
+                    download_success = False
+                    last_error = ValueError("file tai ve khong mo duoc")
+                    continue
+
             if offline_abort or readonly_abort:
                 break
+
+        if not download_success and not dl_state["cancel_requested"]:
+            _trace("tai that bai sau %d nguon: %s" % (len(candidates), last_error))
 
         if dl_state["cancel_requested"]:
             if os.path.exists(tmp_zip_path):
@@ -844,6 +911,9 @@ def start_download_thread(sys_code, game_info, background=False):
                         prefer_name=os.path.splitext(filename)[0])
                 except archive_tool.ArchiveError as ae:
                     print(f"Archive extraction failed: {ae}")
+                    _trace("giai nen that bai (%s): %s | file=%d byte, server bao=%s byte, nguon=%s"
+                           % (ae.key, ae.detail or "khong ro", os.path.getsize(tmp_zip_path) if os.path.exists(tmp_zip_path) else -1,
+                              total_bytes if total_bytes > 0 else "khong ro", dl_state.get("source_name", "")))
                     try:
                         os.remove(tmp_zip_path)
                     except OSError:
