@@ -137,6 +137,32 @@ check("T2.6 khong co node nao -> coi nhu dang sang (khong tu ngu sai)",
 check("T2.7 fb0=4 (blank khac 0) -> tat",
       backlight.screen_is_off(fake_sysfs(fb0="4")) is True)
 
+# T2.8+: may TrimUI Brick that (do tren 192.168.1.12, Allwinner sun50iw10) KHONG
+# co /sys/class/backlight va fb0/blank rong; tin hieu nam o fb0/state va
+# /sys/class/disp/disp/attr/sys ("unblank"/"blank" + "backlight( 72)").
+def fake_disp(text, fb_state=None):
+    root = tempfile.mkdtemp(prefix="rh-sysfs-disp-")
+    write(os.path.join(root, "sys", "class", "disp", "disp", "attr", "sys"), text)
+    if fb_state is not None:
+        write(os.path.join(root, "sys", "class", "graphics", "fb0", "state"), fb_state)
+        write(os.path.join(root, "sys", "class", "graphics", "fb0", "blank"), "")
+    return root
+
+SYS_ON = ("screen 0:\nde_rate 300000000 hz, ref_fps:60\n"
+          "\tmgr0: 1024x768 fmt[rgb] unblank direct_show[false]\n"
+          "\tlcd output\tbacklight( 72)\tfps:60.6\t1024x 768\n")
+SYS_BLANK = SYS_ON.replace("unblank", "blank")
+SYS_BL_ZERO = SYS_ON.replace("backlight( 72)", "backlight(  0)")
+
+check("T2.8 fb0/state=1 (man hinh tat tren driver moi) -> tat",
+      backlight.screen_is_off(fake_disp(SYS_ON, fb_state="1")) is True)
+check("T2.9 disp attr bao blank -> tat",
+      backlight.screen_is_off(fake_disp(SYS_BLANK)) is True)
+check("T2.10 disp attr bao unblank + backlight 72 -> dang sang",
+      backlight.screen_is_off(fake_disp(SYS_ON)) is False)
+check("T2.11 disp attr bao unblank nhung backlight 0 -> tat",
+      backlight.screen_is_off(fake_disp(SYS_BL_ZERO)) is True)
+
 # ---------------------------------------------------------------------------
 # T3: engine dung chung phep kiem tra do va khong doc sysfs moi khung hinh
 # ---------------------------------------------------------------------------
