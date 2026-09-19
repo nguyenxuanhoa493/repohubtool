@@ -43,8 +43,8 @@ export default {
     if (path === "" || path === "/api") {
       return jsonResponse({
         ok: true,
-        service: "RetroHub Netplay Public Lobby & Telegram Proxy",
-        version: "1.1.0",
+        service: "RetroHub Netplay Lobby, Telegram & AI Proxy",
+        version: "1.2.0",
         docs: {
           list_rooms: "GET /api/rooms",
           create_room: "POST /api/rooms",
@@ -52,9 +52,11 @@ export default {
           heartbeat: "POST /api/rooms/:id/heartbeat",
           telegram_send_msg: "POST /api/telegram/send-message",
           telegram_send_log: "POST /api/telegram/send-log",
+          ai_chat: "POST /api/ai/chat",
         },
       });
     }
+
 
     // --- TELEGRAM PROXY ENDPOINTS (Không yêu cầu KV) ---
     if (path === "/api/telegram/send-message" && request.method === "POST") {
