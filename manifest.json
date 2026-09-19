@@ -2,7 +2,7 @@
   "version": "2.45",
   "full_release_version": "2.45",
   "python": "any",
-  "built": "2026-09-20T01:12:00+07:00",
+  "built": "2026-09-20T01:13:17+07:00",
   "base_url": "https://raw.githubusercontent.com/nguyenxuanhoa493/repohubtool/main",
   "note": {
     "vi": "Sửa lỗi cài đặt giả lập Java J2ME: Khắc phục lỗi [Errno 5] Input/output error trên thẻ nhớ FAT32/exFAT, giải nén an toàn 3 tầng và tối ưu RAM",
@@ -1753,8 +1753,8 @@
     },
     {
       "path": "rh/emulator_store.py",
-      "size": 10763,
-      "sha256": "5c421d9ac9166491235b8f2a46dbf8dd7fc4067fab2552b3d28d19d8397ef281"
+      "size": 15880,
+      "sha256": "81d1236a0d4b73e1aa9eabe0ef95142c8f677e18340465bc3089ef1241b28e33"
     },
     {
       "path": "rh/emulators.py",
@@ -1803,8 +1803,8 @@
     },
     {
       "path": "rh/j2me.py",
-      "size": 40637,
-      "sha256": "0dbea392f6bb77f421929457401a85cbb87a00991da15ab089337212948f4b41"
+      "size": 40782,
+      "sha256": "b49fa6b328d0eaccda501f700cab15b1ffa16f995e3a62950f381b36e67db071"
     },
     {
       "path": "rh/led.py",
@@ -2098,8 +2098,8 @@
     },
     {
       "path": "rh/version.py",
-      "size": 2089,
-      "sha256": "82392720ce1ab5281cdccc6adaff717b1e16bdf6ab56b332047a5494ebbb1e33"
+      "size": 2228,
+      "sha256": "57cdef94be2fb4c75ece996c0080de46b2c905d6a5421ebbec403ebf7a8c6aab"
     },
     {
       "path": "rh/yt.py",
@@ -2512,6 +2512,6 @@
       "sha256": "23db841331c6e35d5eb21dcac3c4d69e948e3f4e42c844161f6ea72393ba25d6"
     }
   ],
-  "notes": "• Loại bỏ 100% token Telegram bot và API key AI Chatbot hardcode trong codebase, loại trừ triệt để nguy cơ rò rỉ key.\n• Kiến trúc Cloudflare Worker Proxy: Chuyển tiếp an toàn mọi yêu cầu gửi SSH, file log lỗi, kèo Netplay và AI Chatbot mà không cần lưu token trên thiết bị.\n• Nâng cấp bảo mật CI/CD GitHub Actions: Tự động nhận Telegram Token qua GitHub Repository Secrets khi phát hành OTA.\n• Cơ chế quản lý Secret phân tầng: Hỗ trợ cấu hình bí mật cục bộ trên thẻ nhớ qua secrets.json và biến môi trường.",
-  "notes_en": "• Completely removed hardcoded Telegram Bot and AI Chatbot tokens from codebase, eliminating secret leak vulnerabilities.\n• Cloudflare Worker Proxy: Securely forward SSH info, diagnostic logs, Netplay rooms, and AI Chatbot requests without exposing tokens on handhelds.\n• GitHub Actions CI/CD Security: Automated OTA release notifications now securely authenticate via GitHub Repository Secrets.\n• Multi-tier Secret Management: Safe local secrets configuration support via SDCARD secrets.json and system environment variables."
+  "notes": "• Khắc phục lỗi [Errno 5] Input/output error: Áp dụng cơ chế giải nén an toàn 3 tầng (BusyBox tar native, 7-Zip 7zzs, và Python tarfile với set_attrs=False), loại bỏ hoàn toàn các lỗi xung đột quyền POSIX khi giải nén đè lên thẻ nhớ FAT32/exFAT.\n• Tối ưu dung lượng RAM khi tải gói cài: Chuyển vị trí tải file nén 62.8 MB sang bộ nhớ đệm trên thẻ SD (paths.TEMP_DOWNLOAD_DIR) thay vì ghi vào /tmp (tmpfs trong RAM), loại trừ nguy cơ cạn kiệt RAM và lỗi I/O trên máy handheld.\n• Mở khóa file tự động và đồng bộ cấu hình Java: Tự động gỡ cờ DOS Read-Only trước khi ghi đè, tự động kích hoạt tạo JAVA.pak cho NextUI, thiết lập cấu hình phím/render và bảo toàn dữ liệu save game (RMS).",
+  "notes_en": "• Resolved [Errno 5] Input/output error: Implemented a 3-tier safe extraction mechanism (native BusyBox tar, 7-Zip 7zzs, and Python tarfile with set_attrs=False), eliminating POSIX attribute conflicts on FAT32/exFAT SD cards.\n• RAM optimization during package download: Relocated temporary downloads for the 62.8 MB archive to SD card cache (paths.TEMP_DOWNLOAD_DIR) instead of /tmp (tmpfs in RAM), preventing memory exhaustion and I/O failures on handhelds.\n• Automated file unlock and Java configuration: Auto-unlocked DOS Read-Only flags before overwrite, and automatically wired NextUI JAVA.pak generation, keypad/renderer profiles, and RMS save persistence."
 }
