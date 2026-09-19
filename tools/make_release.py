@@ -183,15 +183,55 @@ def step_2_check_i18n_keys():
         print("  -> Tat ca cac key tr(...) deu co trong tu dien i18n.py.")
 
 
+CHANGELOG_FILE = os.path.join(ROOT, "changelogs.json")
+
+def changelog_entry(version):
+    """Object cua *version* trong changelogs.json, hoac None.
+
+    changelogs.json la nguon duy nhat: trang changelog, thong bao Telegram va
+    manifest.note deu lay tu day, nen mot ban phat hanh khong the ra doi ma thieu
+    noi dung hoac lech nhau."""
+    try:
+        with open(CHANGELOG_FILE, encoding="utf-8") as f:
+            releases = json.load(f).get("releases", [])
+    except (OSError, ValueError) as e:
+        print("  [!] Khong doc duoc changelogs.json: %s" % e)
+        return None
+    for rel in releases:
+        if str(rel.get("version", "")).strip() == str(version).strip():
+            return rel
+    return None
+
 def step_3_update_manifest():
     print("[3/7] Quet va cap nhat ma bam SHA256 vao manifest.json...")
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
     version = app_version()
+    rel = changelog_entry(version)
+    if not rel:
+        print("FAILED: changelogs.json chua co muc cho v%s." % version)
+        print("  Them mot object vao mang \"releases\" (version, date, headline vi/en,")
+        print("  bullets vi/en) roi chay lai. Thieu muc thi popup OTA, trang changelog")
+        print("  va thong bao Telegram deu khong co noi dung cua ban nay.")
+        sys.exit(1)
+    head = rel.get("headline") or {}
+    if not head.get("vi") or not head.get("en"):
+        print("FAILED: muc v%s trong changelogs.json thieu headline vi/en." % version)
+        sys.exit(1)
+    bullets = [b for b in (rel.get("bullets") or []) if b.get("vi") and b.get("en")]
+    if not bullets:
+        print("FAILED: muc v%s trong changelogs.json chua co bullet nao." % version)
+        sys.exit(1)
+
     manifest["version"] = version
     manifest["built"] = datetime.now(TZ).replace(microsecond=0).isoformat()
     manifest["base_url"] = "https://raw.githubusercontent.com/%s/%s" % (REPO, BRANCH)
+    # Note hien tren popup OTA va notes trong GitHub Release deu lay tu changelog,
+    # khong con sua tay hai noi roi lech nhau.
+    manifest["note"] = {"vi": head["vi"], "en": head["en"]}
+    manifest["notes"] = "\n".join("\u2022 " + b["vi"] for b in bullets)
+    manifest["notes_en"] = "\n".join("\u2022 " + b["en"] for b in bullets)
     if FULL:
         manifest["full_release_version"] = version
 

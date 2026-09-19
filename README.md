@@ -11,10 +11,13 @@ tệp có sha256 khác. Mỗi tệp được kiểm hash trước khi ghi đè.
 
 ## Phát hành
 
-Version nằm duy nhất ở `files/rh/version.py`. Tạo tag và push:
+Changelog nằm ở `changelogs.json`: thêm **một object** vào mảng `releases` (mới
+nhất lên đầu) rồi bump `APP_VERSION` trong `files/rh/version.py` cho khớp. Trang
+changelog, `manifest.note` và thông báo Telegram đều sinh ra từ object đó, nên
+không phải sửa tay `manifest.json`; thiếu object là `make_release.py` fail ngay.
 
 ```
-git tag v2.36 && git push origin main --tags
+git tag v2.39 && git push origin main --tags
 ```
 
 CI sẽ kiểm tra, tính lại hash, build website, đóng gói 4 zip và tạo GitHub
