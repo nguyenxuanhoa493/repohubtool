@@ -918,8 +918,10 @@ def install_j2me_emulator(force=False):
                     return False, ("Thiếu gói cài trong app (payload/j2me_sdl.tar.gz)"
                                    if vi else "Installer payload missing from app folder")
             else:
-                with tarfile.open(PAYLOAD, "r:gz") as tf:
-                    tf.extractall(f"{SDCARD_PATH}/Emus")
+                from .emulator_store import safe_extract_tar_gz
+                ok_p, err_p = safe_extract_tar_gz(PAYLOAD, f"{SDCARD_PATH}/Emus", "JAVA")
+                if not ok_p:
+                    return False, f"Lỗi giải nén payload Java: {err_p}"
             upgraded = True
             _probe_cache.pop("runtime", None)
 
