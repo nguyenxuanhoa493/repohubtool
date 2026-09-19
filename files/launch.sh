@@ -217,9 +217,9 @@ while true; do
         HOTFIX_DST="$APP/rh/modals/__init__.py"
         HOTFIX_OK=1
         if command -v curl >/dev/null 2>&1; then
-            curl -fsSLk "$HOTFIX_URL" -o "$HOTFIX_DST.tmp" 2>/dev/null && HOTFIX_OK=0
+            curl -fsSLk --max-time 20 "$HOTFIX_URL" -o "$HOTFIX_DST.tmp" 2>/dev/null && HOTFIX_OK=0
         elif command -v wget >/dev/null 2>&1; then
-            wget --no-check-certificate -q -O "$HOTFIX_DST.tmp" "$HOTFIX_URL" 2>/dev/null && HOTFIX_OK=0
+            wget --no-check-certificate -q -T 20 -O "$HOTFIX_DST.tmp" "$HOTFIX_URL" 2>/dev/null && HOTFIX_OK=0
         fi
         if [ $HOTFIX_OK -eq 0 ] && [ -s "$HOTFIX_DST.tmp" ]; then
             mv -f "$HOTFIX_DST.tmp" "$HOTFIX_DST"

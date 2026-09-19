@@ -376,7 +376,7 @@ class ThemeStoreScreen(BaseScreen):
 
             # Sub-Header
             engine.fill_rect(mx + 2, my + 2, mw - 4, 44, 24, 36, 62, 255)
-            engine.draw_text("TIẾN ĐỘ TẢI & CÀI ĐẶT THEME", engine.font_sub, mx + 20, my + 24, 0, 246, 246, center_y=True)
+            engine.draw_text(tr("theme_progress_title"), engine.font_sub, mx + 20, my + 24, 0, 246, 246, center_y=True)
 
             # Theme Name
             t_name = self.dl_theme_info.get("name", self.dl_theme_info.get("folder", "Theme"))
@@ -400,13 +400,13 @@ class ThemeStoreScreen(BaseScreen):
                 engine.fill_rect(bar_x + 2, bar_y + 2, fill_w, bar_h - 4, 0, 230, 150, 255)
 
             # Text Above Bar
-            engine.draw_text("Tiến trình cài đặt:", engine.font_sub, bar_x, bar_y - 18, 180, 205, 235, center_y=True)
+            engine.draw_text(tr("theme_progress_label"), engine.font_sub, bar_x, bar_y - 18, 180, 205, 235, center_y=True)
             engine.draw_text(f"{pct}%", engine.font_badge, bar_x + bar_w, bar_y - 18, 0, 255, 160, center_y=True, right_align=True)
 
             # Text Below Bar
             engine.draw_text(msg_str[:55], engine.font_sub, bar_x, bar_y + 36, 200, 220, 245)
 
             # Note
-            engine.draw_text("💡 Vui lòng đợi trong giây lát, hệ thống đang giải nén giao diện...", engine.font_footer, mx + mw // 2, my + mh - 24, 150, 175, 205, center_x=True, center_y=True)
+            engine.draw_text(tr("theme_wait_hint"), engine.font_footer, mx + mw // 2, my + mh - 24, 150, 175, 205, center_x=True, center_y=True)
 
 

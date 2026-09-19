@@ -147,6 +147,17 @@ except ImportError:
 
     import db
 
+# The block above falls back to mocks on ANY ImportError, which would leave the
+# names below undefined. Bind the logger helpers regardless so the log
+# endpoints (web -> Telegram) never crash with NameError.
+try:
+    from rh.logger import (  # noqa: F811
+        upload_log_to_telegram, generate_debug_report, LOG_FILE,
+        clear_log, get_log_size_str, get_device_id, sync_retroarch_logging,
+    )
+except Exception:
+    pass
+
 # Tên các hệ máy chuẩn
 SYSTEM_NAMES = {
     "MAME": "Arcade (MAME)",

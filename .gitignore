@@ -35,3 +35,14 @@ _src/*.bak
 # Desktop runner (run-desktop.ps1)
 .venv-desktop/
 .sdcard-desktop/
+
+# The store database the app installs into the payload directory at runtime
+# (rh/updater.apply_catalog). 31 MB, and `git add -A` would happily ship it.
+files/catalog/roms_store.sqlite3
+files/catalog/roms_store.sqlite3.gz
+files/.catalog_staging/
+files/.update_staging/
+
+
+# plans files. For dev purposes only, not to be committed to the repo.
+plans/

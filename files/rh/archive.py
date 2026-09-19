@@ -15,7 +15,7 @@ import subprocess
 
 from .paths import APP_DIR
 from .romfiles import (GENERIC_ROM_EXTS, ROM_EXT_PRIORITY, SIDECAR_EXTS,
-                       pick_primary_rom)
+                       pick_primary_rom, safe_preferred_name)
 from .storage import free_space as _free_space, human_bytes as _human
 
 # Ly do that bai, la key cua rh.i18n de nguoi goi tu dich.
@@ -23,7 +23,16 @@ NO_TOOL = "dl_err_no_extractor"
 NO_SPACE = "dl_err_extract_space"
 FAILED = "dl_err_extract_failed"
 PATCH_ONLY = "dl_err_patch_only"
-ARCHIVE_KEYS = frozenset([NO_TOOL, NO_SPACE, FAILED, PATCH_ONLY])
+# File doc duoc nhung khong mo noi (thieu duoi, CRC hong, tai thieu byte): day la
+# loi cua ban tai ve, thu lai hoac doi nguon se giai quyet duoc - khac han voi
+# "archive lanh nhung ben trong khong co ROM".
+BROKEN = "dl_err_archive_broken"
+# Archive lanh, doc duoc danh sach, nhung khong co file nao la ROM.
+NO_ROM = "dl_err_no_rom_in_archive"
+# ROM ben trong la anh CD da nen ECM (.bin.ecm) - dinh dang cua ban scene, phai
+# giai ma bang ecm2bin truoc khi RetroArch doc duoc.
+ECM = "dl_err_ecm_rom"
+ARCHIVE_KEYS = frozenset([NO_TOOL, NO_SPACE, FAILED, PATCH_ONLY, BROKEN, NO_ROM, ECM])
 
 # Ban va ROM hack: khong phai ROM, va khong phai file hong. Muon choi thi phai
 # va len ROM goc, viec ma RetroHub chua lam.
@@ -126,27 +135,34 @@ def _run(args, timeout=None):
     return p.returncode, p.stdout.decode("utf-8", "replace")
 
 
-def list_entries(archive_path, exe):
-    """(tong byte bung ra, [ten file]) doc tu 7zz, da bo thu muc.
+# Dong ngan cach giua phan mo ta archive va danh sach file trong `7zz l -slt`.
+# So dau gach doi theo ban 7-Zip (10 o ban cu, nhieu hon o ban moi), va tren
+# Windows output ve bang CRLF - tung lam ca buoc doc danh sach hong, keo theo
+# bao sai "file tai ve hong" cho mot archive hoan toan lanh.
+_SEPARATOR = re.compile(r"^-{4,}\s*$")
 
-    Doc header chu khong bung, nen goi truoc moi tang deu gan nhu mien phi."""
-    rc, out = _run([exe, "l", "-slt", archive_path], timeout=120)
-    if rc != 0:
-        tail = out.strip().splitlines()
-        raise ArchiveError(FAILED, tail[-1][:60] if tail else "")
+def parse_list_output(out):
+    """(tong byte, [ten file], parse duoc?) tu output cua `7zz l -slt`.
 
-    # Khoi dau tien sau dau "--" la mo ta chinh cai archive (cung co dong
-    # "Path = "), danh sach file that chi bat dau sau dong "----------".
-    body = out.split("\n----------\n", 1)
-    if len(body) < 2:
-        return 0, []
+    Tach rieng khoi viec chay 7zz de kiem tra duoc tren may build, va de phan
+    biet "archive rong" voi "khong hieu output" - truoc day ca hai deu tra
+    (0, []) nen buoc kiem dung luong bi bo qua trong im lang."""
+    text = out.replace("\r\n", "\n").replace("\r", "\n")
+    lines = text.split("\n")
+    start = None
+    for i, line in enumerate(lines):
+        if _SEPARATOR.match(line.strip()):
+            start = i + 1
+            break
+    if start is None:
+        return 0, [], False
 
     total = 0
     names = []
     path = None
     is_folder = False
     size = 0
-    for line in body[1].splitlines() + [""]:
+    for line in lines[start:] + [""]:
         if line.startswith("Path = "):
             path, is_folder, size = line[7:].strip(), False, 0
         elif line.startswith("Folder = "):
@@ -161,6 +177,23 @@ def list_entries(archive_path, exe):
                 names.append(path)
                 total += size
             path = None
+    return total, names, True
+
+def list_entries(archive_path, exe):
+    """(tong byte bung ra, [ten file]); tong la None khi khong doc duoc.
+
+    Doc header chu khong bung, nen goi truoc moi tang deu gan nhu mien phi.
+    None khac han 0: nguoi goi phai bo qua buoc kiem dung luong chu khong duoc
+    coi nhu archive rong."""
+    rc, out = _run([exe, "l", "-slt", archive_path], timeout=120)
+    if rc != 0:
+        tail = out.strip().splitlines()
+        raise ArchiveError(BROKEN, tail[-1][:60] if tail else "7z l rc=%d" % rc)
+    total, names, parsed = parse_list_output(out)
+    if not parsed:
+        print("7zz l -slt: khong doc duoc danh sach muc cua %s"
+              % os.path.basename(archive_path))
+        return None, []
     return total, names
 
 
@@ -197,7 +230,8 @@ def extract_to(archive_path, dest_dir, exe, progress=None):
     rc = proc.wait()
     if rc != 0:
         shutil.rmtree(dest_dir, ignore_errors=True)
-        raise ArchiveError(FAILED, "7z rc=%d" % rc)
+        tail_line = [l for l in tail.splitlines() if l.strip()]
+        raise ArchiveError(BROKEN, tail_line[-1][:80] if tail_line else "7z rc=%d" % rc)
 
     root = os.path.realpath(dest_dir)
     out = []
@@ -221,6 +255,35 @@ def extract_to(archive_path, dest_dir, exe, progress=None):
             out.append(full)
     return out
 
+
+def ecm_packed(path):
+    """True khi file that su la anh CD da nen ECM, khong chi ten la .ecm.
+
+    Bon byte dau cua ban ECM la "ECM" + so phien ban; file .ecm dat ten sai (do
+    la .bin that) thi khong tinh, de con duong khac cuu duoc."""
+    if not path or not path.lower().endswith(".ecm"):
+        return False
+    try:
+        with open(path, "rb") as f:
+            return f.read(3) == b"ECM"
+    except OSError:
+        return False
+
+def readable(archive_path, exe):
+    """True khi 7-Zip doc duoc header cua archive (khong can bung).
+
+    Dung de kiem mot file vua tai ve truoc khi bao "giai nen that bai": server
+    khong tra Content-Length thi khong co gi doi chieu duoc kich thuoc, va mot
+    file tai thieu se chi lo ra o buoc nay."""
+    if not exe or not os.path.isfile(archive_path):
+        return False
+    try:
+        list_entries(archive_path, exe)
+        return True
+    except ArchiveError:
+        return False
+    except OSError:
+        return False
 
 # Thu tu uu tien khi phai chui vao mot tang nua. Ban scene dat ten hai kieu:
 # ".rar + .r00 + .r01" va ".001 + .002"; ca hai deu phai bat dau tu volume dau.
@@ -264,9 +327,10 @@ def unpack_to_rom(archive_path, rom_dir, sys_code, exe=None, work_dir=None,
     try:
         for depth in range(MAX_DEPTH):
             need, _ = list_entries(current, exe)
-            have = free_space(os.path.dirname(rom_dir) or ".")
-            if need + SPACE_MARGIN > have:
-                raise ArchiveError(NO_SPACE, "can %s, con %s" % (_human(need), _human(have)))
+            if need is not None:
+                have = free_space(os.path.dirname(rom_dir) or ".")
+                if need + SPACE_MARGIN > have:
+                    raise ArchiveError(NO_SPACE, "can %s, con %s" % (_human(need), _human(have)))
 
             stage = os.path.join(work_dir, "tang%d" % depth)
             files = extract_to(current, stage, exe, progress=progress)
@@ -284,22 +348,48 @@ def unpack_to_rom(archive_path, rom_dir, sys_code, exe=None, work_dir=None,
                 # xoa ngay sau day.
                 companions = [f for f in files
                               if f != rom and not f.lower().endswith(SIDECAR_EXTS)]
+                # Doi ten ROM chinh theo ten kho, nhung chi khi .cue/.m3u ben
+                # canh khong tro toi no.
+                new_base = safe_preferred_name(rom, companions, prefer_name)
                 dest = None
-                for src in [rom] + companions:
-                    name = os.path.basename(src)
-                    if src == rom and prefer_name and not companions:
-                        name = prefer_name + os.path.splitext(src)[1].lower()
-                    target = os.path.join(rom_dir, name)
-                    os.replace(src, target)
-                    if src == rom:
-                        dest = target
+                placed = []
+                try:
+                    # Companion truoc, ROM chinh sau: mot ROM tro thi trong khi
+                    # .bin con nam lai staging la thu khong the phat hien tu ben
+                    # ngoai, con .bin thua thi chi ton cho.
+                    for src in companions + [rom]:
+                        # Giu duong dan tuong doi trong archive: .cue tro ten
+                        # .bin cung thu muc, don het ve mot cho se lam cue tro
+                        # sai cho va hai dia cung ten track ghi de nhau.
+                        rel = os.path.relpath(src, stage)
+                        if src == rom and new_base:
+                            rel = os.path.join(os.path.dirname(rel),
+                                               new_base + os.path.splitext(src)[1].lower())
+                        target = os.path.join(rom_dir, rel)
+                        os.makedirs(os.path.dirname(target), exist_ok=True)
+                        os.replace(src, target)
+                        placed.append(target)
+                        if src == rom:
+                            dest = target
+                except OSError:
+                    for f in placed:
+                        try:
+                            os.remove(f)
+                        except OSError:
+                            pass
+                    raise
                 return dest
 
             nxt = next_volume(files)
             if not nxt:
+                # Anh CD nen ECM: da bung dung, chi la app chua doc duoc. Noi ro
+                # de nguoi dung khong di tai lai cung mot nguon mai.
+                for f in files:
+                    if ecm_packed(f):
+                        raise ArchiveError(ECM, os.path.basename(f)[:60])
                 if any(f.lower().endswith(PATCH_EXTS) for f in files):
                     raise ArchiveError(PATCH_ONLY)
-                raise ArchiveError(FAILED, "khong tim thay ROM trong archive")
+                raise ArchiveError(NO_ROM, "khong tim thay ROM trong archive")
             current = nxt
         raise ArchiveError(FAILED, "long qua %d tang" % MAX_DEPTH)
     finally:

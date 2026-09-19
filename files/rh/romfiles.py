@@ -30,6 +30,39 @@ SIDECAR_EXTS = (".nfo", ".diz", ".sfv", ".md5", ".sha1", ".dat", ".jpg", ".jpeg"
                 ".gif", ".html", ".txt", ".url")
 
 
+def referenced_by_sidecar(rom_path, companions):
+    """True khi mot .cue/.m3u ben canh tro dung ten file cua *rom_path*.
+
+    Doi ten mot .bin/.iso ma co .cue tro toi no thi cue tro vao khoang khong.
+    Doi ten chinh cai .cue thi khong sao: cue tro ten .bin chu khong tu tro minh.
+    """
+    base = os.path.basename(rom_path).lower()
+    for c in companions:
+        if not c.lower().endswith((".cue", ".m3u")):
+            continue
+        try:
+            with open(c, "r", encoding="utf-8", errors="ignore") as f:
+                text = f.read().lower()
+        except OSError:
+            continue
+        if base in text:
+            return True
+    return False
+
+def safe_preferred_name(rom_path, companions, prefer_name):
+    """Ten moi cho ROM chinh, None khi phai giu nguyen ten trong archive.
+
+    Kho ghi ten goi tai ve (.zip) con thu muc Roms giu ten ROM da bung, nen doi
+    ten giup lan sau tim lai duoc game. Chi doi khi viec do khong lam hong tham
+    chieu cua .cue/.m3u."""
+    if not prefer_name:
+        return None
+    if not companions:
+        return prefer_name
+    if referenced_by_sidecar(rom_path, companions):
+        return None
+    return prefer_name
+
 def pick_primary_rom(paths, sys_code):
     """Choose the file the emulator should actually be launched with.
 

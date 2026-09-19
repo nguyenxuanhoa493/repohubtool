@@ -66,3 +66,26 @@ jobs:
             git commit -m "chore(release): sync manifest and site for ${GITHUB_REF_NAME:-manual}"
             git push origin "HEAD:${{ github.event.repository.default_branch }}"
           fi
+
+      # Sau khi release va manifest da duoc day len nhanh mac dinh, xoa cache CDN:
+      # jsDelivr giu manifest.json toi 12 gio nen may se khong thay ban moi ngay.
+      - name: Purge jsDelivr cache
+        continue-on-error: true
+        run: |
+          for f in manifest.json files/rh/version.py; do
+            echo "purge $f"
+            curl -fsSL --max-time 20 \
+              "https://purge.jsdelivr.net/gh/${{ github.repository }}@${{ github.event.repository.default_branch }}/$f" \
+              || true
+          done
+
+      # Thong bao Telegram cho ban OTA (theo .agents/memory/release-workflow.md).
+      # Chi chay khi phat hanh bang tag, va loi mang o buoc nay khong duoc lam
+      # hong ban phat hanh da tao xong.
+      - name: Notify Telegram
+        if: github.ref_type == 'tag'
+        continue-on-error: true
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          python _src/notify_ota_telegram.py || echo "::warning::Telegram notify failed"

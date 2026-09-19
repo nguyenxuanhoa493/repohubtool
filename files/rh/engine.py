@@ -29,6 +29,25 @@ from .modals.update import UpdateModal
 
 
 
+def desktop_window_size(display_w, display_h):
+    """(w, h) khi chay trong cua so, None khi toan man hinh.
+
+    May cam tay khong co trinh quan ly cua so va khong ai bam duoc nut phong
+    to, nen fullscreen van la mac dinh: khong co bien moi truong thi khong
+    doi gi so voi truoc. Desktop moi can thanh tieu de co minimize, maximize,
+    close - thu chi xuat hien khi cua so khong fullscreen va duoc phep doi
+    kich thuoc."""
+    if os.environ.get("RETROHUB_WINDOWED", "").strip().lower() not in ("1", "true", "yes", "on"):
+        return None
+    want = os.environ.get("RETROHUB_WINDOW_SIZE", "").strip().lower()
+    parts = want.split("x") if "x" in want else []
+    if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+        return min(int(parts[0]), display_w), min(int(parts[1]), display_h)
+    # Mac dinh 70% man hinh, khong nho hon 800x600: nho hon nua thi UI bi bop
+    # lai khong con doc duoc.
+    return (min(max(800, int(display_w * 0.7)), display_w),
+            min(max(600, int(display_h * 0.7)), display_h))
+
 def is_screen_blanked():
     """Returns True if physical display is blanked/off by OS (standby/sleep)."""
     try:
@@ -106,6 +125,10 @@ class RetroHubEngine:
             state.SCREEN_W = 1024
             state.SCREEN_H = 768
 
+        windowed = desktop_window_size(state.SCREEN_W, state.SCREEN_H)
+        if windowed:
+            state.SCREEN_W, state.SCREEN_H = windowed
+
         for i in range(sdl2.SDL_NumJoysticks()):
             if sdl2.SDL_IsGameController(i) == sdl2.SDL_TRUE:
                 pad = sdl2.SDL_GameControllerOpen(i)
@@ -116,16 +139,23 @@ class RetroHubEngine:
                 if joy:
                     self.joysticks.append(joy)
 
+        flags = sdl2.SDL_WINDOW_SHOWN
+        flags |= sdl2.SDL_WINDOW_RESIZABLE if windowed else sdl2.SDL_WINDOW_FULLSCREEN
         self.window = sdl2.SDL_CreateWindow(
             b"RetroHub",
             0, 0,
             state.SCREEN_W,
             state.SCREEN_H,
-            sdl2.SDL_WINDOW_SHOWN | sdl2.SDL_WINDOW_FULLSCREEN
+            flags
         )
         if not self.window:
             self.window = sdl2.SDL_CreateWindow(b"RetroHub", 0, 0, state.SCREEN_W, state.SCREEN_H, sdl2.SDL_WINDOW_SHOWN)
         self.renderer = sdl2.SDL_CreateRenderer(self.window, -1, sdl2.SDL_RENDERER_ACCELERATED)
+        if windowed:
+            # UI ve theo toa do SCREEN_W/H. Logical size giu nguyen khung do khi
+            # nguoi dung keo gian hoac bam maximize, thay vi de lo ra vung trong
+            # hoac cat mat goc phai.
+            sdl2.SDL_RenderSetLogicalSize(self.renderer, state.SCREEN_W, state.SCREEN_H)
         self.input_mgr = InputManager()
 
     def init_fonts(self):
@@ -249,6 +279,10 @@ class RetroHubEngine:
     # Modals
     # --------------------------------------------------------------------------
     def open_modal(self, modal, data=None):
+        # Never open a modal while the app is shutting down: a background thread
+        # (e.g. the auto-update check) could otherwise pop one up after exit.
+        if not self.running:
+            return
         modal.engine = self
         modal.open(data)
         self.active_modal = modal
@@ -384,6 +418,11 @@ class RetroHubEngine:
             elif self.current_screen:
                 self.current_screen.handle_input(inputs)
 
+            # A screen or modal may have requested exit; leave immediately so no
+            # extra frame is drawn and nothing can reopen during shutdown.
+            if not self.running:
+                break
+
             # Update
             if self.active_modal and self.active_modal.is_active():
                 self.active_modal.update(0.016)
@@ -445,7 +484,13 @@ class RetroHubEngine:
         self.cleanup()
 
     def cleanup(self):
-        """Free resources and shutdown SDL2."""
+        """Free resources and shutdown SDL2 (never raises)."""
+        try:
+            self._cleanup()
+        except Exception as e:
+            print(f"[ENGINE] cleanup error: {e}")
+
+    def _cleanup(self):
         for c in self.controllers:
             sdl2.SDL_GameControllerClose(c)
         for j in self.joysticks:

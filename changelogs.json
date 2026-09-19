@@ -1,0 +1,1882 @@
+{
+  "schema": 1,
+  "releases": [
+    {
+      "version": "2.39",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Sửa hàng chờ tải, vòng lặp cập nhật OTA, Switch emulator core; thêm trang xem & queue YouTube; màn chi tiết game; Kho game trống",
+        "en": "Fix the download queue, the OTA update loop, Switch emulator core; add the YouTube watch page and queue; detail screen; empty ROMs Store"
+      },
+      "bullets": [
+        {
+          "vi": "Hàng chờ tải: lần tải đầu giữ slot kết quả mãi mãi nên mọi lần sau chỉ xếp hàng. Đóng modal này trả slot và hủy được cả mục đang chờ.",
+          "en": "Download queue: the first download used to hold the result slot forever, so every later download only queued. Closing the modal now releases the slot and cancelling removes a queued item."
+        },
+        {
+          "vi": "Màn chi tiết khớp bản đã cài: kho ghi tên .zip còn Roms giữ tên ROM đã bung nên app tưởng game chưa có. Nay khớp theo tên gốc, kể cả file phụ.",
+          "en": "Detail screen vs installed copy: the store keeps the .zip name while Roms keeps the extracted ROM name, so the app thought a game was missing after installing it. Matching is now by base name, for companions too."
+        },
+        {
+          "vi": "Giải nén zip an toàn hơn: giải nén vào thư mục tạm, kiểm tra dung lượng trước, giữ nguyên cấu trúc thư mục trong zip thay vì dồn hết ROM ra một chỗ.",
+          "en": "Safer zip extraction: files extract into a staging folder, free space is checked first, and the directory tree inside the zip is preserved instead of flattening every ROM into one folder."
+        },
+        {
+          "vi": "Hết vòng lặp popup OTA: cấu hình bàn phím J2ME và settings.json vừa nằm trong gói phát hành vừa bị app ghi đè nên danh sách file chờ không bao giờ rỗng. Cả hai đã bị loại khỏi payload.",
+          "en": "OTA popup loop solved: the J2ME keypad config and settings.json were shipped and also written by the app, so pending files never converged and every launch offered the same update again. Both left the payload."
+        },
+        {
+          "vi": "UI cập nhật: modal nói đúng bản chất (kho game, giả lập J2ME) thay vì báo bản mới, và ghi log chẩn đoán sau khi cập nhật.",
+          "en": "Update UI: the modal now says what it is actually updating (game catalog, J2ME emulator) instead of claiming a new version, and logs a diagnostic line after the update."
+        },
+        {
+          "vi": "Tiện ích: Switch emulator core chạy lại (mục này trước không có handler), Storage & thẻ nhớ ghi log và có dòng dự phòng thay vì trắng màn, core picker dùng mũi tên ASCII cho máy thiếu glyph.",
+          "en": "Utilities: Switch emulator core works again (the item had no handler), Storage & SD card logs and falls back to a placeholder row instead of a blank screen, and the core picker uses ASCII arrows for devices whose font lacks the glyphs."
+        },
+        {
+          "vi": "YouTube: watch page kèm queue, lịch sử, playlist và resume; có popup chờ khi chuyển sang RetroArch, kể cả khi phát từ queue; video liên quan tải được kèm thumbnail; nút Save to favorites đổi vàng khi đã lưu. Bỏ audio-only vì RetroArch không hỗ trợ được.",
+          "en": "YouTube: watch page with queue, history, playlist and resume; a loading popup appears when playback hands over to RetroArch, including when playing from the queue; related videos load with thumbnails; Save to favorites turns yellow once saved. Audio-only was dropped because RetroArch cannot honour it."
+        },
+        {
+          "vi": "Màn chi tiết & tải game hết tràn: tên game và tên file dài được cắt theo pixel nên chữ nằm trong card thay vì tràn ra sát lề màn hình; nhãn nút dài bị giới hạn theo ô.",
+          "en": "Detail & download screen no longer overflows: long game names and file names are cut by pixel width, so text stays inside the cards instead of spilling to the screen edge; long action labels are bounded to their tile."
+        },
+        {
+          "vi": "Hạn giờ tải ảnh bìa: mỗi lần tải có ngân sách 30s cho cả lần truyền và trần 12MB. Máy chủ nhỏ giọt từng byte sẽ bị bỏ qua, ảnh quá nặng bị từ chối thay vì treo tiến trình cào ảnh; code cũ chỉ giới hạn từng lần đọc socket nên server nhỏ giọt có thể giữ lần tải mãi.",
+          "en": "Boxart download deadline: fetching a cover image now has a 30s budget for the whole transfer and a 12MB ceiling. A slow mirror that trickles bytes forever is skipped, and a heavy image is refused instead of stalling the scraper; the old code only limited each socket read, so a trickling server could hold the download open indefinitely."
+        },
+        {
+          "vi": "Chẩn đoán lỗi giải nén: bộ đọc danh sách của 7-Zip chỉ nhận LF và dòng ngăn cách đúng 10 dấu gạch, nên trên Windows hay với bản 7-Zip mới là hỏng và app đổ lỗi cho một file nén lành lặn. Nay phân biệt rõ \"file tải về hỏng/thiếu\", \"nén không chứa ROM\" và \"ROM là ảnh CD đã nén ECM\", kiểm tra archive ngay sau khi tải để bỏ qua nguồn lỗi thay vì để nó nổ ra ở bước giải nén, dọn file tạm do lần tải bị ngắt, và ghi mọi lỗi tải/giải nén vào RetroHub/logs/tai-loi.log kèm số byte đã nhận so với kích thước server báo.",
+          "en": "Extraction diagnosis fixed: the 7-Zip listing parser only accepted LF output and a ten-dash separator, so on Windows and with newer 7-Zip builds it failed and the app blamed a healthy archive as a damaged download. Errors are now separated into \"download is damaged/incomplete\", \"archive holds no ROM\" and \"ROM is an ECM-packed CD image\", archives are verified right after download so a bad mirror is skipped instead of surfacing later as an extraction failure, stale temp files left by interrupted downloads are purged, and every download/extraction failure is written to RetroHub/logs/tai-loi.log with the byte count that was received against the size the server advertised."
+        },
+        {
+          "vi": "Đa ngôn ngữ và phần còn lại: các màn mới đã dịch đủ, header tìm kiếm hiện \"Kết quả tìm kiếm cho ...\", hộp thoại thoát app không còn treo, web logger hoạt động lại, desktop có chế độ cửa sổ, repo thêm AGENTS.md, hash guard và selftest.",
+          "en": "Multi-language and misc: the newly added screens are fully translated, the store search header reads \"Search results for ...\", the exit dialog no longer hangs, the web logger works again, desktop gets a windowed mode, and the repo gains AGENTS.md, a hash guard and self-tests."
+        },
+        {
+          "vi": "Quy trình phát hành: changelog của mọi phiên bản nằm trong changelogs.json (thêm một object là xong), thông báo Telegram lấy đúng headline + bullet của bản đang phát hành thay vì nội dung hardcode của 2.37, và manifest.note lấy từ chính changelog nên popup OTA không thể lệch với trang changelog.",
+          "en": "Release flow: every release's changelog now lives in changelogs.json (adding one object is the whole job), the Telegram notification uses that release's own headline and bullets instead of the hardcoded 2.37 text, and manifest.note is filled from the same entry so the OTA popup cannot drift from the changelog page."
+        },
+        {
+          "vi": "ROMs Store rỗng với máy cài trực tiếp từ file zip: gói phát hành không kèm kho game nên mở store chỉ thấy danh sách trống. Nay bước đóng gói bung catalogue đã tracked vào zip và kiểm sha256 với manifest; máy chưa có kho game thì mở ROMs Store sẽ tự hỏi server và mở đúng modal cập nhật (một lần mỗi phiên, có báo nếu chưa nối được mạng); và bỏ qua một phiên bản không còn chặn cập nhật kho game nữa.",
+          "en": "Empty ROMs Store for users who installed from the release zip: the package shipped without the game catalog, so the store listed nothing. Packaging now inflates the tracked catalog into the zip and verifies its sha256 against the manifest; a device without a catalog has the store ask the server and open the right update modal (once per session, with a notice when offline); and skipping a version no longer blocks catalog updates."
+        }
+      ]
+    },
+    {
+      "version": "2.38",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Khắc phục triệt để lỗi chứng chỉ SSL và bổ sung cURL fallback khi tải giả lập online",
+        "en": "Fix SSL certificate verification and add cURL fallback for online emulator downloads"
+      },
+      "bullets": [
+        {
+          "vi": "Tải giả lập online thử lại với ngữ cảnh SSL không xác thực và chuyển sang cURL khi Python trên máy không kiểm tra được chuỗi chứng chỉ.",
+          "en": "Online emulator downloads retry with an unverified SSL context and fall back to cURL when the bundled Python cannot validate the chain on the device."
+        }
+      ]
+    },
+    {
+      "version": "2.37",
+      "date": "2026-09-19",
+      "headline": {
+        "vi": "Sửa lỗi cài đặt giả lập Java từ xa, tinh gọn giao diện cài đặt Java và tối ưu chống đè chữ UI",
+        "en": "Fix Java emulator remote installation, compact Java settings UI, and anti-overlap UI text rules"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa lỗi Cài đặt Giả lập Java từ xa: Bổ sung cơ chế tự động tải gói cài online khi thiếu payload nén nội bộ, khắc phục lỗi crash time_elapsed trong Kho giả lập và tăng timeout tải lên 60s.",
+          "en": "Java Emulator Remote Installation Fix: Added online download fallback for missing local payload, resolved time_elapsed crash in Emulator Store, and increased archive download timeout to 60s."
+        },
+        {
+          "vi": "Tinh gọn Menu Tiện ích & Cài đặt Java: Dọn dẹp các mục Java thừa trong Tiện ích, bổ sung nút Cài đặt Java riêng biệt trong bảng chi tiết Kho giả lập và loại bỏ biểu tượng emoji tránh lỗi font.",
+          "en": "Streamlined Java Settings & Utilities Menu: Removed redundant Java entries from Utilities, added dedicated 'Java Settings' button in Emulator Store detail panel, and removed emoji icons to prevent font glyph glitches."
+        },
+        {
+          "vi": "Tinh gọn Tùy chọn & Động cơ Chống đè chữ UI: Rút gọn các tùy chọn hiển thị và bàn phím, thêm khung chú thích ngữ cảnh động, nâng cấp hàm vẽ chữ draw_text giới hạn chiều rộng max_w triệt tiêu 100% nguy cơ đè chữ.",
+          "en": "Compact Option Text & Anti-Overlap UI Engine: Shortened display mode and keypad options, introduced contextual hint box, and enhanced draw_text engine with max_w width budgeting and draw_text_fit to prevent text collisions."
+        }
+      ]
+    },
+    {
+      "version": "2.36",
+      "date": "2026-09-18",
+      "headline": {
+        "vi": "Kho Theme/Icon/Giả lập: tải gói trực tiếp từ GitHub Releases, đồng bộ catalog và sửa lỗi cài đặt",
+        "en": "Theme/Icon/Emulator Store: packages served from GitHub Releases, catalogs resynced and install fixes"
+      },
+      "bullets": [
+        {
+          "vi": "Gói Theme/Icon/Giả lập trước đây tải từ đường dẫn git đã bị dọn khỏi repo; nay trỏ thẳng vào asset của GitHub Release nên cài theme, icon pack, giả lập hoạt động trở lại.",
+          "en": "Theme, icon and emulator packages were fetched from git paths that no longer exist; the download URLs now point at the GitHub Release assets, so installing a theme, an icon pack or an emulator works again."
+        },
+        {
+          "vi": "Đánh lại số 2.36: bản 2.35 từng được phát hành lại dưới đúng số phiên bản đó, nên máy đang chạy 2.35 không bao giờ thấy bản mới hơn.",
+          "en": "Re-cut as 2.36: 2.35 had been republished under the same version number, so a device already running 2.35 was never offered a newer build."
+        }
+      ]
+    },
+    {
+      "version": "2.35",
+      "date": "2026-09-18",
+      "headline": {
+        "vi": "Trợ lý AI Web Manager: Sửa lỗi mã hóa ký tự lệnh Shell, Thêm nút Quét Log lỗi Chẩn đoán nhanh, Quét động phần cứng & màn hình",
+        "en": "Web Manager AI Assistant: Fix Shell Command HTML Encoding, Add 1-Click Quick Debug Log Scanner, Dynamic Hardware & Display Probing"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa lỗi Mã hóa Ký tự Lệnh Shell: Phân tách và trích xuất khối lệnh trước khi xử lý HTML escape và markdown, đảm bảo 100% câu lệnh truyền lên terminal Busybox là chuỗi thô sạch sẽ, không còn bị dính các ký tự mã hóa HTML (&lt;, &gt;, &amp;, <em>).",
+          "en": "Fix Shell Command HTML Encoding & Execution: Tokenized code blocks prior to HTML escaping, ensuring 100% clean raw shell commands without HTML entity contamination (&lt;, &gt;, &amp;, <em>) when executing on BusyBox ash terminal."
+        },
+        {
+          "vi": "Nút Quét Log lỗi Chẩn đoán nhanh: Bổ sung nút 'Quét log lỗi' 1 chạm trên thanh công cụ Chat, tự động tổng hợp toàn bộ file log vừa thay đổi (<30 phút), log RetroHub, RetroArch, game port và dmesg kernel nạp thẳng vào AI để phát hiện và đưa câu lệnh fix lỗi trong 1 lượt chat duy nhất.",
+          "en": "1-Click Quick Debug Log Scanner: Added Quick Debug button to Web Assistant toolbar, aggregating recently modified logs (<30min), RetroHub, RetroArch, PortMaster, and dmesg kernel errors into a single prompt for instant root-cause analysis."
+        },
+        {
+          "vi": "Quét động Thông số Phần cứng & Độ phân giải Màn hình: Nâng cấp nút 'Gửi info' tự động đọc trực tiếp độ phân giải thực tế từ Framebuffer hệ thống, cấu hình phần cứng, dung lượng thẻ nhớ, giả lập và cores thực tế trên thiết bị.",
+          "en": "Dynamic Hardware & Display Resolution Probing: Upgraded Send Info button to dynamically inspect framebuffer resolution (/sys/class/graphics/fb0/virtual_size), SoC model, RAM, Disk, ROM directories, emulator cores, and actual log paths."
+        },
+        {
+          "vi": "Chuẩn hóa Quy tắc Phản hồi & System Prompt: Tinh gọn System Prompt theo cơ chế điều tra thực tế, loại bỏ thông số hardcode, ràng buộc AI xuất lệnh rõ ràng và đưa ra giải pháp kỹ thuật dứt điểm khi nhận được log.",
+          "en": "Hardened AI System Prompt & Fast Investigation Protocol: Removed static hardcoded specs from prompt, enforcing strict single-command markdown block formatting and immediate direct technical solutions upon receiving logs."
+        }
+      ]
+    },
+    {
+      "version": "2.34",
+      "date": "2026-09-18",
+      "headline": {
+        "vi": "Thêm Thư viện Theme, Thư viện Icon Giả Lập trực quan, Tải Online 1 chạm, Tự động Sao lưu & Khôi phục",
+        "en": "Theme Store & Emu Icon Store with 1-Click Online Install, Auto-Backup & Fail-Safe Recovery"
+      },
+      "bullets": [
+        {
+          "vi": "Thư viện Theme & Thư viện Icon: Bổ sung 2 tính năng Theme Store và Icon Store hoàn chỉnh trong Tiện ích hệ thống với giao diện lưới 3x2 trực quan, hiển thị STT (#1..#N), ảnh xem trước tức thì, nhãn trạng thái và tải trực tiếp từ CDN mạng tốc độ cao.",
+          "en": "Theme Store & Emu Icon Store: Added full-featured Theme Store and Emu Icon Store to Utilities, providing a sleek 3x2 grid with sequence index, live preview, dynamic installed badge, and fast on-demand online download directly from GitHub CDN."
+        },
+        {
+          "vi": "Sao lưu & Khôi phục An toàn 1 Chạm: Tự động sao lưu toàn bộ bộ icon gốc khi cài lần đầu, cơ chế khôi phục 2 lớp thông minh (khôi phục từ bản backup nội bộ hoặc tự động nạp gói zip dự phòng).",
+          "en": "1-Click Stock Backup & Fail-Safe Recovery: Automatically backs up original emulator icons and theme resources on first install, with intelligent 2-layer recovery (local backup restore and emergency stock zip extraction)."
+        },
+        {
+          "vi": "Bộ máy Tải Online Tối ưu: Tự động mã hóa URL tên file, tương thích SSL trên hệ điều hành nhúng TrimUI, truyền phát dữ liệu theo luồng mượt mà kèm thanh tiến độ % và dung lượng chi tiết.",
+          "en": "Optimized Online Download Engine: Added URL percent-encoding for spaces, bypass outdated SSL cert issues on embedded Linux, and direct chunked streaming with percentage & MB progress indicators."
+        }
+      ]
+    },
+    {
+      "version": "2.33",
+      "date": "2026-09-18",
+      "headline": {
+        "vi": "Theme Store Grid 3x2 trực quan (STT, Tên, Trạng thái & Tải trực tiếp), Sửa lỗi Web Manager UI, Khung ảnh Boxart & Tìm kiếm Game Store",
+        "en": "Theme Store Grid 3x2 (Index, Title, Status & Direct Download), Fix Web Manager UI, Boxart Ratio & Online Game Search"
+      },
+      "bullets": [
+        {
+          "vi": "Theme Store Grid 3x2 trực quan & Tải trực tiếp: Nâng cấp giao diện Theme Store thành dạng lưới 3x2 tối ưu toàn màn hình, hiển thị đầy đủ STT (#1..#N), Tên theme và biểu tượng trạng thái cài đặt (✓/☁). Tải và giải nén giao diện trực tiếp từ máy chủ mạng vào /mnt/SDCARD/Themes/ kèm thanh tiến độ mượt mà.",
+          "en": "Theme Store Grid 3x2 with Direct Download: Upgraded Theme Store UI to a clean 3x2 grid with sequence index, theme name, and dynamic installed status badge. Optimized on-demand remote download and instant extraction directly to /mnt/SDCARD/Themes/."
+        },
+        {
+          "vi": "Sửa lỗi Giao diện Web Game Manager: Làm sạch mã nguồn JavaScript trên Web Manager, loại bỏ triệt để lỗi cú pháp Unexpected token '<' và khôi phục hoạt động mượt mà cho toàn bộ các tab chức năng.",
+          "en": "Web Game Manager UI Cleanup: Cleaned app.js to resolve unexpected token and switchMainTab errors, restoring full tab navigation and responsive management."
+        },
+        {
+          "vi": "Chuẩn hóa Tỉ lệ Ảnh bìa Game (Boxart): Khắc phục lỗi ảnh bìa bị kéo dãn dọc toàn màn hình, cố định chiều cao khung ảnh 175px và giữ nguyên tỉ lệ gốc của poster mọi hệ máy kèm lưới nút bấm 2x2 cân đối.",
+          "en": "Standardized Game Boxart Ratio: Fixed game cards stretching issue by constraining art box height to 175px with object-fit: contain, ensuring sharp and proportionate boxart display across all retro systems."
+        },
+        {
+          "vi": "Tìm kiếm Toàn diện 40.000+ Game: Tối ưu hóa bộ lọc tìm kiếm trên Web Store kết nối trực tiếp SQLite FTS, cho phép tìm kiếm tức thời trên toàn bộ kho game mà không bị giới hạn trong danh mục ban đầu.",
+          "en": "Full-Text Search Across 40,000+ Games: Connected web search to SQLite DAO (db.search_games_fts) without category confinement, enabling instant global search and page navigation."
+        }
+      ]
+    },
+    {
+      "version": "2.32",
+      "date": "2026-09-17",
+      "headline": {
+        "vi": "Bảo mật & Mã hóa đa tầng Token/AI Key trong toàn bộ ứng dụng, bổ sung công cụ quản lý Secret",
+        "en": "Multi-layer Secret Obfuscation for Telegram & AI Keys, added Secret Management CLI utility"
+      },
+      "bullets": [
+        {
+          "vi": "Bảo mật & Mã hóa đa tầng Secret Key: Tích hợp module mã hóa đa tầng (XOR Salt tuần hoàn + Đảo mảng byte + Base85) trong rh.security, loại bỏ hoàn toàn các chuỗi plaintext token nhạy cảm trong toàn bộ codebase (netplay, services, logger, OTA).",
+          "en": "Multi-layer Secret Key Obfuscation: Implemented symmetric multi-stage encryption (cyclic Salt XOR + Byte Inversion + Base85) in rh.security, completely eliminating hardcoded plaintext Telegram tokens across netplay, services, logger, and OTA modules."
+        },
+        {
+          "vi": "Quản lý Secret & Sẵn sàng tích hợp AI Key: Xây dựng module rh.secrets với cơ chế giải mã tức thời trên RAM khi cần dùng, hỗ trợ cấu hình nhanh API Key cho các mô hình AI mà không để lộ khóa bí mật.",
+          "en": "Secret Management & AI Key Integration: Created rh.secrets with lazy RAM decryption for Telegram tokens and dynamic AI API keys (Gemini, OpenAI, Groq), preventing memory inspection and unauthorized token extraction."
+        },
+        {
+          "vi": "Tiện ích CLI mã hóa Secret: Bổ sung công cụ dòng lệnh _src/encrypt_secret.py giúp mã hóa và gắn khóa API / token mới một cách an toàn và nhanh chóng.",
+          "en": "CLI Secret Encryption Utility: Added _src/encrypt_secret.py to quickly encode and embed new API credentials and secrets from the terminal."
+        }
+      ]
+    },
+    {
+      "version": "2.31",
+      "date": "2026-09-17",
+      "headline": {
+        "vi": "Nâng cấp Đổi ảnh khởi động Side-by-Side & Live Preview, Quản lý Sao lưu Save Game, Modal Cào Boxart, Modal xác nhận SSH Telegram",
+        "en": "Side-by-side Boot Splash Manager & Live Preview, Save Game Backup & Restore, Boxart Scraper Modal, SSH Telegram Confirm Modal"
+      },
+      "bullets": [
+        {
+          "vi": "Giao diện Đổi ảnh khởi động Side-by-Side & Live Preview: Tái cấu trúc giao diện Đổi ảnh khởi động 2 cột chuyên nghiệp. Cột trái gồm thư viện ảnh mẫu, trình duyệt file thẻ nhớ và khôi phục ảnh gốc; cột phải hiển thị ảnh xem trước trực tiếp theo thời gian thực trước khi áp dụng vào bootloader và hệ điều hành.",
+          "en": "Side-by-Side Boot Splash Manager & Live Preview: Restructured Boot Splash UI with a 2-column layout. Left column hosts preset library, SD card file browser, and one-click default restore; right column provides instant real-time live preview before applying to bootloader and OS."
+        },
+        {
+          "vi": "Quản lý Sao lưu & Khôi phục Save Game: Nâng cấp hoàn chỉnh Modal quản lý save game với tính năng nén ZIP toàn bộ save (.srm, .sav, .state*) có gắn nhãn thời gian, duyệt lịch sử sao lưu và bấm khôi phục hoặc xóa bản sao lưu cũ dễ dàng.",
+          "en": "Save Game Backup & Restore Manager: Full-featured Save Manager modal with one-click timestamped ZIP compression of all save files (.srm, .sav, .state*) across all systems, archive history inspection, and individual backup restore or deletion."
+        },
+        {
+          "vi": "Modal Theo dõi Tiến trình Cào Boxart: Bổ sung giao diện modal hiển thị thanh tiến độ %, số lượng cào thành công/tổng số và tên game đang cào với 4 luồng xử lý song song.",
+          "en": "Boxart Scraper Progress Modal: Added live percentage progress bar, concurrent worker status, and active title display when running automated boxart scraping."
+        },
+        {
+          "vi": "Modal Xác nhận Gửi SSH qua Telegram: Bổ sung hộp thoại xác nhận kèm thông tin IP máy trước khi gửi dữ liệu kết nối SSH lên Telegram, triệt tiêu nguy cơ bấm nhầm.",
+          "en": "SSH Telegram Confirmation Modal: Added safety confirmation modal with IP address preview before sending SSH connection details to avoid accidental clicks."
+        },
+        {
+          "vi": "Tối ưu Giao diện, Màu sắc Nút bấm & Tinh gọn Mã nguồn: Chuẩn hóa thanh hướng dẫn nút bấm có huy hiệu màu trực quan, chống rách hình Framebuffer, loại bỏ toàn bộ khối bắt lỗi trần và tối ưu hóa lệnh gọi đồ họa GraphicsMagick.",
+          "en": "UI Typography, Spacing & Codebase Hardening: Polished modal footers with colored button badges (A green, X orange, B red), added framebuffer clearing against double-buffering artifacts, eliminated all bare except blocks, and optimized direct GraphicsMagick subprocess calls."
+        }
+      ]
+    },
+    {
+      "version": "2.30",
+      "date": "2026-09-17",
+      "headline": {
+        "vi": "Sửa lỗi văng app khi chọn Danh hiệu ứng đèn LED, Đồng bộ trạng thái Daemon đèn LED",
+        "en": "Fix app crash when opening LED Effect / Theme selector, Synchronize LED daemon running state"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa lỗi văng app khi chọn Danh hiệu ứng đèn LED: Bổ sung định nghĩa THEME_ORDER trong rh.ledthemes, khắc phục hoàn toàn lỗi văng ứng dụng khi bấm chọn đổi bộ màu / danh hiệu ứng đèn LED.",
+          "en": "Fix LED Effect & Theme Selector Crash: Resolved missing THEME_ORDER attribute error in rh.ledthemes that caused app crash when entering LED effect picker from Utilities > LED Lights."
+        },
+        {
+          "vi": "Đồng bộ trạng thái Daemon đèn LED: Tự động kiểm chuẩn trạng thái tiến trình nền của đèn LED khi mở màn hình cài đặt, đảm bảo công tác Bật/Tắt luôn phản ánh chính xác trạng thái thực tế.",
+          "en": "State Synchronization for LED Daemon: Integrated ledctl.reconcile on LED screen entry to ensure UI toggle state strictly mirrors background daemon process status."
+        }
+      ]
+    },
+    {
+      "version": "2.29",
+      "date": "2026-09-17",
+      "headline": {
+        "vi": "Sửa lỗi Tìm kiếm Game Online (FTS SQLite), Tối ưu Download & Cào Boxart ảnh bìa, Tự động trích xuất icon Java J2ME",
+        "en": "Fix Online Game Search (SQLite FTS), Optimize Boxart Download & Scraping Fallback, Auto-extract Java J2ME icons"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa lỗi Tìm kiếm Game Online: Khắc phục triệt để lỗi tìm kiếm không ra kết quả trên màn hình Kho Game bằng cách kết nối trực tiếp cơ sở dữ liệu SQLite FTS (db.search_games_fts). Bổ sung thuật toán tách nhiều từ khóa (multi-word AND) bao phủ cả tiêu đề và tên tệp ROM.",
+          "en": "Fix Online Game Search: Restored real-time instant search in Store by routing queries directly to SQLite DAO (db.search_games_fts) instead of legacy empty catalogs dict. Enhanced query parsing to support multi-word AND search across game titles and filenames."
+        },
+        {
+          "vi": "Sửa lỗi & Tối ưu Cào ảnh bìa (Boxart): Khắc phục lỗi tương thích tham số và unpack tuple trong Modal hành động game khi bấm 'Tải bìa'. Bổ sung thông báo Toast trực quan thời gian thực về kết quả tìm ảnh.",
+          "en": "Robust Boxart Scraping & Action Modal: Fixed argument mismatch and tuple unpacking error in GameActionModal when triggering 'GET BOXART'. Users now receive real-time toast notifications with clear success/failure status."
+        },
+        {
+          "vi": "Tự động Cào ảnh bù & Trích xuất Icon Game Java: Khi tải ROM game về máy, nếu link ảnh bìa từ server bị lỗi hoặc là ảnh giữ chỗ (placeholder), RetroHub tự động kích hoạt cào ảnh bìa dự phòng (Libretro / Bing) và tự trích xuất icon gốc từ file .jar của game Java J2ME.",
+          "en": "Automated Boxart Fallback & Java J2ME Icon Extraction: When downloading games, if the CDN boxart URL is invalid or placeholder, RetroHub now automatically scrapes boxarts (Libretro Thumbnails / Bing Images) and extracts original MANIFEST icons for Java J2ME (.jar) games."
+        }
+      ]
+    },
+    {
+      "version": "2.28",
+      "date": "2026-09-17",
+      "headline": {
+        "vi": "Trợ lý RetroHub AI & Thực thi lệnh Web, Modal Thoát & Quản lý Dịch vụ thông minh, Chống nóng máy khi tắt màn hình & Hợp nhất Modal Tải Game",
+        "en": "RetroHub AI Web Assistant & Direct Shell Execution, Smart Exit & Service Manager, Sleep Overheating Prevention & Unified Game Modal"
+      },
+      "bullets": [
+        {
+          "vi": "Trợ lý RetroHub AI & Thực thi lệnh Web: Tích hợp trợ lý AI thông minh trực tiếp trên giao diện Web Game Manager (Cổng 8888). Hỗ trợ trò chuyện tương tác, gợi ý game retro theo sở thích, tra cứu System Prompt thiết bị, tìm kiếm log thời gian thực, quản lý Wake Lock và cho phép AI thực thi lệnh shell Linux trực tiếp trên máy TrimUI.",
+          "en": "RetroHub AI Web Assistant & Shell Command Execution: Integrated intelligent AI assistant into the Web Game Manager interface (Port 8888). Features interactive chat, retro gaming recommendations, real-time device system prompt inspection, terminal log search, wake lock management, and direct Linux shell command execution on TrimUI devices."
+        },
+        {
+          "vi": "Modal Thoát & Quản lý Dịch vụ Thông minh: Tối ưu hóa bảng điều khiển khi thoát ứng dụng với thao tác phím tức thì: [A] Thoát hẳn ngay lập tức, [B] Hủy / Ở lại và [X] Đổi trạng thái Bật/Tắt (ON/OFF) các dịch vụ mạng chạy ngầm (SSH, SFTP, RetroHub Web, Stream) kèm nhãn ON/OFF gọn gàng và khoảng cách hàng thoáng đãng.",
+          "en": "Smart Exit & Background Services Manager: Streamlined exit modal with instant key shortcuts: [A] Exit RetroHub immediately with selected services, [B] Cancel / Stay, and [X] Toggle ON/OFF for background services (SSH, SFTPGo, RetroHub Web, Screen Stream) with compact ON/OFF badges and generous vertical row padding."
+        },
+        {
+          "vi": "Chống nóng máy & Sập nguồn khi Tắt màn hình: Tích hợp cơ chế nhận diện tắt màn hình phần cứng. Khi màn hình tắt trong lúc mở RetroHub, vòng lặp đồ họa tự động hạ tải CPU xuống dưới 0.1%, giữ máy luôn mát mẻ và triệt tiêu nguy cơ quá nhiệt sập nguồn.",
+          "en": "Sleep Screen-Off Overheating Prevention: Added hardware framebuffer blanking detection (/sys/class/graphics/fb0/blank). When the screen is turned off while RetroHub is running, the render loop sleeps 200ms, dropping CPU usage below 0.1% and preventing overheating or shutdown."
+        },
+        {
+          "vi": "Hợp nhất Modal Chi tiết & Tải Game 2 cột: Chuẩn hóa giao diện xem thông tin và tải game thành modal 2 cột đồng nhất, hiển thị thanh tiến trình tải trực quan kèm tốc độ mạng và tự động chuyển sang menu Xem chi tiết khi tải hoàn tất.",
+          "en": "Unified 2-Column Game Details & Download Modal: Replaced separate modal states with a unified 2-column modal displaying system metadata, clean game titles, and dynamic states (Pre-download, Live Progress Bar with download speed, Downloaded Action Grid)."
+        },
+        {
+          "vi": "Chuẩn hóa Đa ngôn ngữ & Danh mục Java: Xử lý triệt để các mã dịch thô trên menu Kho game, tự động chuẩn hóa dấu gạch dưới trong tên game thành khoảng trắng và hiển thị tên danh mục tiếng Việt thân thiện cho toàn bộ 28 nhóm game Java.",
+          "en": "Store Menu & Java J2ME i18n Standardization: Eliminated raw translation keys (e.g. menu_search_title) across store screens, cleaned underscores in game titles, and added friendly localized titles for all 28 Java J2ME categories."
+        }
+      ]
+    },
+    {
+      "version": "2.27",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Bổ sung Thanh tiến trình trực quan & Phần trăm tải tệp thời gian thực trong Modal Cập nhật",
+        "en": "Visual Progress Bar & Real-time Percentage for OTA Update Downloads"
+      },
+      "bullets": [
+        {
+          "vi": "Thanh tiến trình trực quan & Nổi bật: Nâng cấp bảng tiến độ cập nhật với thanh Progress Bar phát sáng viền neon, hiển thị phần trăm (%) động từ 0-100% cùng số lượng tệp theo thời gian thực.",
+          "en": "Visual High-Tech Progress Bar: Upgraded the OTA download console with a thick glowing progress bar, dynamic progress percentage (0-100%), and real-time file counters."
+        },
+        {
+          "vi": "Hiển thị chi tiết giai đoạn & Tệp đang tải: Theo dõi chính xác từng tệp mã nguồn, tệp giả lập hoặc cơ sở dữ liệu đang được tải và giải nén.",
+          "en": "Detailed Phase & File Status: Shows exactly which component or file is currently downloading/installing (Code, Runtime, Database) with clear indicators."
+        },
+        {
+          "vi": "Khắc phục triệt để vòng lặp cập nhật: Sửa dứt điểm lỗi báo tải lại database/runtime, tự động đồng bộ mã băm SHA256 và xử lý trạng thái lỗi chính xác.",
+          "en": "Fix Update Loop & Automated SHA256 Sync: Resolved infinite update prompts by fixing runtime hash validation, eliminating false success restart loops."
+        },
+        {
+          "vi": "Tối ưu giao diện & Chống đè text: Tăng khoảng đệm (padding) đáy cho Box tính năng, chuẩn hóa tỷ lệ font chữ modal giúp các dòng hiển thị thoáng đãng, không bị đè nhau.",
+          "en": "Refined Modal Typography & Layout: Added generous bottom padding to the feature changelog box and adjusted font sizes to eliminate text overlapping."
+        }
+      ]
+    },
+    {
+      "version": "2.26",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Tái thiết kế Modal Cập nhật dạng Toàn màn hình (Full-Screen) hiển thị chi tiết nội dung, cuộn mượt mà & chuẩn hóa i18n",
+        "en": "Redesign Full-Screen Update Modal with rich release details, smooth scrolling & unified i18n review"
+      },
+      "bullets": [
+        {
+          "vi": "Giao diện Cập nhật Toàn màn hình: Tái thiết kế Modal cập nhật sang dạng bảng điều khiển toàn màn hình hiện đại, chia cột thông tin phiên bản, dung lượng tải, thời gian phát hành và ghi chú bảo vệ dữ liệu.",
+          "en": "Full-Screen OTA Update Dashboard: Redesigned the update dialog into a spacious full-screen layout with version comparison tags, download size summary, release timestamp, and safety protection notice."
+        },
+        {
+          "vi": "Cuộn nội dung nâng cấp & Thanh tiến trình động: Hỗ trợ phím điều hướng [▲▼] cuộn đọc toàn bộ ghi chú cập nhật dài, nổi bật các điểm mới và hiển thị thanh tiến trình cài đặt trực quan.",
+          "en": "Scrollable Changelog & Dynamic Progress: Integrated D-pad [▲▼] scrolling for long release notes, stylish bullet highlights, and a real-time progress bar during download and installation."
+        },
+        {
+          "vi": "Chuẩn hóa toàn bộ UI và Đa ngôn ngữ: Rà soát và chuẩn hóa 100% tiêu đề bảng hướng dẫn, modal và chuỗi ngôn ngữ trên toàn bộ các màn hình.",
+          "en": "Unified UI i18n Review: Cleaned up and standardized all interface titles, modal headers, and localization strings across screens and dialogs."
+        }
+      ]
+    },
+    {
+      "version": "2.25",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Khắc phục triệt để hiện tượng treo màn hình 'Installed. Restarting' sau khi cập nhật OTA (Tự động khởi động lại liền mạch)",
+        "en": "Fix OTA Update restart freeze (Auto-exit & restart RetroHub seamlessly after installation finishes)"
+      },
+      "bullets": [
+        {
+          "vi": "Tự động khởi động lại sau cập nhật OTA: Khắc phục sự cố UpdateModal dừng vô hạn ở thông báo 'Đã cài đặt. Đang khởi động lại...'. Ứng dụng tự động thoát và bàn giao cho launch.sh khởi động lại phiên bản mới ngay lập tức mà không cần người dùng phải bấm thêm phím.",
+          "en": "Seamless OTA Auto-Restart: Resolved the issue where UpdateModal paused indefinitely on 'Installed. Restarting...'. The engine now automatically exits smoothly after 1.2s, allowing launch.sh to immediately restart RetroHub with the new build."
+        }
+      ]
+    },
+    {
+      "version": "2.24",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Tự động mở SSH Internet Online khi gửi Telegram & chỉ hiển thị hướng dẫn khi dịch vụ tương ứng được BẬT",
+        "en": "Auto-open Remote SSH Tunnel for Telegram & dynamically show sub-guides only when services are ON"
+      },
+      "bullets": [
+        {
+          "vi": "Hiển thị hướng dẫn động theo trạng thái: Các mục hướng dẫn và thao tác con chỉ xuất hiện khi dịch vụ cha tương ứng được BẬT, giúp menu luôn gọn gàng và tinh tế.",
+          "en": "Dynamic Sub-Guide Visibility: Guide rows and sub-actions now only appear when their parent service is turned ON, keeping the dashboard clean and uncluttered."
+        },
+        {
+          "vi": "Tự động mở SSH Internet khi gửi Telegram: Khi bấm gửi thông tin sang Telegram, RetroHub tự động khởi tạo đường hầm SSH Internet (Pinggy), cung cấp đầy đủ lệnh SSH và SCP từ xa qua Internet kèm IP nội mạng.",
+          "en": "Auto Remote SSH Online Tunnel: When sending SSH info to Telegram, RetroHub now automatically establishes an online Internet tunnel (Pinggy) so you can SSH and SCP into the device from anywhere over the Internet."
+        }
+      ]
+    },
+    {
+      "version": "2.23",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Nâng cấp Quản lý Dịch vụ & Gửi thông tin SSH qua Telegram (Tổng hợp đầy đủ thông tin IP/SSH/Web Manager, tối ưu thứ tự & phân cấp menu)",
+        "en": "Service Dashboard & SSH Telegram enhancements (Comprehensive connection info sent to bot, clean menu hierarchy & Web Game Manager priority)"
+      },
+      "bullets": [
+        {
+          "vi": "Gửi thông tin SSH & Dịch vụ qua Telegram: Sửa triệt để lỗi báo 'chưa có phiên SSH' khi dùng mạng cục bộ. Tự động tổng hợp đầy đủ địa chỉ IP Wi-Fi, lệnh kết nối SSH, mật khẩu, link Quản lý Game qua Web (8090), SFTPGo (8080) và SSH Internet từ xa gửi về Telegram bot.",
+          "en": "Send SSH & Service Info to Telegram: Fixed the issue where SSH info failed to send without an active remote tunnel. Now automatically aggregates Wi-Fi IP, SSH connection commands, Web Game Manager (8090), SFTPGo (8080) and remote tunnels to Telegram bot."
+        },
+        {
+          "vi": "Tối ưu thứ tự Menu Dịch vụ: Đưa tính năng 'Quản lý Game qua Web (8090)' lên vị trí đầu tiên, tiếp theo là SSH Server (22), Stream màn hình (8088), SFTP Server... giúp thao tác nhanh chóng và thuận tiện.",
+          "en": "Service Dashboard Reordering: Moved 'Web Game Manager (8090)' to top priority for immediate access, followed by SSH Server, Screen Stream, SFTP Server, ADB, and MTP."
+        },
+        {
+          "vi": "Chuẩn hóa phân cấp & đánh số STT: Các mục hướng dẫn con (Sub-items) không còn bị đánh số thứ tự, giúp giao diện phân cấp mạch lạc, trực quan và chuyên nghiệp hơn trên cả màn hình Dịch vụ mạng và Tiện ích.",
+          "en": "Streamlined Menu Numbering: Sub-guide items no longer carry sequence numbers, providing a clean, logical distinction between main features and accompanying instructions across Network and Utilities screens."
+        }
+      ]
+    },
+    {
+      "version": "2.22",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Khắc phục triệt để lỗi sập/tự khởi động lại (Reboot) khi tắt màn hình lâu trên TrimUI (Tích hợp cơ chế cờ stay_alive bảo vệ Kernel)",
+        "en": "Fix system crash & reboot when screen is turned off for a long time on TrimUI (Integrated stay_alive system flag)"
+      },
+      "bullets": [
+        {
+          "vi": "Khắc phục lỗi Kernel Panic khi thức dậy: Xử lý triệt để sự cố xung đột ngắt phần cứng I2C và Bluetooth của nhân Linux TrimUI khi hệ thống thức dậy từ trạng thái ngủ sâu (Deep Suspend).",
+          "en": "Fix TrimUI Deep Suspend Kernel Panic: Resolved a critical firmware kernel crash where wake-up from Deep Suspend triggered I2C and Bluetooth interrupt panics on Allwinner A133+ chipsets."
+        },
+        {
+          "vi": "Tích hợp cờ hệ thống stay_alive: RetroHub cùng toàn bộ trình khởi chạy giả lập tự động duy trì cờ /tmp/stay_alive, giúp tắt đen màn hình tiết kiệm pin an toàn mà không rơi vào trạng thái ngủ sâu lỗi của kernel.",
+          "en": "Integrated stay_alive Flag: RetroHub and emulator launchers now automatically manage the /tmp/stay_alive system flag, keeping the CPU in safe idle while fully powering off the screen backlight to save battery."
+        },
+        {
+          "vi": "Bật sáng tức thì & Chấm dứt Reboot: Màn hình sáng lại ngay lập tức khi nhấn phím nguồn, trải nghiệm mượt mà và chấm dứt 100% hiện tượng tự khởi động lại.",
+          "en": "Instant Wake-Up & Zero Reboot: Screen turns back on instantly upon pressing the Power button without any system reboot or lag."
+        }
+      ]
+    },
+    {
+      "version": "2.21",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Web Game Manager: Nhập trọn bộ Playlist YouTube từ liên kết (Trích xuất toàn bộ video, tự động tạo chủ đề và đồng bộ tức thì lên RetroHub)",
+        "en": "Web Game Manager: YouTube Playlist Import (Extract full video list from URL/ID, auto-create category & sync to RetroHub)"
+      },
+      "bullets": [
+        {
+          "vi": "Nhập Playlist YouTube qua đường dẫn: Bổ sung tính năng dán link hoặc mã ID Playlist YouTube trực tiếp trên Web Game Manager, hỗ trợ mọi định dạng liên kết (playlist?list=..., youtu.be/...&list=..., mã PL..., RD..., OLAK...).",
+          "en": "YouTube Playlist Import: Added instant URL/ID parsing for YouTube playlists in Web Game Manager, supporting all playlist URL formats (playlist?list=..., youtu.be/...&list=..., raw IDs PL..., RD..., OLAK...)."
+        },
+        {
+          "vi": "Tự động trích xuất toàn bộ Video & Lưu đệm: Quét và trích xuất trọn bộ danh sách video (mã video, tiêu đề chuẩn hóa, kênh, thời lượng và ảnh bìa) qua YouTube InnerTube API, tự động tạo danh mục và lưu đệm trên thẻ nhớ.",
+          "en": "Automated Video Extraction & Cache: Traverses InnerTube browse responses and extracts complete video collections (IDs, titles, channels, durations, thumbnails), storing them in persistent local cache for zero-delay offline/online access."
+        },
+        {
+          "vi": "Đồng bộ tức thì lên thiết bị: Toàn bộ danh sách phát vừa nhập hiển thị ngay lập tức trên cả giao diện Web và màn hình YouTube máy cầm tay, sẵn sàng thưởng thức mượt mà.",
+          "en": "Seamless Handheld Integration: Imported playlists appear directly in both Web Game Manager and the Handheld YouTube browser, instantly playable via RetroArch FFMPEG."
+        }
+      ]
+    },
+    {
+      "version": "2.20",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Tái thiết kế toàn diện các Modal Dịch vụ & Hướng dẫn (Bố cục thẻ Card hiện đại, hộp giá trị Hero Box nổi bật, tự động căn chỉnh chiều cao & cuộn mượt mà)",
+        "en": "Redesign Service & Guide Modals (Card layout, prominent Hero value boxes, responsive auto-height & smooth scrolling)"
+      },
+      "bullets": [
+        {
+          "vi": "Bố cục Thẻ Card Hiện Đại: Nâng cấp TwoColInfoModal với các thẻ phân tầng riêng biệt, viền dạ quang và cấu trúc thông tin rõ ràng, chấm dứt hoàn toàn hiện tượng chữ bị đè dính.",
+          "en": "Card-based Modal Layout: Upgraded TwoColInfoModal with card panels, cyan accent borders, and structured hierarchy, eliminating text overlapping across all screen sizes."
+        },
+        {
+          "vi": "Hộp Giá Trị Hero Box Nổi Bật: Tự động đóng khung các thông tin kết nối quan trọng (Địa chỉ Web, Lệnh SSH, IP, Cổng port và Mật khẩu) trong các hộp viền vàng Gold sắc nét, dễ quan sát từ xa.",
+          "en": "Prominent Hero Value Boxes: Highlighted critical connection details (Web URLs, SSH commands, IPs, and passwords) in dark golden Hero boxes for instant readability."
+        },
+        {
+          "vi": "Tự Động Căn Chiều Cao & Cuộn Danh Sách: Tự động điều chỉnh kích thước modal theo số lượng hàng và hỗ trợ cuộn [▲▼] mượt mà với thanh Scrollbar khi danh sách dài.",
+          "en": "Dynamic Height & Smooth Scrolling: Added auto-adjusting window dimensions and D-pad [▲▼] scrolling support for long guide lists."
+        }
+      ]
+    },
+    {
+      "version": "2.19",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Sửa triệt để lỗi văng app khi vào Sảnh game (Netplay), tối ưu nạp danh sách phòng Cloudflare & tự động khởi chạy game độc lập",
+        "en": "Fix Netplay Lobby crash, handle API response safely & add standalone Netplay game launcher"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa lỗi văng Sảnh game: Khắc phục triệt để lỗi phân giải giá trị trả về của fetch_public_rooms, chấm dứt hoàn toàn hiện tượng văng ứng dụng khi duyệt danh sách phòng trực tuyến.",
+          "en": "Fix Netplay Lobby Crash: Fixed return tuple handling in fetch_public_rooms, preventing AttributeError crash when rendering room lists in Public Lobby."
+        },
+        {
+          "vi": "Khởi chạy Netplay trực tiếp: Bổ sung cơ chế tự động khớp ROM và khởi chạy giả lập trực tiếp từ Menu chính mà không bắt buộc phải mở từ Thư viện game.",
+          "en": "Direct Netplay Game Launcher: Added direct emulator launching fallback when joining/hosting Netplay rooms directly from the Main Menu without requiring prior game selection in Library."
+        },
+        {
+          "vi": "Tăng cường an toàn kết nối: Bổ sung hiển thị trạng thái lỗi mạng trực quan và xác thực dữ liệu phòng trên giao diện Netplay.",
+          "en": "Robust Error Handling: Added network error status display and room validation safeguards across all Netplay modals."
+        }
+      ]
+    },
+    {
+      "version": "2.18",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Sửa triệt để lỗi khởi động văng app (ImportError modals) & bổ sung cơ chế Tự động cứu hộ (Emergency Self-Healing)",
+        "en": "Fix startup crash on boot (ImportError modals) & introduce launcher Emergency Self-Healing auto-recovery"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa lỗi Import Module Modal: Chuẩn hóa toàn bộ import trong rh/modals/__init__.py khớp đúng định nghĩa thực tế (ExitModal, ResolutionModal, TwoColInfoModal, StreamLoadingModal và NetplayModal), chấm dứt hoàn toàn hiện tượng văng ứng dụng khi khởi động.",
+          "en": "Fix Modal Module Imports: Standardized and corrected rh/modals/__init__.py imports (ExitModal, ResolutionModal, TwoColInfoModal, StreamLoadingModal, and NetplayModal), resolving ImportError on startup."
+        },
+        {
+          "vi": "Tự động Cứu hộ khi có sự cố (Self-Healing): Bổ sung cơ chế tự động cứu hộ trong launch.sh, tự động kéo bản vá khẩn cấp qua mạng khi phát hiện ứng dụng gặp sự cố khởi động và tự chạy lại mượt mà.",
+          "en": "Launcher Emergency Self-Healing Recovery: Added automatic fallback recovery in launch.sh to safely fetch emergency hotfixes over network when app encounters startup errors, auto-healing the device seamlessly."
+        }
+      ]
+    },
+    {
+      "version": "2.17",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Tích hợp hộp thoại Cập nhật OTA tự động (UpdateModal), sửa lỗi kiểm tra cập nhật thủ công trong Cài đặt & tối ưu luồng nâng cấp ứng dụng ngầm",
+        "en": "Integrate full-featured OTA UpdateModal dialog, fix manual update check in Settings & optimize background self-updater"
+      },
+      "bullets": [
+        {
+          "vi": "Tích hợp hộp thoại Cập nhật OTA (UpdateModal): Bổ sung giao diện cập nhật với thanh tiến trình tải chi tiết từng file, xác thực mã băm SHA256 an toàn và 3 tùy chọn tương tác rõ ràng (Cài đặt ngay, Nhắc sau, Bỏ qua bản này).",
+          "en": "Integrated Full OTA UpdateModal Dialog: Added UpdateModal with visual progress reporting, package hash verification, and clear interactive actions (Install now, Remind later, Skip version)."
+        },
+        {
+          "vi": "Sửa lỗi Kiểm tra Cập nhật trong Cài đặt: Khắc phục triệt để lỗi phân giải kết quả kiểm tra cập nhật thủ công trong màn hình Cài đặt, loại bỏ thông báo nhận diện sai phiên bản và kích hoạt trực tiếp hộp thoại tải bản mới.",
+          "en": "Fixed Settings Manual Update Check: Fixed tuple unpacking error when checking for updates manually from Settings, resolving false 'up to date' warnings and opening UpdateModal directly."
+        },
+        {
+          "vi": "Tự động dò bản cập nhật khi khởi động: Luồng kiểm tra nền tự động quét bản cập nhật mới sau khi máy kết nối mạng, mở thông báo nâng cấp mượt mà không gây gián đoạn trải nghiệm.",
+          "en": "Automated Background OTA Check on Boot: Background thread automatically scans for newer releases 2.5s after boot when Wi-Fi is connected, smoothly popping up update prompt without blocking gameplay."
+        }
+      ]
+    },
+    {
+      "version": "2.16",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Nâng cấp Web Game Manager: Bổ sung 3 menu chính (Quản lý game, Tải game online từ kho 40.000+ ROMs về thẻ nhớ, Quản lý playlist và video yêu thích YouTube trực tuyến)",
+        "en": "Upgrade Web Game Manager: Added 3 main menus (Game Manager, Download Online Games directly to SD card from 40k+ catalog, and YouTube Playlist & Favorites Manager)"
+      },
+      "bullets": [
+        {
+          "vi": "3 Trung tâm Quản lý Web trực quan: Cơ cấu trang web quản trị thành 3 menu chính: 1. Quản lý game (danh sách ROMs, cào ảnh bìa, đổi tên, xóa, tải lên, sao lưu/khôi phục save), 2. Tải game online (khám phá kho 40.000+ game, lọc 6 nhóm tuyển chọn & 29 hệ máy, tải ngầm trực tiếp về thẻ nhớ kèm ảnh bìa), và 3. Quản lý YouTube (tìm kiếm video trực tuyến, quản lý danh sách phát, thể loại chủ đề và video yêu thích).",
+          "en": "Three Main Web Manager Hubs: Reorganized web management into 3 intuitive tabs: 1. Game Manager (ROMs list, Scraper boxarts, Renamer, Deleter, Uploader, Save backup/restore), 2. Download Online Games (browse 40,000+ catalog titles, filter by 6 curated shelves & 29 systems, background download directly to SD card with boxarts), and 3. YouTube Manager (search videos, manage custom playlists, topic categories, and favorite channels)."
+        },
+        {
+          "vi": "Tự động nhận diện đường dẫn Database: Hoàn thiện cơ chế tự động tìm nạp cơ sở dữ liệu roms_store.sqlite3 trong db.py trên mọi môi trường và điểm gắn thẻ nhớ máy cầm tay.",
+          "en": "Robust Database Path Resolution: Enhanced catalog DB path discovery in db.py to reliably locate roms_store.sqlite3 across various handheld mount points and local dev environments."
+        }
+      ]
+    },
+    {
+      "version": "2.15",
+      "date": "2026-09-16",
+      "headline": {
+        "vi": "Tái cấu trúc Menu chính (Thư viện game, Xem YouTube, Sảnh game), cơ cấu Kho ROM (Tìm kiếm game, Top 100 game, Kho game hack), đồng bộ số thứ tự STT và tối ưu cuộn xoay vòng danh sách",
+        "en": "Restructure Main Menu (Game Library, Watch YouTube, Game Lobby), reorganize ROM Store (Search on top, Top 100 Games, Romhacks), unified sequential numbering, and smooth circular wrap-around navigation"
+      },
+      "bullets": [
+        {
+          "vi": "Tái cơ cấu Menu chính & Kho ROM: Đưa '1. Thư viện game' lên đầu Menu chính, tiếp theo là '2. Xem YouTube' và '3. Sảnh game'. Sắp xếp lại Kho ROM với '1. Tìm kiếm game' lên đầu, bổ sung 'Top 100 game hay nhất', 'Kho game hack' và lược bỏ các mục trùng lặp.",
+          "en": "Main Menu & ROM Store Reorganization: Moved '1. Game Library' to the top of the main menu, followed by '2. Watch YouTube' and '3. Game Lobby (Netplay)'. Reorganized ROM Store with '1. Search games' at the top, followed by 'Top 100 Games', 'Romhacks', and cleaned duplicate entries."
+        },
+        {
+          "vi": "Đồng bộ đánh số thứ tự (STT): Bổ sung tiền tố số thứ tự (1., 2., 3....) rõ ràng trên toàn bộ các màn hình (Menu chính, Kho ROM, Thư viện game dạng danh sách & lưới, Cài đặt, Tiện ích, LED, Sảnh game, YouTube và Splash Screen).",
+          "en": "Unified Sequential Numbering (STT): Added clear numeric prefixes across all UI screens (Main, Store, Library list & grid, Settings, Utilities, LED, Netplay, YouTube, and Splash screens) for effortless navigation."
+        },
+        {
+          "vi": "Tối ưu cuộn khung nhìn & Di chuyển xoay vòng: Áp dụng cơ chế cuộn cửa sổ hiển thị mượt mà kèm khả năng di chuyển xoay vòng 4 hướng (lên/xuống, trái/phải) trên tất cả danh sách, lưới 2D và hộp thoại modal.",
+          "en": "Smooth Viewport Scrolling & Circular Wrap-Around Navigation: Implemented sliding window viewport scrolling and bidirectional circular wrap-around navigation (up/down and left/right) on all lists, 2D grids, and modal dialogs."
+        },
+        {
+          "vi": "Kiến trúc module hóa màn hình & Engine: Tách các màn hình vào rh/screens/, modals vào rh/modals/ và vòng lặp chính vào rh/engine.py, đảm bảo hiệu năng và tính ổn định cao.",
+          "en": "Modular Screen & Engine Architecture: Refactored screens into rh/screens/, modals into rh/modals/, and core loop into rh/engine.py with py_compile verification."
+        }
+      ]
+    },
+    {
+      "version": "2.01",
+      "date": "2026-09-11",
+      "headline": {
+        "vi": "Sửa lỗi khởi chạy game PSP (PPSSPP Vulkan/GL) trên CrossMix-OS, đồng bộ bộ điều khiển InputManager & nâng cấp báo cáo chẩn đoán",
+        "en": "Fix PSP game launch (PPSSPP Vulkan/GL) on CrossMix-OS, unified InputManager, and enhanced diagnostics"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa lỗi khởi chạy game PSP trên CrossMix-OS: Tự động nhận diện và phân giải trực tiếp launcher từ launchlist (ưu tiên PPSSPP Vulkan/GL) thay vì chạy qua default.sh, loại bỏ hoàn toàn lỗi cú pháp shell BusyBox ash (< <(...)) và chấm dứt hiện tượng văng game sau 1 giây.",
+          "en": "Fix PSP & Standalone Emulator Launch on CrossMix-OS: Automatically resolves real binary scripts from launchlist (prioritizing PPSSPP Vulkan/GL) instead of intermediate default.sh, bypassing BusyBox ash process substitution syntax errors and eliminating 1-second crash-on-launch."
+        },
+        {
+          "vi": "Chuẩn hóa kiến trúc điều khiển (InputManager): Tách và quy tụ toàn bộ luồng xử lý phím GameController, Joystick thô và Bàn phím với cơ chế tự động lặp (autorepeat) mượt mà vào module rh/inputs.py, tinh giản gần 300 dòng mã thừa.",
+          "en": "Unified Input Architecture (InputManager): Extracted and centralized low-level SDL2 GameController, raw Joystick, and Keyboard events with smooth autorepeat scrolling into dedicated rh/inputs.py, reducing ~300 lines of redundant code."
+        },
+        {
+          "vi": "Tương thích đa thiết bị & Tự động quét phần cứng: Tự động dò gốc thẻ nhớ qua biến môi trường hoặc điểm gắn kết (SDCARD_PATH, thư mục cha Apps, mmc, userdata), quét động cảm biến pin /sys/class/power_supply, và thêm cơ chế vô hiệu hóa LED an toàn trên máy không có đèn.",
+          "en": "Universal Handheld Path & Hardware Safety: Auto-detects user storage and SD card root via environment or mount points (SDCARD_PATH, Apps parent, mmc, userdata), dynamically scans /sys/class/power_supply for battery telemetry, and adds safe LED hardware guards."
+        },
+        {
+          "vi": "Nâng cấp Chẩn đoán & Bắt lỗi Giả lập Độc lập: Công cụ chẩn đoán tự động ghi nhận game mở từ RetroHub (last_game.json), bắt trực tiếp nhật ký lỗi runtime (/tmp/retrohub_game.log), giúp phát hiện chuẩn xác lỗi crash của các giả lập độc lập ngoài RetroArch.",
+          "en": "Enhanced Game Crash & Standalone Diagnostics: Diagnostics Engine now tracks games launched from RetroHub (last_game.json), captures real-time stdout/stderr execution logs (/tmp/retrohub_game.log), and provides full visibility into standalone emulators outside RetroArch."
+        }
+      ]
+    },
+    {
+      "version": "2.00",
+      "date": "2026-09-11",
+      "headline": {
+        "vi": "Game Java J2ME: Sửa lỗi sập khi mở game do cấu hình phím & chống lỗi cache khi cập nhật OTA",
+        "en": "Java J2ME: Fix launch crash from keymap syntax & OTA updater CDN cache bypass"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa triệt để lỗi sập khi mở game Java: khôi phục đầy đủ định danh phím softkey gốc ('左键'/'右键') trong keymap.cfg song song với 'ML'/'MR'. Khắc phục lỗi segmentation fault trong binary sdl_interface khi khởi động, đảm bảo mở game 100% ổn định.",
+          "en": "Fix Java Launch Crash: restored authentic Chinese softkey bindings ('左键'/'右键') in keymap.cfg alongside 'ML'/'MR'. Eliminates segmentation faults inside sdl_interface binary on startup and guarantees 100% launch stability."
+        },
+        {
+          "vi": "Tự động đồng bộ chuẩn hóa Keymap: nâng cấp cơ chế sync_bundled_runtime_files() so khớp nội dung tệp cấu hình với bản đóng gói, tự động sửa chữa keymap.cfg ngay khi cập nhật ứng dụng mà không ảnh hưởng tới dữ liệu save game RMS.",
+          "en": "Automated Keymap & Runtime Sync: improved sync_bundled_runtime_files() to verify exact content hashes of configuration files against bundled versions, immediately repairing keymap.cfg upon app update without touching user RMS saves."
+        },
+        {
+          "vi": "Chống cache CDN & Tự thử lại khi cập nhật OTA: bổ sung header chống cache HTTP và tham số thời gian thực bypass CDN Fastly/GitHub, tự động thử lại khi lệch mã băm hash, giải quyết dứt điểm lỗi báo 'cập nhật thất bại' do nhận file cache cũ.",
+          "en": "OTA Updater CDN Cache-Buster & Auto-Retry: added anti-cache HTTP headers and timestamped cache-busting queries with automatic 1-second retry on hash mismatch, completely resolving update failure errors caused by stale GitHub CDN caches."
+        }
+      ]
+    },
+    {
+      "version": "1.99",
+      "date": "2026-09-10",
+      "headline": {
+        "vi": "Game Java J2ME: Thêm cài đặt phím mặc định Nokia (N), bảo toàn 100% save game khi nâng cấp và khôi phục keymap gốc",
+        "en": "Java J2ME: Default Nokia (N) keypad profile setting, 100% safe save persistence across updates, and restore original keymap"
+      },
+      "bullets": [
+        {
+          "vi": "Tùy chọn chế độ phím mặc định Nokia (N): bổ sung cài đặt profile bàn phím điện thoại mặc định (Nokia [N] - Khuyên dùng, Phổ thông [P], Sony Ericsson [E], Siemens [S], Motorola [M]). Mọi game Java khi mở lần đầu tự động nhận D-pad điều hướng GameAction chuẩn mà không cần bấm đổi thủ công.",
+          "en": "Default Nokia (N) Keypad Profile: added configurable default phone keypad mode (Nokia [N] - Recommended, Plain [P], Sony Ericsson [E], Siemens [S], Motorola [M]). J2ME games launch with authentic D-pad GameAction by default without requiring manual switching."
+        },
+        {
+          "vi": "Bảo toàn 100% Save Game (RMS) khi nâng cấp: tách biệt và lưu trữ dữ liệu save game bền vững bên ngoài thư mục JRE (Emus/JAVA/rms). Tự động đồng bộ 2 chiều trước và sau khi chơi, flush sync ghi đĩa tức thì, và tự động quét cứu lại toàn bộ save game bị kẹt từ các lần cập nhật trước.",
+          "en": "100% Safe Save Persistence Across Updates: relocated user RMS save data and configs to persistent storage outside the JRE runtime (Emus/JAVA/rms). Automated 2-way pre/post-launch synchronization, instant OS flash sync, and recovery of orphaned saves from previous crashes."
+        },
+        {
+          "vi": "Gỡ bàn phím ảo & khôi phục FreeJ2ME gốc: loại bỏ hoàn toàn mod bàn phím ảo, khôi phục tệp sdl_interface nguyên bản và keymap.cfg chuẩn (A/B/X/Y, D-pad, START, SELECT, L1/R1/L2/R2) với độ trễ 0ms.",
+          "en": "Remove virtual keyboard & restore original FreeJ2ME: completely removed virtual keyboard mod, restored authentic sdl_interface binary and original keymap.cfg (A/B/X/Y, D-pad, START, SELECT, L1/R1/L2/R2) with zero latency."
+        }
+      ]
+    },
+    {
+      "version": "1.98",
+      "date": "2026-09-10",
+      "headline": {
+        "vi": "Nâng cấp Chẩn đoán & Bắt lỗi văng game: Bắt lỗi runtime RetroArch, trích xuất log Java J2ME, Kernel dmesg và kiểm tra ROM",
+        "en": "Game Crash & Diagnostics Engine: RetroArch runtime logs, Java J2ME stack traces, and recent game crash dump"
+      },
+      "bullets": [
+        {
+          "vi": "Đồng bộ log RetroArch tự động: Tự động kích hoạt ghi log chi tiết trong cấu hình retroarch.cfg khi bật ghi nhật ký, ghi nhận chuẩn xác lỗi văng game, thiếu BIOS và xung đột cấu hình vào báo cáo chẩn đoán.",
+          "en": "Auto RetroArch Log Sync: Automatically enables verbose file logging in RetroArch (retroarch.cfg) when logging is active, capturing fatal errors, missing BIOS, and crash causes directly into diagnostic reports."
+        },
+        {
+          "vi": "Chẩn đoán toàn diện game Java J2ME: Kiểm tra môi trường chạy Zulu17, file freej2me-sdl.jar, quyền thực thi của sdl_interface, và tự động trích xuất các lỗi Exception, OutOfMemory từ RetroHub-java.log.",
+          "en": "Java J2ME & FreeJ2ME Diagnostics: Comprehensive runtime inspection of Zulu17 JDK, FreeJ2ME JAR, execution permissions on sdl_interface, and automatically parses RetroHub-java.log for JVM Exceptions, Errors, and OutOfMemory crashes."
+        },
+        {
+          "vi": "Chẩn đoán game gần nhất & Kernel dmesg: Kiểm tra chi tiết game vừa khởi chạy, phát hiện file ROM hoặc Core 0-byte bị lỗi, kiểm tra tỉ lệ màn hình hiển thị và trích xuất nhật ký lỗi Kernel dmesg.",
+          "en": "Recent Game & Kernel Diagnostics: Inspects the most recently launched game, validates ROM and core file sizes (detecting corrupted/0-byte ROMs), displays active display aspect ratios, and extracts kernel dmesg crash dumps."
+        },
+        {
+          "vi": "Đồng bộ quản trị nhật ký: Các chức năng Xoá log và tính dung lượng log trên giao diện máy và Web Manager đã bao gồm và dọn dẹp sạch cả RetroArch log và Java log.",
+          "en": "Synchronized Log Management: Clear Log and Log Size indicators across handheld UI and Web Manager now fully include and purge both RetroArch and Java J2ME log files."
+        }
+      ]
+    },
+    {
+      "version": "1.97",
+      "date": "2026-09-09",
+      "headline": {
+        "vi": "Tối ưu menu Tiện ích và giao diện Sao lưu: Mở menu tức thì 0ms, mở rộng modal và sửa lỗi tràn chữ menu Sao lưu",
+        "en": "Utilities & Save Backup Optimization: Instant 0ms menu entry, enlarged save modal with clean typography and scrolling"
+      },
+      "bullets": [
+        {
+          "vi": "Mở menu Tiện ích tức thì: Loại bỏ hoàn toàn các tác vụ quét đĩa nặng nề (quét toàn bộ ROM, file save, cheat code) trong vòng lặp dựng hình giao diện, giúp mở và cuộn menu Tiện ích mượt mà 60 FPS không còn giật lag.",
+          "en": "Instant Utilities Menu: Completely eliminated synchronous disk crawling (full ROM scan, saves scan, cheats check) from the main UI render loop, making menu entry and scrolling 100% instantaneous at 60 FPS."
+        },
+        {
+          "vi": "Nâng cấp giao diện Sao lưu Save: Mở rộng kích thước modal, tăng chiều cao thẻ tùy chọn lên 108px với khoảng cách thoáng đãng, khắc phục triệt để lỗi chữ tràn viền và đè lên nhau. Bổ sung cơ chế cuộn mượt mà danh sách bản sao lưu.",
+          "en": "Enlarged Save Backup Modal: Expanded modal bounds and increased card height to 108px with balanced spacing, eliminating font overlaps and card border cutoffs. Added smooth list scrolling for backup archives."
+        }
+      ]
+    },
+    {
+      "version": "1.96",
+      "date": "2026-09-09",
+      "headline": {
+        "vi": "Nâng cấp bộ cào Box Art: Nhận diện chính xác 100% ROM số hiệu, game Arcade và bổ sung tìm kiếm ảnh Web",
+        "en": "Boxart Scraper Upgrade: 100% match rate for numbered scene ROMs and Arcade short names with Web fallback"
+      },
+      "bullets": [
+        {
+          "vi": "Làm sạch số hiệu ROM: Tự động loại bỏ tiền tố số thứ tự release (ví dụ '0032 - ', '0247 - ') và các nhãn nhóm dịch, giúp nhận diện chính xác 100% game trên kho Catalog và Libretro.",
+          "en": "Scene Release Number Cleaning: Automatically strips release index prefixes (e.g. '0032 - ', '0247 - ') and translation tags, ensuring flawless matching against catalog and Libretro indexes."
+        },
+        {
+          "vi": "Tra cứu tên file Arcade: Ánh xạ trực tiếp tên file ROM ngắn (mslug6, dino, mvsc...) sang tên game đầy đủ và ảnh bìa gốc Libretro thông qua cơ sở dữ liệu Catalog SQLite.",
+          "en": "Arcade Filename Mapping: Directly maps short Arcade filenames (mslug6, dino, mvsc, etc.) to full titles and official Libretro artwork via Catalog SQLite database."
+        },
+        {
+          "vi": "Mở rộng timeout & Tìm kiếm ảnh Web dự phòng: Tăng thời gian chờ tải chỉ mục Libretro phù hợp với Wi-Fi máy cầm tay và bổ sung tìm kiếm ảnh Bing vượt lỗi SSL cho các bản ROM Việt hóa và ROM hack.",
+          "en": "Extended Timeout & Bing Search Fallback: Extended Libretro CDN index timeout for handheld Wi-Fi and integrated Bing Image search fallback with insecure SSL bypass for ROM hacks and custom titles."
+        }
+      ]
+    },
+    {
+      "version": "1.95",
+      "date": "2026-09-09",
+      "headline": {
+        "vi": "Khắc phục loạn danh sách game: Cào ảnh chuẩn vào Imgs, tự động dọn dẹp triệt để file ảnh và .media khỏi thư mục ROMs",
+        "en": "Roms Directory Clean: Boxart scraper saves strictly to Imgs, auto-cleans rogue images and .media from ROMs"
+      },
+      "bullets": [
+        {
+          "vi": "Cách ly ảnh tuyệt đối: Bộ cào ảnh và tải game chỉ lưu ảnh bìa vào /mnt/SDCARD/Imgs/[SYSTEM]/, không lưu đè hay tạo thư mục .media trong thư mục chứa game ROMs.",
+          "en": "Strict Image Isolation: Scraper and downloader save boxart strictly to /mnt/SDCARD/Imgs/[SYSTEM]/ and never write into ROM directories or create .media subfolders."
+        },
+        {
+          "vi": "Tự động dọn dẹp sạch sẽ thư mục ROMs: Tự động di chuyển các file ảnh (.png, .jpg, .media) vô tình nằm trong Roms/ sang Imgs/ và xóa sạch khỏi Roms/ (ngoại trừ game thẻ PICO-8), giúp danh sách game trên TrimUI trở lại gọn gàng và chính xác.",
+          "en": "Automated ROM Directory Cleanup: Automatically moves misplaced image files (.png, .jpg, .media) from Roms/ to Imgs/ and deletes them from Roms/ (skipping PICO-8 cartridges), restoring clean game lists in TrimUI."
+        },
+        {
+          "vi": "Chuẩn hóa định dạng ROM: Loại bỏ đuôi .png khỏi danh sách ROM chung trên toàn bộ ứng dụng và Web Manager, chỉ cho phép nhận diện .png là game trên hệ máy PICO-8.",
+          "en": "Refined ROM Extensions: Removed .png from generic valid ROM extensions across catalog and web manager, restricting .png exclusively to PICO-8."
+        }
+      ]
+    },
+    {
+      "version": "1.94",
+      "date": "2026-09-09",
+      "headline": {
+        "vi": "Tải Cheat trực tiếp siêu nhẹ: Chỉ tải đúng mã Cheat của game đang có từ CDN Libretro, không còn tải file zip 37MB",
+        "en": "Direct On-Demand Cheat Download: Download only matching cheats directly from Libretro CDN without fetching the 37MB archive"
+      },
+      "bullets": [
+        {
+          "vi": "Tải trực tiếp từ CDN: Loại bỏ hoàn toàn việc phải tải file zip 37MB. Từng file cheat (.cht) được tải trực tiếp song song từ mạng CDN tốc độ cao.",
+          "en": "Direct CDN Stream: Completely eliminates the 37MB zip download. Individual cheat files (.cht) are downloaded directly from jsdelivr/GitHub CDN in parallel."
+        },
+        {
+          "vi": "Siêu tiết kiệm dung lượng (~150KB): Mỗi game chỉ tốn 1-3 KB dữ liệu, hoàn tất tải toàn bộ mã cheat cho các game trên máy chỉ trong 3-5 giây.",
+          "en": "Ultralight Data Usage (~150KB): Downloads only a few KB per game, completing the entire installed library cheat setup in 3-5 seconds."
+        }
+      ]
+    },
+    {
+      "version": "1.93",
+      "date": "2026-09-09",
+      "headline": {
+        "vi": "Tải Cheat Code Libretro thông minh: Tự động trích xuất mã cheat cho game đang có, tạo alias Auto-Load cho RetroArch và tải cheat lẻ trên Web",
+        "en": "Smart Libretro Cheat Downloader: Selective cheat extraction for installed games, RetroArch auto-load aliases, and Web Manager single-game cheat fetching"
+      },
+      "bullets": [
+        {
+          "vi": "Trích xuất Cheat thông minh theo game: Tự động quét game trên thẻ nhớ thuộc 45 hệ máy và chỉ giải nén các file .cht tương ứng thay vì giải nén 30.000 file. Tránh nghẽn bộ nhớ thẻ và hoàn tất chỉ trong vài giây.",
+          "en": "Smart On-Device Cheat Extraction: Automatically scans installed ROMs across 45 systems and selectively extracts matching .cht files instead of unpacking all 30,000 files. Prevents SD card clutter and finishes in seconds."
+        },
+        {
+          "vi": "Hỗ trợ Auto-Load trên RetroArch: Tạo bản sao tệp cheat theo đúng tên file ROM ([rom_name].cht), giúp RetroArch tự động nhận diện và nạp mã cheat ngay khi vào game.",
+          "en": "RetroArch Auto-Load Support: Generates [rom_name].cht aliases alongside original cheats, allowing RetroArch to automatically detect and activate cheat codes when starting games."
+        },
+        {
+          "vi": "Hai chế độ linh hoạt & Tích hợp Web Manager: Lựa chọn giữa 'Tải cho game đang có (Khuyên dùng)' hoặc 'Tải toàn bộ kho (~37MB)'. Web Game Manager tích hợp thêm nút Cheat nhanh trực tiếp trên từng thẻ game.",
+          "en": "Dual Modes & Web Manager Integration: Choose between 'For Installed Games' (Recommended) or 'Download All' (~37MB). Web Game Manager features quick Cheat buttons directly on game cards."
+        }
+      ]
+    },
+    {
+      "version": "1.92",
+      "date": "2026-09-08",
+      "headline": {
+        "vi": "Cài đặt & Web: Sao lưu/Khôi phục Save, Tải Cheat Code, Cào Box Art và Quản lý Nhật ký Telegram theo Mã máy",
+        "en": "Settings & Web: Save Backup/Restore, Libretro Cheats, Boxart Scraper, and Telegram Diagnostic Logging with Device ID"
+      },
+      "bullets": [
+        {
+          "vi": "Sao lưu & Khôi phục Save Game: Nén toàn bộ file save (.srm, .sav) và state (.state) thành file ZIP an toàn có dấu mốc thời gian. Hỗ trợ khôi phục chuẩn xác 1 chạm trên máy và tải file save về PC/điện thoại qua Web.",
+          "en": "Save Game Backup & Restore: 1-click compress all .srm, .sav, and .state files into timestamped ZIP archives with manifest. Easily restore, manage, or download saves directly to PC/Phone via Web Manager."
+        },
+        {
+          "vi": "Tải trọn bộ Cheat Code Libretro: Tự động tải kho Cheat chính thức (~37MB) từ Libretro CDN và giải nén hàng ngàn file .cht vào RetroArch, kèm hướng dẫn bật mã cheat trực tiếp trong game.",
+          "en": "Auto Libretro Cheat Codes Downloader: Instantly downloads official Libretro Cheat bundle (~37MB) and extracts thousands of .cht files directly into RetroArch with in-game activation guidance."
+        },
+        {
+          "vi": "Tự động cào Box Art trên máy: Quét toàn bộ game chưa có ảnh bìa và tự động tải từ Catalog DB (~1ms) cùng Libretro CDN (~2ms), hỗ trợ 4 luồng song song chạy ngầm mượt mà kèm modal tiến độ trực quan.",
+          "en": "On-Device Auto Boxart Scraper: Scans all local games lacking boxarts and downloads high-quality covers via SQLite Catalog DB (~1ms) and Libretro CDN (~2ms) with 4 background workers and live progress modal."
+        },
+        {
+          "vi": "Tùy biến Ghi nhật ký & Mã máy ngẫu nhiên: Bật/tắt ghi log trong Cài đặt; khi bật, hiển thị 2 thao tác Làm sạch nhật ký và Gửi log qua Telegram. Mỗi máy tự cấp 1 Mã thiết bị (Device ID) ngẫu nhiên duy nhất giúp tác giả dễ dàng tra cứu và chẩn đoán sự cố từ xa.",
+          "en": "Configurable System Logging & Random Device ID: Toggle logging in Settings; when enabled, offers 1-click Clean Log and Send Diagnostic Log to Telegram. Each device generates a persistent unique Device ID for easy remote debugging via handheld and Web Manager."
+        }
+      ]
+    },
+    {
+      "version": "1.91",
+      "date": "2026-09-08",
+      "headline": {
+        "vi": "Quản lý Game Web: Tối ưu cào ảnh siêu tốc (Catalog DB & CDN Libretro), 4 luồng song song trên trình duyệt và tự động tìm Web sâu",
+        "en": "Web Game Manager: Ultra-fast boxart scraping (Catalog DB & Libretro CDN), 4 browser-driven concurrent workers with automatic deep web search fallback"
+      },
+      "bullets": [
+        {
+          "vi": "Cào ảnh tự động siêu tốc 1 bước: Gom tìm kiếm và tải ảnh thành 1 request duy nhất, ưu tiên kho Catalog DB (~1ms) và Libretro CDN index cache (~2ms), giảm thời gian xử lý xuống hàng mili-giây.",
+          "en": "Ultra-Fast 1-Step Auto Scrape: Replaced multi-roundtrip scrape with a 1-step backend pipeline prioritizing SQLite Catalog DB (~1ms) and cached Libretro CDN index (~2ms) before web fallback."
+        },
+        {
+          "vi": "Điều phối 4 luồng song song từ trình duyệt: Trình duyệt chạy đồng thời 4 workers cào ảnh song song, hiển thị ảnh bìa thật ngay khi xong từng game, thanh tiến độ live mượt mà và nút dừng phản hồi tức thì.",
+          "en": "Browser Concurrency Pool (4 Workers): Frontend coordinates 4 parallel workers for concurrent scraping, updating game cards and progress live with seamless stop handling."
+        }
+      ]
+    },
+    {
+      "version": "1.90",
+      "date": "2026-09-08",
+      "headline": {
+        "vi": "Quản lý Game qua Web: Cào ảnh hàng loạt trực tiếp trên danh sách (không popup modal), biểu tượng SVG vector cho từng hệ máy và hiển thị trọn vẹn 100% ảnh bìa",
+        "en": "Web Game Manager: Inline batch scraping with real-time card updates, SVG vector system icons, and full uncropped boxart view"
+      },
+      "bullets": [
+        {
+          "vi": "Cào ảnh hàng loạt trực tiếp: Tự động cào ảnh tuần tự và cập nhật trực tiếp vào thẻ game trên màn hình kèm thanh tiến độ inline thanh mảnh, không còn modal che khuất.",
+          "en": "Inline Batch Scrape & Live Visual Updates: Direct batch scraping with smooth auto-scrolling, live card borders, and inline progress indicator without blocking modal overlays."
+        },
+        {
+          "vi": "Hiển thị trọn vẹn ảnh bìa & Icon SVG: Khung ảnh giữ đúng tỉ lệ gốc 100% không méo/crop, hỗ trợ phóng to ảnh nét căng khi nhấp chuột, thay thế toàn bộ emoji bằng vector SVG tay cầm cho từng hệ máy.",
+          "en": "Full-Size Boxart & SVG Vector Artwork: Displays full uncropped covers with aspect-ratio preservation, click-to-preview full-res modal, and beautiful SVG vector gamepad icons for every system placeholder."
+        }
+      ]
+    },
+    {
+      "version": "1.89",
+      "date": "2026-09-08",
+      "headline": {
+        "vi": "Quản lý Game qua Web: Tích hợp máy chủ web cổng 8090 trong menu Dịch vụ, cho phép đổi tên game, cào ảnh bìa (Libretro CDN), chuyển hệ máy và tải ROM trực tiếp qua trình duyệt",
+        "en": "Web Game Manager: Integrated port 8090 web server in Services menu, enabling game renaming, boxart scraping (Libretro CDN), system moving, and ROM uploading via browser"
+      },
+      "bullets": [
+        {
+          "vi": "Quản lý Game qua Trình duyệt: Truy cập địa chỉ http://<IP>:8090 từ điện thoại hoặc máy tính trong cùng mạng Wi-Fi để xem và quản lý toàn bộ kho game mà không cần rút thẻ nhớ.",
+          "en": "Convenient Web Game Management: Access http://<IP>:8090 from any phone or PC on the same Wi-Fi to manage all games with zero cable or SD card removal required."
+        },
+        {
+          "vi": "Cào ảnh bìa & Đổi tên thông minh: Tự động tìm và tải ảnh bìa gốc từ kho Libretro Thumbnails CDN, đổi tên game đồng bộ cả file ảnh, chuyển game giữa các hệ máy và kéo thả tải ROM mới lên thẻ nhớ.",
+          "en": "Auto Boxart Scraping & Renaming: Seamlessly scrape official boxarts from Libretro Thumbnails CDN, preview images, rename ROMs with synchronized boxart updating, and move ROMs between systems instantly."
+        }
+      ]
+    },
+    {
+      "version": "1.88",
+      "date": "2026-09-08",
+      "headline": {
+        "vi": "Giả lập Sega CD: Tích hợp cấu hình và trình khởi chạy Sega CD / Mega CD (PicoDrive, GenesisPlusGX, GX Wide), tự động đồng bộ theme và thư mục ROMs/Imgs",
+        "en": "Sega CD Emulator: Bundled Sega CD / Mega CD configs and launchers (PicoDrive, GenesisPlusGX, GX Wide), auto-sync themes and ROMs/Imgs directories"
+      },
+      "bullets": [
+        {
+          "vi": "Tích hợp trọn bộ giả lập Sega CD: Đóng gói sẵn cấu hình, script ép xung tối ưu (cpufreq/cpuswitch) và hỗ trợ đa core (PicoDrive mặc định, GenesisPlusGX và GenesisPlusGX Wide) với cơ chế tự động cấp quyền 755.",
+          "en": "Full Sega CD Emulator Setup: Bundled official emulator launchers, cpufreq tuning, and multi-core options (PicoDrive default, GenesisPlusGX, and GenesisPlusGX Wide) with clean fallback and permissions handling."
+        },
+        {
+          "vi": "Tự động đồng bộ Theme & Thư mục: Tự động cài đặt biểu tượng (ic-segacd.png), hình nền (bg-segacd.png) và poster vào Emus/_theme trên thẻ nhớ, tự động tạo sẵn thư mục chứa game Roms/SEGACD và ảnh bìa Imgs/SEGACD.",
+          "en": "Auto-sync Theme & Folders: Automatically deploys icons, background, and poster artwork to Emus/_theme and scaffolds Roms/SEGACD and Imgs/SEGACD on SDCARD on startup."
+        }
+      ]
+    },
+    {
+      "version": "1.87",
+      "date": "2026-09-07",
+      "headline": {
+        "vi": "Giao diện & Hiệu năng: Loại bỏ hoàn toàn menu TikTok, giải phóng bộ nhớ RAM và tối ưu hóa độ ổn định hệ thống",
+        "en": "UI & Performance: Remove TikTok menu and integration to streamline user interface and optimize system stability"
+      },
+      "bullets": [
+        {
+          "vi": "Gỡ bỏ hoàn toàn TikTok: Loại bỏ mục TikTok khỏi menu chính, xóa sạch các luồng tải ngầm, bộ nhớ đệm video và cache thumbnail, giải phóng bộ nhớ RAM và loại bỏ triệt để nguy cơ gián đoạn hoạt động của máy.",
+          "en": "Complete Removal of TikTok: Removed the TikTok menu from Home screen, deleted unused background feeds, video pre-fetch workers, and streaming caches, freeing substantial RAM and preventing unexpected crash issues."
+        }
+      ]
+    },
+    {
+      "version": "1.86",
+      "date": "2026-09-07",
+      "headline": {
+        "vi": "TikTok Video: Chuyển đổi toàn diện sang các endpoint dữ liệu thật (Dành cho bạn FYP Live, Xu hướng VN, Ẩm thực quê, Hài Hước VN, Thú cưng vui), đảm bảo 100% video đều có nguồn phát trực tiếp",
+        "en": "TikTok Video: Transition to verified live endpoints (For You FYP Live, Trending VN, Rural Food, Comedy VN, Cute Pets), guaranteeing 100% playable direct stream URLs"
+      },
+      "bullets": [
+        {
+          "vi": "Bảng tin Dành cho bạn (FYP Live): Nạp video trực tiếp thời gian thực từ bảng tin chính thức, tự động cập nhật clip mới mỗi lần tải thêm với đường dẫn CDN chuẩn phát ngay.",
+          "en": "Real Live FYP Feed: Dedicated For You Page powered by official live feed endpoint, continuously refreshing fresh trending videos with direct CDN streaming URLs."
+        },
+        {
+          "vi": "100% Luồng phát khả dụng: Loại bỏ hoàn toàn video giả lập (mock) và các link bị chặn 403; toàn bộ video ở mọi tab đều sở hữu link stream CDN thật và phát mượt mà qua RetroArch.",
+          "en": "100% Playable Direct Stream URLs: Eliminated mock video data and 403-blocked links; all videos across all tabs now stream instantly and reliably on RetroArch FFMPEG core."
+        }
+      ]
+    },
+    {
+      "version": "1.85",
+      "date": "2026-09-07",
+      "headline": {
+        "vi": "TikTok Video: Phân tách nguồn cấp độc lập cho từng tab (Xu hướng VN, Nhạc Hot VN, Gaming VN, Hài Hước VN, Ẩm Thực VN), loại bỏ trùng lặp video giữa các tab",
+        "en": "TikTok Video: Separate independent feeds for each category tab (Trending VN, Music VN, Gaming VN, Comedy VN, Food VN), completely eliminating clip duplication"
+      },
+      "bullets": [
+        {
+          "vi": "Nguồn cấp riêng cho từng tab: Mỗi chuyên mục nạp video độc lập qua Sound ID chuyên biệt và hạt giống Việt Nam thay vì dùng chung video Xu hướng, đảm bảo 100% nội dung riêng biệt.",
+          "en": "Separate category feeds: Each tab now sources from specialized Sound IDs and Vietnamese seeds instead of falling back to global trending, ensuring 100% unique video catalogs per tab."
+        },
+        {
+          "vi": "Tự động thanh lọc bộ nhớ đệm: Nhận diện và hủy các mục cache cũ bị nhiễm dữ liệu xu hướng chéo, giúp máy cập nhật ngay danh sách clip mới chuẩn xác.",
+          "en": "Automatic cache self-healing: Automatically detects and purges contaminated legacy cache entries to restore fresh feeds without manual intervention."
+        }
+      ]
+    },
+    {
+      "version": "1.84",
+      "date": "2026-09-07",
+      "headline": {
+        "vi": "TikTok Video: Duyệt video xu hướng/FYP, tìm kiếm, lưu yêu thích, tải phân trang vô tận và phát video trực tiếp qua RetroArch FFMPEG core",
+        "en": "TikTok Video: Browse trending/FYP, search, favorites, infinite pagination, and smooth streaming playback via RetroArch FFMPEG core"
+      },
+      "bullets": [
+        {
+          "vi": "Menu TikTok mới: Bổ sung mục duyệt video TikTok ngay tại màn hình chính với cổng kết nối TikTok REST API Gateway, hỗ trợ xem video xu hướng (FYP), tìm kiếm theo từ khóa và lưu danh sách yêu thích cá nhân.",
+          "en": "New TikTok Menu: Added dedicated TikTok video browser on Home screen powered by TikTok REST API Gateway with For You Page (FYP) trending videos, keyword search, and custom favorites."
+        },
+        {
+          "vi": "Hiệu năng cao & Khởi chạy tức thì: Trích xuất trước luồng phát khi dừng con trỏ, nạp trước nội dung các tab lân cận, tải ảnh bìa đa luồng phân cấp và giới hạn nạp texture GPU đảm bảo cuộn lướt mượt mà 60fps không giật lag.",
+          "en": "High Performance & Zero-latency Launch: Fast-path stream resolution, speculative background stream pre-fetch on hover, multi-threaded thumbnail prefetching, and rate-limited GPU texture uploads for 60fps silky smooth scrolling."
+        },
+        {
+          "vi": "Phát video mượt mà qua RetroArch: Tự động trích xuất luồng MP4 chất lượng cao không logo và bàn giao sang core FFMPEG của RetroArch, tự động lưu và khôi phục trạng thái xem khi quay lại ứng dụng.",
+          "en": "Seamless Video Streaming via RetroArch: Directly hands off high-definition watermark-free MP4 stream URLs to RetroArch FFMPEG core with custom resume state and player controls."
+        }
+      ]
+    },
+    {
+      "version": "1.83",
+      "date": "2026-09-06",
+      "headline": {
+        "vi": "Game Java: Khôi phục chuẩn 100% key map gốc Nokia (-5 cho phím OK/X), chỉ mở bàn phím ảo khi giữ START + bấm X, bảo toàn tuyệt đối hệ thống phím gốc",
+        "en": "Java Games: Restore authentic Nokia key mapping (-5 for OK/X), strictly toggle Virtual Keyboard only on START + X combo, completely preserving original controls"
+      },
+      "bullets": [
+        {
+          "vi": "Khôi phục chuẩn 100% keymap gốc: nút X và nút OK luôn trả về đúng mã -5 trong chế độ Nokia (Canvas FIRE / đánh quái), -26 ở Siemens, -20 ở Motorola và 53 ở chế độ bàn phím số tiêu chuẩn, giúp nhân vật tấn công, ra chiêu và chọn menu chuẩn xác 100% trong Ninja School và toàn bộ game Java.",
+          "en": "Restore 100% authentic Nokia keymap: button X and OK button cleanly return -5 in Nokia mode (Canvas FIRE / attack), -26 in Siemens, -20 in Motorola, and 53 in standard keypad mode, restoring flawless combat, attack, and menu navigation in Ninja School and all J2ME games."
+        },
+        {
+          "vi": "Chuẩn hoá chặt chẽ tổ hợp START + X: bàn phím ảo chỉ kích hoạt khi giữ phím START rồi mới nhấn X (có cơ chế timeout 4s tự huỷ trạng thái kẹt phím). Bấm nút X độc lập tuyệt đối không mở bàn phím và phản hồi đòn đánh ngay lập tức.",
+          "en": "Strict START + X combo activation: the Virtual Keyboard now strictly requires holding START while pressing X (with 4-second timeout protection and instant reset). Pressing button X alone will never trigger the keyboard and passes straight to the game with zero latency."
+        }
+      ]
+    },
+    {
+      "version": "1.82",
+      "date": "2026-09-06",
+      "headline": {
+        "vi": "Game Java: Sửa triệt để lỗi bấm X bị bật bàn phím ảo, chuẩn hoá tổ hợp START + X (phải giữ START mới kích hoạt), nút X đánh quái phím 5 mượt mà 100%, bổ sung Bluetooth stub chống văng game khi khởi động",
+        "en": "Java Games: Fix standalone X button triggering virtual keyboard, strictly require START + X combo to activate, map X button cleanly to key 5 for attacks, and add JSR-82 Bluetooth stubs preventing startup crash"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa triệt để lỗi bấm nút X bị bật bàn phím ảo: sửa lỗi nhận diện phím khiến việc nhấn nút X độc lập vô tình kích hoạt bàn phím ảo. Giờ đây bàn phím ảo yêu cầu chuẩn xác tổ hợp START + X (phải giữ phím START rồi mới bấm X) hoặc tổ hợp phụ SELECT + START.",
+          "en": "Fix standalone X button hotkey issue: corrected the key mapping where pressing button X alone previously triggered the virtual keyboard. The virtual keyboard now strictly requires the START + X combination (hold START, then tap X) or SELECT + START."
+        },
+        {
+          "vi": "Nút X đánh quái và tương tác phím 5 mượt mà: khi bấm nút X một mình (không giữ START), phím được chuyển tiếp trơn tru thành phím 5 / OK của Nokia ở mọi chế độ máy, giúp nhân vật tấn công và dùng kỹ năng hoàn hảo trong các game như Ninja School.",
+          "en": "Dedicated attack / action key 5 for button X: pressing button X independently without holding START cleanly maps to Nokia key 5 / OK across all phone modes, allowing smooth combat and interactions in games like Ninja School."
+        },
+        {
+          "vi": "Tích hợp stub Bluetooth JSR-82 chống văng game: bổ sung đầy đủ các lớp javax.bluetooth chuẩn vào freej2me-sdl.jar, khắc phục triệt để lỗi sập game NoClassDefFoundError khi khởi động các game có tính năng kiểm tra Bluetooth.",
+          "en": "Add JSR-82 Bluetooth stubs preventing startup crashes: implemented standard javax.bluetooth API stubs (LocalDevice, DiscoveryAgent, UUID) inside freej2me-sdl.jar, completely resolving NoClassDefFoundError crashes on games with multiplayer checks."
+        }
+      ]
+    },
+    {
+      "version": "1.81",
+      "date": "2026-09-06",
+      "headline": {
+        "vi": "Game Java: Sửa triệt để lỗi liệt nút sau khi mở bàn phím ảo, loại bỏ hoàn toàn can thiệp reflection gây lỗi game; chuẩn hoá phím tắt mở bàn phím sang START + Y (phần cứng) hoặc SELECT + START (trung tâm) không ảnh hưởng phím kỹ năng Nokia",
+        "en": "Java Games: Fix unresponsive controls after opening virtual keyboard, eliminate disruptive class reflection, standardize hotkeys to START + Y (hardware) and SELECT + START with zero Nokia skill conflicts"
+      },
+      "bullets": [
+        {
+          "vi": "Sửa triệt để lỗi liệt phím điều khiển: khắc phục triệt để nguyên nhân khiến nhân vật bị đơ/liệt nút sau khi mở bàn phím ảo bằng việc gỡ bỏ hoàn toàn cơ chế quét reflection làm biến dạng các cờ trạng thái phím trong game (như Ninja School). Mọi nút bấm và chiêu thức trong game hoạt động trơn tru 100% cả trước và sau khi mở bàn phím.",
+          "en": "Fix unresponsive controls bug: resolved the root cause where opening the virtual keyboard corrupted game key states by eliminating aggressive class reflection that forcibly modified static field flags in obfuscated game classes (e.g. Ninja School). All in-game controls and skills remain 100% responsive after closing the keyboard."
+        },
+        {
+          "vi": "Tổ hợp phím tắt an toàn tuyệt đối: phím tắt chính là START + Y (được phần cứng sdl_interface chặn và gửi mã F1 riêng biệt, không lọt phím vào game), kèm tổ hợp 2 nút trung tâm SELECT + START. Toàn bộ các phím kỹ năng 1, 3, 7, 9 (L1, R1, L2, R2) và phím đánh 5 (X) hoàn toàn không bị ảnh hưởng, không bao giờ lo bật nhầm bàn phím giữa trận đấu.",
+          "en": "Safe, conflict-free hotkey combos: primary hotkey is hardware-intercepted START + Y (emits SDLK_F1, zero key leakage into game), with center-button SELECT + START as clean secondary combo. Nokia skill keys 1, 3, 7, 9 (L1, R1, L2, R2) and attack key 5 (X) are completely unburdened and never trigger the keyboard accidentally."
+        },
+        {
+          "vi": "Quản lý trạng thái phím sạch sẽ: khi bàn phím đang mở, các nút điều hướng và phím gõ được cô lập hoàn toàn cho bàn phím ảo mà không làm nhân vật di chuyển; khi đóng bàn phím, mọi cờ phím được trả về trạng thái tự do ngay lập tức.",
+          "en": "Clean state handling and keyboard navigation: when virtual keyboard is active, all inputs are captured exclusively for typing without affecting the game character; upon closing, all key states are cleanly reset."
+        }
+      ]
+    },
+    {
+      "version": "1.80",
+      "date": "2026-09-06",
+      "headline": {
+        "vi": "Tự động kiểm tra & cập nhật Giả lập Java: Khi mở app hoặc khi cập nhật app, hệ thống luôn tự động kiểm tra và đồng bộ phiên bản FreeJ2ME mới nhất, không bao giờ bị ghi đè bản cũ",
+        "en": "Auto-check & update Java Emulator: On app startup and post-update, automatically verify and synchronize the latest FreeJ2ME runtime binaries and configs, preventing legacy overwrites"
+      },
+      "bullets": [
+        {
+          "vi": "Tự động kiểm tra Java khi mở app: mỗi khi khởi động RetroHub, ứng dụng tự động đối soát xem bộ giả lập Java trên thẻ đã đúng phiên bản mới nhất chưa. Mọi tệp nhị phân hoặc cấu hình mới (freej2me-sdl.jar, sdl_interface, launch.sh, config.json) đều được tự động đồng bộ ngay mà không cần thao tác thủ công.",
+          "en": "Automatic startup Java verification: on every RetroHub launch, the app automatically checks whether the installed Java emulator matches the latest target release. Any missing or updated binaries (freej2me-sdl.jar, sdl_interface, launch.sh, config.json) are synchronized immediately without manual intervention."
+        },
+        {
+          "vi": "Đồng bộ chuẩn xác sau khi cập nhật OTA: sau mỗi lần cập nhật ứng dụng qua Wi-Fi, RetroHub tự động cài đặt và phủ bản FreeJ2ME mới nhất, đảm bảo tính năng mới và phím tắt hoạt động ngay lập tức.",
+          "en": "Robust post-update synchronization: after OTA self-updates, the app automatically installs and overlays the latest FreeJ2ME emulator files, guaranteeing that new features and key mappings are active right away."
+        },
+        {
+          "vi": "Chấm dứt hiện tượng ghi đè bản cũ: sửa triệt để logic kiểm tra runtime cũ vốn có thể làm bung lại gói payload 1.63 đè lên bản mới, bảo vệ toàn vẹn dữ liệu cài đặt và tiến trình chơi game của người dùng.",
+          "en": "Eliminate legacy payload overwrites: fixed stale runtime detection logic that previously risked restoring older 1.63 payload files over newer OTA updates, protecting all user configurations and game progress."
+        }
+      ]
+    },
+    {
+      "version": "1.79",
+      "date": "2026-09-06",
+      "headline": {
+        "vi": "Game Java: Đổi phím tắt Bàn phím ảo sang START + X (không trùng phím kỹ năng 1, 3, 7, 9 của Nokia), khôi phục phản hồi phím vai L1/R1/L2/R2 nguyên bản với độ trễ 0ms",
+        "en": "Java Games: Switch Virtual Keyboard hotkey to START + X (F1, zero conflict with Nokia skills 1, 3, 7, 9), restore instant 0ms latency for shoulder buttons L1/R1/L2/R2"
+      },
+      "bullets": [
+        {
+          "vi": "Tổ hợp phím nóng START + X (mã F1): giữ START và bấm X để đóng/mở bàn phím ảo. Trình điều khiển phần cứng sdl_interface tự động chuyển đổi tổ hợp này thành mã phím riêng biệt SDLK_F1 (0x4000003A), hoàn toàn không trùng với 12 phím Nokia trong game, không lo nhân vật bị tự động đánh hay tung chiêu.",
+          "en": "START + X hotkey combo (F1): hold START and press X to open or close the virtual keyboard. The hardware sdl_interface translates this combination into SDLK_F1 (0x4000003A), which is completely ignored by Nokia game MIDlets, preventing accidental attacks or skill casting."
+        },
+        {
+          "vi": "Khôi phục 100% độ trễ 0ms cho các phím vai: gỡ bỏ hoàn toàn bộ đếm thời gian chờ tổ hợp khỏi L2 (phím 7) và R2 (phím 9/3). Tất cả các phím vai (L1, R1, L2, R2) và phím bấm trên máy phản hồi chiêu thức tức thì chuẩn xác.",
+          "en": "100% Native 0ms latency for shoulder triggers: removed all delay timers and combo buffering from L2 (7) and R2 (9/3). All shoulder buttons (L1, R1, L2, R2) and face buttons respond instantaneously to in-game skills."
+        },
+        {
+          "vi": "Đa dạng cách đóng bàn phím nhanh: có thể đóng bàn phím bất cứ lúc nào bằng tổ hợp START + X, phím SELECT, hoặc bấm phím START (vừa gửi nội dung đã gõ vừa đóng).",
+          "en": "Multiple quick close methods: close the keyboard anytime by pressing START + X, single-tap SELECT, or pressing START (submits typed text and closes)."
+        }
+      ]
+    },
+    {
+      "version": "1.78",
+      "date": "2026-09-06",
+      "headline": {
+        "vi": "Game Java: Đổi phím tắt mở Bàn phím ảo sang tổ hợp R2 + L2 tiện lợi, không lo ấn nhầm khi chơi game; nút SELECT trả về phím * nguyên bản không delay",
+        "en": "Java Games: Switch Virtual Keyboard hotkey to R2 + L2 combo for effortless chatting without accidental triggers; SELECT key cleanly maps to * without delay"
+      },
+      "bullets": [
+        {
+          "vi": "Tổ hợp phím nóng R2 + L2: nhấn đồng thời 2 nút vai (R2 + L2) hoặc giữ nút này bấm nút kia để đóng/mở bàn phím ảo tức thì, loại bỏ hoàn toàn tình trạng ấn nhầm khi combat trong game.",
+          "en": "R2 + L2 hotkey combination: press both shoulder triggers (R2 + L2) together or hold one and press the other to instantly open/close the virtual keyboard, completely eliminating accidental triggers during gameplay."
+        },
+        {
+          "vi": "Nút SELECT phản hồi tức thì: phím SELECT gửi phím * (mã 42) vào game ngay lập tức với độ trễ 0ms, không còn cần đệm nhấp đúp.",
+          "en": "Zero-delay SELECT key: pressing SELECT now sends * key (42) directly to game with zero delay and no double-tap buffer."
+        },
+        {
+          "vi": "An toàn trạng thái phím trong game: khi kích hoạt L2 + R2, phím kỹ năng được triệt tiêu hoặc thả phím an toàn, không lo nhân vật bị kẹt chiêu thức.",
+          "en": "Clean toggle and game input safety: during L2 + R2 activation, skills are safely suppressed or released so character does not stay in skill casting states."
+        }
+      ]
+    },
+    {
+      "version": "1.77",
+      "date": "2026-09-06",
+      "headline": {
+        "vi": "Game Java: Sửa lỗi phím SELECT gán nhầm số 5 (chuyển sang phím *), nhấp đúp (Double-tap) SELECT để mở Bàn phím ảo gõ chat, bổ sung menu Cài đặt Java & Quản lý danh sách từ khóa gõ nhanh (Quick Chat)",
+        "en": "Java Games: Fix SELECT key mapped to 5 (remap to *), double-tap SELECT to open Virtual Keyboard for chatting, add Java Settings & Quick Chat phrase manager in RetroHub"
+      },
+      "bullets": [
+        {
+          "vi": "Vá mã phím SELECT trong tệp nhị phân: sửa trực tiếp sdl_interface để gỡ phím SELECT khỏi số 5 (vốn gây tự động đánh/tấn công trong game online) và chuyển sang phím * (mã 42) chuẩn xác.",
+          "en": "Fix hardcoded SELECT key in binary: patched sdl_interface to unbind SELECT from key 5 (which caused accidental attacks in online games) and map cleanly to * (ASCII 42)."
+        },
+        {
+          "vi": "Bàn phím ảo kích hoạt bằng nhấp đúp SELECT: nhấn đúp SELECT trong 350ms để mở bàn phím ảo QWERTY đầy đủ có chống ấn nhầm và thanh cụm từ chat nhanh. Nhấn đơn SELECT vẫn gửi phím * vào game bình thường.",
+          "en": "Double-tap SELECT Virtual Keyboard: double-tap SELECT within 350ms to open full on-screen QWERTY virtual keyboard with debounce protection and quick phrases bar. Single-tap SELECT still forwards * to game."
+        },
+        {
+          "vi": "Menu Cài đặt Java & Quản lý từ khóa gõ nhanh: đổi tên mục cài đặt thành 'Cài đặt Java' (mặc định chế độ hình ảnh HQ) và bổ sung màn hình quản lý, thêm/xóa/đặt lại danh sách từ khóa chat nhanh lưu tại quickchat.txt.",
+          "en": "Java Settings & Quick Chat manager in RetroHub: renamed display settings to 'Cài đặt Java' (default HQ render mode) and added a dedicated screen to view, add, delete, and reset quick chat phrases stored in quickchat.txt."
+        }
+      ]
+    },
+    {
+      "version": "1.76",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Game Java: Thêm danh mục Tea Mobile [Chuẩn] - cập nhật 50 game TeaMobi Online (Ninja School Online, Ngọc Rồng, KPAH, Avatar 258, Army 2...) và Offline",
+        "en": "Java Games: Add Tea Mobile [Official] shelf - 50 TeaMobi Online & Offline titles (Ninja School Online, Dragon Boy, KPAH, Avatar, Army 2...)"
+      },
+      "bullets": [
+        {
+          "vi": "Danh mục Tea Mobile [Chuẩn] chuyên biệt: được ghim trang trọng ngay đầu màn hình chọn nhóm game Java giúp mở nhanh 50 tựa game TeaMobi huyền thoại.",
+          "en": "Dedicated Tea Mobile [Official] shelf: pinned prominently near the top of the Java category selector for instant access to 50 legendary TeaMobi titles."
+        },
+        {
+          "vi": "8 game online chính thức từ Gomobi/TeaMobi: tải trực tiếp từ CDN máy chủ gốc kèm icon sắc nét cho Ninja School Online v2.5.1, Chú Bé Rồng (Ngọc Rồng Online) v2.5.0, Khí Phách Anh Hùng v2.7.6, Avatar v2.5.8, Mobi Army 2 v3.7.1, Thời Đại Hiệp Sĩ v4.0.2, Hải Tặc Tí Hon v1.2.9 và Ngũ Long Tranh Bá v2.9.9.",
+          "en": "8 official online games from Gomobi/TeaMobi: direct high-speed CDN downloads with official icons for Ninja School Online v2.5.1, Dragon Boy (Ngoc Rong Online) v2.5.0, Khi Phach Anh Hung v2.7.6, Avatar v2.5.8, Mobi Army 2 v3.7.1, Knight Age Online v4.0.2, Hai Tac Ti Hon v1.2.9, and Ngu Long Tranh Ba v2.9.9."
+        },
+        {
+          "vi": "42 tựa game offline kinh điển: trọn bộ các siêu phẩm tuổi thơ gồm Ninja School 1, 2, 3, Bắn Vịt, Câu Cá, Hành Tinh Kim Cương, Tay Lái Lụa, Pet Kingdom, Mai An Tiêm, Vườn Táo, cùng hàng chục tựa game gắn liền ký ức.",
+          "en": "42 classic offline games: complete collection of offline hits including Ninja School 1, 2, 3, Ban Vit, Cau Ca, Hanh Tinh Kim Cuong, Tay Lai Lua, Pet Kingdom, Mai An Tiem, Vuon Tao, and more."
+        }
+      ]
+    },
+    {
+      "version": "1.75",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Java J2ME: Khôi phục bản FreeJ2ME gốc sạch sẽ, gỡ bỏ hoàn toàn watermark, khôi phục đầy đủ phím tắt (START+SELECT, START+R3, START+B) và sửa lỗi mở game",
+        "en": "Java J2ME: Restore clean FreeJ2ME, remove watermark, restore all shortcuts (START+SELECT, START+R3, START+B) and fix game launching"
+      },
+      "bullets": [
+        {
+          "vi": "Khôi phục bản FreeJ2ME gốc sạch sẽ: gỡ bỏ hoàn toàn watermark bản dùng thử và các lớp khoá launcher bằng việc quay trở lại bản build FreeJ2ME Brick Pro chính thức, ổn định.",
+          "en": "Restored clean official FreeJ2ME runtime: completely removed the third-party trial watermark and DRM locks by reverting to the stable, clean FreeJ2ME Brick Pro binary build."
+        },
+        {
+          "vi": "Khôi phục đầy đủ tổ hợp phím tắt: phục hồi START+SELECT (chuyển chế độ máy P/N/E/S/M/H/K/X), START+R3 (đổi bộ lọc hiển thị PIXEL/SMOOTH/HQ), START+B (xoay màn hình), START+Y (chuột ảo) và MENU (hỏi xác nhận thoát).",
+          "en": "Full shortcut combinations restored: restored START+SELECT (cycle phone modes P/N/E/S/M/H/K/X), START+R3 (cycle PIXEL/SMOOTH/HQ display filters), START+B (rotate screen), START+Y (mouse mode), and MENU (exit dialog)."
+        },
+        {
+          "vi": "Khởi chạy game mượt mà & dự phòng độ phân giải: launch.sh cải tiến giữ nguyên cơ chế tự nhận diện khổ màn, fallback 240x320 cho game nằm ngoài thư mục gốc Roms/JAVA/, xử lý an toàn file có dấu cách và ghi log chẩn đoán ra /mnt/SDCARD/RetroHub-java.log.",
+          "en": "Reliable game launching & resolution fallback: improved launch.sh retains auto-detection, fallback to 240x320 for games in root Roms/JAVA/, URI-safe symlinks for filenames with spaces, and logging to /mnt/SDCARD/RetroHub-java.log."
+        }
+      ]
+    },
+    {
+      "version": "1.74",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Java J2ME: Gỡ bỏ khoá xác thực launcher, sửa dứt điểm lỗi crash, tự tạo main.lua và jm_version",
+        "en": "Java J2ME: Remove launcher verification lock, fix launch crash, auto-generate main.lua and jm_version"
+      },
+      "bullets": [
+        {
+          "vi": "Gỡ bỏ khoá kiểm tra launcher: vá trực tiếp bytecode hàm checkMainLua và start() trong freej2me-sdl.jar, loại bỏ hoàn toàn lỗi văng tắt đột ngột (Error Validate 2) do thiếu main.lua.",
+          "en": "Bypass launcher DRM lock: patched checkMainLua and start() validation checks inside freej2me-sdl.jar that previously triggered System.exit(0) (Error Validate 2) when main.lua was missing."
+        },
+        {
+          "vi": "Tự động chuẩn bị môi trường tương thích: launch.sh tự động sinh launcher/main.lua, /tmp/jm_version và /tmp/jm_pipe cùng biến môi trường LD_LIBRARY_PATH đầy đủ cho các thư viện đồ hoạ.",
+          "en": "Auto-generate compatibility environment: launch.sh now pre-creates main.lua, /tmp/jm_version, and /tmp/jm_pipe with complete LD_LIBRARY_PATH support for TrimUI SDL2 libraries."
+        },
+        {
+          "vi": "Khởi chạy mượt mà mọi tựa game Java: đảm bảo mở tức thì Bobby Carrot 4 và toàn bộ kho game Java trên cả hệ gốc TrimUI và NextUI.",
+          "en": "Flawless J2ME execution: guarantees instant launching for Bobby Carrot 4 and all Java titles across TrimUI Stock OS and NextUI."
+        }
+      ]
+    },
+    {
+      "version": "1.73",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Java J2ME: Khắc phục lỗi không mở được game, tự động nhận diện độ phân giải, fallback 240x320 và sửa lỗi tên file có khoảng trắng",
+        "en": "Java J2ME: Fix launch crash, auto resolution detection, fallback to 240x320 and URI safety for spaces"
+      },
+      "bullets": [
+        {
+          "vi": "Tự động nhận diện độ phân giải & đường lui thông minh: trích xuất độ phân giải từ đường dẫn thư mục hoặc tên file (240x320, 320x240, 176x220...) và tự động dự phòng 240x320 thay vì thoát ngang khi game nằm trực tiếp ở thư mục gốc Roms/JAVA.",
+          "en": "Intelligent resolution detection & fallback: automatically extracts target screen resolutions from folder path or filename (240x320, 320x240, 176x220, etc.) and falls back to standard 240x320 instead of silently exiting when games are placed in the root Roms/JAVA folder."
+        },
+        {
+          "vi": "Xử lý tên file chứa dấu cách & ký tự đặc biệt: tự động tạo liên kết symlink sạch trong /tmp/ nếu tên file có khoảng trắng hoặc ngoặc, loại bỏ hoàn toàn lỗi văng crash URI của máy ảo Java.",
+          "en": "URI-safe execution for spaces and brackets: creates a clean /tmp/ symlink if filename contains spaces or special characters, completely eliminating Java IllegalArgumentException crashes on FreeJ2ME."
+        },
+        {
+          "vi": "Ghi log khởi chạy toàn diện: ghi lại nhật ký chạy của giả lập ra /mnt/SDCARD/RetroHub-java.log giúp dễ dàng chẩn đoán và xử lý sự cố.",
+          "en": "Comprehensive launch logging: redirects emulator output to /mnt/SDCARD/RetroHub-java.log for transparent diagnostic monitoring."
+        }
+      ]
+    },
+    {
+      "version": "1.72",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "YouTube & UI: Khắc phục nháy modal chờ, tối ưu tải video dài siêu tốc, hiển thị đang đóng app và tăng khoảng cách 2 dòng tiêu đề",
+        "en": "YouTube & UI: Seamless modal transitions, instant long video caching & buffering, exit splash, and 2-line title spacing"
+      },
+      "bullets": [
+        {
+          "vi": "Chuyển cảnh modal mượt mà, chống nháy: loại bỏ hoàn toàn hiện tượng xóa trắng màn hình nền khi chuẩn bị mở RetroArch, giữ nguyên giao diện và chuyển trạng thái tức thì không chớp nháy.",
+          "en": "Flicker-free modal transitions: eliminated background screen wipes during YouTube video handoff, ensuring a continuous and seamless modal transition into RetroArch."
+        },
+        {
+          "vi": "Tối ưu tải video dài siêu tốc: lưu đệm luồng phát trực tiếp xuống bộ nhớ tạm, rút ngắn thời gian nạp trước khi rê chuột còn 1.2s và tăng gấp đôi bộ đệm truyền phát lên 128KB giúp xem video dài tức thì.",
+          "en": "High-speed long video loading: added persistent disk stream cache (/tmp/yt_stream_cache.json), reduced speculative hover prefetch delay to 1.2s, and doubled proxy buffer chunks to 128KB with TCP_NODELAY."
+        },
+        {
+          "vi": "Phản hồi rõ ràng khi thoát ứng dụng: hiển thị ngay lập tức thông báo 'Đang đóng ứng dụng... Vui lòng đợi trong giây lát' khi bấm xác nhận thoát, không còn cảm giác bị đơ khi đang dọn dẹp bộ nhớ.",
+          "en": "Clear exit feedback splash: immediately displays 'Closing application...' and 'Please wait a moment...' when confirming exit, preventing the app from appearing frozen during cleanup."
+        },
+        {
+          "vi": "Cải thiện bố cục tiêu đề 2 dòng: tăng khoảng cách giữa 2 dòng và mở rộng độ dài ký tự hiển thị giúp đọc trọn vẹn tên video và bài hát.",
+          "en": "Enhanced 2-line title layout: increased line spacing and expanded character limits across 2 lines so full titles are readable without premature truncation."
+        }
+      ]
+    },
+    {
+      "version": "1.71",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "YouTube: Cho phép xóa cả từ khóa mặc định, hiển thị tiêu đề video 2 dòng rõ ràng trọn vẹn",
+        "en": "YouTube: Allow deleting default keyword tabs, 2-line video title wrapping for improved readability"
+      },
+      "bullets": [
+        {
+          "vi": "Xóa mọi từ khóa: cho phép bấm phím SELECT [SL] để xóa bất kỳ tab từ khóa nào kể cả từ khóa mặc định (Music, KPOP, USUK, Tiktok), chỉ giữ lại tab Yêu thích được bảo vệ.",
+          "en": "Delete any keyword: users can now remove any search keyword tab including default presets (Music, KPOP, USUK, Tiktok) via SELECT [SL], leaving only the Favorites tab protected."
+        },
+        {
+          "vi": "Xuống 2 dòng tiêu đề: tận dụng chiều cao khả dụng của thẻ để hiển thị tiêu đề video tối đa 2 dòng mượt mà, giúp đọc trọn vẹn tên bài hát và clip mà không bị cắt ngắn sớm.",
+          "en": "Two-line title wrapping: utilized available vertical card space to display video titles across up to 2 lines with cached wrapping, making titles readable in full without early truncation."
+        }
+      ]
+    },
+    {
+      "version": "1.70",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "YouTube: Tinh chỉnh kích thước thumbnail và thẻ lớn hơn, vừa vặn tuyệt đối với chiều rộng màn hình",
+        "en": "YouTube: Refine card and thumbnail dimensions to perfectly fit screen width with balanced padding"
+      },
+      "bullets": [
+        {
+          "vi": "Thumbnail lớn hơn, hình ảnh sống động: tăng chiều rộng thẻ lên 390px (Smart Pro) và 316px (Brick) giúp ảnh bìa 16:9 to rõ nét, lề trái phải vừa vặn 24-37px không bị quá hẹp hay quá rộng.",
+          "en": "Larger immersive thumbnails: increased card width to 390px (Smart Pro) and 316px (Brick), providing larger 16:9 thumbnails while keeping clean 24-37px edge margins."
+        },
+        {
+          "vi": "Hiển thị tiêu đề dài hơn: mở rộng độ dài tiêu đề hiển thị tối đa lên đến 34 ký tự giúp đọc trọn vẹn tên bài hát và video rõ ràng.",
+          "en": "Extended title readability: expanded maximum visible title length up to 34 characters to display full video titles without premature truncation."
+        }
+      ]
+    },
+    {
+      "version": "1.69",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "YouTube: Mặc định Music, KPOP, USUK, Tiktok; tab Yêu thích; xóa từ khóa; thumbnail vừa vặn không tràn viền và tải thêm video",
+        "en": "YouTube: Default Music/KPOP/USUK/Tiktok presets, Favorites tab, keyword deletion, clean responsive thumbnails & load more"
+      },
+      "bullets": [
+        {
+          "vi": "Bộ từ khóa mặc định mới: chuyển từ khóa sang Music (mặc định), KPOP, USUK, Tiktok, giữ nguyên thứ hạng tự nhiên từ YouTube, bỏ hoàn toàn logic nối năm và lọc ngày.",
+          "en": "New default topic presets: changed default keywords to Music (default), KPOP, USUK, Tiktok, preserving natural YouTube ranking without artificial year or age sorting."
+        },
+        {
+          "vi": "Quản lý danh sách Yêu thích: bấm [Y] trên video bất kỳ để thêm/bỏ Yêu thích (có huy hiệu FAV). Nếu có dữ liệu, app sẽ tự động hiển thị tab Yêu thích đầu tiên khi mở menu YouTube.",
+          "en": "Favorites management: press [Y] on any video to add/remove from Favorites with heart badge indicator. When favorite videos exist, YouTube opens directly to the Favorites tab by default."
+        },
+        {
+          "vi": "Nút xóa từ khóa tìm kiếm: bấm phím SELECT [SL] khi đang ở tab từ khóa tùy chỉnh để xóa bỏ từ khóa khỏi lịch sử tìm kiếm nhanh chóng.",
+          "en": "Delete custom keywords: press SELECT [SL] while browsing custom search keywords to easily remove unwanted history queries from the pill navigation bar."
+        },
+        {
+          "vi": "Thumbnail gọn gàng, chống tràn màn hình: thu nhỏ kích thước thẻ và thumbnail 16:9 vừa vặn tuyệt đối cho cả màn hình TrimUI Brick (1024x768) và Smart Pro (1280x720), không còn bị tràn ra ngoài biên.",
+          "en": "Responsive compact thumbnails: reduced card and thumbnail dimensions to fit both TrimUI Brick (1024x768) and Smart Pro (1280x720) perfectly without horizontal overflow or screen clipping."
+        },
+        {
+          "vi": "Giao diện tối giản, thoáng mắt: lược bỏ hoàn toàn tên kênh và thời gian đăng video, tập trung vào thumbnail và tiêu đề rõ nét.",
+          "en": "Clean single-line title: removed channel name and upload date lines for a clutter-free, modern, and readable card interface."
+        },
+        {
+          "vi": "Thẻ tải thêm video ở cuối danh sách: tích hợp thẻ 'Tải thêm' ở cuối danh sách video thông qua continuation token của YouTube InnerTube, cho phép tải thêm video liên tục tiện lợi.",
+          "en": "Load more pagination card: added a dedicated 'Load more videos' card at the end of the list powered by InnerTube continuation tokens, allowing endless browsing of video feeds."
+        }
+      ]
+    },
+    {
+      "version": "1.68",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Tối ưu menu YouTube: mở tức thì qua feed cache, tải song song thumbnail và duy trì 60 FPS mượt mà",
+        "en": "Optimize YouTube menu: instant load via feed cache, parallel thumbnail prefetch, and rock-solid 60 FPS"
+      },
+      "bullets": [
+        {
+          "vi": "Bộ nhớ đệm dữ liệu lâu dài: danh sách video thịnh hành và từ khóa được lưu trực tiếp trên thẻ nhớ, giúp mở menu hoặc chuyển danh mục xuất hiện ngay lập tức không cần chờ mạng.",
+          "en": "Persistent feed cache: trending videos and keywords are cached on SDCARD so opening the menu or switching tabs loads instantly with 0 latency."
+        },
+        {
+          "vi": "Tải trước thumbnail song song theo mức ưu tiên: 6 video đang hiển thị trên màn hình được tải đồng thời với 3 luồng mạng, rút ngắn thời gian nạp ảnh bìa từ 7 giây xuống chỉ còn ~0.5 giây.",
+          "en": "Parallel prioritized thumbnails: front-page visible video thumbnails download concurrently with 3 workers, cutting thumbnail loading time from 7s down to ~0.5s."
+        },
+        {
+          "vi": "Loại bỏ request mạng dư thừa: không gọi thêm yêu cầu phân trang thứ hai khi trang đầu tiên đã có đủ video cho lưới 3x2, tăng gấp đôi tốc độ tải mạng từ 4-5s xuống ~1.5s.",
+          "en": "Eliminated continuation request overhead: avoid redundant second network pagination request when the first page already yields sufficient candidate videos, doubling search speed."
+        },
+        {
+          "vi": "Duy trì 60 FPS mượt mà tuyệt đối: giới hạn giải mã tối đa 1 texture mỗi khung hình và loại bỏ hoàn toàn lệnh kiểm tra ổ đĩa trong vòng lặp vẽ, giúp thao tác bấm cuộn lướt video mượt như bơ.",
+          "en": "Rock-solid 60 FPS rendering: throttled texture decoding to 1 image per frame and replaced filesystem stat calls with in-memory set lookups, eliminating all stutter when scrolling."
+        },
+        {
+          "vi": "Chống nghẽn CPU Allwinner: dời tính năng tự động dò luồng phát chỉ khi người dùng dừng lại xem video quá 2.5 giây, giải phóng CPU để giao diện luôn phản hồi phím bấm tức thì.",
+          "en": "CPU overload prevention: delayed speculative stream pre-fetching until the user pauses on a video for 2.5s, freeing CPU cores for responsive UI navigation."
+        }
+      ]
+    },
+    {
+      "version": "1.67",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Khắc phục triệt để lỗi theme LED mới: tối ưu nháy sáng liên tục, tự khởi động lại daemon nạp hiệu ứng mới",
+        "en": "Fix new LED themes: continuous vibrant strobe & pulse, auto-restart daemon to load new effects"
+      },
+      "bullets": [
+        {
+          "vi": "Thiết kế lại 5 hiệu ứng LED sôi động: loại bỏ hoàn toàn tình trạng đèn bị tối đen kéo dài và lỗi mất khung hình ở 30 FPS. Các hiệu ứng strobe, sấm sét, bass drop, drift và glitch giờ duy trì nền ánh sáng sống động liên tục cùng các luồng chớp/sóng xung kích bốc lửa.",
+          "en": "Redesigned high-energy effects: eliminated pitch-black dead times and 30ms aliasing dropouts in strobe, lightning, pulse_bass, hyper_chase, and chaos. All effects now maintain a rich ambient energy floor with blazing bursts."
+        },
+        {
+          "vi": "Sửa thứ tự kích hoạt driver phần cứng: đảo lại thứ tự ghi màu trước rồi mới kích hoạt chốt effect STATIC trong sysfs, giúp phần cứng LED nhận diện và chuyển màu chính xác từng khung hình.",
+          "en": "Hardware write order fix: corrected sysfs driver latch sequence in leddaemon to write color before triggering static effect, ensuring every single frame renders accurately on hardware."
+        },
+        {
+          "vi": "Tự động khởi động lại tiến trình daemon: tự động tắt và khởi động lại tiến trình chạy ngầm LED khi cập nhật hoặc chọn theme, giúp bộ nhớ nạp ngay hiệu ứng mới nhất mà không bị giữ lại code cũ trong RAM.",
+          "en": "Auto-restart stale background daemon: automatically stop and restart the LED background process upon update and theme selection so newly published effects load immediately into RAM without requiring a reboot."
+        }
+      ]
+    },
+    {
+      "version": "1.66",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Sửa triệt để lỗi lặp cập nhật OTA giả lập Java J2ME (JM 1.0.5) và tối ưu kiểm tra runtime",
+        "en": "Fix infinite OTA update loop for Java runtime (JM 1.0.5) and optimize startup checks"
+      },
+      "bullets": [
+        {
+          "vi": "Ngăn chặn ghi đè khi khởi động: khắc phục lỗi runtime_is_stale() ngộ nhận và tự động bung gói payload cũ đè lên bản mới JM 1.0.5 mỗi khi mở app.",
+          "en": "Prevent startup payload overwrite: fixed runtime_is_stale() incorrectly wiping JM 1.0.5 with legacy bundled payload on application startup."
+        },
+        {
+          "vi": "Tách biệt tệp cấu hình động: loại bỏ graphics.cfg khỏi danh sách kiểm tra hash tĩnh trong manifest để việc đổi chế độ hiển thị trong game không bị hiểu nhầm là có bản cập nhật mới.",
+          "en": "Dynamic user config exclusion: removed mutable graphics.cfg from static hash verification in manifest so in-game display mode changes do not trigger false-positive updates."
+        }
+      ]
+    },
+    {
+      "version": "1.65",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Cập nhật giả lập Java J2ME (JM 1.0.5): bàn phím ảo gõ chữ, D-pad chéo, phím tắt 1/3/7/9, đổi chế độ hiển thị",
+        "en": "Update Java J2ME emulator (JM 1.0.5): on-screen text input, diagonal D-pad, hotkeys, display mode toggle"
+      },
+      "bullets": [
+        {
+          "vi": "Bản phân nhánh JM bởi nvcuong1312: tích hợp bản dựng JM 1.0.5 mới nhất (https://github.com/nvcuong1312/jm) tối ưu riêng cho máy cầm tay TrimUI. Xem hướng dẫn phím bấm, chế độ hiển thị và ghi nhận nguồn tại /vi/java/.",
+          "en": "Upstream JM fork by nvcuong1312: integrated the latest JM 1.0.5 build (https://github.com/nvcuong1312/jm) with dedicated optimizations for TrimUI handhelds. Check the full Java guide at /java/ for controls, display modes and source credits."
+        },
+        {
+          "vi": "Bàn phím ảo nhập text: game Java yêu cầu nhập tên nhân vật/text giờ đã có bàn phím ảo hiển thị trực quan qua font.ttf (* xóa ký tự, # thêm ký tự, 2/4 chọn chữ a-z, 1/3 chọn số 0-9, 7/9 ký tự đặc biệt).",
+          "en": "On-screen virtual keyboard: games requiring character or text input now support interactive typing via font.ttf (* to delete, # to add, 2/4 for letters, 1/3 for digits, 7/9 for special characters)."
+        },
+        {
+          "vi": "D-pad hướng chéo và phím tắt nhanh: D-pad hỗ trợ đầy đủ 8 hướng chéo, bấm tổ hợp Menu + D-pad Trái để chuyển nhanh các hướng chéo thành các phím số 1, 3, 7, 9.",
+          "en": "Diagonal D-pad & hotkey shortcuts: full 8-direction D-pad support, and pressing Menu + D-pad Left toggles diagonal directions to send number keys 1, 3, 7, 9."
+        },
+        {
+          "vi": "Đổi chế độ hiển thị tức thì trong game: bấm phím Select khi đang chơi để chuyển đổi giữa hai chế độ Linear (mịn) và Nearest (pixel sắc nét), tự động đồng bộ cùng cài đặt RetroHub.",
+          "en": "In-game display mode toggle: press Select during gameplay to instantly switch between linear (smooth) and nearest (pixel) scaling, automatically synchronized with RetroHub display settings."
+        }
+      ]
+    },
+    {
+      "version": "1.64",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Bổ sung 5 hiệu ứng LED sôi động (chớp giật strobe, bão sấm sét, bass drop...) và 7 theme LED mới",
+        "en": "Add 5 high-energy LED effects (rave strobe, thunderstorm, bass drop) and 7 vibrant themes"
+      },
+      "bullets": [
+        {
+          "vi": "5 hiệu ứng LED toán học tốc độ cao: strobe (vũ trường EDM chớp kép trái/phải liên tục), lightning (bão sấm sét chùm tia chớp gắt), pulse_bass (đập bass EDM 130 BPM lan toả từ tâm), hyper_chase (đua xe vệt lửa siêu tốc) và chaos (glitch loạn nhịp arcade).",
+          "en": "5 new mathematical LED effects: strobe (fast double-flash rave party), lightning (intermittent violent thunderstorm flash), pulse_bass (130 BPM subwoofer shockwave), hyper_chase (speed racer comet trail), and chaos (cyber glitch)."
+        },
+        {
+          "vi": "7 bộ theme LED mới cực cháy: Vũ trường EDM, Bass Drop, Bão sấm sét, Cyber Glitch, Đua xe Drift, Báo động đỏ và Siêu tân tinh; chọn và xem thử trực quan trong Cài đặt > Đèn LED.",
+          "en": "7 dynamic LED themes: EDM Rave, Bass Drop, Thunderstorm, Cyber Glitch, Night Drift, Red Alert, and Supernova, available immediately in Settings > LED Lights."
+        }
+      ]
+    },
+    {
+      "version": "1.63",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Hỗ trợ máy mới TrimUI Smart Pro S (TSPS), tối ưu tìm nạp thư viện SDL2 đa hệ máy",
+        "en": "Support TrimUI Smart Pro S (TSPS) and multi-device SDL2 library search"
+      },
+      "bullets": [
+        {
+          "vi": "Tương thích TrimUI Smart Pro S (TSPS): khắc phục lỗi sập màn hình đen khi khởi động bằng cách tự động nạp thư viện từ /usr/lib và /usr/lib64 khi máy không có /usr/trimui/lib.",
+          "en": "TrimUI Smart Pro S (TSPS) compatibility: resolved startup black screen by searching /usr/lib and /usr/lib64 when /usr/trimui/lib is absent."
+        },
+        {
+          "vi": "Chuỗi nạp thư viện đa nền tảng: ưu tiên bản SDL2 tùy biến riêng cho TrimUI Brick / Smart Pro, đồng thời sẵn sàng tương thích các bản Linux handheld 64-bit và thư mục libs/ đi kèm.",
+          "en": "Multi-platform fallback chain: prioritized tailored libraries for Brick/Smart Pro while supporting standard 64-bit handhelds and bundled libs in libs/."
+        }
+      ]
+    },
+    {
+      "version": "1.62",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Tối ưu thao tác hộp thoại xác nhận thoát: bấm [B] Thoát hẳn, [A] Ở lại trực tiếp",
+        "en": "Direct hotkey controls for exit modal: [B] Exit completely, [A] Stay"
+      },
+      "bullets": [
+        {
+          "vi": "Thao tác phím trực tiếp: loại bỏ bước điều hướng D-pad qua lại rườm rà; bấm ngay phím [B] để thoát hẳn ứng dụng, hoặc phím [A] để ở lại ngay lập tức.",
+          "en": "Instant hotkey actions: eliminated multi-step D-pad selection; pressing button [B] immediately quits the application, while button [A] instantly returns to the app."
+        },
+        {
+          "vi": "Giao diện nút trực quan: hiển thị rõ ràng 2 nút hành động với màu sắc đặc trưng ([A] Ở lại màu xanh lá, [B] Thoát hẳn màu đỏ) kèm phụ đề hướng dẫn thao tác dứt khoát.",
+          "en": "Visual action buttons: distinct dedicated styling for each action ([A] Stay in green, [B] Exit completely in red) with clear instructional subtitles."
+        }
+      ]
+    },
+    {
+      "version": "1.61",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Thêm hộp thoại xác nhận thoát ứng dụng ở menu chính để tránh bấm nhầm",
+        "en": "Exit confirmation modal on home screen to prevent accidental quitting"
+      },
+      "bullets": [
+        {
+          "vi": "Hộp thoại xác nhận thoát ứng dụng: khi bấm phím X (hoặc phím B, hoặc chọn mục 'Thoát' ở menu chính), ứng dụng sẽ mở hộp thoại xác nhận thay vì đóng đột ngột.",
+          "en": "Exit confirmation modal: pressing button X (or button B, or selecting 'Exit' from the main menu) now opens an interactive confirmation dialog instead of quitting abruptly."
+        },
+        {
+          "vi": "Hai nút điều hướng tiện lợi: hỗ trợ nút '[B] Ở lại' (được chọn mặc định tránh bấm nhầm) và '[A] Thoát', điều hướng linh hoạt bằng phím điều hướng D-pad.",
+          "en": "Dual action buttons: provides '[B] Stay' (highlighted by default to prevent accidental exits) and '[A] Exit', with D-pad navigation and one-tap cancellation."
+        },
+        {
+          "vi": "Chỉ dẫn chân trang trực quan: hiển thị rõ ràng hai phím tắt '[A] Chọn / Mở' và '[X] Thoát' ngay tại thanh điều hướng chân trang menu chính.",
+          "en": "Home footer navigation hint: displays explicit '[A] Select / Open' and '[X] Exit' shortcuts on the home screen footer bar."
+        }
+      ]
+    },
+    {
+      "version": "1.60",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Trải nghiệm YouTube mượt mà: kết nối nguồn phát không nháy màn hình, sắp xếp video mới nhất và tải trước thông minh",
+        "en": "Smooth YouTube playback: zero screen flicker when connecting, real-time video sorting, and speculative preload"
+      },
+      "bullets": [
+        {
+          "vi": "Chấm dứt hoàn toàn hiện tượng nháy màn hình: tắt luồng in tty console của yt-dlp và chuyển giao màn hình sạch sang RetroArch trên cả hai bộ đệm (Double-Buffer VSync).",
+          "en": "Zero screen flicker: completely silenced yt-dlp console tty output and implemented smooth double-buffered splash handoff to RetroArch."
+        },
+        {
+          "vi": "Hộp thoại kết nối luồng phát chạy ngầm 60 FPS: trích xuất luồng trên luồng riêng với giao diện phát sáng nhịp thở mượt mà, hỗ trợ bấm phím B để hủy kết nối.",
+          "en": "Non-blocking 60 FPS stream connecting modal: asynchronous background stream extraction with a breathing pulse dialog, supporting instant cancellation with button B."
+        },
+        {
+          "vi": "Sắp xếp video theo thời gian thực: bóc tách thời gian tải lên và tính toán độ tuổi video theo giờ, đảm bảo các video mới nhất (vài giờ/vài ngày trước) luôn nằm trên đầu danh sách.",
+          "en": "Real-time chronological sorting: extracts publication timestamps and sorts candidates by age in hours, guaranteeing the newest videos (hours/days ago) always appear at the top."
+        },
+        {
+          "vi": "Bộ từ khóa thịnh hành mới và tải trước lân cận: MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop; tự động nạp trước kết quả và thumbnail của 2 tab xung quanh dưới nền.",
+          "en": "Trending categories and speculative preload: MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop, with automatic background prefetching of adjacent keywords and thumbnails."
+        }
+      ]
+    },
+    {
+      "version": "1.59",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Nâng cấp toàn diện YouTube: sắp xếp video mới nhất, tải trước thông minh và thanh tải HUD không chặn",
+        "en": "Comprehensive YouTube upgrade: chronological sorting, speculative preloading, and non-blocking HUD"
+      },
+      "bullets": [
+        {
+          "vi": "Sắp xếp video theo thời gian thực: bóc tách thời gian tải lên và tính toán độ tuổi video theo giờ, đảm bảo các video mới nhất (vài giờ/vài ngày trước) luôn nằm trên đầu danh sách.",
+          "en": "Real-time chronological sorting: extracts publication timestamps and sorts candidates by age in hours, guaranteeing the newest videos (hours/days ago) always appear at the top."
+        },
+        {
+          "vi": "Cập nhật 4 bộ từ khóa thịnh hành chuẩn xu hướng: MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop (tự động gắn năm 2026 khi truy vấn ngầm).",
+          "en": "Updated trending preset categories to MV Vpop, Nhạc hot tiktok, Hot girl tiktok, MV Kpop, with automatic background current year query targeting."
+        },
+        {
+          "vi": "Tải trước từ khóa lân cận: tự động nạp trước kết quả tìm kiếm và ảnh bìa của 2 tab xung quanh dưới nền, giúp chuyển từ khóa tức thì không độ trễ.",
+          "en": "Speculative tab preloading: background prefetching of adjacent keywords and thumbnails eliminates switching delays between tabs."
+        },
+        {
+          "vi": "Tìm kiếm bất đồng bộ không chặn: tiến trình nạp dữ liệu chạy ngầm kèm thanh trạng thái HUD phát sáng ở đáy màn hình thay vì làm đơ giao diện.",
+          "en": "Non-blocking async search: background thread fetching with a smooth glowing bottom HUD banner replaces the UI freeze."
+        },
+        {
+          "vi": "Hiển thị thời gian đăng video: thông tin thẻ video hiển thị chi tiết 'Tên Kênh • X ngày trước' giúp nhận biết trực quan độ mới của clip.",
+          "en": "Publication age badge: video cards now display relative upload times (e.g. Channel • 2 days ago) alongside the channel name."
+        }
+      ]
+    },
+    {
+      "version": "1.58",
+      "date": "2026-09-05",
+      "headline": {
+        "vi": "Tối ưu siêu tốc kho game: cuộn 60 FPS mượt mà, tải ảnh bìa thông minh và sắp xếp tức thì trong RAM",
+        "en": "Blazing fast game library: 60 FPS scrolling, lazy boxarts, and instant sorting in RAM"
+      },
+      "bullets": [
+        {
+          "vi": "Cơ chế lưu cache danh sách và phân giải ảnh bìa theo nhu cầu (lazy boxart) loại bỏ hoàn toàn các lệnh quét tệp tin trên thẻ nhớ SD, duy trì tốc độ cuộn 60 FPS mượt mà ngay cả với kho hàng ngàn ROM.",
+          "en": "Display item caching and lazy boxart resolution eliminate per-frame FAT32 SD card filesystem scans, restoring smooth 60 FPS scrolling even with thousands of ROMs."
+        },
+        {
+          "vi": "Chuyển đổi sắp xếp (Lượt tải <-> A-Z) và mở Bảng chữ cái A-Z (phím Y) được xử lý trực tiếp trong RAM với thuật toán Timsort cực nhanh dưới 2ms thay vì quét lại SQLite trên thẻ nhớ.",
+          "en": "Toggling between downloads and A-Z sorting, or jumping with the Alphabet modal (Y button), is now performed in RAM using fast C-level Timsort in under 2ms."
+        },
+        {
+          "vi": "Tối ưu hóa SQLite: loại bỏ các câu truy vấn đếm mirror thừa, bật bộ nhớ đệm RAM 8MB và mmap I/O 32MB, cùng hệ thống chỉ mục B-tree giúp tăng tốc tìm kiếm và lọc game.",
+          "en": "Optimized SQLite engine: removed unused mirror count subqueries, enabled 8MB RAM page cache and 32MB memory-mapped I/O, and added B-tree indexes."
+        },
+        {
+          "vi": "Cập nhật huy hiệu trạng thái tải game theo thời gian thực chỉ quét trên các dòng đang hiển thị trong khung nhìn, đảm bảo phản hồi tức thì mà không tốn tài nguyên.",
+          "en": "Real-time badge updates for active downloads are now dynamically checked only for the visible screen items."
+        }
+      ]
+    },
+    {
+      "version": "1.57",
+      "date": "2026-09-04",
+      "headline": {
+        "vi": "Tối ưu đột phá tốc độ phát YouTube: RAM tmpfs, nạp trước thông minh (Pre-fetch) và hộp thoại tải",
+        "en": "Major YouTube playback speedup: RAM tmpfs, speculative pre-fetch, and instant loading dialog"
+      },
+      "bullets": [
+        {
+          "vi": "Cơ chế nạp trước thông minh (Speculative Pre-fetch) tự động tải sẵn link phát khi rê con trỏ, đưa thời gian mở video xuống còn 0,0009 giây.",
+          "en": "Speculative background pre-fetch resolves video stream URLs instantly as you browse cards, cutting playback start time to 0.0009s."
+        },
+        {
+          "vi": "yt-dlp được giải nén sẵn vào phân vùng RAM ảo (<code>/tmp/ytdlp_cache</code>) ngay khi mở menu, loại bỏ hoàn toàn độ trễ đọc file zip từ thẻ nhớ.",
+          "en": "yt-dlp is pre-extracted into RAM tmpfs (<code>/tmp/ytdlp_cache</code>) on startup, eliminating slow SD card zip decompression bottlenecks."
+        },
+        {
+          "vi": "Hiển thị hộp thoại trạng thái trực quan với tựa đề video ngay khi bấm phím A, chấm dứt tình trạng đen màn hình khi kết nối luồng phát.",
+          "en": "Added an instant loading dialog with real-time video title and status, replacing the old black screen freeze."
+        },
+        {
+          "vi": "Loại bỏ các cổng proxy ngoài không ổn định và tối ưu bộ phân giải Android trực tiếp.",
+          "en": "Removed failing proxy endpoints and optimized single-client Android extraction."
+        }
+      ]
+    },
+    {
+      "version": "1.56",
+      "date": "2026-09-04",
+      "headline": {
+        "vi": "Thêm ứng dụng YouTube: xem video, tìm kiếm tiếng Việt, phát qua RetroArch FFMPEG",
+        "en": "New YouTube app: watch videos, search with on-screen keyboard, playback via RetroArch FFMPEG"
+      },
+      "bullets": [
+        {
+          "vi": "Tích hợp ứng dụng YouTube xem video trực tiếp trên máy TrimUI, hỗ trợ duyệt video thịnh hành và chuyển nhanh từ khóa bằng nút L1 / R1.",
+          "en": "Dedicated YouTube app on TrimUI handhelds with trending feed and fast switching between recent keywords using L1 / R1."
+        },
+        {
+          "vi": "Bàn phím ảo hỗ trợ gõ tiếng Việt có dấu (kiểu gõ TVTelex) cùng danh sách lưu lịch sử các từ khóa tìm kiếm gần đây.",
+          "en": "On-screen keyboard with full Vietnamese accent input (TVTelex) and recent search history."
+        },
+        {
+          "vi": "Phát video mượt mà qua core FFMPEG của RetroArch, điều khiển tua tiến, lùi và tăng giảm âm lượng dễ dàng.",
+          "en": "Stream playback powered by RetroArch FFMPEG core with fast-forward, rewind, and volume controls."
+        },
+        {
+          "vi": "Thông báo trực quan khi máy chưa có sẵn RetroArch hoặc core FFMPEG thay vì thoát đột ngột.",
+          "en": "Clear warning toast if RetroArch or FFMPEG core is not installed on the device."
+        }
+      ]
+    },
+    {
+      "version": "1.55",
+      "date": "2026-09-03",
+      "headline": {
+        "vi": "Đèn LED tự bật lại sau khi khởi động máy, dùng được trên cả firmware gốc",
+        "en": "LED lights now come back on their own after a reboot, on stock firmware too"
+      },
+      "bullets": [
+        {
+          "vi": "Firmware TrimUI gốc tự chạy các script từ <code>/mnt/SDCARD/System/starts</code> mà không cần can thiệp bộ nhớ NAND.",
+          "en": "Stock TrimUI firmware runs scripts from <code>/mnt/SDCARD/System/starts</code> without touching NAND flash."
+        },
+        {
+          "vi": "Hệ điều hành NextUI tiếp tục dùng <code>.hooks/boot.d</code>; tính năng 'Tự chạy khi khởi động' giờ hoạt động chuẩn trên cả hai hệ máy.",
+          "en": "NextUI continues using <code>.hooks/boot.d</code>; 'Run at startup' now works on both systems."
+        }
+      ]
+    },
+    {
+      "version": "1.54",
+      "date": "2026-09-01",
+      "headline": {
+        "vi": "Thêm tiện ích Đèn LED: 12 bộ màu, 10 hiệu ứng, xem thử ngay khi di con trỏ",
+        "en": "New LED Lights utility: 12 colour themes, 10 effects, live preview as you scroll"
+      },
+      "bullets": [
+        {
+          "vi": "Engine phần mềm tự vẽ từng khung hình vào <code>/sys/class/led_anim</code>, tạo được các hiệu ứng lệch pha (sóng chạy, quét) mà hiệu ứng gốc không làm được.",
+          "en": "Custom software engine renders frame-by-frame into <code>/sys/class/led_anim</code>, enabling out-of-phase effects (wave, sweep) impossible with stock effects."
+        },
+        {
+          "vi": "Daemon chạy nền giữ hiệu ứng đèn LED hoạt động ngay cả khi đã thoát RetroHub.",
+          "en": "Background daemon preserves lighting effects even after exiting RetroHub."
+        }
+      ]
+    },
+    {
+      "version": "1.53",
+      "date": "2026-09-01",
+      "headline": {
+        "vi": "Sửa nhãn tràn ra ngoài nút ở menu đổi giả lập",
+        "en": "Fixes the overflowing badge in the emulator switcher"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.52",
+      "date": "2026-09-01",
+      "headline": {
+        "vi": "Game NAOMI/Atomiswave (Metal Slug 6, Marvel vs Capcom 2) về đúng hệ DC; thêm mục đổi giả lập trong Tiện ích",
+        "en": "NAOMI/Atomiswave games now route to the DC system; new emulator switcher in Utilities"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.51",
+      "date": "2026-08-31",
+      "headline": {
+        "vi": "Sửa game CPS2 hệ MAME (Marvel vs Capcom, Street Fighter Alpha...) không mở được",
+        "en": "Fixes CPS2 arcade games in the MAME system failing to launch"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.50",
+      "date": "2026-08-31",
+      "headline": {
+        "vi": "Hỗ trợ chính thức hệ điều hành NextUI, lưu ảnh bìa kép và tinh gọn menu tiện ích",
+        "en": "Official NextUI support, dual artwork saving, and cleaner utilities menu"
+      },
+      "bullets": [
+        {
+          "vi": "Đóng gói dưới dạng Tool Pak (<code>Tools/tg5040/RetroHub.pak</code> & <code>Tools/tg5050/</code>) với đầy đủ tính năng tự cập nhật qua Wi-Fi.",
+          "en": "Packaged as a native Tool Pak (<code>Tools/tg5040/RetroHub.pak</code> & <code>Tools/tg5050/</code>) with full in-app Wi-Fi auto-updates."
+        },
+        {
+          "vi": "Tự động nhận diện thư mục ROM theo tag của NextUI như <code>Game Boy Advance (GBA)</code>, lưu ảnh bìa vào <code>.media/</code> song song với <code>Imgs/</code> của Stock OS.",
+          "en": "ROM directories with NextUI tags like <code>Game Boy Advance (GBA)</code> are resolved automatically, and artwork is saved into <code>.media/</code> beside stock <code>Imgs/</code>."
+        },
+        {
+          "vi": "Cài đặt giả lập Java J2ME tự động tạo <code>JAVA.pak</code> cho NextUI song song với <code>Emus/JAVA</code> cho Stock OS.",
+          "en": "Java J2ME installation now sets up <code>JAVA.pak</code> for NextUI as well as <code>Emus/JAVA</code> for Stock OS."
+        },
+        {
+          "vi": "Sửa lỗi game Java chứa mục rỗng bị đánh dấu mã khoá làm không mở được.",
+          "en": "Fixed encrypted zip entry edge-case in Java jars refusing to launch."
+        },
+        {
+          "vi": "Loại bỏ nút 'Làm mới ROMs' trong Tiện ích vì NextUI tự động quét game khi về màn hình chính.",
+          "en": "Removed the redundant 'Reload ROMs' button from Utilities since NextUI scans games automatically."
+        }
+      ]
+    },
+    {
+      "version": "1.49",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Game Java 320x240 không còn rơi vào thư mục 240320",
+        "en": "Java games at 320x240 no longer land in the 240320 folder"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.48",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Hai kệ game Java ghim đầu và thêm 130 game Gameloft",
+        "en": "Two pinned Java shelves and 130 more Gameloft titles"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.47",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Thêm nguồn game Java giaitri321.vip, ưu tiên bản 320x240",
+        "en": "Added giaitri321.vip Java source, prioritizing 320x240 versions"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.46",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Bộ giả lập Java đi theo đường cập nhật trong app",
+        "en": "Java emulator updates seamlessly via the in-app updater"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.45",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Game Java hỏi nhập chữ giờ chơi được",
+        "en": "Text input in Java games is now supported"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.44",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Game Java có dấu cách trong tên tệp giờ mở được",
+        "en": "Java games with a space in the filename now open"
+      },
+      "bullets": [
+        {
+          "vi": "Giả lập mở tệp jar bằng một URI \"jar:file:\" mà không mã hoá gì cả, nên chỉ một dấu cách là không đọc nổi manifest — game chết trước khi vẽ được khung hình nào. 758 trên 3.357 nguồn game Java trong kho có tên như vậy.",
+          "en": "The emulator opens a jar through a \"jar:file:\" URI it never escapes, so one space and it could not read the manifest — the game died before drawing a frame. 758 of the 3,357 Java sources in the library are named that way."
+        },
+        {
+          "vi": "Tệp đã nằm sẵn trên thẻ được đổi tên khi mở app; save game, cấu hình riêng từng game và ảnh bìa đổi theo cùng.",
+          "en": "Files already on the card are renamed when the app opens; saves, per-game settings and box art are renamed with them."
+        }
+      ]
+    },
+    {
+      "version": "1.43",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Máy còn giả lập Java cũ được tự nâng cấp",
+        "en": "A device still on the old Java emulator is upgraded automatically"
+      },
+      "bullets": [
+        {
+          "vi": "Bản cập nhật trong app chỉ mang mã ứng dụng, không mang 66 MB giả lập, nên máy có thể ở lại bản cũ mãi mà không ai báo. Giờ app tự nhận ra và nâng cấp lúc khởi động, giữ nguyên save.",
+          "en": "An in-app update carries the app only, not the 66 MB emulator, so a device could sit on the old one indefinitely with nothing saying so. Now the app notices and upgrades it at startup, keeping saves."
+        }
+      ]
+    },
+    {
+      "version": "1.42",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Cài lại giả lập Java không còn xoá save game",
+        "en": "Reinstalling the Java emulator no longer wipes saves"
+      },
+      "bullets": [
+        {
+          "vi": "Save J2ME và cấu hình từng game nằm bên trong thư mục giả lập, mà cài lại thì thay trọn thư mục đó. Giờ chúng được cất ra rồi đặt lại — kể cả khi bản cài hỏng giữa chừng.",
+          "en": "J2ME saves and per-game settings live inside the emulator folder, and reinstalling replaced that folder wholesale. They are now moved aside and put back — including when the install fails halfway."
+        }
+      ]
+    },
+    {
+      "version": "1.41",
+      "date": "2026-08-30",
+      "headline": {
+        "vi": "Giả lập Java đổi sang bản FreeJ2ME mới cho Brick Pro",
+        "en": "New FreeJ2ME build for the Brick Pro"
+      },
+      "bullets": [
+        {
+          "vi": "Ba kiểu hiển thị PIXEL, SMOOTH, HQ — đổi trong app hoặc bấm START + R3 ngay trong game.",
+          "en": "Three display modes — PIXEL, SMOOTH, HQ — switchable in the app or with START + R3 in game."
+        },
+        {
+          "vi": "Ba bố trí nút H, K, X đổi ngay trên máy bằng START + SELECT, và thoát game giờ có hỏi lại.",
+          "en": "Pad layouts H, K and X cycle on the device with START + SELECT, and quitting a game now asks first."
+        }
+      ]
+    },
+    {
+      "version": "1.40",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Chữ tiếng Việt không còn thành ô vuông trên máy dùng theme thiếu font",
+        "en": "Vietnamese text no longer shows as boxes on font-poor themes"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.39",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Kho game tự cập nhật trong máy, không cần cài lại",
+        "en": "The game library updates in place, no reinstall"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.38",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Không còn ảnh 404 ở box art; game chưa có bìa hiện ô tên game và hệ máy",
+        "en": "No more placeholder box art; games without a cover show a name-and-system tile"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.37",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Nhảy chữ cái rơi đúng game, không còn lệch cột",
+        "en": "Alphabet jump lands on the right game, with no column drift"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.36",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Danh sách game không còn cắt ngang ở 1.000",
+        "en": "The game list no longer stops at 1,000 entries"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.35",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Đổi ngôn ngữ có tác dụng ngay, không cần khởi động lại",
+        "en": "Language switch updates immediately, with no restart"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.34",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Chữ tiếng Việt ở danh sách game tải về không còn ngắt dòng giữa dấu",
+        "en": "Vietnamese text on downloaded games no longer wraps mid-accent"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.33",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Bản cập nhật hỏng tự dọn dẹp, bản đang chạy còn nguyên",
+        "en": "A failed update cleans up after itself, leaving the running install intact"
+      },
+      "bullets": []
+    },
+    {
+      "version": "1.32",
+      "date": "2026-08-29",
+      "headline": {
+        "vi": "Màn hình cập nhật báo bản mới có gì khác",
+        "en": "Update screen tells you what changed in the new version"
+      },
+      "bullets": []
+    }
+  ]
+}

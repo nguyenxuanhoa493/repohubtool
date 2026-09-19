@@ -4,7 +4,7 @@
 import os
 import time
 import threading
-from .. import state, yt
+from .. import playback, state, yt
 from ..paths import YT_CACHE_DIR
 from ..i18n import tr
 from ..yt_player import play_video
@@ -25,6 +25,9 @@ class YoutubeScreen(BaseScreen):
         self.active_query_idx = 0
         self.loading = False
         self.launching = False
+        self.fav_ids = set()
+        self.has_more = False
+        self.loading_more = False
 
     def build_tabs(self, select_tab: str = None):
         """Build tab list dynamically: puts '★ Yêu thích' first if favorites exist."""
@@ -33,9 +36,11 @@ class YoutubeScreen(BaseScreen):
         if favs:
             tabs.append("★ Yêu thích")
         tabs.append("Trending")
+        if playback.load_watched():
+            tabs.append("Lịch sử")
         history = yt.load_search_history() or ["Nhạc Trẻ Remix", "Game Retro", "Hoạt Hình"]
         for q in history:
-            if q not in ("Trending", "★ Yêu thích", "Yêu thích") and q not in tabs:
+            if q not in ("Trending", "★ Yêu thích", "Yêu thích", "Lịch sử") and q not in tabs:
                 tabs.append(q)
         self.recent_queries = tabs
 
@@ -47,12 +52,28 @@ class YoutubeScreen(BaseScreen):
     def on_enter(self, params=None):
         self.build_tabs()
         self.load_current_tab()
+        self._surface_last_error()
+
+    def _surface_last_error(self):
+        """Show the previous playback failure (if any) and clear the marker."""
+        try:
+            path = "/tmp/yt_last_error.txt"
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    msg = f.read().strip()
+                os.remove(path)
+                if msg:
+                    self.engine.toast(msg[:120], duration=5.0)
+        except Exception:
+            pass
 
     def load_current_tab(self):
         if not self.recent_queries or self.active_query_idx >= len(self.recent_queries):
             self.active_query_idx = 0
         cur_q = self.recent_queries[self.active_query_idx]
         self.loading = True
+        self.has_more = False
+        self.loading_more = False
         self.videos = []
         self.selected_idx = 0
         self.scroll_row = 0
@@ -63,6 +84,8 @@ class YoutubeScreen(BaseScreen):
                     self.videos = yt.load_favorites() or []
                 elif cur_q == "Trending":
                     self.videos = yt.get_trending() or []
+                elif cur_q == "Lịch sử":
+                    self.videos = playback.load_watched() or []
                 else:
                     cached, _ = yt.load_feed_cache(cur_q)
                     if cached:
@@ -72,6 +95,8 @@ class YoutubeScreen(BaseScreen):
             except Exception as e:
                 self.engine.toast(f"Lỗi tải YouTube: {e}")
             self.loading = False
+            if cur_q not in ("★ Yêu thích", "Yêu thích", "Trending", "Lịch sử"):
+                self.has_more = bool(yt.get_continuation_token(cur_q))
 
             # Background download thumbnails
             def _bg_thumbs():
@@ -82,6 +107,30 @@ class YoutubeScreen(BaseScreen):
             threading.Thread(target=_bg_thumbs, daemon=True).start()
 
         threading.Thread(target=_bg_fetch, daemon=True).start()
+
+    def load_more(self):
+        """Append the next page of results for the current search tab."""
+        if self.loading_more or not self.has_more:
+            return
+        cur_q = self.recent_queries[self.active_query_idx] if self.active_query_idx < len(self.recent_queries) else ""
+        if cur_q in ("★ Yêu thích", "Yêu thích", "Trending", "Lịch sử"):
+            return
+        self.loading_more = True
+
+        def _bg():
+            try:
+                more, token = yt.fetch_more_youtube(cur_q)
+                existing = {v.get("id") for v in self.videos}
+                added = [v for v in more if v.get("id") and v.get("id") not in existing]
+                self.videos.extend(added)
+                self.has_more = bool(token)
+                for v in added[:18]:
+                    yt.fetch_thumbnail(v.get("thumb", ""), YT_CACHE_DIR, v["id"])
+            except Exception:
+                self.has_more = False
+            self.loading_more = False
+
+        threading.Thread(target=_bg, daemon=True).start()
 
     def get_header_title(self):
         cur_q = self.recent_queries[self.active_query_idx] if self.recent_queries else "YouTube"
@@ -196,6 +245,9 @@ class YoutubeScreen(BaseScreen):
                 self.scroll_row = cur_row - rows + 1
             return True
         elif btn_down:
+            if self.has_more and (self.selected_idx // cols) >= ((total_v - 1) // cols):
+                self.load_more()
+                return True
             if self.selected_idx + cols < total_v:
                 self.selected_idx += cols
             else:
@@ -231,11 +283,13 @@ class YoutubeScreen(BaseScreen):
 
         if btn_a and 0 <= self.selected_idx < total_v:
             v = self.videos[self.selected_idx]
-            v_id = v.get("id")
-            if v_id:
-                from ..modals.common import StreamLoadingModal
-                self.engine.open_modal(StreamLoadingModal(self.engine), {
-                    "video_data": v
+            if v.get("id"):
+                cur_q = self.recent_queries[self.active_query_idx] if self.active_query_idx < len(self.recent_queries) else ""
+                self.engine.push_screen("watch", {
+                    "video": v,
+                    "queue": self.videos,
+                    "index": self.selected_idx,
+                    "context": "youtube:%s" % cur_q,
                 })
             return True
 
@@ -370,3 +424,7 @@ class YoutubeScreen(BaseScreen):
                 t_col = (255, 255, 255) if is_sel else (200, 215, 235)
                 engine.draw_text(tl, engine.font_grid_title, bx + 8, ty, t_col[0], t_col[1], t_col[2])
                 ty += 30
+
+        if self.loading_more:
+            engine.draw_text(tr("yt_more_loading"), engine.font_footer, state.SCREEN_W // 2,
+                             content_y + content_h - 12, 0, 220, 245, center_x=True, center_y=True)

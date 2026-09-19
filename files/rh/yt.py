@@ -277,13 +277,51 @@ def _make_request(endpoint: str, payload: dict, timeout: int = 7) -> dict:
         return json.loads(resp.read().decode("utf-8", errors="ignore"))
 
 
-def _extract_videos_from_json(node, found_list: list, limit: int = 30):
+def _lockup_video(node):
+    """(videoId, title) tu lockupViewModel - kieu du lieu InnerTube moi.
+
+    YouTube tra ve `lockupViewModel` cho danh sach video lien quan thay cho
+    `compactVideoRenderer`; chi doc cac khoa cu thi trang chi tiet luon trong
+    phan 'Video lien quan'.
+    """
+    if not isinstance(node, dict):
+        return None, ""
+    lk = node.get("lockupViewModel")
+    if not isinstance(lk, dict):
+        return None, ""
+    vid = lk.get("contentId") or ""
+    title = ""
+    meta = lk.get("metadata", {})
+    if isinstance(meta, dict):
+        lmv = meta.get("lockupMetadataViewModel", {})
+        if isinstance(lmv, dict):
+            t = lmv.get("title", {})
+            if isinstance(t, dict):
+                title = t.get("content") or ""
+                if not title and t.get("runs"):
+                    title = t["runs"][0].get("text", "")
+    return (vid or None), title
+
+
+# Tran so node duyet qua: response "next" cua YouTube vai MB, duyet het tren CPU
+# may cam tay ton vai giay va giu GIL -> vong render 60 FPS bi khung.
+_MAX_WALK_NODES = 40000
+
+def _extract_videos_from_json(node, found_list: list, limit: int = 30, _seen=None):
     """Recursively traverse JSON structure to find all videoRenderer objects."""
-    if len(found_list) >= limit:
+    if _seen is None:
+        _seen = [0]
+    _seen[0] += 1
+    if _seen[0] > _MAX_WALK_NODES or len(found_list) >= limit:
         return
 
     if isinstance(node, dict):
-        v = node.get("videoRenderer") or node.get("gridVideoRenderer")
+        v = (node.get("videoRenderer") or node.get("gridVideoRenderer")
+             or node.get("compactVideoRenderer") or node.get("playlistVideoRenderer"))
+        if not v:
+            lv_id, lv_title = _lockup_video(node)
+            if lv_id:
+                v = {"videoId": lv_id, "title": {"simpleText": lv_title or "Video YouTube"}}
         if v:
             vid = v.get("videoId")
             if vid:
@@ -336,13 +374,13 @@ def _extract_videos_from_json(node, found_list: list, limit: int = 30):
                     })
 
         for val in node.values():
-            _extract_videos_from_json(val, found_list, limit)
+            _extract_videos_from_json(val, found_list, limit, _seen)
             if len(found_list) >= limit:
                 break
 
     elif isinstance(node, list):
         for item in node:
-            _extract_videos_from_json(item, found_list, limit)
+            _extract_videos_from_json(item, found_list, limit, _seen)
             if len(found_list) >= limit:
                 break
 
@@ -468,6 +506,106 @@ def get_trending(limit: int = 24) -> list:
     if items:
         save_feed_cache("Music", items)
     return items
+
+
+def _deep_find_bounded(node, key, max_nodes: int = 20000):
+    """Nhu _deep_find nhung co tran so node duyet qua.
+
+    Response `next` cua YouTube nang vai MB; quet het bang de quy tren CPU cua
+    may cam tay ton vai giay va giu GIL, lam vong render 60 FPS bi khung. Tra
+    None khi khong thay trong pham vi cho phep de nguoi goi tu fallback.
+    """
+    stack = [node]
+    seen = 0
+    while stack:
+        cur = stack.pop()
+        seen += 1
+        if seen > max_nodes:
+            return None
+        if isinstance(cur, dict):
+            if key in cur:
+                return cur[key]
+            stack.extend(cur.values())
+        elif isinstance(cur, list):
+            stack.extend(cur)
+    return None
+
+
+def _deep_find(node, key):
+    """Return the first value stored under *key* anywhere in a nested JSON tree."""
+    if isinstance(node, dict):
+        if key in node:
+            return node[key]
+        for val in node.values():
+            found = _deep_find(val, key)
+            if found is not None:
+                return found
+    elif isinstance(node, list):
+        for item in node:
+            found = _deep_find(item, key)
+            if found is not None:
+                return found
+    return None
+
+
+def fetch_watch_metadata(video_id: str) -> dict:
+    """Fetch a video's detail page: title, channel, views, description, related.
+
+    Uses the InnerTube `next` endpoint. Returns None on network failure so the
+    caller can fall back to the data already known from the grid.
+    """
+    if not video_id:
+        return None
+    payload = {"context": WEB_CONTEXT, "videoId": video_id}
+    try:
+        data = _make_request("next", payload, timeout=7)
+    except Exception as e:
+        print(f"[rh.yt] Watch metadata error for {video_id}: {e}")
+        return None
+
+    primary = _deep_find_bounded(data, "videoPrimaryInfoRenderer", 4000) or {}
+    secondary = _deep_find_bounded(data, "videoSecondaryInfoRenderer", 12000) or {}
+
+    title_runs = primary.get("title", {}).get("runs", [])
+    title = title_runs[0].get("text", "") if title_runs else primary.get("title", {}).get("simpleText", "")
+
+    views = ""
+    vc = primary.get("viewCount", {})
+    if isinstance(vc, dict):
+        views = (
+            vc.get("videoViewCountRenderer", {}).get("viewCount", {}).get("simpleText", "")
+            or vc.get("simpleText", "")
+        )
+
+    published = primary.get("dateText", {}).get("simpleText", "")
+
+    owner = secondary.get("owner", {}).get("videoOwnerRenderer", {})
+    o_runs = owner.get("title", {}).get("runs", [])
+    channel = o_runs[0].get("text", "") if o_runs else ""
+
+    description = secondary.get("attributedDescription", {}).get("content", "")
+    if not description:
+        d_runs = secondary.get("description", {}).get("runs", [])
+        description = " ".join(r.get("text", "") for r in d_runs)
+
+    related = []
+    try:
+        # Danh sach lien quan nam trong secondaryResults; duyet rieng nhanh do thay
+        # vi ca response (nhanh hon nhieu lan tren CPU cua may).
+        scope = _deep_find_bounded(data, "secondaryResults", 20000) or data
+        _extract_videos_from_json(scope, related, limit=13)
+    except Exception:
+        pass
+    related = [r for r in related if r.get("id") != video_id][:12]
+
+    return {
+        "title": clean_yt_text(title),
+        "channel": clean_yt_text(channel),
+        "views": clean_yt_text(views),
+        "published": clean_yt_text(published),
+        "description": clean_yt_text(description),
+        "related": related,
+    }
 
 
 # Aliases for cross-module compatibility
@@ -867,6 +1005,34 @@ def extract_stream_url(video_id: str) -> tuple:
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(yt_url, download=False)
         return info.get("url"), info.get("title", video_id)
+
+
+def resolve_audio_stream(video_id: str) -> tuple:
+    """Resolve an audio-only stream (m4a/webm) for audio-only playback."""
+    yt_dlp = resolve_ytdlp()
+    if not yt_dlp:
+        return None, None
+
+    yt_url = f"https://www.youtube.com/watch?v={video_id}"
+    ydl_opts = {
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "nocheckcertificate": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "ios"]
+            }
+        },
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(yt_url, download=False)
+            return info.get("url"), info.get("title", video_id)
+    except Exception as e:
+        print(f"[rh.yt] Audio stream error for {video_id}: {e}")
+        return None, None
 
 
 def get_cached_video_path(video_id: str) -> str:

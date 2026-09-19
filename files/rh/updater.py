@@ -417,9 +417,15 @@ def apply_runtime(pending):
 
 
 def pending_files(manifest):
-    """Files whose on-disk hash differs from the manifest."""
+    """Files whose on-disk hash differs from the manifest.
+
+    settings.json la state cua may (device_id, catalog_sha, skipped_versions) va
+    apply_update() co y khong ghi de no, nen neu dem vao day thi lan nao cung con
+    "1 file can tai" va modal cap nhat lap lai mai."""
     out = []
     for f in manifest["files"]:
+        if f["path"] == "settings.json":
+            continue
         local = os.path.join(APP_DIR, f["path"])
         if sha256_of(local) != f["sha256"]:
             out.append(f)
@@ -565,10 +571,14 @@ def check_for_update(force=False):
     # Catalogue di lech mot minh la chuyen thuong: ban .py cai xong roi khoi
     # dong lai thi phien ban da bang nhau, ma kho game thi chua ve. Chi xet
     # phien ban thoi se bo quen no mai mai.
-    if (not is_newer(m["version"], APP_VERSION)
-            and not catalog_pending(m) and not runtime_pending(m)):
+    version_newer = is_newer(m["version"], APP_VERSION)
+    if not version_newer and not catalog_pending(m) and not runtime_pending(m):
         return None
-    if not force and m["version"] in (state.skipped_versions or []):
+    # skipped_versions nham vao BAN CAP NHAT PHIEN BAN. Kho game va bo chay van
+    # phai ve du nguoi dung da bo qua ban do: bo qua 2.38 khong co nghia la mai
+    # mai khong co kho game, ma may cai tu file zip thi kho game chi den duoc
+    # bang duong nay.
+    if not force and version_newer and m["version"] in (state.skipped_versions or []):
         return None
     return m, pending_files(m)
 

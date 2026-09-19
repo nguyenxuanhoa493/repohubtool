@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Gửi thông báo cập nhật OTA vào chủ đề chung của nhóm Telegram RetroHub."""
+"""Gửi thông báo cập nhật OTA vào chủ đề chung của nhóm Telegram RetroHub.
+
+Nội dung lấy từ changelogs.json theo đúng số phiên bản trong manifest.json, nên
+mỗi bản phát hành chỉ cần thêm một object vào file JSON đó là thông báo có đủ
+headline + bullet của chính bản ấy. Trước đây phần "Chi tiết kỹ thuật" bị
+hardcode nội dung của 2.37 và lặp lại y nguyên cho mọi bản sau."""
 
 import os
 import json
@@ -13,40 +18,69 @@ sys.path.insert(0, os.path.join(ROOT, "files"))
 from rh.secrets import get_telegram_token
 
 TELEGRAM_GROUP_CHAT_ID = "-1003890413445"
+CHANGELOG_FILE = os.path.join(ROOT, "changelogs.json")
+# Telegram tu choi thong diep dai hon 4096 ky tu; chua lai mot it cho phan cuoi.
+MAX_MESSAGE_CHARS = 4000
 
-def send_ota_notification(version=None, note_vi=None):
-    manifest_path = os.path.join(ROOT, "manifest.json")
-    if not version or not note_vi:
-        try:
-            with open(manifest_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                version = version or data.get("version", "")
-                note_vi = note_vi or data.get("note", {}).get("vi", "")
-        except Exception as e:
-            print(f"Lỗi đọc manifest.json: {e}")
-            return False
+def changelog_entry(version):
+    """Object cua *version* trong changelogs.json, hoac None."""
+    try:
+        with open(CHANGELOG_FILE, encoding="utf-8") as f:
+            rels = json.load(f).get("releases", [])
+    except Exception as e:
+        print(f"Lỗi đọc changelogs.json: {e}")
+        return None
+    for rel in rels:
+        if str(rel.get("version", "")) == str(version):
+            return rel
+    return None
 
+def build_message(version, entry, lang="vi"):
+    """Thông điệp Telegram cho một phiên bản, cắt bớt nếu quá dài."""
     import html
-    escaped_note = html.escape(note_vi)
-    msg_lines = [
+    head = (entry or {}).get("headline") or {}
+    bullets = [b for b in ((entry or {}).get("bullets") or []) if b.get(lang)]
+    lines = [
         f"🚀 <b>[RetroHub] BẢN CẬP NHẬT MỚI: v{version} (OTA)</b>",
         "",
-        f"✨ <b>Điểm mới & Nội dung cập nhật:</b>",
-        f"• {escaped_note}",
+        "✨ <b>Điểm mới &amp; Nội dung cập nhật:</b>",
+        "• %s" % html.escape(head.get(lang, "")),
         "",
         "🛠️ <b>Chi tiết kỹ thuật:</b>",
-        "• Khắc phục hoàn toàn lỗi thiếu gói cài đặt Giả lập Java (J2ME) bằng cơ chế tự động tải online từ xa.",
-        "• Sửa lỗi crash <code>time_elapsed</code> khi bấm cài đặt trong Kho giả lập.",
-        "• Chuyển nút Cài đặt Java trực tiếp sang bảng chi tiết Kho giả lập, loại bỏ biểu tượng emoji tránh lỗi font.",
-        "• Tinh gọn nhãn tùy chọn hiển thị và bàn phím, bổ sung khung chú thích ngữ cảnh động.",
-        "• Động cơ vẽ chữ tích hợp giới hạn chiều rộng <code>max_w</code> triệt tiêu nguy cơ đè chữ.",
+    ]
+    tail = [
         "",
         "📲 <b>Cách cập nhật qua OTA:</b>",
         "1. Bật <b>Wi-Fi</b> trên máy chơi game.",
         "2. Mở ứng dụng <b>RetroHub</b> ➔ Ứng dụng sẽ tự động thông báo và tải cập nhật trong 2–3 giây!",
-        "3. Hoặc vào <b>Cài đặt (Settings) ➔ Kiểm tra cập nhật</b>."
+        "3. Hoặc vào <b>Cài đặt (Settings) ➔ Kiểm tra cập nhật</b>.",
     ]
-    text = "\n".join(msg_lines)
+    fixed = len("\n".join(lines + tail))
+    shown = []
+    for b in bullets:
+        candidate = shown + ["• %s" % html.escape(b[lang])]
+        if fixed + len("\n".join(candidate)) > MAX_MESSAGE_CHARS:
+            shown = candidate[:-1] + ["• …"]
+            break
+        shown = candidate
+    if not bullets:
+        shown = ["• (xem changelog đầy đủ trên web)"]
+    return "\n".join(lines + shown + tail)
+
+def send_ota_notification(version=None, note_vi=None):
+    manifest_path = os.path.join(ROOT, "manifest.json")
+    if not version:
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                version = json.load(f).get("version", "")
+        except Exception as e:
+            print(f"Lỗi đọc manifest.json: {e}")
+            return False
+
+    entry = changelog_entry(version)
+    if not entry:
+        print(f"⚠️  changelogs.json chưa có mục cho v{version}; thông báo chỉ có tiêu đề.")
+    text = build_message(version, entry)
 
     token = get_telegram_token()
     url = f"https://api.telegram.org/bot{token}/sendMessage"

@@ -68,7 +68,9 @@ class ExitModal(BaseModal):
                     stop_gameweb()
                 elif s_id == "stream":
                     stop_streamer()
-        self.close()
+        # Dong qua engine de active_modal duoc xoa, khong de modal cu nam lai;
+        # roi moi dat co thoat de vong lap ket thuc ngay, khong ve them khung nao.
+        self._dismiss()
         if self.engine:
             self.engine.running = False
 
@@ -87,7 +89,7 @@ class ExitModal(BaseModal):
         num_services = len(self.services)
 
         if btn_b:
-            self.close()
+            self._dismiss()
             return True
 
         if btn_a:
@@ -108,6 +110,13 @@ class ExitModal(BaseModal):
                 return True
 
         return True
+
+    def _dismiss(self):
+        """Close through the engine so active_modal is cleared, not left stale."""
+        if self.engine:
+            self.engine.close_modal()
+        else:
+            self.close()
 
     def render(self, engine):
         if not self.active:

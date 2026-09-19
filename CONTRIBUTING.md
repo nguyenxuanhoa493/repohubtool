@@ -52,9 +52,29 @@ git checkout -b swpts/fix-youtube-ui
    git checkout main
    git pull origin main
    ```
-2. Nếu bản này sẵn sàng phát hành cho người dùng (đã cập nhật version trong `files/rh/version.py`, ghi chú vào `manifest.json` và changelog):
+2. Nếu bản này sẵn sàng phát hành cho người dùng, chuẩn bị **2 chỗ**:
+   - Thêm **một object** vào mảng `releases` trong `changelogs.json` (mới nhất lên đầu):
+     ```json
+     {
+       "version": "2.40",
+       "date": "2026-09-20",
+       "headline": { "vi": "một câu cho popup OTA", "en": "one line for the OTA popup" },
+       "bullets": [ { "vi": "...", "en": "..." } ]
+     }
+     ```
+     `changelogs.json` là nguồn duy nhất: trang changelog, thông báo Telegram và
+     `manifest.note` đều sinh ra từ đây — không sửa tay `manifest.json`.
+   - Bump `APP_VERSION` trong `files/rh/version.py` cho khớp số trong object trên.
+
+   `make_release.py` sẽ **fail sớm** nếu thiếu object hoặc thiếu headline/bullet, nên
+   không thể tag một bản không có changelog. Kiểm nhanh trước khi tag:
+   ```bash
+   python _src/selftest_changelog.py
+   ```
+
+3. Tag và push:
    ```bash
    git tag vX.XX
    git push origin main --tags
    ```
-3. GitHub Actions (`release.yml`) sẽ tự động kích hoạt workflow kiểm tra, đóng gói và phát hành bản cập nhật (OTA & Release).
+4. GitHub Actions (`release.yml`) sẽ tự động kích hoạt workflow kiểm tra, đóng gói, phát hành (OTA & Release), sync `manifest.json`/website, purge cache jsDelivr và gửi thông báo Telegram.

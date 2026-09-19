@@ -270,7 +270,7 @@ class EmuStoreScreen(BaseScreen):
         sys_id = item.get("id")
         self.installing_emu = True
         self.install_emu_info = item
-        self.install_msg = f"Đang gỡ bỏ {sys_id}..."
+        self.install_msg = tr("emu_removing").format(sys=sys_id)
 
         def run_task():
             res = uninstall_emu(sys_id)
@@ -280,7 +280,9 @@ class EmuStoreScreen(BaseScreen):
                     self.engine.toast(f"{tr('emu_uninstall_success')}", text_color=(0, 255, 160))
             else:
                 if self.engine:
-                    self.engine.toast(res.get('error', 'Lỗi khi gỡ bỏ'), text_color=(255, 100, 100))
+                    # Giu ban dich cua nhanh minh (tr) nhung them mau do cua upstream
+                    self.engine.toast(f"✗ {res.get('error') or tr('emu_err_remove')}",
+                                      text_color=(255, 100, 100))
             self.refresh_catalog()
 
         t = threading.Thread(target=run_task, daemon=True)
@@ -291,13 +293,13 @@ class EmuStoreScreen(BaseScreen):
             self._render_content(engine)
         except Exception as e:
             print(f"[EmuStoreScreen] Render error: {e}")
-            engine.draw_text(f"Lỗi hiển thị: {str(e)}", engine.font_item,
+            engine.draw_text(f'{tr("store_err_render")}: {str(e)}', engine.font_item,
                              state.SCREEN_W // 2, state.SCREEN_H // 2, 255, 100, 100, center_x=True, center_y=True)
 
     def _render_content(self, engine):
         total_items = len(self.filtered_items)
         if total_items == 0:
-            engine.draw_text("Không có hệ máy nào trong bộ lọc này!", engine.font_item,
+            engine.draw_text(tr("emu_empty_filter"), engine.font_item,
                              state.SCREEN_W // 2, state.SCREEN_H // 2, 160, 175, 195, center_x=True, center_y=True)
             return
 
@@ -365,11 +367,11 @@ class EmuStoreScreen(BaseScreen):
             if is_inst:
                 engine.fill_rect(badge_x, badge_y, badge_w, badge_h, 20, 60, 40, 255)
                 engine.draw_rect(badge_x, badge_y, badge_w, badge_h, 34, 197, 94, 255, thickness=1)
-                engine.draw_text("ĐÃ CÀI", engine.font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 74, 222, 128, center_x=True, center_y=True)
+                engine.draw_text(tr("emu_installed"), engine.font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 74, 222, 128, center_x=True, center_y=True)
             else:
                 engine.fill_rect(badge_x, badge_y, badge_w, badge_h, 35, 40, 55, 255)
                 engine.draw_rect(badge_x, badge_y, badge_w, badge_h, 80, 95, 125, 255, thickness=1)
-                engine.draw_text("CHƯA CÓ", engine.font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 160, 175, 200, center_x=True, center_y=True)
+                engine.draw_text(tr("emu_not_installed"), engine.font_badge, badge_x + badge_w // 2, badge_y + badge_h // 2, 160, 175, 200, center_x=True, center_y=True)
 
         # 2. Draw Right Details Panel
         if 0 <= self.selected_idx < total_items:
@@ -411,24 +413,24 @@ class EmuStoreScreen(BaseScreen):
             row_gap = 26
 
             # 1. Company
-            comp = sel_item.get('company') or 'Chưa rõ'
-            engine.draw_text(f"• Hãng sản xuất:  {comp}", engine.font_badge, text_x, info_y + 0 * row_gap, 190, 210, 235)
+            comp = sel_item.get('company') or tr('emu_unknown')
+            engine.draw_text(f'{tr("emu_company")}  {comp}', engine.font_badge, text_x, info_y + 0 * row_gap, 190, 210, 235)
 
             # 2. Year
             year_val = sel_item.get('year') or 'N/A'
-            engine.draw_text(f"• Năm phát hành:  {year_val}", engine.font_badge, text_x, info_y + 1 * row_gap, 190, 210, 235)
+            engine.draw_text(f'{tr("emu_year")}  {year_val}', engine.font_badge, text_x, info_y + 1 * row_gap, 190, 210, 235)
 
             # 3. Core / Emulator
             core_name = sel_item.get('active_core') or sel_item.get('core', 'RetroArch')
-            engine.draw_text(f"• Giả lập / Core:   {core_name}", engine.font_badge, text_x, info_y + 2 * row_gap, 255, 210, 95)
+            engine.draw_text(f'{tr("emu_core")}   {core_name}', engine.font_badge, text_x, info_y + 2 * row_gap, 255, 210, 95)
 
             # 4. ROMs count
-            roms_val = f"{sel_item.get('rom_count', 0)} trò chơi"
-            engine.draw_text(f"• Số ROMs có sẵn: {roms_val}", engine.font_badge, text_x, info_y + 3 * row_gap, 110, 235, 165)
+            roms_val = tr("emu_roms_count").format(n=sel_item.get("rom_count", 0))
+            engine.draw_text(f'{tr("emu_roms")} {roms_val}', engine.font_badge, text_x, info_y + 3 * row_gap, 110, 235, 165)
 
             # 5. Package Size
-            pkg_size = sel_item.get('package_size') or 'Đang cập nhật'
-            engine.draw_text(f"• Dung lượng gói: {pkg_size}", engine.font_badge, text_x, info_y + 4 * row_gap, 160, 205, 250)
+            pkg_size = sel_item.get('package_size') or tr('emu_updating')
+            engine.draw_text(f'{tr("emu_pkg_size")} {pkg_size}', engine.font_badge, text_x, info_y + 4 * row_gap, 160, 205, 250)
 
             # Divider line with comfortable top/bottom margin
             div_y = info_y + 5 * row_gap + 8

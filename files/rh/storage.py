@@ -23,9 +23,15 @@ def free_space(path):
     """Cho trong that su ghi duoc vao *path*.
 
     f_bavail chu khong phai f_bfree: he thong danh rieng mot phan cho root, va
-    phan do khong phai cho ma nguoi dung ghi duoc vao."""
-    st = os.statvfs(path)
-    return st.f_bavail * st.f_frsize
+    phan do khong phai cho ma nguoi dung ghi duoc vao.
+
+    Windows khong co os.statvfs; ban chay desktop dung shutil.disk_usage de
+    buoc kiem dung luong truoc khi giai nen khong no ra AttributeError."""
+    if hasattr(os, "statvfs"):
+        st = os.statvfs(path)
+        return st.f_bavail * st.f_frsize
+    import shutil
+    return shutil.disk_usage(path).free
 
 
 def unlock(path):

@@ -394,7 +394,7 @@ class IconStoreScreen(BaseScreen):
             engine.draw_rect(ox, oy, overlay_w, overlay_h, 0, 230, 255, 255, thickness=3)
 
             # 1. Header
-            header_txt = "ĐANG CÀI ĐẶT BỘ ICON" if state.current_lang == "VI" else "INSTALLING ICON PACK"
+            header_txt = tr("icon_installing")
             engine.draw_text(header_txt, engine.font_title, ox + overlay_w // 2, oy + 32, 0, 230, 255, center_x=True)
 
             # 2. Icon Pack Name

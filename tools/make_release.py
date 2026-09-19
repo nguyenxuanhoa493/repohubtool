@@ -11,6 +11,8 @@
 import os
 import sys
 import json
+import shutil
+import gzip
 import hashlib
 import py_compile
 import subprocess
@@ -28,6 +30,11 @@ MANIFEST_PATH = os.path.join(ROOT, "manifest.json")
 # resolved against it, so renaming the branch would strand every device.
 REPO = "nguyenxuanhoa493/repohubtool"
 BRANCH = "main"
+# settings.json la state cua may chu (device_id, catalog_sha, skipped_versions);
+# phat hanh no se ghi de cau hinh nguoi dung va khien pending_files() khong bao
+# gio hoi tu (apply_update bo qua no). Khong bao gio ship, khong them vao remove.
+NEVER_SHIPPED = frozenset(["settings.json"])
+
 FULL = False
 TZ = timezone(timedelta(hours=7))
 
@@ -59,6 +66,29 @@ def _git_blobs(specs):
             proc.stdout.read(1)
         proc.wait()
     return blobs
+
+def _git_ignored(rels):
+    """Payload paths .gitignore covers - they can never be served by GitHub.
+
+    A desktop run installs the 31 MB store database into files/catalog/, which
+    is ignored; hashing it would put a file in the manifest that no client can
+    download."""
+    if not rels:
+        return set()
+    with tempfile.TemporaryFile() as spec_file:
+        for rel in rels:
+            spec_file.write(("files/%s\n" % rel).encode("utf-8"))
+        spec_file.seek(0)
+        proc = subprocess.Popen(["git", "-C", ROOT, "check-ignore", "--stdin", "--no-index"],
+                                stdin=spec_file, stdout=subprocess.PIPE)
+        out = proc.stdout.read().decode("utf-8", "replace")
+        proc.wait()
+    ignored = set()
+    for line in out.splitlines():
+        line = line.strip()
+        if line.startswith("files/"):
+            ignored.add(line[len("files/"):])
+    return ignored
 
 def payload_bytes(data, blob):
     """The bytes GitHub serves for a payload file, or None when they differ.
@@ -155,15 +185,55 @@ def step_2_check_i18n_keys():
         print("  -> Tat ca cac key tr(...) deu co trong tu dien i18n.py.")
 
 
+CHANGELOG_FILE = os.path.join(ROOT, "changelogs.json")
+
+def changelog_entry(version):
+    """Object cua *version* trong changelogs.json, hoac None.
+
+    changelogs.json la nguon duy nhat: trang changelog, thong bao Telegram va
+    manifest.note deu lay tu day, nen mot ban phat hanh khong the ra doi ma thieu
+    noi dung hoac lech nhau."""
+    try:
+        with open(CHANGELOG_FILE, encoding="utf-8") as f:
+            releases = json.load(f).get("releases", [])
+    except (OSError, ValueError) as e:
+        print("  [!] Khong doc duoc changelogs.json: %s" % e)
+        return None
+    for rel in releases:
+        if str(rel.get("version", "")).strip() == str(version).strip():
+            return rel
+    return None
+
 def step_3_update_manifest():
     print("[3/7] Quet va cap nhat ma bam SHA256 vao manifest.json...")
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
     version = app_version()
+    rel = changelog_entry(version)
+    if not rel:
+        print("FAILED: changelogs.json chua co muc cho v%s." % version)
+        print("  Them mot object vao mang \"releases\" (version, date, headline vi/en,")
+        print("  bullets vi/en) roi chay lai. Thieu muc thi popup OTA, trang changelog")
+        print("  va thong bao Telegram deu khong co noi dung cua ban nay.")
+        sys.exit(1)
+    head = rel.get("headline") or {}
+    if not head.get("vi") or not head.get("en"):
+        print("FAILED: muc v%s trong changelogs.json thieu headline vi/en." % version)
+        sys.exit(1)
+    bullets = [b for b in (rel.get("bullets") or []) if b.get("vi") and b.get("en")]
+    if not bullets:
+        print("FAILED: muc v%s trong changelogs.json chua co bullet nao." % version)
+        sys.exit(1)
+
     manifest["version"] = version
     manifest["built"] = datetime.now(TZ).replace(microsecond=0).isoformat()
     manifest["base_url"] = "https://raw.githubusercontent.com/%s/%s" % (REPO, BRANCH)
+    # Note hien tren popup OTA va notes trong GitHub Release deu lay tu changelog,
+    # khong con sua tay hai noi roi lech nhau.
+    manifest["note"] = {"vi": head["vi"], "en": head["en"]}
+    manifest["notes"] = "\n".join("\u2022 " + b["vi"] for b in bullets)
+    manifest["notes_en"] = "\n".join("\u2022 " + b["en"] for b in bullets)
     if FULL:
         manifest["full_release_version"] = version
 
@@ -177,10 +247,18 @@ def step_3_update_manifest():
         for fn in sorted(files):
             if fn.startswith(".") or fn.endswith(".pyc") or fn == "desktop.ini":
                 continue
+            if fn in NEVER_SHIPPED:
+                continue
             fp = os.path.join(root, fn)
             rel = os.path.relpath(fp, FILES_DIR).replace(os.sep, "/")
             with open(fp, "rb") as fh:
                 payload.append((rel, fh.read()))
+
+    ignored = _git_ignored([rel for rel, _ in payload])
+    if ignored:
+        print("  -> Bo qua %d tep bi .gitignore (GitHub khong phuc vu): %s"
+              % (len(ignored), ", ".join(sorted(ignored)[:3])))
+        payload = [(rel, data) for rel, data in payload if rel not in ignored]
 
     blobs = _git_blobs([":files/%s" % rel for rel, _ in payload])
 
@@ -219,6 +297,8 @@ def step_3_update_manifest():
     # Tự động thêm các tệp đã xóa hoặc đổi tên vào danh sách remove
     deleted_paths = old_paths - scanned_paths
     for dp in deleted_paths:
+        if dp in NEVER_SHIPPED:
+            continue   # khong bao gio ship thi khong duoc xoa file cua nguoi dung
         remove_list.add(dp)
 
     manifest["files"] = sorted(current_files, key=lambda x: x["path"])
@@ -305,8 +385,45 @@ def step_4_ota_simulation_suite():
     print(f"  -> Mo phong thanh cong 100% tren {len(legacy_tags)} phien ban lich su!")
 
 
+CATALOG_GZ = os.path.join(ROOT, "catalog", "roms_store.sqlite3.gz")
+CATALOG_PLAIN_NAME = "catalog/roms_store.sqlite3"
+
+def ensure_catalog_for_zip():
+    """Bung catalogue da tracked vao files/catalog/ truoc khi go zip.
+
+    May cai tu file zip khong di qua OTA, nen khong co buoc tai catalogue nao
+    khac: thieu file nay la vao ROMs Store thay rong (dung loi nguoi dung bao).
+    Ban .gz nam trong git (files/catalog/*.sqlite3 bi .gitignore) nen phai bung
+    ra tai cho, va kiem sha256_plain voi manifest de zip khong mang ban cu.
+    """
+    target = os.path.join(FILES_DIR, "catalog", "roms_store.sqlite3")
+    if not os.path.isfile(CATALOG_GZ):
+        print("FAILED: thieu %s - zip se khong co kho game." % os.path.relpath(CATALOG_GZ, ROOT))
+        sys.exit(1)
+    with gzip.open(CATALOG_GZ, "rb") as src, open(target, "wb") as dst:
+        shutil.copyfileobj(src, dst, 1024 * 1024)
+
+    with open(MANIFEST_PATH, encoding="utf-8") as f:
+        catalog = (json.load(f) or {}).get("catalog") or {}
+    expected = catalog.get("sha256_plain")
+    size_expected = catalog.get("size_plain")
+    got = hashlib.sha256(open(target, "rb").read()).hexdigest()
+    if expected and got != expected:
+        print("FAILED: catalogue bung ra khong khop sha256_plain trong manifest")
+        print("  manifest: %s" % expected)
+        print("  thuc te : %s" % got)
+        print("  Chay lai buoc tao catalogue (.gz) truoc khi phat hanh.")
+        sys.exit(1)
+    if size_expected and os.path.getsize(target) != size_expected:
+        print("FAILED: catalogue bung ra %d byte, manifest ghi %d byte"
+              % (os.path.getsize(target), size_expected))
+        sys.exit(1)
+    print("  -> Da bung kho game vao payload (%d byte) cho cac goi zip."
+          % os.path.getsize(target))
+
 def step_5_package_dist():
     print("[5/7] Dong goi cac tap tin phat hanh trong dist/...")
+    ensure_catalog_for_zip()
     dist_dir = os.path.join(ROOT, "dist")
     os.makedirs(dist_dir, exist_ok=True)
 

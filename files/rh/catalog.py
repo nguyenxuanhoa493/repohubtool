@@ -4,7 +4,7 @@
 import os
 import re
 
-from .paths import SDCARD_PATH
+from .paths import SDCARD_PATH, get_roms_root
 from . import state
 
 try:
@@ -54,7 +54,9 @@ def clean_game_title(title):
 def scan_all_downloaded_games():
     """Scans all folders in /mnt/SDCARD/Roms/ to list all downloaded games across all systems."""
     results = []
-    roms_root = f"{SDCARD_PATH}/Roms"
+    # get_roms_root() ton trong casing thuc te cua the (Roms/roms/ROMS);
+    # hardcode "Roms" lam thu vien trong tren may dat ten thu muc khac.
+    roms_root = get_roms_root()
     if not os.path.exists(roms_root):
         return results
 
@@ -74,7 +76,8 @@ def scan_all_downloaded_games():
                 actual_code = extracted
 
         rom_dir = os.path.join(roms_root, sys_code)
-        img_dir = f"{SDCARD_PATH}/Imgs/{actual_code}"
+        img_dir = state.catalogs.get(actual_code, {}).get(
+            "img_dir", f"{SDCARD_PATH}/Imgs/{actual_code}")
         # ROM folders are commonly one level deep, and J2ME depends on it: the
         # launcher reads the screen size from a folder named like 240320. Scan the
         # system folder plus one level below it.
