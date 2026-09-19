@@ -15,12 +15,10 @@ OUTPUT_JSON = os.path.join(CATALOG_DIR, "icons_catalog.json")
 APP_CATALOG_JSON = os.path.join(ROOT, "files", "catalog", "icons_catalog.json")
 APP_ASSETS_PREVIEW_DIR = os.path.join(ROOT, "files", "assets", "icons_preview")
 
-# Icon zips live on a GitHub Release (uploaded by _src/publish_assets.py).
-# GitHub rewrites spaces to dots in asset names; run
-# _src/migrate_assets_urls.py after uploading to correct any edge cases.
-ASSET_BASE = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
-BASE_CDN_URL = ASSET_BASE
-BASE_RAW_GIT_URL = ASSET_BASE
+# Icon zips phan phoi uu tien qua Cloudflare R2 CDN; GitHub Releases giu vai tro backup
+BASE_CDN_URL = "https://cdn.xuanhoa493.com/"
+BASE_RAW_GIT_URL = "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/"
+ASSET_BASE = BASE_CDN_URL
 
 
 def build_icon_pack_zip(pack_name: str, pack_path: str) -> str:

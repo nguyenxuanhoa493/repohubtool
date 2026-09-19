@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "total": 129,
-  "base_cdn_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/",
+  "base_cdn_url": "https://cdn.xuanhoa493.com/",
   "themes": [
     {
       "id": "Animal Crossing",
@@ -13,7 +13,7 @@
       "zip_size_bytes": 7764365,
       "size_str": "7.4 MB",
       "preview_rel": "assets/themes_preview/Animal_Crossing.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Animal.Crossing.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Animal.Crossing.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Animal.Crossing.zip"
     },
     {
@@ -26,7 +26,7 @@
       "zip_size_bytes": 7733310,
       "size_str": "7.38 MB",
       "preview_rel": "assets/themes_preview/Animal_Crossing_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Animal.Crossing.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Animal.Crossing.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Animal.Crossing.-.Alternate.zip"
     },
     {
@@ -39,7 +39,7 @@
       "zip_size_bytes": 8258855,
       "size_str": "7.88 MB",
       "preview_rel": "assets/themes_preview/Assassins_Creed.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Assassins.Creed.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Assassins.Creed.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Assassins.Creed.zip"
     },
     {
@@ -52,7 +52,7 @@
       "zip_size_bytes": 8180217,
       "size_str": "7.8 MB",
       "preview_rel": "assets/themes_preview/Assassins_Creed_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Assassins.Creed.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Assassins.Creed.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Assassins.Creed.-.Alternate.zip"
     },
     {
@@ -65,7 +65,7 @@
       "zip_size_bytes": 7329002,
       "size_str": "6.99 MB",
       "preview_rel": "assets/themes_preview/Attack_on_Titan.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Attack.on.Titan.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.zip"
     },
     {
@@ -78,7 +78,7 @@
       "zip_size_bytes": 9914248,
       "size_str": "9.45 MB",
       "preview_rel": "assets/themes_preview/Attack_on_Titan_-_Attack.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.-.Attack.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Attack.on.Titan.-.Attack.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.-.Attack.zip"
     },
     {
@@ -91,7 +91,7 @@
       "zip_size_bytes": 10611464,
       "size_str": "10.12 MB",
       "preview_rel": "assets/themes_preview/Attack_on_Titan_-_Levi.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.-.Levi.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Attack.on.Titan.-.Levi.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.-.Levi.zip"
     },
     {
@@ -104,7 +104,7 @@
       "zip_size_bytes": 10239251,
       "size_str": "9.76 MB",
       "preview_rel": "assets/themes_preview/Attack_on_Titan_-_Mikasa.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.-.Mikasa.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Attack.on.Titan.-.Mikasa.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Attack.on.Titan.-.Mikasa.zip"
     },
     {
@@ -117,7 +117,7 @@
       "zip_size_bytes": 6750973,
       "size_str": "6.44 MB",
       "preview_rel": "assets/themes_preview/Baki_the_Grappler.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Baki.the.Grappler.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Baki.the.Grappler.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Baki.the.Grappler.zip"
     },
     {
@@ -130,7 +130,7 @@
       "zip_size_bytes": 5531957,
       "size_str": "5.28 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Black.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Black.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Black.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Black.zip"
     },
     {
@@ -143,8 +143,8 @@
       "zip_size_bytes": 6465416,
       "size_str": "6.17 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Black___Red.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Black.Red.zip",
-      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Black.Red.zip"
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Black.&.Red.zip",
+      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Black.&.Red.zip"
     },
     {
       "id": "Basic - Canyon",
@@ -156,7 +156,7 @@
       "zip_size_bytes": 7377456,
       "size_str": "7.04 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Canyon.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Canyon.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Canyon.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Canyon.zip"
     },
     {
@@ -169,7 +169,7 @@
       "zip_size_bytes": 5617349,
       "size_str": "5.36 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Clouds.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Clouds.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Clouds.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Clouds.zip"
     },
     {
@@ -182,7 +182,7 @@
       "zip_size_bytes": 9768730,
       "size_str": "9.32 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Night_Sky.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Night.Sky.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Night.Sky.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Night.Sky.zip"
     },
     {
@@ -195,7 +195,7 @@
       "zip_size_bytes": 5164266,
       "size_str": "4.93 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Prism.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Prism.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Prism.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Prism.zip"
     },
     {
@@ -205,10 +205,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Basic - Space.zip",
-      "zip_size_bytes": 7986506,
-      "size_str": "7.62 MB",
+      "zip_size_bytes": 8017378,
+      "size_str": "7.65 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Space.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Space.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Space.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Space.zip"
     },
     {
@@ -218,10 +218,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Basic - Triangles.zip",
-      "zip_size_bytes": 7375326,
-      "size_str": "7.03 MB",
+      "zip_size_bytes": 7406198,
+      "size_str": "7.06 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Triangles.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Triangles.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Triangles.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Triangles.zip"
     },
     {
@@ -231,10 +231,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Basic - Yosemite.zip",
-      "zip_size_bytes": 9737413,
-      "size_str": "9.29 MB",
+      "zip_size_bytes": 9768285,
+      "size_str": "9.32 MB",
       "preview_rel": "assets/themes_preview/Basic_-_Yosemite.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Yosemite.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Basic.-.Yosemite.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Basic.-.Yosemite.zip"
     },
     {
@@ -244,10 +244,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Batman.zip",
-      "zip_size_bytes": 4617642,
-      "size_str": "4.4 MB",
+      "zip_size_bytes": 4648514,
+      "size_str": "4.43 MB",
       "preview_rel": "assets/themes_preview/Batman.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Batman.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Batman.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Batman.zip"
     },
     {
@@ -257,10 +257,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Berserk.zip",
-      "zip_size_bytes": 7649599,
-      "size_str": "7.3 MB",
+      "zip_size_bytes": 7680471,
+      "size_str": "7.32 MB",
       "preview_rel": "assets/themes_preview/Berserk.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Berserk.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Berserk.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Berserk.zip"
     },
     {
@@ -270,10 +270,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Berserk - Alternate.zip",
-      "zip_size_bytes": 4945524,
-      "size_str": "4.72 MB",
+      "zip_size_bytes": 4976396,
+      "size_str": "4.75 MB",
       "preview_rel": "assets/themes_preview/Berserk_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Berserk.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Berserk.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Berserk.-.Alternate.zip"
     },
     {
@@ -283,10 +283,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Bleach.zip",
-      "zip_size_bytes": 7616910,
-      "size_str": "7.26 MB",
+      "zip_size_bytes": 7647782,
+      "size_str": "7.29 MB",
       "preview_rel": "assets/themes_preview/Bleach.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Bleach.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Bleach.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Bleach.zip"
     },
     {
@@ -296,10 +296,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Bleach - Ichigo.zip",
-      "zip_size_bytes": 7214833,
-      "size_str": "6.88 MB",
+      "zip_size_bytes": 7245705,
+      "size_str": "6.91 MB",
       "preview_rel": "assets/themes_preview/Bleach_-_Ichigo.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Bleach.-.Ichigo.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Bleach.-.Ichigo.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Bleach.-.Ichigo.zip"
     },
     {
@@ -309,10 +309,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Bully.zip",
-      "zip_size_bytes": 8874632,
-      "size_str": "8.46 MB",
+      "zip_size_bytes": 8905504,
+      "size_str": "8.49 MB",
       "preview_rel": "assets/themes_preview/Bully.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Bully.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Bully.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Bully.zip"
     },
     {
@@ -322,10 +322,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Castlevania - Alucard.zip",
-      "zip_size_bytes": 10356037,
-      "size_str": "9.88 MB",
+      "zip_size_bytes": 10386909,
+      "size_str": "9.91 MB",
       "preview_rel": "assets/themes_preview/Castlevania_-_Alucard.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Castlevania.-.Alucard.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Castlevania.-.Alucard.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Castlevania.-.Alucard.zip"
     },
     {
@@ -335,10 +335,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Castlevania - Lords of Shadow.zip",
-      "zip_size_bytes": 7138548,
-      "size_str": "6.81 MB",
+      "zip_size_bytes": 7169420,
+      "size_str": "6.84 MB",
       "preview_rel": "assets/themes_preview/Castlevania_-_Lords_of_Shadow.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Castlevania.-.Lords.of.Shadow.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Castlevania.-.Lords.of.Shadow.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Castlevania.-.Lords.of.Shadow.zip"
     },
     {
@@ -348,10 +348,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Castlevania - Nocturne.zip",
-      "zip_size_bytes": 6555241,
-      "size_str": "6.25 MB",
+      "zip_size_bytes": 6586113,
+      "size_str": "6.28 MB",
       "preview_rel": "assets/themes_preview/Castlevania_-_Nocturne.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Castlevania.-.Nocturne.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Castlevania.-.Nocturne.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Castlevania.-.Nocturne.zip"
     },
     {
@@ -361,10 +361,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Cowboy Bebop.zip",
-      "zip_size_bytes": 7430097,
-      "size_str": "7.09 MB",
+      "zip_size_bytes": 7460969,
+      "size_str": "7.12 MB",
       "preview_rel": "assets/themes_preview/Cowboy_Bebop.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Cowboy.Bebop.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Cowboy.Bebop.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Cowboy.Bebop.zip"
     },
     {
@@ -374,10 +374,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Cowboy Bebop - Spike.zip",
-      "zip_size_bytes": 4476971,
-      "size_str": "4.27 MB",
+      "zip_size_bytes": 4507843,
+      "size_str": "4.3 MB",
       "preview_rel": "assets/themes_preview/Cowboy_Bebop_-_Spike.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Cowboy.Bebop.-.Spike.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Cowboy.Bebop.-.Spike.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Cowboy.Bebop.-.Spike.zip"
     },
     {
@@ -387,10 +387,10 @@
       "font": "ESPACION.otf",
       "has_preview": true,
       "zip_file": "Cyberpunk 2077 - Alternate.zip",
-      "zip_size_bytes": 7401491,
-      "size_str": "7.06 MB",
+      "zip_size_bytes": 7440693,
+      "size_str": "7.1 MB",
       "preview_rel": "assets/themes_preview/Cyberpunk_2077_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Cyberpunk.2077.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Cyberpunk.2077.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Cyberpunk.2077.-.Alternate.zip"
     },
     {
@@ -400,10 +400,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": false,
       "zip_file": "Demon Slayer - Rengoku.zip",
-      "zip_size_bytes": 6535773,
-      "size_str": "6.23 MB",
+      "zip_size_bytes": 6566645,
+      "size_str": "6.26 MB",
       "preview_rel": "",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Demon.Slayer.-.Rengoku.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Demon.Slayer.-.Rengoku.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Demon.Slayer.-.Rengoku.zip"
     },
     {
@@ -413,10 +413,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Digimon.zip",
-      "zip_size_bytes": 8237279,
-      "size_str": "7.86 MB",
+      "zip_size_bytes": 8268151,
+      "size_str": "7.89 MB",
       "preview_rel": "assets/themes_preview/Digimon.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Digimon.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Digimon.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Digimon.zip"
     },
     {
@@ -426,10 +426,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Digimon - Alternate.zip",
-      "zip_size_bytes": 9453710,
-      "size_str": "9.02 MB",
+      "zip_size_bytes": 9484582,
+      "size_str": "9.05 MB",
       "preview_rel": "assets/themes_preview/Digimon_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Digimon.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Digimon.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Digimon.-.Alternate.zip"
     },
     {
@@ -439,10 +439,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Digimon - Omnimon.zip",
-      "zip_size_bytes": 8561475,
-      "size_str": "8.16 MB",
+      "zip_size_bytes": 8592347,
+      "size_str": "8.19 MB",
       "preview_rel": "assets/themes_preview/Digimon_-_Omnimon.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Digimon.-.Omnimon.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Digimon.-.Omnimon.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Digimon.-.Omnimon.zip"
     },
     {
@@ -452,10 +452,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Dragon Ball - Super Saiyans.zip",
-      "zip_size_bytes": 11799678,
-      "size_str": "11.25 MB",
+      "zip_size_bytes": 11830550,
+      "size_str": "11.28 MB",
       "preview_rel": "assets/themes_preview/Dragon_Ball_-_Super_Saiyans.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Dragon.Ball.-.Super.Saiyans.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Dragon.Ball.-.Super.Saiyans.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Dragon.Ball.-.Super.Saiyans.zip"
     },
     {
@@ -465,10 +465,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Dragon Ball - Ultra Instinct.zip",
-      "zip_size_bytes": 5870552,
-      "size_str": "5.6 MB",
+      "zip_size_bytes": 5901424,
+      "size_str": "5.63 MB",
       "preview_rel": "assets/themes_preview/Dragon_Ball_-_Ultra_Instinct.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Dragon.Ball.-.Ultra.Instinct.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Dragon.Ball.-.Ultra.Instinct.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Dragon.Ball.-.Ultra.Instinct.zip"
     },
     {
@@ -478,10 +478,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Elden Ring.zip",
-      "zip_size_bytes": 9050370,
-      "size_str": "8.63 MB",
+      "zip_size_bytes": 9081242,
+      "size_str": "8.66 MB",
       "preview_rel": "assets/themes_preview/Elden_Ring.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Elden.Ring.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Elden.Ring.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Elden.Ring.zip"
     },
     {
@@ -491,10 +491,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Elden Ring - Malenia.zip",
-      "zip_size_bytes": 7418383,
-      "size_str": "7.07 MB",
+      "zip_size_bytes": 7449255,
+      "size_str": "7.1 MB",
       "preview_rel": "assets/themes_preview/Elden_Ring_-_Malenia.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Elden.Ring.-.Malenia.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Elden.Ring.-.Malenia.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Elden.Ring.-.Malenia.zip"
     },
     {
@@ -504,11 +504,11 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Evangelion - Asuka & Rei.zip",
-      "zip_size_bytes": 7746001,
-      "size_str": "7.39 MB",
+      "zip_size_bytes": 7776873,
+      "size_str": "7.42 MB",
       "preview_rel": "assets/themes_preview/Evangelion_-_Asuka___Rei.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Evangelion.-.Asuka.Rei.zip",
-      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Evangelion.-.Asuka.Rei.zip"
+      "download_url": "https://cdn.xuanhoa493.com/Evangelion.-.Asuka.&.Rei.zip",
+      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Evangelion.-.Asuka.&.Rei.zip"
     },
     {
       "id": "Evangelion - NERV",
@@ -517,10 +517,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Evangelion - NERV.zip",
-      "zip_size_bytes": 4988785,
-      "size_str": "4.76 MB",
+      "zip_size_bytes": 5019657,
+      "size_str": "4.79 MB",
       "preview_rel": "assets/themes_preview/Evangelion_-_NERV.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Evangelion.-.NERV.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Evangelion.-.NERV.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Evangelion.-.NERV.zip"
     },
     {
@@ -530,10 +530,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Final Fantasy - Airship.zip",
-      "zip_size_bytes": 6814209,
-      "size_str": "6.5 MB",
+      "zip_size_bytes": 6845081,
+      "size_str": "6.53 MB",
       "preview_rel": "assets/themes_preview/Final_Fantasy_-_Airship.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.-.Airship.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Final.Fantasy.-.Airship.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.-.Airship.zip"
     },
     {
@@ -543,10 +543,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Final Fantasy IX.zip",
-      "zip_size_bytes": 5757720,
-      "size_str": "5.49 MB",
+      "zip_size_bytes": 5788592,
+      "size_str": "5.52 MB",
       "preview_rel": "assets/themes_preview/Final_Fantasy_IX.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.IX.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Final.Fantasy.IX.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.IX.zip"
     },
     {
@@ -556,10 +556,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Final Fantasy IX - Vivi.zip",
-      "zip_size_bytes": 6813795,
-      "size_str": "6.5 MB",
+      "zip_size_bytes": 6844667,
+      "size_str": "6.53 MB",
       "preview_rel": "assets/themes_preview/Final_Fantasy_IX_-_Vivi.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.IX.-.Vivi.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Final.Fantasy.IX.-.Vivi.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.IX.-.Vivi.zip"
     },
     {
@@ -569,10 +569,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Final Fantasy VII.zip",
-      "zip_size_bytes": 7514180,
-      "size_str": "7.17 MB",
+      "zip_size_bytes": 7545052,
+      "size_str": "7.2 MB",
       "preview_rel": "assets/themes_preview/Final_Fantasy_VII.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.VII.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Final.Fantasy.VII.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.VII.zip"
     },
     {
@@ -582,10 +582,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Final Fantasy VII - Alternate.zip",
-      "zip_size_bytes": 10462353,
-      "size_str": "9.98 MB",
+      "zip_size_bytes": 10493225,
+      "size_str": "10.01 MB",
       "preview_rel": "assets/themes_preview/Final_Fantasy_VII_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.VII.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Final.Fantasy.VII.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.VII.-.Alternate.zip"
     },
     {
@@ -595,10 +595,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Final Fantasy XVI.zip",
-      "zip_size_bytes": 8464897,
-      "size_str": "8.07 MB",
+      "zip_size_bytes": 8495769,
+      "size_str": "8.1 MB",
       "preview_rel": "assets/themes_preview/Final_Fantasy_XVI.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.XVI.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Final.Fantasy.XVI.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Final.Fantasy.XVI.zip"
     },
     {
@@ -608,10 +608,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Fire Emblem.zip",
-      "zip_size_bytes": 10811319,
-      "size_str": "10.31 MB",
+      "zip_size_bytes": 10842191,
+      "size_str": "10.34 MB",
       "preview_rel": "assets/themes_preview/Fire_Emblem.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Fire.Emblem.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Fire.Emblem.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Fire.Emblem.zip"
     },
     {
@@ -621,10 +621,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Fullmetal Alchemist - Brothers.zip",
-      "zip_size_bytes": 6564160,
-      "size_str": "6.26 MB",
+      "zip_size_bytes": 6595032,
+      "size_str": "6.29 MB",
       "preview_rel": "assets/themes_preview/Fullmetal_Alchemist_-_Brothers.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Fullmetal.Alchemist.-.Brothers.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Fullmetal.Alchemist.-.Brothers.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Fullmetal.Alchemist.-.Brothers.zip"
     },
     {
@@ -634,10 +634,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "God of War.zip",
-      "zip_size_bytes": 8710285,
-      "size_str": "8.31 MB",
+      "zip_size_bytes": 8741157,
+      "size_str": "8.34 MB",
       "preview_rel": "assets/themes_preview/God_of_War.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/God.of.War.zip",
+      "download_url": "https://cdn.xuanhoa493.com/God.of.War.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/God.of.War.zip"
     },
     {
@@ -647,10 +647,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Halo - Alternate.zip",
-      "zip_size_bytes": 9486491,
-      "size_str": "9.05 MB",
+      "zip_size_bytes": 9517363,
+      "size_str": "9.08 MB",
       "preview_rel": "assets/themes_preview/Halo_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Halo.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Halo.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Halo.-.Alternate.zip"
     },
     {
@@ -660,10 +660,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Halo - Stealth.zip",
-      "zip_size_bytes": 6726241,
-      "size_str": "6.41 MB",
+      "zip_size_bytes": 6757113,
+      "size_str": "6.44 MB",
       "preview_rel": "assets/themes_preview/Halo_-_Stealth.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Halo.-.Stealth.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Halo.-.Stealth.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Halo.-.Stealth.zip"
     },
     {
@@ -673,10 +673,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Harry Potter - Hogwarts.zip",
-      "zip_size_bytes": 9078500,
-      "size_str": "8.66 MB",
+      "zip_size_bytes": 9109372,
+      "size_str": "8.69 MB",
       "preview_rel": "assets/themes_preview/Harry_Potter_-_Hogwarts.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Harry.Potter.-.Hogwarts.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Harry.Potter.-.Hogwarts.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Harry.Potter.-.Hogwarts.zip"
     },
     {
@@ -686,10 +686,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Helldivers 2.zip",
-      "zip_size_bytes": 6939484,
-      "size_str": "6.62 MB",
+      "zip_size_bytes": 6970356,
+      "size_str": "6.65 MB",
       "preview_rel": "assets/themes_preview/Helldivers_2.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Helldivers.2.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Helldivers.2.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Helldivers.2.zip"
     },
     {
@@ -699,11 +699,11 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Howl's Moving Castle.zip",
-      "zip_size_bytes": 8737977,
-      "size_str": "8.33 MB",
+      "zip_size_bytes": 8768849,
+      "size_str": "8.36 MB",
       "preview_rel": "assets/themes_preview/Howl_s_Moving_Castle.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Howl.s.Moving.Castle.zip",
-      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Howl.s.Moving.Castle.zip"
+      "download_url": "https://cdn.xuanhoa493.com/Howl's.Moving.Castle.zip",
+      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Howl's.Moving.Castle.zip"
     },
     {
       "id": "Howl's Moving Castle - Alternate",
@@ -712,11 +712,11 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Howl's Moving Castle - Alternate.zip",
-      "zip_size_bytes": 11224185,
-      "size_str": "10.7 MB",
+      "zip_size_bytes": 11255057,
+      "size_str": "10.73 MB",
       "preview_rel": "assets/themes_preview/Howl_s_Moving_Castle_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Howl.s.Moving.Castle.-.Alternate.zip",
-      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Howl.s.Moving.Castle.-.Alternate.zip"
+      "download_url": "https://cdn.xuanhoa493.com/Howl's.Moving.Castle.-.Alternate.zip",
+      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Howl's.Moving.Castle.-.Alternate.zip"
     },
     {
       "id": "Initial D",
@@ -725,10 +725,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Initial D.zip",
-      "zip_size_bytes": 8864250,
-      "size_str": "8.45 MB",
+      "zip_size_bytes": 8895122,
+      "size_str": "8.48 MB",
       "preview_rel": "assets/themes_preview/Initial_D.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Initial.D.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Initial.D.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Initial.D.zip"
     },
     {
@@ -738,10 +738,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Initial D - Alternate.zip",
-      "zip_size_bytes": 8819346,
-      "size_str": "8.41 MB",
+      "zip_size_bytes": 8850218,
+      "size_str": "8.44 MB",
       "preview_rel": "assets/themes_preview/Initial_D_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Initial.D.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Initial.D.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Initial.D.-.Alternate.zip"
     },
     {
@@ -751,10 +751,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Initial D - Trueno.zip",
-      "zip_size_bytes": 9030294,
-      "size_str": "8.61 MB",
+      "zip_size_bytes": 9061166,
+      "size_str": "8.64 MB",
       "preview_rel": "assets/themes_preview/Initial_D_-_Trueno.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Initial.D.-.Trueno.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Initial.D.-.Trueno.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Initial.D.-.Trueno.zip"
     },
     {
@@ -764,10 +764,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Jujutsu Kaisen - Gojo.zip",
-      "zip_size_bytes": 6437310,
-      "size_str": "6.14 MB",
+      "zip_size_bytes": 6468182,
+      "size_str": "6.17 MB",
       "preview_rel": "assets/themes_preview/Jujutsu_Kaisen_-_Gojo.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Jujutsu.Kaisen.-.Gojo.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Jujutsu.Kaisen.-.Gojo.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Jujutsu.Kaisen.-.Gojo.zip"
     },
     {
@@ -777,10 +777,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Jujutsu Kaisen - Yuji.zip",
-      "zip_size_bytes": 8463118,
-      "size_str": "8.07 MB",
+      "zip_size_bytes": 8493990,
+      "size_str": "8.1 MB",
       "preview_rel": "assets/themes_preview/Jujutsu_Kaisen_-_Yuji.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Jujutsu.Kaisen.-.Yuji.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Jujutsu.Kaisen.-.Yuji.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Jujutsu.Kaisen.-.Yuji.zip"
     },
     {
@@ -790,10 +790,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Jujutsu Kaisen - Yuta.zip",
-      "zip_size_bytes": 7459101,
-      "size_str": "7.11 MB",
+      "zip_size_bytes": 7489973,
+      "size_str": "7.14 MB",
       "preview_rel": "assets/themes_preview/Jujutsu_Kaisen_-_Yuta.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Jujutsu.Kaisen.-.Yuta.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Jujutsu.Kaisen.-.Yuta.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Jujutsu.Kaisen.-.Yuta.zip"
     },
     {
@@ -803,10 +803,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Kill Bill.zip",
-      "zip_size_bytes": 8930810,
-      "size_str": "8.52 MB",
+      "zip_size_bytes": 8961682,
+      "size_str": "8.55 MB",
       "preview_rel": "assets/themes_preview/Kill_Bill.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kill.Bill.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Kill.Bill.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kill.Bill.zip"
     },
     {
@@ -816,10 +816,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Kingdom Hearts.zip",
-      "zip_size_bytes": 8481931,
-      "size_str": "8.09 MB",
+      "zip_size_bytes": 8512803,
+      "size_str": "8.12 MB",
       "preview_rel": "assets/themes_preview/Kingdom_Hearts.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kingdom.Hearts.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Kingdom.Hearts.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kingdom.Hearts.zip"
     },
     {
@@ -829,10 +829,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Kingdom Hearts 2.zip",
-      "zip_size_bytes": 9004548,
-      "size_str": "8.59 MB",
+      "zip_size_bytes": 9035420,
+      "size_str": "8.62 MB",
       "preview_rel": "assets/themes_preview/Kingdom_Hearts_2.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kingdom.Hearts.2.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Kingdom.Hearts.2.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kingdom.Hearts.2.zip"
     },
     {
@@ -842,10 +842,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Kingdom Hearts Birth By Sleep.zip",
-      "zip_size_bytes": 8068831,
-      "size_str": "7.7 MB",
+      "zip_size_bytes": 8099703,
+      "size_str": "7.72 MB",
       "preview_rel": "assets/themes_preview/Kingdom_Hearts_Birth_By_Sleep.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kingdom.Hearts.Birth.By.Sleep.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Kingdom.Hearts.Birth.By.Sleep.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Kingdom.Hearts.Birth.By.Sleep.zip"
     },
     {
@@ -855,10 +855,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Legend of Zelda - Alternate.zip",
-      "zip_size_bytes": 7153611,
-      "size_str": "6.82 MB",
+      "zip_size_bytes": 7184483,
+      "size_str": "6.85 MB",
       "preview_rel": "assets/themes_preview/Legend_of_Zelda_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Legend.of.Zelda.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Legend.of.Zelda.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Legend.of.Zelda.-.Alternate.zip"
     },
     {
@@ -868,10 +868,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Lord of the Rings.zip",
-      "zip_size_bytes": 8148194,
-      "size_str": "7.77 MB",
+      "zip_size_bytes": 8179066,
+      "size_str": "7.8 MB",
       "preview_rel": "assets/themes_preview/Lord_of_the_Rings.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Lord.of.the.Rings.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Lord.of.the.Rings.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Lord.of.the.Rings.zip"
     },
     {
@@ -881,10 +881,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Lord of the Rings - Gandalf.zip",
-      "zip_size_bytes": 7606893,
-      "size_str": "7.25 MB",
+      "zip_size_bytes": 7637765,
+      "size_str": "7.28 MB",
       "preview_rel": "assets/themes_preview/Lord_of_the_Rings_-_Gandalf.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Lord.of.the.Rings.-.Gandalf.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Lord.of.the.Rings.-.Gandalf.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Lord.of.the.Rings.-.Gandalf.zip"
     },
     {
@@ -894,10 +894,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "MF Ghost.zip",
-      "zip_size_bytes": 10216373,
-      "size_str": "9.74 MB",
+      "zip_size_bytes": 10247245,
+      "size_str": "9.77 MB",
       "preview_rel": "assets/themes_preview/MF_Ghost.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/MF.Ghost.zip",
+      "download_url": "https://cdn.xuanhoa493.com/MF.Ghost.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/MF.Ghost.zip"
     },
     {
@@ -907,10 +907,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Mario.zip",
-      "zip_size_bytes": 7590110,
-      "size_str": "7.24 MB",
+      "zip_size_bytes": 7620982,
+      "size_str": "7.27 MB",
       "preview_rel": "assets/themes_preview/Mario.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Mario.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Mario.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Mario.zip"
     },
     {
@@ -920,10 +920,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Mario - Alternate.zip",
-      "zip_size_bytes": 6654466,
-      "size_str": "6.35 MB",
+      "zip_size_bytes": 6685338,
+      "size_str": "6.38 MB",
       "preview_rel": "assets/themes_preview/Mario_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Mario.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Mario.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Mario.-.Alternate.zip"
     },
     {
@@ -933,10 +933,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Metal Gear.zip",
-      "zip_size_bytes": 7210704,
-      "size_str": "6.88 MB",
+      "zip_size_bytes": 7241576,
+      "size_str": "6.91 MB",
       "preview_rel": "assets/themes_preview/Metal_Gear.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metal.Gear.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Metal.Gear.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metal.Gear.zip"
     },
     {
@@ -946,10 +946,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Metal Gear Rising.zip",
-      "zip_size_bytes": 9391452,
-      "size_str": "8.96 MB",
+      "zip_size_bytes": 9422324,
+      "size_str": "8.99 MB",
       "preview_rel": "assets/themes_preview/Metal_Gear_Rising.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metal.Gear.Rising.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Metal.Gear.Rising.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metal.Gear.Rising.zip"
     },
     {
@@ -959,10 +959,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Metaphor ReFantazio.zip",
-      "zip_size_bytes": 7320994,
-      "size_str": "6.98 MB",
+      "zip_size_bytes": 7351866,
+      "size_str": "7.01 MB",
       "preview_rel": "assets/themes_preview/Metaphor_ReFantazio.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metaphor.ReFantazio.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Metaphor.ReFantazio.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metaphor.ReFantazio.zip"
     },
     {
@@ -972,10 +972,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Metroid - Dread.zip",
-      "zip_size_bytes": 4536168,
-      "size_str": "4.33 MB",
+      "zip_size_bytes": 4567040,
+      "size_str": "4.36 MB",
       "preview_rel": "assets/themes_preview/Metroid_-_Dread.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metroid.-.Dread.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Metroid.-.Dread.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Metroid.-.Dread.zip"
     },
     {
@@ -985,10 +985,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Naruto - Akatsuki.zip",
-      "zip_size_bytes": 8360069,
-      "size_str": "7.97 MB",
+      "zip_size_bytes": 8390941,
+      "size_str": "8.0 MB",
       "preview_rel": "assets/themes_preview/Naruto_-_Akatsuki.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Naruto.-.Akatsuki.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Naruto.-.Akatsuki.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Naruto.-.Akatsuki.zip"
     },
     {
@@ -998,10 +998,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Nier Automata.zip",
-      "zip_size_bytes": 7072617,
-      "size_str": "6.74 MB",
+      "zip_size_bytes": 7103489,
+      "size_str": "6.77 MB",
       "preview_rel": "assets/themes_preview/Nier_Automata.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Nier.Automata.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Nier.Automata.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Nier.Automata.zip"
     },
     {
@@ -1011,10 +1011,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "One Piece - Cover.zip",
-      "zip_size_bytes": 10374507,
-      "size_str": "9.89 MB",
+      "zip_size_bytes": 10405379,
+      "size_str": "9.92 MB",
       "preview_rel": "assets/themes_preview/One_Piece_-_Cover.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Cover.zip",
+      "download_url": "https://cdn.xuanhoa493.com/One.Piece.-.Cover.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Cover.zip"
     },
     {
@@ -1024,10 +1024,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "One Piece - Gear 5.zip",
-      "zip_size_bytes": 6527375,
-      "size_str": "6.22 MB",
+      "zip_size_bytes": 6558247,
+      "size_str": "6.25 MB",
       "preview_rel": "assets/themes_preview/One_Piece_-_Gear_5.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Gear.5.zip",
+      "download_url": "https://cdn.xuanhoa493.com/One.Piece.-.Gear.5.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Gear.5.zip"
     },
     {
@@ -1037,10 +1037,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "One Piece - Luffy.zip",
-      "zip_size_bytes": 6780763,
-      "size_str": "6.47 MB",
+      "zip_size_bytes": 6811635,
+      "size_str": "6.5 MB",
       "preview_rel": "assets/themes_preview/One_Piece_-_Luffy.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Luffy.zip",
+      "download_url": "https://cdn.xuanhoa493.com/One.Piece.-.Luffy.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Luffy.zip"
     },
     {
@@ -1050,10 +1050,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "One Piece - Straw Hats.zip",
-      "zip_size_bytes": 9145820,
-      "size_str": "8.72 MB",
+      "zip_size_bytes": 9176692,
+      "size_str": "8.75 MB",
       "preview_rel": "assets/themes_preview/One_Piece_-_Straw_Hats.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Straw.Hats.zip",
+      "download_url": "https://cdn.xuanhoa493.com/One.Piece.-.Straw.Hats.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One.Piece.-.Straw.Hats.zip"
     },
     {
@@ -1063,10 +1063,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "One-Punch Man.zip",
-      "zip_size_bytes": 6352722,
-      "size_str": "6.06 MB",
+      "zip_size_bytes": 6383594,
+      "size_str": "6.09 MB",
       "preview_rel": "assets/themes_preview/One-Punch_Man.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One-Punch.Man.zip",
+      "download_url": "https://cdn.xuanhoa493.com/One-Punch.Man.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/One-Punch.Man.zip"
     },
     {
@@ -1079,7 +1079,7 @@
       "zip_size_bytes": 4858401,
       "size_str": "4.63 MB",
       "preview_rel": "assets/themes_preview/PSP.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/PSP.zip",
+      "download_url": "https://cdn.xuanhoa493.com/PSP.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/PSP.zip"
     },
     {
@@ -1089,10 +1089,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Persona 3 - Memories.zip",
-      "zip_size_bytes": 10378661,
-      "size_str": "9.9 MB",
+      "zip_size_bytes": 10409533,
+      "size_str": "9.93 MB",
       "preview_rel": "assets/themes_preview/Persona_3_-_Memories.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.3.-.Memories.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Persona.3.-.Memories.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.3.-.Memories.zip"
     },
     {
@@ -1102,10 +1102,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Persona 5.zip",
-      "zip_size_bytes": 7069779,
-      "size_str": "6.74 MB",
+      "zip_size_bytes": 7100651,
+      "size_str": "6.77 MB",
       "preview_rel": "assets/themes_preview/Persona_5.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Persona.5.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.zip"
     },
     {
@@ -1115,10 +1115,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Persona 5 - Alternate.zip",
-      "zip_size_bytes": 5684545,
-      "size_str": "5.42 MB",
+      "zip_size_bytes": 5715417,
+      "size_str": "5.45 MB",
       "preview_rel": "assets/themes_preview/Persona_5_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Persona.5.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.-.Alternate.zip"
     },
     {
@@ -1128,10 +1128,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Persona 5 - Kasumi.zip",
-      "zip_size_bytes": 8665087,
-      "size_str": "8.26 MB",
+      "zip_size_bytes": 8695959,
+      "size_str": "8.29 MB",
       "preview_rel": "assets/themes_preview/Persona_5_-_Kasumi.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.-.Kasumi.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Persona.5.-.Kasumi.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.-.Kasumi.zip"
     },
     {
@@ -1141,10 +1141,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Persona 5 - Ladies.zip",
-      "zip_size_bytes": 5868451,
-      "size_str": "5.6 MB",
+      "zip_size_bytes": 5899323,
+      "size_str": "5.63 MB",
       "preview_rel": "assets/themes_preview/Persona_5_-_Ladies.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.-.Ladies.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Persona.5.-.Ladies.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Persona.5.-.Ladies.zip"
     },
     {
@@ -1154,10 +1154,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Playstation.zip",
-      "zip_size_bytes": 4845318,
-      "size_str": "4.62 MB",
+      "zip_size_bytes": 4876190,
+      "size_str": "4.65 MB",
       "preview_rel": "assets/themes_preview/Playstation.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Playstation.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Playstation.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Playstation.zip"
     },
     {
@@ -1167,10 +1167,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Playstation - Anniversary.zip",
-      "zip_size_bytes": 5129971,
-      "size_str": "4.89 MB",
+      "zip_size_bytes": 5160843,
+      "size_str": "4.92 MB",
       "preview_rel": "assets/themes_preview/Playstation_-_Anniversary.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Playstation.-.Anniversary.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Playstation.-.Anniversary.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Playstation.-.Anniversary.zip"
     },
     {
@@ -1180,10 +1180,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Pokeball.zip",
-      "zip_size_bytes": 8483316,
-      "size_str": "8.09 MB",
+      "zip_size_bytes": 8514188,
+      "size_str": "8.12 MB",
       "preview_rel": "assets/themes_preview/Pokeball.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokeball.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Pokeball.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokeball.zip"
     },
     {
@@ -1193,10 +1193,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Pokedex - Blue.zip",
-      "zip_size_bytes": 3820396,
-      "size_str": "3.64 MB",
+      "zip_size_bytes": 3851268,
+      "size_str": "3.67 MB",
       "preview_rel": "assets/themes_preview/Pokedex_-_Blue.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokedex.-.Blue.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Pokedex.-.Blue.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokedex.-.Blue.zip"
     },
     {
@@ -1206,10 +1206,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Pokemon Sleep.zip",
-      "zip_size_bytes": 13917554,
-      "size_str": "13.27 MB",
+      "zip_size_bytes": 13948426,
+      "size_str": "13.3 MB",
       "preview_rel": "assets/themes_preview/Pokemon_Sleep.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokemon.Sleep.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Pokemon.Sleep.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokemon.Sleep.zip"
     },
     {
@@ -1219,10 +1219,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Pokemon Trainer Red.zip",
-      "zip_size_bytes": 7363044,
-      "size_str": "7.02 MB",
+      "zip_size_bytes": 7393916,
+      "size_str": "7.05 MB",
       "preview_rel": "assets/themes_preview/Pokemon_Trainer_Red.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokemon.Trainer.Red.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Pokemon.Trainer.Red.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Pokemon.Trainer.Red.zip"
     },
     {
@@ -1232,10 +1232,10 @@
       "font": "LTWaveAlt-Regular.otf",
       "has_preview": true,
       "zip_file": "Princess Mononoke.zip",
-      "zip_size_bytes": 2549494,
-      "size_str": "2.43 MB",
+      "zip_size_bytes": 7547907,
+      "size_str": "7.2 MB",
       "preview_rel": "assets/themes_preview/Princess_Mononoke.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Princess.Mononoke.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Princess.Mononoke.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Princess.Mononoke.zip"
     },
     {
@@ -1248,7 +1248,7 @@
       "zip_size_bytes": 9412117,
       "size_str": "8.98 MB",
       "preview_rel": "assets/themes_preview/Princess_Mononoke_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Princess.Mononoke.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Princess.Mononoke.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Princess.Mononoke.-.Alternate.zip"
     },
     {
@@ -1261,7 +1261,7 @@
       "zip_size_bytes": 11293887,
       "size_str": "10.77 MB",
       "preview_rel": "assets/themes_preview/Princess_Mononoke_-_Ashitaka.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Princess.Mononoke.-.Ashitaka.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Princess.Mononoke.-.Ashitaka.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Princess.Mononoke.-.Ashitaka.zip"
     },
     {
@@ -1274,7 +1274,7 @@
       "zip_size_bytes": 4428987,
       "size_str": "4.22 MB",
       "preview_rel": "assets/themes_preview/Retro_Game_Corps.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Retro.Game.Corps.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Retro.Game.Corps.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Retro.Game.Corps.zip"
     },
     {
@@ -1287,7 +1287,7 @@
       "zip_size_bytes": 5935839,
       "size_str": "5.66 MB",
       "preview_rel": "assets/themes_preview/Sanrio_-_Cinnamoroll.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Sanrio.-.Cinnamoroll.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Sanrio.-.Cinnamoroll.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Sanrio.-.Cinnamoroll.zip"
     },
     {
@@ -1300,8 +1300,8 @@
       "zip_size_bytes": 7301499,
       "size_str": "6.96 MB",
       "preview_rel": "assets/themes_preview/Shrek___Miku.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Shrek.Miku.zip",
-      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Shrek.Miku.zip"
+      "download_url": "https://cdn.xuanhoa493.com/Shrek.&.Miku.zip",
+      "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Shrek.&.Miku.zip"
     },
     {
       "id": "Skyrim",
@@ -1313,7 +1313,7 @@
       "zip_size_bytes": 8696237,
       "size_str": "8.29 MB",
       "preview_rel": "assets/themes_preview/Skyrim.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Skyrim.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Skyrim.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Skyrim.zip"
     },
     {
@@ -1326,7 +1326,7 @@
       "zip_size_bytes": 7140363,
       "size_str": "6.81 MB",
       "preview_rel": "assets/themes_preview/Smash_Bros.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Smash.Bros.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Smash.Bros.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Smash.Bros.zip"
     },
     {
@@ -1339,7 +1339,7 @@
       "zip_size_bytes": 6342591,
       "size_str": "6.05 MB",
       "preview_rel": "assets/themes_preview/Smash_Bros_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Smash.Bros.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Smash.Bros.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Smash.Bros.-.Alternate.zip"
     },
     {
@@ -1352,7 +1352,7 @@
       "zip_size_bytes": 7815080,
       "size_str": "7.45 MB",
       "preview_rel": "assets/themes_preview/Spiderman.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spiderman.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Spiderman.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spiderman.zip"
     },
     {
@@ -1365,7 +1365,7 @@
       "zip_size_bytes": 5031860,
       "size_str": "4.8 MB",
       "preview_rel": "assets/themes_preview/Spiderman_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spiderman.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Spiderman.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spiderman.-.Alternate.zip"
     },
     {
@@ -1378,7 +1378,7 @@
       "zip_size_bytes": 9637345,
       "size_str": "9.19 MB",
       "preview_rel": "assets/themes_preview/Spiderman_-_Venom.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spiderman.-.Venom.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Spiderman.-.Venom.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spiderman.-.Venom.zip"
     },
     {
@@ -1391,7 +1391,7 @@
       "zip_size_bytes": 8382489,
       "size_str": "7.99 MB",
       "preview_rel": "assets/themes_preview/Spirited_Away_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spirited.Away.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Spirited.Away.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Spirited.Away.-.Alternate.zip"
     },
     {
@@ -1404,7 +1404,7 @@
       "zip_size_bytes": 8065365,
       "size_str": "7.69 MB",
       "preview_rel": "assets/themes_preview/Stalker.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Stalker.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Stalker.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Stalker.zip"
     },
     {
@@ -1417,7 +1417,7 @@
       "zip_size_bytes": 6204166,
       "size_str": "5.92 MB",
       "preview_rel": "assets/themes_preview/Star_Wars.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Star.Wars.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Star.Wars.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Star.Wars.zip"
     },
     {
@@ -1430,7 +1430,7 @@
       "zip_size_bytes": 7638898,
       "size_str": "7.29 MB",
       "preview_rel": "assets/themes_preview/Starfield.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Starfield.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Starfield.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Starfield.zip"
     },
     {
@@ -1443,7 +1443,7 @@
       "zip_size_bytes": 5077097,
       "size_str": "4.84 MB",
       "preview_rel": "assets/themes_preview/Steam_Deck.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Steam.Deck.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Steam.Deck.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Steam.Deck.zip"
     },
     {
@@ -1456,7 +1456,7 @@
       "zip_size_bytes": 6857299,
       "size_str": "6.54 MB",
       "preview_rel": "assets/themes_preview/TRIMUI_Blue.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Blue.zip",
+      "download_url": "https://cdn.xuanhoa493.com/TRIMUI.Blue.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Blue.zip"
     },
     {
@@ -1469,7 +1469,7 @@
       "zip_size_bytes": 6661836,
       "size_str": "6.35 MB",
       "preview_rel": "assets/themes_preview/TRIMUI_Energy.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Energy.zip",
+      "download_url": "https://cdn.xuanhoa493.com/TRIMUI.Energy.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Energy.zip"
     },
     {
@@ -1482,7 +1482,7 @@
       "zip_size_bytes": 7038992,
       "size_str": "6.71 MB",
       "preview_rel": "",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Green.zip",
+      "download_url": "https://cdn.xuanhoa493.com/TRIMUI.Green.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Green.zip"
     },
     {
@@ -1495,7 +1495,7 @@
       "zip_size_bytes": 6340238,
       "size_str": "6.05 MB",
       "preview_rel": "",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Simple.zip",
+      "download_url": "https://cdn.xuanhoa493.com/TRIMUI.Simple.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Simple.zip"
     },
     {
@@ -1508,7 +1508,7 @@
       "zip_size_bytes": 7435829,
       "size_str": "7.09 MB",
       "preview_rel": "",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Syber.zip",
+      "download_url": "https://cdn.xuanhoa493.com/TRIMUI.Syber.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.Syber.zip"
     },
     {
@@ -1521,7 +1521,7 @@
       "zip_size_bytes": 6186302,
       "size_str": "5.9 MB",
       "preview_rel": "",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.YaHei.zip",
+      "download_url": "https://cdn.xuanhoa493.com/TRIMUI.YaHei.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/TRIMUI.YaHei.zip"
     },
     {
@@ -1534,7 +1534,7 @@
       "zip_size_bytes": 6010372,
       "size_str": "5.73 MB",
       "preview_rel": "assets/themes_preview/Totoro.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Totoro.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Totoro.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Totoro.zip"
     },
     {
@@ -1547,7 +1547,7 @@
       "zip_size_bytes": 8284290,
       "size_str": "7.9 MB",
       "preview_rel": "assets/themes_preview/Totoro_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Totoro.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Totoro.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Totoro.-.Alternate.zip"
     },
     {
@@ -1560,7 +1560,7 @@
       "zip_size_bytes": 3712993,
       "size_str": "3.54 MB",
       "preview_rel": "assets/themes_preview/Wii.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Wii.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Wii.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Wii.zip"
     },
     {
@@ -1573,7 +1573,7 @@
       "zip_size_bytes": 8766505,
       "size_str": "8.36 MB",
       "preview_rel": "assets/themes_preview/Witcher_3.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Witcher.3.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Witcher.3.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Witcher.3.zip"
     },
     {
@@ -1586,7 +1586,7 @@
       "zip_size_bytes": 7331249,
       "size_str": "6.99 MB",
       "preview_rel": "assets/themes_preview/Witcher_3_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Witcher.3.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Witcher.3.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Witcher.3.-.Alternate.zip"
     },
     {
@@ -1599,7 +1599,7 @@
       "zip_size_bytes": 7659005,
       "size_str": "7.3 MB",
       "preview_rel": "assets/themes_preview/Xenoblade.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Xenoblade.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.zip"
     },
     {
@@ -1612,7 +1612,7 @@
       "zip_size_bytes": 6972372,
       "size_str": "6.65 MB",
       "preview_rel": "assets/themes_preview/Xenoblade_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Xenoblade.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.-.Alternate.zip"
     },
     {
@@ -1625,7 +1625,7 @@
       "zip_size_bytes": 7423659,
       "size_str": "7.08 MB",
       "preview_rel": "assets/themes_preview/Xenoblade_-_Day.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.-.Day.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Xenoblade.-.Day.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.-.Day.zip"
     },
     {
@@ -1638,7 +1638,7 @@
       "zip_size_bytes": 7433292,
       "size_str": "7.09 MB",
       "preview_rel": "assets/themes_preview/Xenoblade_-_Night.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.-.Night.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Xenoblade.-.Night.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Xenoblade.-.Night.zip"
     },
     {
@@ -1651,7 +1651,7 @@
       "zip_size_bytes": 7142352,
       "size_str": "6.81 MB",
       "preview_rel": "assets/themes_preview/Your_Lie_in_April.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Your.Lie.in.April.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Your.Lie.in.April.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Your.Lie.in.April.zip"
     },
     {
@@ -1664,7 +1664,7 @@
       "zip_size_bytes": 9293530,
       "size_str": "8.86 MB",
       "preview_rel": "assets/themes_preview/Yugioh.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Yugioh.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Yugioh.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Yugioh.zip"
     },
     {
@@ -1677,7 +1677,7 @@
       "zip_size_bytes": 7059448,
       "size_str": "6.73 MB",
       "preview_rel": "assets/themes_preview/Yugioh_-_Alternate.png",
-      "download_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Yugioh.-.Alternate.zip",
+      "download_url": "https://cdn.xuanhoa493.com/Yugioh.-.Alternate.zip",
       "raw_git_url": "https://github.com/nguyenxuanhoa493/repohubtool/releases/download/assets/Yugioh.-.Alternate.zip"
     }
   ]

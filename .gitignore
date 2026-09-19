@@ -53,3 +53,4 @@ plans/
 *secrets_local*
 .env
 .env.*
+!.env.example
